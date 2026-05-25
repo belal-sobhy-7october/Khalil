@@ -1,0 +1,129 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-terracotta-50: #fdf4ef;
+  --color-terracotta-100: #fae6da;
+  --color-terracotta-200: #f4cab0;
+  --color-terracotta-300: #eba77d;
+  --color-terracotta-400: #e07d4d;
+  --color-terracotta-500: #d46430;
+  --color-terracotta-600: #c1694f;
+  --color-terracotta-700: #924d3a;
+  --color-terracotta-800: #764033;
+  --color-terracotta-900: #5f372e;
+
+  --color-sage-50: #f3f7f3;
+  --color-sage-100: #e3ede3;
+  --color-sage-200: #c8dcc8;
+  --color-sage-300: #a3c4a3;
+  --color-sage-400: #8fa88f;
+  --color-sage-500: #5d8a5d;
+  --color-sage-600: #4d734d;
+  --color-sage-700: #3f5c3f;
+  --color-sage-800: #364a36;
+  --color-sage-900: #2d3d2d;
+
+  --color-cream-50: #fefcf8;
+  --color-cream-100: #fdf8f0;
+  --color-cream-200: #fbf0e0;
+  --color-cream-300: #f5e0c0;
+  --color-cream-400: #eed5a8;
+  --color-cream-500: #e0b880;
+  --color-cream-600: #c9a062;
+  --color-cream-700: #a8844d;
+  --color-cream-800: #8c6d42;
+  --color-cream-900: #745a39;
+
+  --color-gold-50: #fbf7ef;
+  --color-gold-100: #f5edda;
+  --color-gold-200: #ebd9b3;
+  --color-gold-300: #dcc085;
+  --color-gold-400: #c9a96e;
+  --color-gold-500: #b8914a;
+  --color-gold-600: #9e773d;
+  --color-gold-700: #835e34;
+  --color-gold-800: #6d4d2f;
+  --color-gold-900: #5c412a;
+
+  --color-slate-50: #f6f7f8;
+  --color-slate-100: #e9ebed;
+  --color-slate-200: #d5d8dc;
+  --color-slate-300: #b5bac1;
+  --color-slate-400: #8e949f;
+  --color-slate-500: #737985;
+  --color-slate-600: #5d626d;
+  --color-slate-700: #4c5059;
+  --color-slate-800: #2d2d2d;
+  --color-slate-900: #1a1a1a;
+
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-arabic: 'Amiri', 'Noto Naskh Arabic', serif;
+}
+
+:root {
+  --bg-primary: #fdf8f0;
+  --bg-secondary: #faf3e8;
+  --bg-card: #ffffff;
+  --text-primary: #2d2d2d;
+  --text-secondary: #5d626d;
+  --border-color: #e9ebed;
+}
+
+.dark {
+  --bg-primary: #1a1a1a;
+  --bg-secondary: #2d2d2d;
+  --bg-card: #363636;
+  --text-primary: #f6f7f8;
+  --text-secondary: #b5bac1;
+  --border-color: #4c5059;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+[dir='rtl'] {
+  font-family: 'Inter', 'Noto Naskh Arabic', system-ui, sans-serif;
+}
+
+.font-arabic {
+  font-family: 'Amiri', 'Noto Naskh Arabic', serif;
+}
+
+.geometric-bg {
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 5l25 15v20L30 55 5 40V20z' fill='none' stroke='%23c1694f' stroke-width='0.5' opacity='0.08'/%3E%3C/svg%3E");
+  background-size: 60px 60px;
+}
+
+.geometric-overlay {
+  position: relative;
+}
+
+.geometric-overlay::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M40 5l35 20v30L40 75 5 55V25z' fill='none' stroke='%23c9a96e' stroke-width='0.5' opacity='0.06'/%3E%3C/svg%3E");
+  background-size: 80px 80px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 4px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: var(--color-slate-300);
+  border-radius: 2px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: var(--color-slate-400);
+}
