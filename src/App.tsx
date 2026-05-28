@@ -12,7 +12,6 @@ import WeeklyTodo from './components/Todo/WeeklyTodo';
 import BacklogTodo from './components/Todo/BacklogTodo';
 import LifePillars from './components/LifePillars/LifePillars';
 import BookmarksVault from './components/Bookmarks/BookmarksVault';
-import DraggableContainer from './components/Canvas/DraggableContainer';
 import StickyNote, { createStickyNote, loadStickyNotes, saveStickyNotes } from './components/Canvas/StickyNote';
 import TodoNote, { createTodoNote, loadTodoNotes, saveTodoNotes } from './components/Canvas/TodoNote';
 import type { StickyNoteData } from './components/Canvas/StickyNote';
