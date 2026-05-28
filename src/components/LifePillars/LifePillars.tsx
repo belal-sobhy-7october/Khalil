@@ -37,32 +37,32 @@ const iconOptions = ['heart', 'brain', 'book-open', 'code', 'star', 'bookmark', 
 
 const pillColors: Record<string, { bg: string; border: string; accent: string; pill: string; text: string }> = {
   terracotta: {
-    bg: 'bg-terracotta-100 dark:bg-terracotta-900/20',
+    bg: 'bg-terracotta-100 dark:bg-terracotta-900/30',
     border: 'border-terracotta-300 dark:border-terracotta-700',
-    accent: 'bg-terracotta-500',
-    pill: 'bg-terracotta-200 dark:bg-terracotta-800/40 text-terracotta-900 dark:text-terracotta-300',
-    text: 'text-terracotta-800 dark:text-terracotta-400',
+    accent: 'bg-terracotta-500 dark:bg-terracotta-400',
+    pill: 'bg-terracotta-200 dark:bg-terracotta-800/50 text-terracotta-800 dark:text-terracotta-200',
+    text: 'text-terracotta-800 dark:text-terracotta-200',
   },
   gold: {
-    bg: 'bg-gold-100 dark:bg-gold-900/20',
+    bg: 'bg-gold-100 dark:bg-gold-900/30',
     border: 'border-gold-300 dark:border-gold-700',
-    accent: 'bg-gold-500',
-    pill: 'bg-gold-200 dark:bg-gold-800/40 text-gold-900 dark:text-gold-300',
-    text: 'text-gold-800 dark:text-gold-400',
+    accent: 'bg-gold-500 dark:bg-gold-400',
+    pill: 'bg-gold-200 dark:bg-gold-800/50 text-gold-800 dark:text-gold-200',
+    text: 'text-gold-800 dark:text-gold-200',
   },
   sage: {
-    bg: 'bg-sage-100 dark:bg-sage-900/20',
+    bg: 'bg-sage-100 dark:bg-sage-900/30',
     border: 'border-sage-300 dark:border-sage-700',
-    accent: 'bg-sage-500',
-    pill: 'bg-sage-200 dark:bg-sage-800/40 text-sage-900 dark:text-sage-300',
-    text: 'text-sage-800 dark:text-sage-400',
+    accent: 'bg-sage-500 dark:bg-sage-400',
+    pill: 'bg-sage-200 dark:bg-sage-800/50 text-sage-800 dark:text-sage-200',
+    text: 'text-sage-800 dark:text-sage-200',
   },
   slate: {
     bg: 'bg-slate-100 dark:bg-slate-800',
     border: 'border-slate-300 dark:border-slate-600',
-    accent: 'bg-slate-500',
-    pill: 'bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-slate-300',
-    text: 'text-slate-800 dark:text-slate-400',
+    accent: 'bg-slate-500 dark:bg-slate-400',
+    pill: 'bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200',
+    text: 'text-slate-800 dark:text-slate-200',
   },
 };
 
@@ -127,9 +127,9 @@ export default function LifePillars() {
 
   return (
     <section id="section-life">
-      <div className="flex items-center gap-2 mb-5">
-        <Target size={22} className="text-terracotta-500 dark:text-terracotta-400" />
-        <h2 className="text-xl font-semibold font-arabic text-slate-900 dark:text-amber-50">
+      <div className="flex items-center gap-2 mb-6">
+        <Target size={20} className="text-clay-soft" />
+        <h2 className="text-lg font-semibold font-amiri text-ink leading-relaxed">
           {t('pillars.title')}
         </h2>
       </div>
@@ -149,13 +149,13 @@ export default function LifePillars() {
               layout
               onMouseEnter={() => setHoveredCard(cat.id)}
               onMouseLeave={() => setHoveredCard(null)}
-              className={`rounded-xl border ${colors.border} ${colors.bg} shadow-sm`}
+              className={`rounded-xl border ${colors.border} ${colors.bg}`}
             >
-              <div className="flex items-center justify-between p-5">
-                <button
-                  onClick={() => setExpanded(isExpanded ? null : cat.id)}
-                  className="flex items-center gap-3 min-w-0"
-                >
+              <div
+                className="flex items-center justify-between p-5 md:p-6 cursor-pointer select-none"
+                onClick={() => setExpanded(isExpanded ? null : cat.id)}
+              >
+                <div className="flex items-center gap-3 min-w-0">
                   <span className={`shrink-0 ${colors.text}`}>{iconMap[cat.icon]}</span>
                   {isEditing ? (
                     <input
@@ -168,10 +168,10 @@ export default function LifePillars() {
                       onBlur={saveEdit}
                       autoFocus
                       onClick={(e) => e.stopPropagation()}
-                      className="text-lg font-semibold font-arabic bg-transparent border-b-2 border-terracotta-400 dark:border-terracotta-500 outline-none text-slate-900 dark:text-amber-50 min-w-[120px]"
+                      className="text-lg font-semibold font-amiri bg-transparent border-b-2 border-clay-soft outline-none text-ink min-w-[120px]"
                     />
                   ) : (
-                    <h3 className={`text-lg font-semibold font-arabic ${colors.text} truncate`}>
+                    <h3 className={`text-lg font-semibold font-amiri ${colors.text} truncate leading-relaxed`}>
                       {cat.name}
                     </h3>
                   )}
@@ -180,7 +180,7 @@ export default function LifePillars() {
                       {tracks.filter((t) => t.currentValue > 0).length}/{tracks.length}
                     </span>
                   )}
-                </button>
+                </div>
 
                 <div className="flex items-center gap-2 shrink-0">
                   <div
@@ -192,14 +192,14 @@ export default function LifePillars() {
                       <>
                         <button
                           onClick={(e) => { e.stopPropagation(); saveEdit(); }}
-                          className="flex items-center justify-center w-7 h-7 rounded text-slate-500 dark:text-stone-400 hover:text-sage-600 dark:hover:text-sage-400 hover:bg-sage-100 dark:hover:bg-sage-900/30 transition-all"
+                          className="flex items-center justify-center w-7 h-7 rounded text-ink-lighter hover:text-sage-soft hover:bg-sage-100 dark:hover:bg-sage-900/30 transition-all"
                           title={t('common.save')}
                         >
                           <Check size={14} />
                         </button>
                         <button
                           onClick={(e) => { e.stopPropagation(); cancelEdit(); }}
-                          className="flex items-center justify-center w-7 h-7 rounded text-slate-500 dark:text-stone-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all"
+                          className="flex items-center justify-center w-7 h-7 rounded text-ink-lighter hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-all"
                           title={t('common.cancel')}
                         >
                           <X size={14} />
@@ -209,14 +209,14 @@ export default function LifePillars() {
                       <>
                         <button
                           onClick={(e) => { e.stopPropagation(); startEdit(cat); }}
-                          className="flex items-center justify-center w-7 h-7 rounded text-slate-500 dark:text-stone-400 hover:text-terracotta-600 dark:hover:text-terracotta-400 hover:bg-terracotta-100 dark:hover:bg-terracotta-900/30 transition-all"
+                          className="flex items-center justify-center w-7 h-7 rounded text-ink-lighter hover:text-clay-soft hover:bg-ink/5 transition-all"
                           title={t('common.edit')}
                         >
                           <Pencil size={14} />
                         </button>
                         <button
                           onClick={(e) => { e.stopPropagation(); handleDelete(cat.id); }}
-                          className="flex items-center justify-center w-7 h-7 rounded text-slate-500 dark:text-stone-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all"
+                          className="flex items-center justify-center w-7 h-7 rounded text-ink-lighter hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-all"
                           title={t('common.delete')}
                         >
                           <Trash2 size={14} />
@@ -225,9 +225,9 @@ export default function LifePillars() {
                     )}
                   </div>
                   {isExpanded ? (
-                    <ChevronUp size={18} className="text-slate-700 dark:text-stone-400 shrink-0" />
+                    <ChevronUp size={18} className="text-ink-light shrink-0" />
                   ) : (
-                    <ChevronDown size={18} className="text-slate-700 dark:text-stone-400 shrink-0" />
+                    <ChevronDown size={18} className="text-ink-light shrink-0" />
                   )}
                 </div>
               </div>
@@ -241,9 +241,9 @@ export default function LifePillars() {
                     transition={{ duration: 0.25, ease: 'easeInOut' }}
                     className="overflow-hidden rounded-b-xl"
                   >
-                    <div className="px-5 pb-5 space-y-2">
+                    <div className="px-5 md:px-6 pb-5 space-y-2">
                       {tracks.length === 0 ? (
-                        <p className="text-sm text-slate-600 dark:text-stone-400 text-center py-4">
+                        <p className="text-sm text-ink-light text-center py-4">
                           {t('pillars.addTrack')}
                         </p>
                       ) : (
@@ -261,25 +261,23 @@ export default function LifePillars() {
         })}
       </div>
 
-      {/* Add New Pillar */}
       <div className="mt-5">
         {!showAddPillar ? (
           <button
             onClick={() => setShowAddPillar(true)}
-            className="w-full flex items-center justify-center gap-1.5 py-3 rounded-xl text-sm text-slate-700 dark:text-stone-400 hover:text-slate-800 dark:hover:text-slate-300 border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-500 transition-all group"
+            className="w-full flex items-center justify-center gap-1.5 py-3 rounded-xl text-sm text-ink-light hover:text-ink border-2 border-dashed border-border-subtle hover:border-ink-lighter transition-all group"
           >
             <Plus size={16} className="group-hover:scale-110 transition-transform" />
-            <span className="font-arabic">إضافة ركن جديد</span>
+            <span className="font-amiri">إضافة ركن جديد</span>
           </button>
         ) : (
           <motion.div
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
-            className="rounded-xl border border-cream-300 dark:border-slate-600 bg-cream-50 dark:bg-slate-800/50 shadow-sm p-5 space-y-4"
+            className="rounded-xl border border-border-subtle bg-card p-5 md:p-6 space-y-4"
           >
-            {/* Name */}
             <div>
-              <label className="block text-xs font-medium text-slate-500 dark:text-stone-400 mb-1 font-arabic">
+              <label className="block text-xs font-medium text-ink-light mb-1 font-amiri">
                 اسم الركن
               </label>
               <input
@@ -288,13 +286,12 @@ export default function LifePillars() {
                 onChange={(e) => setNewName(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleAddPillar()}
                 placeholder="مثل: مالي، نفسي، اجتماعي..."
-                className="w-full border border-cream-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-700 text-slate-800 dark:text-stone-100 placeholder-slate-400 dark:placeholder-stone-500 focus:outline-none focus:ring-1 focus:ring-terracotta-400/40"
+                className="w-full border border-border-subtle rounded-lg px-3 py-2 text-sm bg-ink/3 text-ink placeholder-ink-lighter focus:outline-none focus:ring-1 focus:ring-clay-soft/30"
               />
             </div>
 
-            {/* Icon Selector */}
             <div>
-              <label className="block text-xs font-medium text-slate-500 dark:text-stone-400 mb-2 font-arabic">
+              <label className="block text-xs font-medium text-ink-light mb-2 font-amiri">
                 الأيقونة
               </label>
               <div className="flex gap-2 flex-wrap">
@@ -304,8 +301,8 @@ export default function LifePillars() {
                     onClick={() => setNewIcon(iconKey)}
                     className={`flex items-center justify-center w-9 h-9 rounded-lg border-2 transition-all ${
                       newIcon === iconKey
-                        ? 'border-terracotta-500 bg-terracotta-100 dark:bg-terracotta-900/30 text-terracotta-700 dark:text-terracotta-300'
-                        : 'border-transparent bg-white dark:bg-slate-700 text-slate-500 dark:text-stone-400 hover:border-slate-300 dark:hover:border-slate-500'
+                        ? 'border-clay-soft bg-clay-soft/10 text-clay-soft'
+                        : 'border-transparent bg-ink/5 text-ink-lighter hover:border-border-subtle'
                     }`}
                   >
                     {iconMap[iconKey] || iconMap.star}
@@ -314,9 +311,8 @@ export default function LifePillars() {
               </div>
             </div>
 
-            {/* Color Selector */}
             <div>
-              <label className="block text-xs font-medium text-slate-500 dark:text-stone-400 mb-2 font-arabic">
+              <label className="block text-xs font-medium text-ink-light mb-2 font-amiri">
                 اللون
               </label>
               <div className="flex gap-2">
@@ -326,7 +322,7 @@ export default function LifePillars() {
                     onClick={() => setNewColor(colorKey)}
                     className={`flex items-center justify-center w-9 h-9 rounded-full border-2 transition-all ${
                       newColor === colorKey
-                        ? 'border-slate-800 dark:border-white scale-110'
+                        ? 'border-ink scale-110'
                         : 'border-transparent'
                     }`}
                     style={{
@@ -344,18 +340,17 @@ export default function LifePillars() {
               </div>
             </div>
 
-            {/* Actions */}
             <div className="flex gap-2 justify-end pt-1">
               <button
                 onClick={() => { setShowAddPillar(false); setNewName(''); }}
-                className="px-4 py-1.5 text-xs font-medium text-slate-600 dark:text-stone-300 hover:text-slate-700 dark:hover:text-stone-200 transition-colors"
+                className="px-4 py-1.5 text-xs font-medium text-ink-light hover:text-ink transition-colors"
               >
                 {t('pillars.cancel')}
               </button>
               <button
                 onClick={handleAddPillar}
                 disabled={!newName.trim()}
-                className="px-4 py-1.5 text-xs font-medium bg-terracotta-500 hover:bg-terracotta-600 disabled:bg-slate-300 dark:disabled:bg-slate-600 disabled:text-slate-500 dark:disabled:text-stone-400 text-white rounded-lg transition-colors"
+                className="px-4 py-1.5 text-xs font-medium bg-clay-soft hover:bg-clay-soft-dark disabled:opacity-40 text-white rounded-lg transition-colors"
               >
                 {t('pillars.save')}
               </button>
@@ -382,19 +377,17 @@ function SubTrackRow({ track, colors }: { track: SubTrack; colors: (typeof pillC
       layout
       initial={{ opacity: 0, y: -6 }}
       animate={{ opacity: 1, y: 0 }}
-      className="group flex items-center gap-2 bg-white/90 dark:bg-slate-800/70 rounded-lg px-4 py-3 border border-cream-300 dark:border-slate-700"
+      className="group flex items-center gap-2 bg-ink/3 rounded-lg px-4 py-3 border border-border-subtle"
     >
-      {/* Far Right: Icon + Name */}
       <div className="flex items-center gap-2 min-w-0 flex-[2]">
         <span className={`shrink-0 ${colors.text}`}>{iconMap[track.icon]}</span>
-        <span className="text-sm font-medium text-slate-800 dark:text-stone-100 truncate">
+        <span className="text-sm font-medium text-ink truncate">
           {track.name}
         </span>
       </div>
 
-      {/* Center: Progress bar + % label */}
       <div className="flex items-center gap-2 flex-1 min-w-0">
-        <div className="flex-1 h-1.5 bg-cream-300 dark:bg-slate-700 rounded-full overflow-hidden">
+        <div className="flex-1 h-1.5 bg-ink/8 rounded-full overflow-hidden">
           <motion.div
             className={`h-full rounded-full ${colors.accent}`}
             initial={{ width: 0 }}
@@ -402,30 +395,29 @@ function SubTrackRow({ track, colors }: { track: SubTrack; colors: (typeof pillC
             transition={{ duration: 0.6, ease: 'easeOut' }}
           />
         </div>
-        <span className="text-[10px] font-medium text-slate-500 dark:text-stone-400 tabular-nums w-8 text-right shrink-0">
+        <span className="text-[10px] font-medium text-ink-light tabular-nums w-8 text-end shrink-0">
           {percent}%
         </span>
       </div>
 
-      {/* Left Side — Action Group: counter | +/- buttons | trash */}
       <div className="flex items-center gap-1.5 shrink-0">
-        <span className="text-xs font-medium text-slate-700 dark:text-stone-300 tabular-nums whitespace-nowrap">
+        <span className="text-xs font-medium text-ink-light tabular-nums whitespace-nowrap">
           {track.currentValue}/{track.target} {knownUnitLabel(track.unit, t)}
         </span>
 
-        <div className="flex items-center bg-slate-100 dark:bg-zinc-800 rounded-lg p-0.5">
+        <div className="flex items-center bg-ink/8 rounded-lg p-0.5">
           {isRTL ? (
             <>
               <button
                 onClick={() => incrementSubTrack(track.id, 1)}
-                className="flex items-center justify-center w-5 h-5 rounded text-slate-500 dark:text-stone-400 hover:text-slate-800 dark:hover:text-stone-200 hover:bg-white dark:hover:bg-slate-700 transition-all"
+                className="flex items-center justify-center w-5 h-5 rounded text-ink-lighter hover:text-ink hover:bg-ink/10 transition-all"
               >
                 <Plus size={11} />
               </button>
               <button
                 onClick={() => decrementSubTrack(track.id, 1)}
                 disabled={track.currentValue <= 0}
-                className="flex items-center justify-center w-5 h-5 rounded text-slate-500 dark:text-stone-400 hover:text-slate-800 dark:hover:text-stone-200 hover:bg-white dark:hover:bg-slate-700 disabled:opacity-25 disabled:cursor-not-allowed transition-all"
+                className="flex items-center justify-center w-5 h-5 rounded text-ink-lighter hover:text-ink hover:bg-ink/10 disabled:opacity-25 disabled:cursor-not-allowed transition-all"
               >
                 <Minus size={11} />
               </button>
@@ -435,13 +427,13 @@ function SubTrackRow({ track, colors }: { track: SubTrack; colors: (typeof pillC
               <button
                 onClick={() => decrementSubTrack(track.id, 1)}
                 disabled={track.currentValue <= 0}
-                className="flex items-center justify-center w-5 h-5 rounded text-slate-500 dark:text-stone-400 hover:text-slate-800 dark:hover:text-stone-200 hover:bg-white dark:hover:bg-slate-700 disabled:opacity-25 disabled:cursor-not-allowed transition-all"
+                className="flex items-center justify-center w-5 h-5 rounded text-ink-lighter hover:text-ink hover:bg-ink/10 disabled:opacity-25 disabled:cursor-not-allowed transition-all"
               >
                 <Minus size={11} />
               </button>
               <button
                 onClick={() => incrementSubTrack(track.id, 1)}
-                className="flex items-center justify-center w-5 h-5 rounded text-slate-500 dark:text-stone-400 hover:text-slate-800 dark:hover:text-stone-200 hover:bg-white dark:hover:bg-slate-700 transition-all"
+                className="flex items-center justify-center w-5 h-5 rounded text-ink-lighter hover:text-ink hover:bg-ink/10 transition-all"
               >
                 <Plus size={11} />
               </button>
@@ -451,7 +443,7 @@ function SubTrackRow({ track, colors }: { track: SubTrack; colors: (typeof pillC
 
         <button
           onClick={() => removeSubTrack(track.id)}
-          className="flex items-center justify-center w-5 h-5 rounded opacity-0 group-hover:opacity-100 text-slate-400 dark:text-stone-500 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all"
+          className="flex items-center justify-center w-5 h-5 rounded opacity-0 group-hover:opacity-100 text-ink-lighter hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-all"
         >
           <Trash2 size={11} />
         </button>
@@ -466,7 +458,7 @@ function AddTrackForm({ categoryId }: { categoryId: string }) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState('');
   const [target, setTarget] = useState('10');
-  const [unit, setUnit] = useState('pages');
+  const [unit, setUnit] = useState('');
 
   const handleAdd = () => {
     if (!name.trim()) return;
@@ -478,13 +470,13 @@ function AddTrackForm({ categoryId }: { categoryId: string }) {
       icon: 'star',
       progressType: 'counter',
       target: Math.max(1, Number(target) || 10),
-      unit,
+      unit: unit.trim() || 'unit',
       currentValue: 0,
       sortOrder: 99,
     });
     setName('');
     setTarget('10');
-    setUnit('pages');
+    setUnit('');
     setOpen(false);
   };
 
@@ -493,7 +485,7 @@ function AddTrackForm({ categoryId }: { categoryId: string }) {
       {!open ? (
         <button
           onClick={() => setOpen(true)}
-          className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs text-slate-700 dark:text-stone-400 hover:text-slate-800 dark:hover:text-slate-300 border border-dashed border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-500 transition-all"
+          className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs text-ink-light hover:text-ink border border-dashed border-border-subtle hover:border-ink-lighter transition-all"
         >
           <Plus size={14} />
           {t('pillars.addTrack')}
@@ -502,7 +494,7 @@ function AddTrackForm({ categoryId }: { categoryId: string }) {
         <motion.div
           initial={{ opacity: 0, y: -4 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-cream-50 dark:bg-slate-800 rounded-lg p-4 border border-cream-300 dark:border-slate-600 space-y-3"
+          className="bg-ink/3 rounded-lg p-4 border border-border-subtle space-y-3"
         >
           <input
             type="text"
@@ -510,12 +502,12 @@ function AddTrackForm({ categoryId }: { categoryId: string }) {
             onChange={(e) => setName(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
             placeholder={t('pillars.trackName')}
-            className="w-full border border-cream-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-700 text-slate-800 dark:text-stone-100 placeholder-slate-400 dark:placeholder-stone-500 focus:outline-none focus:ring-1 focus:ring-terracotta-400/40"
+            className="w-full border border-border-subtle rounded-lg px-3 py-2 text-sm bg-ink/3 text-ink placeholder-ink-lighter focus:outline-none focus:ring-1 focus:ring-clay-soft/30 text-end"
           />
 
           <div className="flex items-center gap-3">
             <div className="flex-1">
-              <label className="block text-[10px] font-medium text-slate-500 dark:text-stone-400 mb-1">
+              <label className="block text-[10px] font-medium text-ink-light mb-1 text-end">
                 {t('pillars.target')}
               </label>
               <input
@@ -523,39 +515,35 @@ function AddTrackForm({ categoryId }: { categoryId: string }) {
                 min="1"
                 value={target}
                 onChange={(e) => setTarget(e.target.value)}
-                className="w-full border border-cream-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-700 text-slate-800 dark:text-stone-100 focus:outline-none focus:ring-1 focus:ring-terracotta-400/40"
+                className="w-full border border-border-subtle rounded-lg px-3 py-2 text-sm bg-ink/3 text-ink focus:outline-none focus:ring-1 focus:ring-clay-soft/30"
               />
             </div>
 
             <div className="flex-1">
-              <label className="block text-[10px] font-medium text-slate-500 dark:text-stone-400 mb-1">
+              <label className="block text-[10px] font-medium text-ink-light mb-1 text-end">
                 {t('pillars.unit')}
               </label>
-              <select
+              <input
+                type="text"
                 value={unit}
                 onChange={(e) => setUnit(e.target.value)}
-                className="w-full border border-cream-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-700 text-slate-800 dark:text-stone-100 focus:outline-none focus:ring-1 focus:ring-terracotta-400/40"
-              >
-                {UNIT_KEYS.map((key) => (
-                  <option key={key} value={key}>
-                    {t(`pillars.unit${key.charAt(0).toUpperCase() + key.slice(1)}`)}
-                  </option>
-                ))}
-              </select>
+                placeholder={t('pillars.unitPlaceholder')}
+                className="w-full border border-border-subtle rounded-lg px-3 py-2 text-sm bg-ink/3 text-ink placeholder-ink-lighter focus:outline-none focus:ring-1 focus:ring-clay-soft/30 text-end"
+              />
             </div>
           </div>
 
           <div className="flex gap-2 justify-end pt-1">
             <button
               onClick={() => setOpen(false)}
-              className="px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-stone-300 hover:text-slate-700 dark:hover:text-stone-200"
+              className="px-3 py-1.5 text-xs font-medium text-ink-light hover:text-ink"
             >
               {t('pillars.cancel')}
             </button>
             <button
               onClick={handleAdd}
               disabled={!name.trim()}
-              className="px-4 py-1.5 text-xs font-medium bg-terracotta-500 hover:bg-terracotta-600 disabled:bg-slate-300 dark:disabled:bg-slate-600 disabled:text-slate-500 dark:disabled:text-stone-400 text-white rounded-lg transition-colors"
+              className="px-4 py-1.5 text-xs font-medium bg-clay-soft hover:bg-clay-soft-dark disabled:opacity-40 text-white rounded-lg transition-colors"
             >
               {t('pillars.save')}
             </button>

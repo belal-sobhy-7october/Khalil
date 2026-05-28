@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import Sidebar from './Sidebar';
+import Header from './Header';
 import NavCard from './NavCard';
 import { useTranslation } from '../../i18n/useTranslation';
 import { motion } from 'framer-motion';
-
 export default function DashboardLayout({
   children,
   activeSection,
@@ -29,7 +29,12 @@ export default function DashboardLayout({
   };
 
   return (
-    <div className="min-h-screen geometric-bg">
+    <div className="min-h-screen relative">
+      <Header
+        isOpen={sidebarOpen}
+        onToggle={() => setSidebarOpen(!sidebarOpen)}
+      />
+
       <Sidebar
         activeSection={activeSection}
         onSectionChange={handleSectionChange}
@@ -37,17 +42,18 @@ export default function DashboardLayout({
         onToggle={() => setSidebarOpen(!sidebarOpen)}
       />
 
-      <div className="lg:flex lg:max-w-7xl lg:mx-auto lg:gap-6 lg:p-8">
-        <div className="hidden lg:block lg:w-64 shrink-0">
-          <div className="sticky top-6">
-            <NavCard
-              activeSection={activeSection}
-              onSectionChange={handleSectionChange}
-            />
+      <div className="pt-14">
+        <div className="lg:flex lg:max-w-7xl lg:mx-auto lg:gap-8 lg:p-8">
+          <div className="hidden lg:block lg:w-60 shrink-0">
+            <div className="sticky top-24">
+              <NavCard
+                activeSection={activeSection}
+                onSectionChange={handleSectionChange}
+              />
+            </div>
           </div>
-        </div>
 
-        <main id="main-content" className="flex-1 min-w-0 p-4 md:p-6 lg:p-0 pt-16 lg:pt-0">
+          <main id="main-content" className="flex-1 min-w-0 p-5 md:p-8 lg:p-0 relative">
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
@@ -56,6 +62,7 @@ export default function DashboardLayout({
             {children}
           </motion.div>
         </main>
+        </div>
       </div>
     </div>
   );

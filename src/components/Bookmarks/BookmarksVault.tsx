@@ -19,10 +19,10 @@ import type { Bookmark as BookmarkType } from '../../types';
 
 const categoryIcons: Record<string, React.ReactNode> = {
   general: <Globe size={16} />,
-  islamic: <BookOpen size={16} />,
-  tech: <Code size={16} />,
-  learning: <Video size={16} />,
-  media: <Music size={16} />,
+  code: <Code size={16} />,
+  video: <Video size={16} />,
+  book: <BookOpen size={16} />,
+  music: <Music size={16} />,
 };
 
 const defaultCategoryIcon = <LinkIcon size={16} />;
@@ -49,7 +49,6 @@ export default function BookmarksVault() {
   const handleAddCategory = () => {
     if (newCategory.name.trim()) {
       addCategory({
-        id: `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
         name: newCategory.name.trim(),
         icon: newCategory.icon,
       });
@@ -61,7 +60,6 @@ export default function BookmarksVault() {
   const handleAddBookmark = () => {
     if (newBookmark.title.trim() && newBookmark.url.trim() && newBookmark.categoryId) {
       addBookmark({
-        id: `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
         title: newBookmark.title.trim(),
         url: newBookmark.url.trim().startsWith('http') ? newBookmark.url.trim() : `https://${newBookmark.url.trim()}`,
         categoryId: newBookmark.categoryId,
@@ -73,23 +71,23 @@ export default function BookmarksVault() {
   };
 
   return (
-    <section id="section-bookmarks" className="mb-8">
-      <div className="flex items-center justify-between mb-4">
+    <section id="section-bookmarks">
+      <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-2">
-          <Bookmark size={20} className="text-terracotta-500 dark:text-terracotta-400" />
-          <h2 className="text-xl font-semibold text-slate-900 dark:text-amber-50">{t('bookmarks.title')}</h2>
+          <Bookmark size={20} className="text-clay-soft" />
+          <h2 className="text-lg font-semibold text-ink">{t('bookmarks.title')}</h2>
         </div>
         <div className="flex gap-2">
           <button
             onClick={() => setShowCategoryForm(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-cream-200 dark:bg-slate-700 text-slate-700 dark:text-stone-300 rounded-lg hover:bg-cream-300 dark:hover:bg-slate-600 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-ink/5 hover:bg-ink/10 text-ink-light hover:text-ink rounded-lg transition-colors"
           >
             <FolderPlus size={14} />
             <span className="hidden sm:inline">{t('bookmarks.addCategory')}</span>
           </button>
           <button
             onClick={() => setShowBookmarkForm(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-terracotta-500 hover:bg-terracotta-600 text-white rounded-lg transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-clay-soft hover:bg-clay-soft-dark text-white rounded-lg transition-colors"
           >
             <Plus size={14} />
             <span className="hidden sm:inline">{t('bookmarks.addBookmark')}</span>
@@ -97,25 +95,25 @@ export default function BookmarksVault() {
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-2 mb-4">
+      <div className="flex flex-wrap gap-2 mb-5">
         <button
           onClick={() => setActiveCategory(null)}
           className={`px-3 py-1.5 text-sm rounded-full transition-all ${
             !activeCategory
-              ? 'bg-terracotta-500 text-white'
-              : 'bg-cream-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-cream-300 dark:hover:bg-slate-600'
+              ? 'bg-clay-soft text-white'
+              : 'bg-ink/5 text-ink-light hover:bg-ink/10 hover:text-ink'
           }`}
         >
           {t('bookmarks.all')}
         </button>
         {categories.map((cat) => (
-          <button
+          <div
             key={cat.id}
             onClick={() => setActiveCategory(cat.id)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-full transition-all ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-full transition-all cursor-pointer ${
               activeCategory === cat.id
-                ? 'bg-terracotta-500 text-white'
-                : 'bg-cream-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-cream-300 dark:hover:bg-slate-600'
+                ? 'bg-clay-soft text-white'
+                : 'bg-ink/5 text-ink-light hover:bg-ink/10 hover:text-ink'
             }`}
           >
             {categoryIcons[cat.icon] || defaultCategoryIcon}
@@ -129,41 +127,59 @@ export default function BookmarksVault() {
             >
               <Trash2 size={10} />
             </button>
-          </button>
+          </div>
         ))}
       </div>
 
       <AnimatePresence>
         {showCategoryForm && (
           <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            className="overflow-hidden mb-4"
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            className="mb-5"
           >
-            <div className="bg-cream-50 dark:bg-slate-800 rounded-xl border border-cream-300 dark:border-slate-700 p-4">
+            <div className="bg-card border border-border-subtle rounded-xl p-4 space-y-3">
               <div className="flex gap-3">
                 <input
                   type="text"
                   value={newCategory.name}
-                  onChange={(e) => setNewCategory({ ...newCategory, name: e.target.value })}
-                  onKeyDown={(e) => e.key === 'Enter' && handleAddCategory()}
-                  placeholder={t('bookmarks.addCategory')}
-                  dir={isRTL ? 'rtl' : 'ltr'}
-                  className="flex-1 border border-cream-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-cream-50 dark:bg-slate-700 text-slate-900 dark:text-amber-50 placeholder-slate-400 dark:placeholder-stone-500 focus:outline-none focus:ring-2 focus:ring-terracotta-400/40"
+                  onChange={(e) =>
+                    setNewCategory({ ...newCategory, name: e.target.value })
+                  }
+                  placeholder={t('bookmarks.categoryNamePlaceholder')}
+                  className="flex-1 border border-border-subtle rounded-lg px-3 py-2 text-sm bg-ink/3 text-ink placeholder-ink-lighter focus:outline-none focus:ring-2 focus:ring-clay-soft/20"
                 />
+
+                <select
+                  value={newCategory.icon}
+                  onChange={(e) =>
+                    setNewCategory({ ...newCategory, icon: e.target.value })
+                  }
+                  className="border border-border-subtle rounded-lg px-3 py-2 text-sm bg-card text-ink focus:outline-none focus:ring-2 focus:ring-clay-soft/20"
+                >
+                  <option value="general">{t('bookmarks.iconGeneral')}</option>
+                  <option value="code">{t('bookmarks.iconCode')}</option>
+                  <option value="video">{t('bookmarks.iconVideo')}</option>
+                  <option value="book">{t('bookmarks.iconBook')}</option>
+                  <option value="music">{t('bookmarks.iconMusic')}</option>
+                </select>
+              </div>
+
+              <div className="flex justify-end gap-2">
+                <button
+                  onClick={() => setShowCategoryForm(false)}
+                  className="px-3 py-2 text-sm text-ink-light hover:text-ink"
+                >
+                  {t('common.cancel')}
+                </button>
+
                 <button
                   onClick={handleAddCategory}
                   disabled={!newCategory.name.trim()}
-                  className="px-4 py-2 bg-terracotta-500 hover:bg-terracotta-600 disabled:bg-slate-300 dark:disabled:bg-slate-600 disabled:text-slate-500 dark:disabled:text-stone-400 text-white text-sm rounded-lg transition-colors"
+                  className="px-4 py-2 bg-clay-soft hover:bg-clay-soft-dark disabled:opacity-40 text-white text-sm rounded-lg transition-colors"
                 >
-                  {t('common.add')}
-                </button>
-                <button
-                  onClick={() => setShowCategoryForm(false)}
-                  className="px-3 py-2 text-sm text-slate-600 dark:text-stone-300 hover:text-slate-700 dark:hover:text-slate-200"
-                >
-                  {t('common.cancel')}
+                  {t('common.save')}
                 </button>
               </div>
             </div>
@@ -179,23 +195,23 @@ export default function BookmarksVault() {
             exit={{ height: 0, opacity: 0 }}
             className="overflow-hidden mb-4"
           >
-            <div className="bg-cream-50 dark:bg-slate-800 rounded-xl border border-cream-300 dark:border-slate-700 p-4">
+            <div className="bg-card rounded-xl border border-border-subtle p-4">
               <div className="space-y-3">
                 <div className="flex gap-3">
                   <input
                     type="text"
                     value={newBookmark.title}
                     onChange={(e) => setNewBookmark({ ...newBookmark, title: e.target.value })}
-                    placeholder="Title"
+                    placeholder={t('bookmarks.titlePlaceholder')}
                     dir={isRTL ? 'rtl' : 'ltr'}
-                    className="flex-1 border border-cream-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-cream-50 dark:bg-slate-700 text-slate-900 dark:text-amber-50 placeholder-slate-400 dark:placeholder-stone-500 focus:outline-none focus:ring-2 focus:ring-terracotta-400/40"
+                    className="flex-1 border border-border-subtle rounded-lg px-3 py-2 text-sm bg-ink/3 text-ink placeholder-ink-lighter focus:outline-none focus:ring-2 focus:ring-clay-soft/20"
                   />
                   <select
                     value={newBookmark.categoryId}
                     onChange={(e) => setNewBookmark({ ...newBookmark, categoryId: e.target.value })}
-                    className="border border-cream-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-cream-50 dark:bg-slate-700 text-slate-900 dark:text-amber-50 focus:outline-none focus:ring-2 focus:ring-terracotta-400/40"
+                    className="border border-border-subtle rounded-lg px-3 py-2 text-sm bg-card text-ink focus:outline-none focus:ring-2 focus:ring-clay-soft/20"
                   >
-                    <option value="">Select category</option>
+                    <option value="">{t('bookmarks.selectCategory')}</option>
                     {categories.map((cat) => (
                       <option key={cat.id} value={cat.id}>
                         {cat.name}
@@ -209,7 +225,7 @@ export default function BookmarksVault() {
                     value={newBookmark.url}
                     onChange={(e) => setNewBookmark({ ...newBookmark, url: e.target.value })}
                     placeholder={t('bookmarks.urlPlaceholder')}
-                    className="flex-1 border border-cream-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-cream-50 dark:bg-slate-700 text-slate-900 dark:text-amber-50 placeholder-slate-400 dark:placeholder-stone-500 focus:outline-none focus:ring-2 focus:ring-terracotta-400/40"
+                    className="flex-1 border border-border-subtle rounded-lg px-3 py-2 text-sm bg-ink/3 text-ink placeholder-ink-lighter focus:outline-none focus:ring-2 focus:ring-clay-soft/20"
                   />
                   <input
                     type="text"
@@ -217,20 +233,20 @@ export default function BookmarksVault() {
                     onChange={(e) => setNewBookmark({ ...newBookmark, description: e.target.value })}
                     placeholder={t('bookmarks.descriptionPlaceholder')}
                     dir={isRTL ? 'rtl' : 'ltr'}
-                    className="flex-1 border border-cream-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-cream-50 dark:bg-slate-700 text-slate-900 dark:text-amber-50 placeholder-slate-400 dark:placeholder-stone-500 focus:outline-none focus:ring-2 focus:ring-terracotta-400/40"
+                    className="flex-1 border border-border-subtle rounded-lg px-3 py-2 text-sm bg-ink/3 text-ink placeholder-ink-lighter focus:outline-none focus:ring-2 focus:ring-clay-soft/20"
                   />
                 </div>
                 <div className="flex gap-2 justify-end">
                   <button
                     onClick={() => setShowBookmarkForm(false)}
-                    className="px-3 py-2 text-sm text-slate-600 dark:text-stone-300 hover:text-slate-700 dark:hover:text-slate-200"
+                    className="px-3 py-2 text-sm text-ink-light hover:text-ink"
                   >
                     {t('common.cancel')}
                   </button>
                   <button
                     onClick={handleAddBookmark}
                     disabled={!newBookmark.title.trim() || !newBookmark.url.trim() || !newBookmark.categoryId}
-                    className="px-4 py-2 bg-terracotta-500 hover:bg-terracotta-600 disabled:bg-slate-300 dark:disabled:bg-slate-600 disabled:text-slate-500 dark:disabled:text-stone-400 text-white text-sm rounded-lg transition-colors"
+                    className="px-4 py-2 bg-clay-soft hover:bg-clay-soft-dark disabled:opacity-40 text-white text-sm rounded-lg transition-colors"
                   >
                     {t('common.save')}
                   </button>
@@ -242,9 +258,9 @@ export default function BookmarksVault() {
       </AnimatePresence>
 
       {filteredBookmarks.length === 0 ? (
-        <div className="text-center py-12 bg-cream-50 dark:bg-slate-800 rounded-xl border border-cream-300 dark:border-slate-700">
-          <LinkIcon size={40} className="mx-auto text-slate-600 dark:text-stone-500 mb-2" />
-          <p className="text-sm text-slate-600 dark:text-stone-400">{t('bookmarks.empty')}</p>
+        <div className="text-center py-12 bg-card rounded-xl border border-border-subtle">
+          <LinkIcon size={36} className="mx-auto text-ink-lighter mb-2" />
+          <p className="text-sm text-ink-light">{t('bookmarks.empty')}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -269,7 +285,7 @@ function BookmarkCard({ bookmark, onRemove }: { bookmark: BookmarkType; onRemove
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.95 }}
-      className="group relative block bg-cream-50 dark:bg-slate-800 rounded-xl border border-cream-300 dark:border-slate-700 shadow-sm p-4 hover:shadow-md hover:border-terracotta-300 dark:hover:border-terracotta-600 transition-all"
+      className="group relative block bg-card rounded-xl border border-border-subtle p-4 hover:border-clay-soft/30 transition-all"
     >
       <button
         onClick={(e) => {
@@ -277,24 +293,24 @@ function BookmarkCard({ bookmark, onRemove }: { bookmark: BookmarkType; onRemove
           e.stopPropagation();
           onRemove();
         }}
-        className="absolute top-2 right-2 p-1.5 rounded-lg opacity-0 group-hover:opacity-100 text-slate-600 dark:text-stone-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all"
+        className="absolute top-2 right-2 p-1.5 rounded-lg opacity-0 group-hover:opacity-100 text-ink-lighter hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-all"
       >
         <Trash2 size={12} />
       </button>
       <div className="flex items-start gap-3">
-        <div className="p-2 rounded-lg bg-cream-200 dark:bg-slate-700 text-terracotta-500">
+        <div className="p-2 rounded-lg bg-ink/5 text-clay-soft">
           <ExternalLink size={16} />
         </div>
         <div className="min-w-0 flex-1">
-          <h4 className="text-sm font-medium text-slate-900 dark:text-amber-50 truncate">
+          <h4 className="text-sm font-medium text-ink truncate">
             {bookmark.title}
           </h4>
           {bookmark.description && (
-            <p className="text-xs text-slate-600 dark:text-stone-300 mt-0.5 line-clamp-2">
+            <p className="text-xs text-ink-light mt-0.5 line-clamp-2">
               {bookmark.description}
             </p>
           )}
-          <p className="text-[10px] text-slate-600 dark:text-stone-400 mt-1 truncate">
+          <p className="text-[10px] text-ink-lighter mt-1 truncate">
             {bookmark.url.replace(/^https?:\/\//, '')}
           </p>
         </div>

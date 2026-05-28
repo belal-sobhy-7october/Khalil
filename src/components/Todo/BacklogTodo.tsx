@@ -16,9 +16,9 @@ import { useTranslation } from '../../i18n/useTranslation';
 import type { Priority } from '../../types';
 
 const priorityColors: Record<Priority, { bg: string; text: string; dot: string }> = {
-  high: { bg: 'bg-red-50 dark:bg-red-900/20', text: 'text-red-600 dark:text-red-400', dot: 'bg-red-500' },
-  medium: { bg: 'bg-amber-50 dark:bg-amber-900/20', text: 'text-amber-600 dark:text-amber-400', dot: 'bg-amber-500' },
-  low: { bg: 'bg-sage-50 dark:bg-sage-900/20', text: 'text-sage-600 dark:text-sage-400', dot: 'bg-sage-500' },
+  high: { bg: 'bg-red-50 dark:bg-red-950/30', text: 'text-red-600 dark:text-red-400', dot: 'bg-red-500 dark:bg-red-400' },
+  medium: { bg: 'bg-amber-50 dark:bg-amber-950/30', text: 'text-amber-600 dark:text-amber-400', dot: 'bg-amber-500 dark:bg-amber-400' },
+  low: { bg: 'bg-sage-50 dark:bg-sage-950/30', text: 'text-sage-600 dark:text-sage-400', dot: 'bg-sage-500 dark:bg-sage-400' },
 };
 
 export default function BacklogTodo() {
@@ -45,11 +45,11 @@ export default function BacklogTodo() {
 
   return (
     <section>
-      <div className="bg-white dark:bg-slate-800 rounded-xl border border-cream-200 dark:border-slate-700 shadow-sm overflow-hidden">
-        <div className="p-5 border-b border-cream-200 dark:border-slate-700">
-          <div className="flex items-center gap-2 mb-3">
-            <Archive size={20} className="text-slate-600 dark:text-stone-300" />
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-amber-50">
+      <div className="bg-card border border-border-subtle rounded-xl overflow-hidden">
+        <div className="p-5 md:p-6 border-b border-border-subtle">
+          <div className="flex items-center gap-2 mb-4">
+            <Archive size={20} className="text-ink-light" />
+            <h2 className="text-base font-semibold text-ink">
               {t('backlog.title')}
             </h2>
           </div>
@@ -62,7 +62,7 @@ export default function BacklogTodo() {
               onKeyDown={handleKeyDown}
               placeholder={t('backlog.addPlaceholder')}
               dir={isRTL ? 'rtl' : 'ltr'}
-              className="flex-1 border border-cream-200 dark:border-slate-600 rounded-lg px-4 py-2.5 text-sm bg-cream-50 dark:bg-slate-700 text-slate-900 dark:text-amber-50 placeholder-slate-400 dark:placeholder-stone-500 focus:outline-none focus:ring-2 focus:ring-slate-400/40 focus:border-transparent transition-all"
+              className="flex-1 border border-border-subtle rounded-lg px-4 py-2.5 text-sm bg-ink/3 text-ink placeholder-ink-lighter focus:outline-none focus:ring-2 focus:ring-ink-lighter/20 focus:border-transparent transition-all"
             />
             <div className="flex gap-1">
               {(['high', 'medium', 'low'] as Priority[]).map((p) => (
@@ -72,18 +72,18 @@ export default function BacklogTodo() {
                   className={`p-2 rounded-lg border transition-all ${
                     priority === p
                       ? `${priorityColors[p].bg} ${priorityColors[p].text} border-current`
-                      : 'border-cream-200 dark:border-slate-600 text-slate-500 dark:text-stone-400 hover:bg-cream-50 dark:hover:bg-slate-700'
+                      : 'border-border-subtle text-ink-lighter hover:bg-ink/5'
                   }`}
                   title={t(`todo.${p}`)}
                 >
-                  <Flag size={16} />
+                  <Flag size={15} />
                 </button>
               ))}
             </div>
             <button
               onClick={handleAdd}
               disabled={!text.trim()}
-              className="p-2.5 bg-slate-500 hover:bg-slate-600 disabled:bg-slate-300 dark:disabled:bg-slate-600 text-white rounded-lg transition-colors"
+              className="p-2.5 bg-ink-light hover:bg-ink disabled:opacity-40 text-white rounded-lg transition-colors"
             >
               <Plus size={18} />
             </button>
@@ -98,8 +98,8 @@ export default function BacklogTodo() {
                 animate={{ opacity: 1 }}
                 className="p-8 text-center"
               >
-                <Inbox size={40} className="mx-auto text-slate-400 dark:text-stone-500 mb-2" />
-                <p className="text-sm text-slate-500 dark:text-stone-400">{t('backlog.empty')}</p>
+                <Inbox size={36} className="mx-auto text-ink-lighter mb-2" />
+                <p className="text-sm text-ink-light">{t('backlog.empty')}</p>
               </motion.div>
             ) : (
               todos.map((todo) => (
@@ -110,16 +110,16 @@ export default function BacklogTodo() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, x: -20, height: 0, marginBottom: 0 }}
                   transition={{ duration: 0.2 }}
-                  className={`group flex items-center gap-3 p-3 rounded-lg hover:bg-cream-50 dark:hover:bg-slate-700/50 transition-colors ${
+                  className={`group flex items-center gap-3 p-3 rounded-lg hover:bg-ink/3 transition-colors ${
                     todo.completed ? 'opacity-60' : ''
                   }`}
                 >
                   <button
                     onClick={() => toggleTodo(todo.id)}
-                    className="shrink-0 text-slate-500 dark:text-stone-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                    className="shrink-0 text-ink-lighter hover:text-ink transition-colors"
                   >
                     {todo.completed ? (
-                      <CheckCircle size={20} className="text-sage-500" />
+                      <CheckCircle size={20} className="text-sage-soft" />
                     ) : (
                       <Circle size={20} />
                     )}
@@ -135,8 +135,8 @@ export default function BacklogTodo() {
                   <span
                     className={`flex-1 text-sm truncate ${
                       todo.completed
-                        ? 'line-through text-slate-500 dark:text-stone-400'
-                        : 'text-slate-800 dark:text-stone-100'
+                        ? 'line-through text-ink-lighter'
+                        : 'text-ink'
                     }`}
                     dir="auto"
                   >
@@ -146,21 +146,21 @@ export default function BacklogTodo() {
                   <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
                     <button
                       onClick={() => moveToDaily(todo.id)}
-                      className="p-1.5 rounded-md text-terracotta-500 dark:text-terracotta-400 hover:text-terracotta-600 dark:hover:text-terracotta-300 hover:bg-terracotta-50 dark:hover:bg-terracotta-900/20 transition-all"
+                      className="p-1.5 rounded-md text-clay-soft hover:text-clay-soft-dark hover:bg-ink/5 transition-all"
                       title={t('backlog.moveToDaily')}
                     >
                       <Sun size={14} />
                     </button>
                     <button
                       onClick={() => moveToWeekly(todo.id)}
-                      className="p-1.5 rounded-md text-gold-500 dark:text-gold-400 hover:text-gold-600 dark:hover:text-gold-300 hover:bg-gold-50 dark:hover:bg-gold-900/20 transition-all"
+                      className="p-1.5 rounded-md text-gold-soft hover:text-gold-soft-dark hover:bg-ink/5 transition-all"
                       title={t('backlog.moveToWeekly')}
                     >
                       <Calendar size={14} />
                     </button>
                     <button
                       onClick={() => removeTodo(todo.id)}
-                      className="p-1.5 rounded-md text-slate-500 dark:text-stone-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all"
+                      className="p-1.5 rounded-md text-ink-lighter hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-all"
                     >
                       <Trash2 size={14} />
                     </button>
