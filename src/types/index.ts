@@ -8,7 +8,7 @@ export interface DailyFocus {
 }
 
 export interface TodoItem {
-  id?: string;
+  id: string;
   text: string;
   completed: boolean;
   priority: Priority;
@@ -26,13 +26,13 @@ export interface WeeklyTodo extends TodoItem {
 export interface BacklogTodo extends TodoItem {}
 
 export interface BookmarkCategory {
-  id?: string;
+  id: string;
   name: string;
   icon: string;
 }
 
 export interface Bookmark {
-  id?: string;
+  id: string;
   title: string;
   url: string;
   categoryId: string;
@@ -42,7 +42,7 @@ export interface Bookmark {
 export type SubTrackType = 'counter' | 'percentage' | 'habit';
 
 export interface LifeCategory {
-  id?: string;
+  id: string;
   name: string;
   nameKey: string;
   icon: string;
@@ -51,7 +51,7 @@ export interface LifeCategory {
 }
 
 export interface SubTrack {
-  id?: string;
+  id: string;
   categoryId: string;
   name: string;
   nameKey: string;
@@ -64,7 +64,7 @@ export interface SubTrack {
 }
 
 export interface SubTrackEntry {
-  id?: string;
+  id: string;
   trackId: string;
   value: number;
   date: string;

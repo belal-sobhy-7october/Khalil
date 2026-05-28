@@ -70,9 +70,9 @@ interface AppStore {
 
   bookmarkCategories: BookmarkCategory[];
   bookmarks: Bookmark[];
-  addBookmarkCategory: (category: BookmarkCategory) => Promise<void>;
+  addBookmarkCategory: (category: Omit<BookmarkCategory, 'id'>) => Promise<void>;
   removeBookmarkCategory: (id: string) => Promise<void>;
-  addBookmark: (bookmark: Bookmark) => Promise<void>;
+  addBookmark: (bookmark: Omit<Bookmark, 'id'>) => Promise<void>;
   removeBookmark: (id: string) => Promise<void>;
 }
 
@@ -600,7 +600,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   addBookmarkCategory: async (category) => {
     const userId = get().session?.user?.id;
     if (!userId) return;
-    const id = category.id || generateId();
+    const id = generateId();
     const { error } = await supabase
       .from('bookmark_categories')
       .insert({ id, user_id: userId, name: category.name, icon: category.icon });
@@ -624,7 +624,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   addBookmark: async (bookmark) => {
     const userId = get().session?.user?.id;
     if (!userId) return;
-    const id = bookmark.id || generateId();
+    const id = generateId();
     const { error } = await supabase
       .from('bookmarks')
       .insert({
