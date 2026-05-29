@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import {
   BookOpen,
   Bookmark,
@@ -362,11 +362,50 @@ export default function LifePillars() {
   );
 }
 
+function useLongPress(callback: (step: number) => void) {
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pressStart = useRef<number>(0);
+
+  const getStep = () => {
+    const held = Date.now() - pressStart.current;
+    if (held > 3000) return 50;
+    if (held > 1500) return 10;
+    if (held > 600) return 5;
+    return 1;
+  };
+
+  const start = () => {
+    pressStart.current = Date.now();
+    callback(1);
+    timeoutRef.current = setTimeout(() => {
+      intervalRef.current = setInterval(() => {
+        callback(getStep());
+      }, 80);
+    }, 400);
+  };
+
+  const stop = () => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    if (intervalRef.current) clearInterval(intervalRef.current);
+  };
+
+  return {
+    onMouseDown: start,
+    onMouseUp: stop,
+    onMouseLeave: stop,
+    onTouchStart: start,
+    onTouchEnd: stop,
+  };
+}
+
 function SubTrackRow({ track, colors }: { track: SubTrack; colors: (typeof pillColors)[string] }) {
   const { t, isRTL } = useTranslation();
   const incrementSubTrack = useAppStore((s) => s.incrementSubTrack);
   const decrementSubTrack = useAppStore((s) => s.decrementSubTrack);
   const removeSubTrack = useAppStore((s) => s.removeSubTrack);
+  const incPress = useLongPress((step) => incrementSubTrack(track.id, step));
+  const decPress = useLongPress((step) => { if (track.currentValue > 0) decrementSubTrack(track.id, step); });
 
   const percent = track.target > 0
     ? Math.min(Math.round((track.currentValue / track.target) * 100), 100)
@@ -409,15 +448,15 @@ function SubTrackRow({ track, colors }: { track: SubTrack; colors: (typeof pillC
           {isRTL ? (
             <>
               <button
-                onClick={() => incrementSubTrack(track.id, 1)}
-                className="flex items-center justify-center w-5 h-5 rounded text-ink-lighter hover:text-ink hover:bg-ink/10 transition-all"
+                {...incPress}
+                className="flex items-center justify-center w-5 h-5 rounded text-ink-lighter hover:text-ink hover:bg-ink/10 transition-all select-none"
               >
                 <Plus size={11} />
               </button>
               <button
-                onClick={() => decrementSubTrack(track.id, 1)}
+                {...decPress}
                 disabled={track.currentValue <= 0}
-                className="flex items-center justify-center w-5 h-5 rounded text-ink-lighter hover:text-ink hover:bg-ink/10 disabled:opacity-25 disabled:cursor-not-allowed transition-all"
+                className="flex items-center justify-center w-5 h-5 rounded text-ink-lighter hover:text-ink hover:bg-ink/10 disabled:opacity-25 disabled:cursor-not-allowed transition-all select-none"
               >
                 <Minus size={11} />
               </button>
@@ -425,15 +464,15 @@ function SubTrackRow({ track, colors }: { track: SubTrack; colors: (typeof pillC
           ) : (
             <>
               <button
-                onClick={() => decrementSubTrack(track.id, 1)}
+                {...decPress}
                 disabled={track.currentValue <= 0}
-                className="flex items-center justify-center w-5 h-5 rounded text-ink-lighter hover:text-ink hover:bg-ink/10 disabled:opacity-25 disabled:cursor-not-allowed transition-all"
+                className="flex items-center justify-center w-5 h-5 rounded text-ink-lighter hover:text-ink hover:bg-ink/10 disabled:opacity-25 disabled:cursor-not-allowed transition-all select-none"
               >
                 <Minus size={11} />
               </button>
               <button
-                onClick={() => incrementSubTrack(track.id, 1)}
-                className="flex items-center justify-center w-5 h-5 rounded text-ink-lighter hover:text-ink hover:bg-ink/10 transition-all"
+                {...incPress}
+                className="flex items-center justify-center w-5 h-5 rounded text-ink-lighter hover:text-ink hover:bg-ink/10 transition-all select-none"
               >
                 <Plus size={11} />
               </button>
