@@ -13,15 +13,17 @@ export function SortableTodoItem({ id, children }: { id: string; children: React
   };
 
   return (
-    <div ref={setNodeRef} style={style} className="relative group/drag">
+    <div ref={setNodeRef} style={style} className="flex items-center gap-1 group/drag">
       <div
         {...attributes}
         {...listeners}
-        className="absolute left-1 top-1/2 -translate-y-1/2 opacity-20 group-hover/drag:opacity-60 hover:!opacity-100 cursor-grab active:cursor-grabbing p-1 text-ink-lighter transition-opacity touch-none"
+        className="shrink-0 opacity-20 group-hover/drag:opacity-60 hover:!opacity-100 cursor-grab active:cursor-grabbing p-1 text-ink-lighter transition-opacity touch-none"
       >
         <GripVertical size={14} />
       </div>
-      {children}
+      <div className="flex-1 min-w-0">
+        {children}
+      </div>
     </div>
   );
 }
