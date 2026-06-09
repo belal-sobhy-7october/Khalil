@@ -23,7 +23,7 @@ export default function DashboardLayout({
 
   const handleSectionChange = (section: string) => {
     onSectionChange(section);
-    const targetId = section === 'dashboard' ? 'main-content' : `section-${section}`;
+    const targetId = `section-${section}`;
     const el = document.getElementById(targetId);
     if (el) el.scrollIntoView({ behavior: 'smooth' });
   };

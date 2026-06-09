@@ -129,7 +129,7 @@ export default function LifePillars() {
     <section id="section-life">
       <div className="flex items-center gap-2 mb-6">
         <Target size={20} className="text-clay-soft" />
-        <h2 className="text-lg font-semibold font-amiri text-ink leading-relaxed">
+        <h2 className="text-2xl font-bold font-amiri text-ink leading-relaxed">
           {t('pillars.title')}
         </h2>
       </div>

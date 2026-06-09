@@ -157,7 +157,7 @@ export const translations = {
       of: 'من',
     },
     weekly: {
-      title: 'المهام الأسبوعية',
+      title: 'أهداف الأسبوع',
       addPlaceholder: 'أضف مهمة لهذا الأسبوع...',
       empty: 'لا توجد مهام أسبوعية بعد.',
     },
