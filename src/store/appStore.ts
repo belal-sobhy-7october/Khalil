@@ -319,7 +319,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     if (!userId) return;
     const id = generateId();
     try {
-      await supabase.from('backlog_todos').insert({ id, user_id: userId, text, completed: false, priority, created_at: new Date().toISOString() });
+      await supabase.from('backlog_todos').insert({ id, user_id: userId, text, completed: false, priority, created_at: Date.now() });
       set((s) => ({
         backlogTodos: [...s.backlogTodos, { id, text, completed: false, priority, createdAt: Date.now() }],
       }));
