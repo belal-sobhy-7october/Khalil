@@ -219,7 +219,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     const userId = get().session?.user?.id;
     if (!userId) return;
     try {
-      const existing = get().dailyFocus.text ? await supabase.from('daily_focus').select('id').eq('user_id', userId).maybeSingle() : null;
+      const existing = await supabase.from('daily_focus').select('id').eq('user_id', userId).maybeSingle();
       if (existing?.data?.id) {
         await supabase.from('daily_focus').update({ text: focus.text, date: focus.date }).eq('id', existing.data.id);
       } else {
