@@ -1,23 +1,15 @@
 import {
-  Target,
   CheckSquare,
-  Archive,
   Bookmark,
-  LayoutDashboard,
   Heart,
 } from 'lucide-react';
 import { useTranslation } from '../../i18n/useTranslation';
 import CalligraphyWatermark from '../Common/CalligraphyWatermark';
-
 const navItems = [
-  { id: 'dashboard', labelKey: 'nav.dashboard', icon: <LayoutDashboard size={16} /> },
-  { id: 'focus', labelKey: 'nav.daily', icon: <Target size={16} /> },
-  { id: 'todo', labelKey: 'nav.todo', icon: <CheckSquare size={16} /> },
-  { id: 'backlog', labelKey: 'nav.backlog', icon: <Archive size={16} /> },
   { id: 'life', labelKey: 'nav.life', icon: <Heart size={16} /> },
+  { id: 'todo', labelKey: 'nav.todo', icon: <CheckSquare size={16} /> },
   { id: 'bookmarks', labelKey: 'nav.bookmarks', icon: <Bookmark size={16} /> },
 ];
-
 export default function NavCard({
   activeSection,
   onSectionChange,
@@ -26,7 +18,6 @@ export default function NavCard({
   onSectionChange: (id: string) => void;
 }) {
   const { t } = useTranslation();
-
   return (
     <div className="bg-card border border-border-subtle rounded-xl overflow-hidden sticky top-8">
       <div className="p-5 border-b border-border-subtle relative">
@@ -43,7 +34,6 @@ export default function NavCard({
           </div>
         </div>
       </div>
-
       <div className="p-2 space-y-0.5">
         {navItems.map((item) => (
           <button
