@@ -9,6 +9,7 @@ import DashboardLayout from './components/Layout/DashboardLayout';
 import DailyFocus from './components/DailyFocus/DailyFocus';
 import DailyTodo from './components/Todo/DailyTodo';
 import WeeklyTodo from './components/Todo/WeeklyTodo';
+import BacklogTodo from './components/Todo/BacklogTodo';
 
 import LifePillars from './components/LifePillars/LifePillars';
 import BookmarksVault from './components/Bookmarks/BookmarksVault';
@@ -175,6 +176,7 @@ function App() {
 
         <div>
           <DailyTodo />
+          <BacklogTodo />
         </div>
 
         <BookmarksVault />
