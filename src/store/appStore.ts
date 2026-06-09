@@ -776,15 +776,15 @@ function set(state: Partial<AppStore>) {
 }
 
 function mapDailyTodo(row: Record<string, unknown>): DailyTodo {
-  return { id: row.id as string, text: row.text as string, completed: row.completed as boolean, priority: row.priority as Priority, createdAt: (row.created_at as number) || Date.now(), date: row.date as string };
+  return { id: row.id as string, text: row.text as string, completed: row.completed as boolean, priority: row.priority as Priority, createdAt: typeof row.created_at === "number" ? row.created_at : new Date(row.created_at as string).getTime() || Date.now(), date: row.date as string };
 }
 
 function mapWeeklyTodo(row: Record<string, unknown>): WeeklyTodo {
-  return { id: row.id as string, text: row.text as string, completed: row.completed as boolean, priority: row.priority as Priority, createdAt: (row.created_at as number) || Date.now(), weekStart: row.week_start as string };
+  return { id: row.id as string, text: row.text as string, completed: row.completed as boolean, priority: row.priority as Priority, createdAt: typeof row.created_at === "number" ? row.created_at : new Date(row.created_at as string).getTime() || Date.now(), weekStart: row.week_start as string };
 }
 
 function mapBacklogTodo(row: Record<string, unknown>): BacklogTodo {
-  return { id: row.id as string, text: row.text as string, completed: row.completed as boolean, priority: row.priority as Priority, createdAt: (row.created_at as number) || Date.now() };
+  return { id: row.id as string, text: row.text as string, completed: row.completed as boolean, priority: row.priority as Priority, createdAt: typeof row.created_at === "number" ? row.created_at : new Date(row.created_at as string).getTime() || Date.now() };
 }
 
 function mapLifeCategory(row: Record<string, unknown>): LifeCategory {
