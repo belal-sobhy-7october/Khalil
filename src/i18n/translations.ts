@@ -169,7 +169,7 @@ export const translations = {
       empty: 'المؤجلة فارغة. عمل رائع!',
     },
     pillars: {
-      title: 'حياتي — أركان حياتي',
+      title: 'متابعة أهدافي',
       deen: 'ديني',
       mind: 'عقلي',
       health: 'صحتي',
