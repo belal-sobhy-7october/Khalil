@@ -119,7 +119,7 @@ export default function TodoNote({ note, onDelete, onUpdate }: Props) {
           </button>
         </div>
 
-        <div className="max-h-[200px] overflow-y-auto">
+        <div className="max-h-[200px] overflow-y-auto" style={{ scrollbarColor: "#6B3A2A transparent" }}>
           {items.map((item) => (
             <div
               key={item.id}
