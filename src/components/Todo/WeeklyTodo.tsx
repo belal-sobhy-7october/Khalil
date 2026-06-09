@@ -8,6 +8,9 @@ import {
   Flag,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { DndContext, closestCenter, PointerSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
+import { SortableTodoItem } from './SortableTodoItem';
 import { useAppStore } from '../../store/appStore';
 import { useTranslation } from '../../i18n/useTranslation';
 import type { Priority } from '../../types';
@@ -24,6 +27,7 @@ export default function WeeklyTodo() {
   const addTodo = useAppStore((s) => s.addWeeklyTodo);
   const toggleTodo = useAppStore((s) => s.toggleWeeklyTodo);
   const removeTodo = useAppStore((s) => s.removeWeeklyTodo);
+  const reorderWeeklyTodos = useAppStore((s) => s.reorderWeeklyTodos);
   const [text, setText] = useState('');
   const [priority, setPriority] = useState<Priority>('medium');
 
@@ -38,6 +42,21 @@ export default function WeeklyTodo() {
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') handleAdd();
+  };
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } })
+  );
+
+  const handleDragEnd = (event: any) => {
+    const { active, over } = event;
+    if (active.id !== over?.id) {
+      const oldIndex = todos.findIndex((t) => t.id === active.id);
+      const newIndex = todos.findIndex((t) => t.id === over.id);
+      const newOrder = arrayMove(todos, oldIndex, newIndex);
+      reorderWeeklyTodos(newOrder.map((t) => t.id));
+    }
   };
 
   return (
@@ -106,55 +125,60 @@ export default function WeeklyTodo() {
                 <p className="text-sm text-ink-light">{t('weekly.empty')}</p>
               </motion.div>
             ) : (
-              todos.map((todo) => (
-                <motion.div
-                  key={todo.id}
-                  layout
-                  initial={{ opacity: 0, y: -8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, x: -20, height: 0, marginBottom: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className={`group flex items-center gap-3 p-3 rounded-lg hover:bg-ink/3 transition-colors ${
-                    todo.completed ? 'opacity-60' : ''
-                  }`}
-                >
-                  <button
-                    onClick={() => toggleTodo(todo.id)}
-                    className="shrink-0 text-ink-lighter hover:text-gold-soft transition-colors"
-                  >
-                    {todo.completed ? (
-                      <CheckCircle size={20} className="text-sage-soft" />
-                    ) : (
-                      <Circle size={20} />
-                    )}
-                  </button>
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                <SortableContext items={todos.map((t) => t.id)} strategy={verticalListSortingStrategy}>
+                  {todos.map((todo) => (
+                    <SortableTodoItem key={todo.id} id={todo.id}>
+                      <motion.div
+                        layout
+                        initial={{ opacity: 0, y: -8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, x: -20, height: 0, marginBottom: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className={`group flex items-center gap-3 p-3 rounded-lg hover:bg-ink/3 transition-colors ${
+                          todo.completed ? 'opacity-60' : ''
+                        }`}
+                      >
+                        <button
+                          onClick={() => toggleTodo(todo.id)}
+                          className="shrink-0 text-ink-lighter hover:text-gold-soft transition-colors"
+                        >
+                          {todo.completed ? (
+                            <CheckCircle size={20} className="text-sage-soft" />
+                          ) : (
+                            <Circle size={20} />
+                          )}
+                        </button>
 
-                  <div className={`flex items-center gap-2 min-w-0 ${priorityColors[todo.priority].bg} px-2 py-0.5 rounded`}>
-                    <span className={`w-1.5 h-1.5 rounded-full ${priorityColors[todo.priority].dot}`} />
-                    <span className={`text-[10px] uppercase tracking-wider font-medium ${priorityColors[todo.priority].text}`}>
-                      {todo.priority}
-                    </span>
-                  </div>
+                        <div className={`flex items-center gap-2 min-w-0 ${priorityColors[todo.priority].bg} px-2 py-0.5 rounded`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${priorityColors[todo.priority].dot}`} />
+                          <span className={`text-[10px] uppercase tracking-wider font-medium ${priorityColors[todo.priority].text}`}>
+                            {todo.priority}
+                          </span>
+                        </div>
 
-                  <span
-                    className={`flex-1 text-sm truncate ${
-                      todo.completed
-                        ? 'line-through text-ink-lighter'
-                        : 'text-ink'
-                    }`}
-                    dir="auto"
-                  >
-                    {todo.text}
-                  </span>
+                        <span
+                          className={`flex-1 text-sm truncate ${
+                            todo.completed
+                              ? 'line-through text-ink-lighter'
+                              : 'text-ink'
+                          }`}
+                          dir="auto"
+                        >
+                          {todo.text}
+                        </span>
 
-                  <button
-                    onClick={() => removeTodo(todo.id)}
-                    className="shrink-0 p-1.5 rounded-md opacity-0 group-hover:opacity-100 text-ink-lighter hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-all"
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                </motion.div>
-              ))
+                        <button
+                          onClick={() => removeTodo(todo.id)}
+                          className="shrink-0 p-1.5 rounded-md opacity-0 group-hover:opacity-100 text-ink-lighter hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-all"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </motion.div>
+                    </SortableTodoItem>
+                  ))}
+                </SortableContext>
+              </DndContext>
             )}
           </AnimatePresence>
         </div>

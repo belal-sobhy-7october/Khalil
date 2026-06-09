@@ -9,6 +9,9 @@ import {
   ListChecks,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { DndContext, closestCenter, PointerSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
+import { SortableTodoItem } from './SortableTodoItem';
 import { useAppStore } from '../../store/appStore';
 import { useTranslation } from '../../i18n/useTranslation';
 import type { Priority, DailyTodo as DailyTodoType } from '../../types';
@@ -25,6 +28,7 @@ export default function DailyTodo() {
   const addTodo = useAppStore((s) => s.addDailyTodo);
   const toggleTodo = useAppStore((s) => s.toggleDailyTodo);
   const removeTodo = useAppStore((s) => s.removeDailyTodo);
+  const reorderDailyTodos = useAppStore((s) => s.reorderDailyTodos);
   const [text, setText] = useState('');
   const [priority, setPriority] = useState<Priority>('medium');
 
@@ -39,6 +43,21 @@ export default function DailyTodo() {
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') handleAdd();
+  };
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } })
+  );
+
+  const handleDragEnd = (event: any) => {
+    const { active, over } = event;
+    if (active.id !== over?.id) {
+      const oldIndex = todos.findIndex((t) => t.id === active.id);
+      const newIndex = todos.findIndex((t) => t.id === over.id);
+      const newOrder = arrayMove(todos, oldIndex, newIndex);
+      reorderDailyTodos(newOrder.map((t) => t.id));
+    }
   };
 
   return (
@@ -107,14 +126,19 @@ export default function DailyTodo() {
                 <p className="text-sm text-ink-light">{t('todo.empty')}</p>
               </motion.div>
             ) : (
-              todos.map((todo) => (
-                <TodoItem
-                  key={todo.id}
-                  todo={todo}
-                  onToggle={() => toggleTodo(todo.id)}
-                  onRemove={() => removeTodo(todo.id)}
-                />
-              ))
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                <SortableContext items={todos.map((t) => t.id)} strategy={verticalListSortingStrategy}>
+                  {todos.map((todo) => (
+                    <SortableTodoItem key={todo.id} id={todo.id}>
+                      <TodoItem
+                        todo={todo}
+                        onToggle={() => toggleTodo(todo.id)}
+                        onRemove={() => removeTodo(todo.id)}
+                      />
+                    </SortableTodoItem>
+                  ))}
+                </SortableContext>
+              </DndContext>
             )}
           </AnimatePresence>
         </div>

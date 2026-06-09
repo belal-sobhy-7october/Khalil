@@ -44,6 +44,9 @@ interface AppStore {
   addBacklogTodo: (text: string, priority: Priority) => Promise<void>;
   toggleBacklogTodo: (id: string) => Promise<void>;
   removeBacklogTodo: (id: string) => Promise<void>;
+  reorderDailyTodos: (ids: string[]) => Promise<void>;
+  reorderWeeklyTodos: (ids: string[]) => Promise<void>;
+  reorderBacklogTodos: (ids: string[]) => Promise<void>;
   moveToDaily: (id: string) => Promise<void>;
   moveToWeekly: (id: string) => Promise<void>;
 
@@ -343,6 +346,21 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     } catch (err) {
       console.error('Failed to remove backlog todo:', err);
     }
+  },
+  reorderDailyTodos: async (ids) => {
+    set((s) => ({
+      dailyTodos: ids.map((id) => s.dailyTodos.find((t) => t.id === id)!),
+    }));
+  },
+  reorderWeeklyTodos: async (ids) => {
+    set((s) => ({
+      weeklyTodos: ids.map((id) => s.weeklyTodos.find((t) => t.id === id)!),
+    }));
+  },
+  reorderBacklogTodos: async (ids) => {
+    set((s) => ({
+      backlogTodos: ids.map((id) => s.backlogTodos.find((t) => t.id === id)!),
+    }));
   },
   moveToDaily: async (id) => {
     const todo = get().backlogTodos.find((x) => x.id === id);
