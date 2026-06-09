@@ -135,7 +135,7 @@ export default function WeeklyTodo() {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, x: -20, height: 0, marginBottom: 0 }}
                         transition={{ duration: 0.2 }}
-                        className={`group flex items-center gap-3 p-3 rounded-lg hover:bg-ink/3 transition-colors ${
+                        className={`group flex items-center gap-3 p-3 min-w-0 rounded-lg hover:bg-ink/3 transition-colors ${
                           todo.completed ? 'opacity-60' : ''
                         }`}
                       >

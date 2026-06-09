@@ -75,6 +75,7 @@ export default function StickyNote({ note, onDelete, onUpdate }: Props) {
           onChange={(e) => handleChange(e.target.value)}
           placeholder="اكتب ملاحظة..."
           className="w-full min-h-[140px] p-3 text-sm text-ink bg-transparent placeholder-ink-lighter resize-none focus:outline-none leading-relaxed"
+          style={{ scrollbarColor: 'rgba(0,0,0,0.1) transparent' }}
           dir="auto"
         />
       </div>

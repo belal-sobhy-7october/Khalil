@@ -23,9 +23,12 @@ export default function DashboardLayout({
 
   const handleSectionChange = (section: string) => {
     onSectionChange(section);
-    const targetId = `section-${section}`;
-    const el = document.getElementById(targetId);
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (section === 'life') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      const el = document.getElementById(`section-${section}`);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   };
 
   return (
