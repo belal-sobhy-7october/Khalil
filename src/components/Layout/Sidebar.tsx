@@ -1,9 +1,7 @@
 import {
   Target,
   CheckSquare,
-  Archive,
   Bookmark,
-  LayoutDashboard,
   Heart,
   LogOut,
 } from 'lucide-react';
@@ -35,10 +33,8 @@ export default function Sidebar({
   };
 
   const navItems: NavItem[] = [
-    { id: 'dashboard', label: t('nav.dashboard'), icon: <LayoutDashboard size={18} /> },
     { id: 'focus', label: t('nav.daily'), icon: <Target size={18} /> },
     { id: 'todo', label: t('nav.todo'), icon: <CheckSquare size={18} /> },
-    { id: 'backlog', label: t('nav.backlog'), icon: <Archive size={18} /> },
     { id: 'life', label: t('nav.life'), icon: <Heart size={18} /> },
     { id: 'bookmarks', label: t('nav.bookmarks'), icon: <Bookmark size={18} /> },
   ];

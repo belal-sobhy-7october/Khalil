@@ -9,7 +9,7 @@ import DashboardLayout from './components/Layout/DashboardLayout';
 import DailyFocus from './components/DailyFocus/DailyFocus';
 import DailyTodo from './components/Todo/DailyTodo';
 import WeeklyTodo from './components/Todo/WeeklyTodo';
-import BacklogTodo from './components/Todo/BacklogTodo';
+
 import LifePillars from './components/LifePillars/LifePillars';
 import BookmarksVault from './components/Bookmarks/BookmarksVault';
 import StickyNote, { createStickyNote, loadStickyNotes, saveStickyNotes } from './components/Canvas/StickyNote';
@@ -25,7 +25,7 @@ function App() {
   const setSession = useAppStore((s) => s.setSession);
   const loadUserData = useAppStore((s) => s.loadUserData);
   const { isRTL } = useTranslation();
-  const [activeSection, setActiveSection] = useState('dashboard');
+  const [activeSection, setActiveSection] = useState('focus');
   const [stickyNotes, setStickyNotes] = useState<StickyNoteData[]>(() => loadStickyNotes());
   const [todoNotes, setTodoNotes] = useState<TodoNoteData[]>(() => loadTodoNotes());
   const [menuOpen, setMenuOpen] = useState(false);
@@ -174,10 +174,7 @@ function App() {
         </div>
 
         <div>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <DailyTodo />
-            <BacklogTodo />
-          </div>
+          <DailyTodo />
         </div>
 
         <BookmarksVault />

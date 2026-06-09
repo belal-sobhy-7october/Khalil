@@ -134,7 +134,7 @@ export const translations = {
       daily: 'التركيز اليومي',
       todo: 'المهام',
       backlog: 'المؤجلة',
-      life: 'حياتي',
+      life: 'أهدافي',
       bookmarks: 'المراجع',
       settings: 'الإعدادات',
     },
