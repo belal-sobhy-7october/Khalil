@@ -17,7 +17,7 @@ export function SortableTodoItem({ id, children }: { id: string; children: React
       <div
         {...attributes}
         {...listeners}
-        className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1 opacity-0 group-hover/drag:opacity-40 hover:!opacity-80 cursor-grab active:cursor-grabbing p-1 text-ink-lighter transition-opacity touch-none"
+        className="absolute left-1 top-1/2 -translate-y-1/2 opacity-20 group-hover/drag:opacity-60 hover:!opacity-100 cursor-grab active:cursor-grabbing p-1 text-ink-lighter transition-opacity touch-none"
       >
         <GripVertical size={14} />
       </div>

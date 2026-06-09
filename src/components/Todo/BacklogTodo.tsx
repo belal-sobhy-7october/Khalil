@@ -109,19 +109,19 @@ export default function BacklogTodo() {
           </div>
         </div>
 
-        <div className="p-2">
-          <AnimatePresence mode="popLayout">
-            {todos.length === 0 ? (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="p-8 text-center"
-              >
-                <Inbox size={36} className="mx-auto text-ink-lighter mb-2" />
-                <p className="text-sm text-ink-light">{t('backlog.empty')}</p>
-              </motion.div>
-            ) : (
-              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <div className="p-2">
+            <AnimatePresence mode="popLayout">
+              {todos.length === 0 ? (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="p-8 text-center"
+                >
+                  <Inbox size={36} className="mx-auto text-ink-lighter mb-2" />
+                  <p className="text-sm text-ink-light">{t('backlog.empty')}</p>
+                </motion.div>
+              ) : (
                 <SortableContext items={todos.map((t) => t.id)} strategy={verticalListSortingStrategy}>
                   {todos.map((todo) => (
                     <SortableTodoItem key={todo.id} id={todo.id}>
@@ -190,10 +190,10 @@ export default function BacklogTodo() {
                     </SortableTodoItem>
                   ))}
                 </SortableContext>
-              </DndContext>
-            )}
-          </AnimatePresence>
-        </div>
+              )}
+            </AnimatePresence>
+          </div>
+        </DndContext>
       </div>
     </section>
   );
