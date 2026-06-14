@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
+import type { StickyNoteData } from '../components/Canvas/StickyNote';
+import type { TodoNoteData } from '../components/Canvas/TodoNote';
 import type {
   Language,
   Priority,
@@ -77,6 +79,18 @@ interface AppStore {
   removeBookmarkCategory: (id: string) => Promise<void>;
   addBookmark: (bookmark: Omit<Bookmark, 'id'>) => Promise<void>;
   removeBookmark: (id: string) => Promise<void>;
+
+  stickyNotes: StickyNoteData[];
+  todoNotes: TodoNoteData[];
+  loadNotes: () => Promise<void>;
+  addStickyNote: (note: StickyNoteData) => Promise<void>;
+  updateStickyNote: (id: string, text: string) => Promise<void>;
+  deleteStickyNote: (id: string) => Promise<void>;
+  updateStickyNotePosition: (id: string, x: number, y: number) => Promise<void>;
+  addTodoNote: (note: TodoNoteData) => Promise<void>;
+  updateTodoNote: (id: string, updated: Partial<TodoNoteData>) => Promise<void>;
+  deleteTodoNote: (id: string) => Promise<void>;
+  updateTodoNotePosition: (id: string, x: number, y: number) => Promise<void>;
 }
 
 function getToday(): string {
@@ -208,6 +222,8 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       } else {
         console.log('[loadUserData] Data loaded successfully from existing Supabase rows');
       }
+
+      await get().loadNotes();
     } catch (err) {
       console.error('[loadUserData] Failed to load user data:', err);
       set({ isLoading: false });
@@ -615,6 +631,8 @@ export const useAppStore = create<AppStore>()((set, get) => ({
 
   bookmarkCategories: [],
   bookmarks: [],
+  stickyNotes: [],
+  todoNotes: [],
   addBookmarkCategory: async (category) => {
     const userId = get().session?.user?.id;
     if (!userId) return;
@@ -667,6 +685,96 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     } catch (err) {
       console.error('Failed to remove bookmark:', err);
     }
+  },
+
+  loadNotes: async () => {
+    const userId = get().session?.user?.id;
+    if (!userId) return;
+    try {
+      const [stickyRes, todoRes] = await Promise.all([
+        supabase.from('sticky_notes').select('*').eq('user_id', userId).order('created_at'),
+        supabase.from('todo_notes').select('*').eq('user_id', userId).order('created_at'),
+      ]);
+      set({
+        stickyNotes: (stickyRes.data || []).map((r: Record<string, unknown>) => ({
+          id: r.id as string,
+          text: r.text as string,
+          position: { x: r.pos_x as number, y: r.pos_y as number },
+        })),
+        todoNotes: (todoRes.data || []).map((r: Record<string, unknown>) => ({
+          id: r.id as string,
+          title: r.title as string,
+          items: (r.items as { id: string; text: string; done: boolean }[]) || [],
+          position: { x: r.pos_x as number, y: r.pos_y as number },
+        })),
+      });
+    } catch (err) {
+      console.error('Failed to load notes:', err);
+    }
+  },
+
+  addStickyNote: async (note) => {
+    const userId = get().session?.user?.id;
+    if (!userId) return;
+    try {
+      await supabase.from('sticky_notes').insert({ id: note.id, user_id: userId, text: note.text, pos_x: note.position.x, pos_y: note.position.y });
+      set((s) => ({ stickyNotes: [...s.stickyNotes, note] }));
+    } catch (err) { console.error('Failed to add sticky note:', err); }
+  },
+
+  updateStickyNote: async (id, text) => {
+    try {
+      await supabase.from('sticky_notes').update({ text }).eq('id', id);
+      set((s) => ({ stickyNotes: s.stickyNotes.map((n) => n.id === id ? { ...n, text } : n) }));
+    } catch (err) { console.error('Failed to update sticky note:', err); }
+  },
+
+  deleteStickyNote: async (id) => {
+    try {
+      await supabase.from('sticky_notes').delete().eq('id', id);
+      set((s) => ({ stickyNotes: s.stickyNotes.filter((n) => n.id !== id) }));
+    } catch (err) { console.error('Failed to delete sticky note:', err); }
+  },
+
+  updateStickyNotePosition: async (id, x, y) => {
+    try {
+      await supabase.from('sticky_notes').update({ pos_x: x, pos_y: y }).eq('id', id);
+      set((s) => ({ stickyNotes: s.stickyNotes.map((n) => n.id === id ? { ...n, position: { x, y } } : n) }));
+    } catch (err) { console.error('Failed to update sticky note position:', err); }
+  },
+
+  addTodoNote: async (note) => {
+    const userId = get().session?.user?.id;
+    if (!userId) return;
+    try {
+      await supabase.from('todo_notes').insert({ id: note.id, user_id: userId, title: note.title, items: note.items, pos_x: note.position.x, pos_y: note.position.y });
+      set((s) => ({ todoNotes: [...s.todoNotes, note] }));
+    } catch (err) { console.error('Failed to add todo note:', err); }
+  },
+
+  updateTodoNote: async (id, updated) => {
+    try {
+      const dbData: Record<string, unknown> = {};
+      if (updated.title !== undefined) dbData.title = updated.title;
+      if (updated.items !== undefined) dbData.items = updated.items;
+      if (updated.position !== undefined) { dbData.pos_x = updated.position.x; dbData.pos_y = updated.position.y; }
+      await supabase.from('todo_notes').update(dbData).eq('id', id);
+      set((s) => ({ todoNotes: s.todoNotes.map((n) => n.id === id ? { ...n, ...updated } : n) }));
+    } catch (err) { console.error('Failed to update todo note:', err); }
+  },
+
+  deleteTodoNote: async (id) => {
+    try {
+      await supabase.from('todo_notes').delete().eq('id', id);
+      set((s) => ({ todoNotes: s.todoNotes.filter((n) => n.id !== id) }));
+    } catch (err) { console.error('Failed to delete todo note:', err); }
+  },
+
+  updateTodoNotePosition: async (id, x, y) => {
+    try {
+      await supabase.from('todo_notes').update({ pos_x: x, pos_y: y }).eq('id', id);
+      set((s) => ({ todoNotes: s.todoNotes.map((n) => n.id === id ? { ...n, position: { x, y } } : n) }));
+    } catch (err) { console.error('Failed to update todo note position:', err); }
   },
 }));
 

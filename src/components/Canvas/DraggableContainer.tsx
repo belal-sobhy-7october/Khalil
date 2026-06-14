@@ -5,25 +5,18 @@ interface Props {
   defaultPosition?: { x: number; y: number };
   fixed?: boolean;
   children: ReactNode;
+  onPositionChange?: (x: number, y: number) => void;
 }
 
-export default function DraggableContainer({ id, defaultPosition = { x: 0, y: 0 }, fixed = false, children }: Props) {
-  const storageKey = `khalil-drag-${id}`;
-  const saved = (() => {
-    try {
-      const s = localStorage.getItem(storageKey);
-      return s ? JSON.parse(s) : defaultPosition;
-    } catch { return defaultPosition; }
-  })();
-
-  const [pos, setPos] = useState(saved);
+export default function DraggableContainer({ id: _id, defaultPosition = { x: 0, y: 0 }, fixed = false, children, onPositionChange }: Props) {
+  const [pos, setPos] = useState(defaultPosition);
+  const posRef = useRef(pos);
+  posRef.current = pos;
+  const onPositionChangeRef = useRef(onPositionChange);
+  onPositionChangeRef.current = onPositionChange;
   const dragging = useRef(false);
   const startMouse = useRef({ x: 0, y: 0 });
   const startPos = useRef({ x: 0, y: 0 });
-
-  useEffect(() => {
-    localStorage.setItem(storageKey, JSON.stringify(pos));
-  }, [pos, storageKey]);
 
   useEffect(() => {
     const onMove = (e: MouseEvent) => {
@@ -36,7 +29,10 @@ export default function DraggableContainer({ id, defaultPosition = { x: 0, y: 0 
       }
       setPos({ x: newX, y: newY });
     };
-    const onUp = () => { dragging.current = false; };
+    const onUp = () => {
+      dragging.current = false;
+      onPositionChangeRef.current?.(posRef.current.x, posRef.current.y);
+    };
     window.addEventListener('mousemove', onMove);
     window.addEventListener('mouseup', onUp);
     return () => {

@@ -19,9 +19,8 @@ interface Props {
   note: TodoNoteData;
   onDelete: (id: string) => void;
   onUpdate: (id: string, updated: Partial<TodoNoteData>) => void;
+  onPositionChange: (x: number, y: number) => void;
 }
-
-const STORAGE_KEY = 'khalil-todonotes';
 
 export function createTodoNote(): TodoNoteData {
   return {
@@ -32,21 +31,9 @@ export function createTodoNote(): TodoNoteData {
   };
 }
 
-export function loadTodoNotes(): TodoNoteData[] {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) return JSON.parse(stored);
-  } catch {}
-  return [];
-}
-
-export function saveTodoNotes(notes: TodoNoteData[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(notes));
-}
-
 export type { TodoNoteData };
 
-export default function TodoNote({ note, onDelete, onUpdate }: Props) {
+export default function TodoNote({ note, onDelete, onUpdate, onPositionChange }: Props) {
   const [title, setTitle] = useState(note.title);
   const [items, setItems] = useState(note.items);
   const [newItemText, setNewItemText] = useState('');
@@ -99,6 +86,7 @@ export default function TodoNote({ note, onDelete, onUpdate }: Props) {
       id={`todonote-${note.id}`}
       defaultPosition={note.position}
       fixed={true}
+      onPositionChange={onPositionChange}
     >
       <div className="w-56 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/50 rounded-xl overflow-hidden z-50">
         <div className="drag-handle flex items-center justify-between px-3 py-2 bg-amber-100/50 dark:bg-amber-900/30 border-b border-amber-200/50 dark:border-amber-800/30 cursor-grab active:cursor-grabbing">

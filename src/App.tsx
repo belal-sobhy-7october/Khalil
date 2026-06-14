@@ -13,9 +13,8 @@ import BacklogTodo from './components/Todo/BacklogTodo';
 
 import LifePillars from './components/LifePillars/LifePillars';
 import BookmarksVault from './components/Bookmarks/BookmarksVault';
-import StickyNote, { createStickyNote, loadStickyNotes, saveStickyNotes } from './components/Canvas/StickyNote';
-import TodoNote, { createTodoNote, loadTodoNotes, saveTodoNotes } from './components/Canvas/TodoNote';
-import type { StickyNoteData } from './components/Canvas/StickyNote';
+import StickyNote, { createStickyNote } from './components/Canvas/StickyNote';
+import TodoNote, { createTodoNote } from './components/Canvas/TodoNote';
 import type { TodoNoteData } from './components/Canvas/TodoNote';
 
 function App() {
@@ -27,8 +26,16 @@ function App() {
   const loadUserData = useAppStore((s) => s.loadUserData);
   const { isRTL } = useTranslation();
   const [activeSection, setActiveSection] = useState('life');
-  const [stickyNotes, setStickyNotes] = useState<StickyNoteData[]>(() => loadStickyNotes());
-  const [todoNotes, setTodoNotes] = useState<TodoNoteData[]>(() => loadTodoNotes());
+  const stickyNotes = useAppStore((s) => s.stickyNotes);
+  const todoNotes = useAppStore((s) => s.todoNotes);
+  const addStickyNoteStore = useAppStore((s) => s.addStickyNote);
+  const updateStickyNoteStore = useAppStore((s) => s.updateStickyNote);
+  const deleteStickyNoteStore = useAppStore((s) => s.deleteStickyNote);
+  const updateStickyNotePositionStore = useAppStore((s) => s.updateStickyNotePosition);
+  const addTodoNoteStore = useAppStore((s) => s.addTodoNote);
+  const updateTodoNoteStore = useAppStore((s) => s.updateTodoNote);
+  const deleteTodoNoteStore = useAppStore((s) => s.deleteTodoNote);
+  const updateTodoNotePositionStore = useAppStore((s) => s.updateTodoNotePosition);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const initialized = useRef(false);
@@ -47,29 +54,16 @@ function App() {
 
   const addStickyNote = useCallback(() => {
     const note = createStickyNote();
-    setStickyNotes((prev) => {
-      const next = [...prev, note];
-      saveStickyNotes(next);
-      return next;
-    });
-  }, []);
+    addStickyNoteStore(note);
+  }, [addStickyNoteStore]);
 
   const updateStickyNote = useCallback((id: string, text: string) => {
-    setStickyNotes((prev) => {
-      const next = prev.map((n) => (n.id === id ? { ...n, text } : n));
-      saveStickyNotes(next);
-      return next;
-    });
-  }, []);
+    updateStickyNoteStore(id, text);
+  }, [updateStickyNoteStore]);
 
   const deleteStickyNote = useCallback((id: string) => {
-    setStickyNotes((prev) => {
-      const next = prev.filter((n) => n.id !== id);
-      localStorage.removeItem(`khalil-drag-sticky-${id}`);
-      saveStickyNotes(next);
-      return next;
-    });
-  }, []);
+    deleteStickyNoteStore(id);
+  }, [deleteStickyNoteStore]);
 
   const addTextNote = useCallback(() => {
     addStickyNote();
@@ -78,30 +72,17 @@ function App() {
 
   const addTodoNote = useCallback(() => {
     const note = createTodoNote();
-    setTodoNotes((prev) => {
-      const next = [...prev, note];
-      saveTodoNotes(next);
-      return next;
-    });
+    addTodoNoteStore(note);
     setMenuOpen(false);
-  }, []);
+  }, [addTodoNoteStore]);
 
   const updateTodoNote = useCallback((id: string, updated: Partial<TodoNoteData>) => {
-    setTodoNotes((prev) => {
-      const next = prev.map((n) => (n.id === id ? { ...n, ...updated } : n));
-      saveTodoNotes(next);
-      return next;
-    });
-  }, []);
+    updateTodoNoteStore(id, updated);
+  }, [updateTodoNoteStore]);
 
   const deleteTodoNote = useCallback((id: string) => {
-    setTodoNotes((prev) => {
-      const next = prev.filter((n) => n.id !== id);
-      localStorage.removeItem(`khalil-drag-todonote-${id}`);
-      saveTodoNotes(next);
-      return next;
-    });
-  }, []);
+    deleteTodoNoteStore(id);
+  }, [deleteTodoNoteStore]);
 
   useEffect(() => {
     document.documentElement.dir = isRTL ? 'rtl' : 'ltr';
@@ -187,6 +168,7 @@ function App() {
             note={note}
             onDelete={deleteStickyNote}
             onUpdate={updateStickyNote}
+            onPositionChange={(x, y) => updateStickyNotePositionStore(note.id, x, y)}
           />
         ))}
         {todoNotes.map((note) => (
@@ -195,6 +177,7 @@ function App() {
             note={note}
             onDelete={deleteTodoNote}
             onUpdate={updateTodoNote}
+            onPositionChange={(x, y) => updateTodoNotePositionStore(note.id, x, y)}
           />
         ))}
       </div>

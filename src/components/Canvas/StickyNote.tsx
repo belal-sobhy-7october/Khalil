@@ -12,20 +12,7 @@ interface Props {
   note: StickyNoteData;
   onDelete: (id: string) => void;
   onUpdate: (id: string, text: string) => void;
-}
-
-const STORAGE_KEY = 'khalil-stickynotes';
-
-export function loadStickyNotes(): StickyNoteData[] {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) return JSON.parse(stored);
-  } catch {}
-  return [];
-}
-
-export function saveStickyNotes(notes: StickyNoteData[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(notes));
+  onPositionChange: (x: number, y: number) => void;
 }
 
 export function createStickyNote(text = ''): StickyNoteData {
@@ -38,7 +25,7 @@ export function createStickyNote(text = ''): StickyNoteData {
 
 export type { StickyNoteData };
 
-export default function StickyNote({ note, onDelete, onUpdate }: Props) {
+export default function StickyNote({ note, onDelete, onUpdate, onPositionChange }: Props) {
   const [text, setText] = useState(note.text);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -58,6 +45,7 @@ export default function StickyNote({ note, onDelete, onUpdate }: Props) {
       id={`sticky-${note.id}`}
       defaultPosition={note.position}
       fixed={true}
+      onPositionChange={onPositionChange}
     >
       <div className="w-56 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/50 rounded-xl overflow-hidden group z-50">
         <div className="drag-handle flex items-center justify-between px-3 py-2 bg-amber-100/50 dark:bg-amber-900/30 border-b border-amber-200/50 dark:border-amber-800/30 cursor-grab active:cursor-grabbing">
