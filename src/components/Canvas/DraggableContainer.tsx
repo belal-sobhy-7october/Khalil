@@ -60,7 +60,7 @@ export default function DraggableContainer({ id: _id, defaultPosition = { x: 0, 
 
   return (
     <div
-      style={fixed ? { position: 'fixed', left: pos.x, top: pos.y, zIndex: 50 } : { transform: `translate(${pos.x}px, ${pos.y}px)` }}
+      style={fixed ? { position: 'fixed', left: pos.x, top: pos.y, zIndex: 50, transition: 'none' } : { transform: `translate(${pos.x}px, ${pos.y}px)`, transition: 'none' }}
       onMouseDown={onMouseDown}
     >
       {children}
