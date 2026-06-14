@@ -10,30 +10,23 @@ interface Props {
 
 export default function DraggableContainer({
   id: _id,
-  defaultPosition,
+  defaultPosition = { x: 0, y: 0 },
   fixed = false,
   children,
   onPositionChange,
 }: Props) {
-  const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
-  const posRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [pos, setPos] = useState(defaultPosition);
+  const posRef = useRef(pos);
+  posRef.current = pos;
   const onPositionChangeRef = useRef(onPositionChange);
   onPositionChangeRef.current = onPositionChange;
   const dragging = useRef(false);
   const startMouse = useRef({ x: 0, y: 0 });
   const startPos = useRef({ x: 0, y: 0 });
 
-  // Set position once when defaultPosition arrives from Supabase
-  useEffect(() => {
-    if (defaultPosition && pos === null) {
-      setPos(defaultPosition);
-      posRef.current = defaultPosition;
-    }
-  }, [defaultPosition?.x, defaultPosition?.y]);
-
   useEffect(() => {
     const onMove = (e: MouseEvent) => {
-      if (!dragging.current || !pos) return;
+      if (!dragging.current) return;
       let newX = startPos.current.x + (e.clientX - startMouse.current.x);
       let newY = startPos.current.y + (e.clientY - startMouse.current.y);
       if (fixed) {
@@ -55,10 +48,9 @@ export default function DraggableContainer({
       window.removeEventListener('mousemove', onMove);
       window.removeEventListener('mouseup', onUp);
     };
-  }, [fixed, pos]);
+  }, [fixed]);
 
   const onMouseDown = (e: React.MouseEvent) => {
-    if (!pos) return;
     const target = e.target as HTMLElement;
     if (target.closest('input, textarea, button, select, a, [role="button"]')) return;
     if (!target.closest('.drag-handle')) return;
@@ -68,17 +60,12 @@ export default function DraggableContainer({
     e.preventDefault();
   };
 
-  // Don't render until we have a position from Supabase
-  if (pos === null) return null;
-
-  const currentPos = pos;
-
   return (
     <div
       style={
         fixed
-          ? { position: 'fixed', left: currentPos.x, top: currentPos.y, zIndex: 50 }
-          : { transform: `translate(${currentPos.x}px, ${currentPos.y}px)` }
+          ? { position: 'fixed', left: pos.x, top: pos.y, zIndex: 50 }
+          : { transform: `translate(${pos.x}px, ${pos.y}px)` }
       }
       onMouseDown={onMouseDown}
     >
