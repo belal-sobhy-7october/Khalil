@@ -3,6 +3,8 @@ import {
   CheckSquare,
   Plus,
   Trash2,
+  Calendar,
+  Archive,
   Circle,
   CheckCircle,
   Flag,
@@ -28,6 +30,8 @@ export default function DailyTodo() {
   const addTodo = useAppStore((s) => s.addDailyTodo);
   const toggleTodo = useAppStore((s) => s.toggleDailyTodo);
   const removeTodo = useAppStore((s) => s.removeDailyTodo);
+  const moveToWeekly = useAppStore((s) => s.moveToWeekly);
+  const moveToBacklog = useAppStore((s) => s.moveToBacklog);
   const reorderDailyTodos = useAppStore((s) => s.reorderDailyTodos);
   const [text, setText] = useState('');
   const [priority, setPriority] = useState<Priority>('medium');
@@ -134,6 +138,8 @@ export default function DailyTodo() {
                         todo={todo}
                         onToggle={() => toggleTodo(todo.id)}
                         onRemove={() => removeTodo(todo.id)}
+                        onMoveToWeekly={() => moveToWeekly(todo.id)}
+                        onMoveToBacklog={() => moveToBacklog(todo.id, 'daily')}
                       />
                     </SortableTodoItem>
                   ))}
@@ -151,10 +157,14 @@ function TodoItem({
   todo,
   onToggle,
   onRemove,
+  onMoveToWeekly,
+  onMoveToBacklog,
 }: {
   todo: DailyTodoType;
   onToggle: () => void;
   onRemove: () => void;
+  onMoveToWeekly: () => void;
+  onMoveToBacklog: () => void;
 }) {
   const colors = priorityColors[todo.priority];
 
@@ -198,12 +208,29 @@ function TodoItem({
         {todo.text}
       </span>
 
-      <button
-        onClick={onRemove}
-        className="shrink-0 p-1.5 rounded-md opacity-0 group-hover:opacity-100 text-ink-lighter hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-all"
-      >
-        <Trash2 size={14} />
-      </button>
+      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all shrink-0">
+        <button
+          onClick={onMoveToWeekly}
+          className="p-1.5 rounded-md text-gold-soft hover:text-gold-soft-dark hover:bg-ink/5 transition-all"
+          title="نقل للأسبوع"
+        >
+          <Calendar size={14} />
+        </button>
+        <button
+          onClick={onMoveToBacklog}
+          className="p-1.5 rounded-md text-ink-lighter hover:text-ink hover:bg-ink/5 transition-all"
+          title="نقل للمؤجلة"
+        >
+          <Archive size={14} />
+        </button>
+        <button
+          onClick={onRemove}
+          className="p-1.5 rounded-md text-ink-lighter hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-all"
+          title="حذف"
+        >
+          <Trash2 size={14} />
+        </button>
+      </div>
     </motion.div>
   );
 }

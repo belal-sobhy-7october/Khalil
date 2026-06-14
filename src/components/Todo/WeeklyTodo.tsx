@@ -3,6 +3,8 @@ import {
   Calendar,
   Plus,
   Trash2,
+  Sun,
+  Archive,
   Circle,
   CheckCircle,
   Flag,
@@ -27,6 +29,8 @@ export default function WeeklyTodo() {
   const addTodo = useAppStore((s) => s.addWeeklyTodo);
   const toggleTodo = useAppStore((s) => s.toggleWeeklyTodo);
   const removeTodo = useAppStore((s) => s.removeWeeklyTodo);
+  const moveToDaily = useAppStore((s) => s.moveToDaily);
+  const moveToBacklog = useAppStore((s) => s.moveToBacklog);
   const reorderWeeklyTodos = useAppStore((s) => s.reorderWeeklyTodos);
   const [text, setText] = useState('');
   const [priority, setPriority] = useState<Priority>('medium');
@@ -168,12 +172,29 @@ export default function WeeklyTodo() {
                           {todo.text}
                         </span>
 
-                        <button
-                          onClick={() => removeTodo(todo.id)}
-                          className="shrink-0 p-1.5 rounded-md opacity-0 group-hover:opacity-100 text-ink-lighter hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-all"
-                        >
-                          <Trash2 size={14} />
-                        </button>
+                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all shrink-0">
+                          <button
+                            onClick={() => moveToDaily(todo.id)}
+                            className="p-1.5 rounded-md text-clay-soft hover:text-clay-soft-dark hover:bg-ink/5 transition-all"
+                            title="نقل لليوم"
+                          >
+                            <Sun size={14} />
+                          </button>
+                          <button
+                            onClick={() => moveToBacklog(todo.id, 'weekly')}
+                            className="p-1.5 rounded-md text-ink-lighter hover:text-ink hover:bg-ink/5 transition-all"
+                            title="نقل للمؤجلة"
+                          >
+                            <Archive size={14} />
+                          </button>
+                          <button
+                            onClick={() => removeTodo(todo.id)}
+                            className="p-1.5 rounded-md text-ink-lighter hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-all"
+                            title="حذف"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
                       </motion.div>
                     </SortableTodoItem>
                   ))}

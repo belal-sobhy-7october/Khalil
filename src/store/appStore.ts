@@ -51,6 +51,7 @@ interface AppStore {
   reorderBacklogTodos: (ids: string[]) => Promise<void>;
   moveToDaily: (id: string) => Promise<void>;
   moveToWeekly: (id: string) => Promise<void>;
+  moveToBacklog: (id: string, from: 'daily' | 'weekly') => Promise<void>;
 
   lifeCategories: LifeCategory[];
   addLifeCategory: (cat: LifeCategory) => Promise<void>;
@@ -413,6 +414,30 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     } catch (err) {
       console.error('Failed to move to weekly:', err);
     }
+  },
+  moveToBacklog: async (id, from) => {
+    const todos = from === 'daily' ? get().dailyTodos : get().weeklyTodos;
+    const todo = todos.find((x) => x.id === id);
+    if (!todo) return;
+    const userId = get().session?.user?.id;
+    if (!userId) return;
+    const newId = generateId();
+    const table = from === 'daily' ? 'daily_todos' : 'weekly_todos';
+    try {
+      await supabase.from('backlog_todos').insert({ id: newId, user_id: userId, text: todo.text, completed: false, priority: todo.priority, created_at: Date.now() });
+      await supabase.from(table).delete().eq('id', id);
+      if (from === 'daily') {
+        set((s) => ({
+          dailyTodos: s.dailyTodos.filter((x) => x.id !== id),
+          backlogTodos: [...s.backlogTodos, { id: newId, text: todo.text, completed: false, priority: todo.priority, createdAt: Date.now() }],
+        }));
+      } else {
+        set((s) => ({
+          weeklyTodos: s.weeklyTodos.filter((x) => x.id !== id),
+          backlogTodos: [...s.backlogTodos, { id: newId, text: todo.text, completed: false, priority: todo.priority, createdAt: Date.now() }],
+        }));
+      }
+    } catch (err) { console.error('Failed to move to backlog:', err); }
   },
 
   lifeCategories: [],
