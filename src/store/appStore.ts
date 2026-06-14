@@ -380,17 +380,23 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     }));
   },
   moveToDaily: async (id) => {
-    const todo = get().backlogTodos.find((x) => x.id === id);
+    const todo = get().backlogTodos.find((x) => x.id === id) || get().weeklyTodos.find((x) => x.id === id);
     if (!todo) return;
+    const fromBacklog = get().backlogTodos.some((x) => x.id === id);
     const userId = get().session?.user?.id;
     if (!userId) return;
     const newId = generateId();
     const today = getToday();
     try {
       await supabase.from('daily_todos').insert({ id: newId, user_id: userId, text: todo.text, completed: false, priority: todo.priority, created_at: Date.now(), date: today });
-      await supabase.from('backlog_todos').delete().eq('id', id);
+      if (fromBacklog) {
+        await supabase.from('backlog_todos').delete().eq('id', id);
+      } else {
+        await supabase.from('weekly_todos').delete().eq('id', id);
+      }
       set((s) => ({
         backlogTodos: s.backlogTodos.filter((x) => x.id !== id),
+        weeklyTodos: s.weeklyTodos.filter((x) => x.id !== id),
         dailyTodos: [...s.dailyTodos, { ...todo, id: newId, date: today, completed: false }],
       }));
     } catch (err) {
@@ -398,17 +404,23 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     }
   },
   moveToWeekly: async (id) => {
-    const todo = get().backlogTodos.find((x) => x.id === id);
+    const todo = get().backlogTodos.find((x) => x.id === id) || get().dailyTodos.find((x) => x.id === id);
     if (!todo) return;
+    const fromBacklog = get().backlogTodos.some((x) => x.id === id);
     const userId = get().session?.user?.id;
     if (!userId) return;
     const newId = generateId();
     const weekStart = getWeekStart();
     try {
       await supabase.from('weekly_todos').insert({ id: newId, user_id: userId, text: todo.text, completed: false, priority: todo.priority, created_at: Date.now(), week_start: weekStart });
-      await supabase.from('backlog_todos').delete().eq('id', id);
+      if (fromBacklog) {
+        await supabase.from('backlog_todos').delete().eq('id', id);
+      } else {
+        await supabase.from('daily_todos').delete().eq('id', id);
+      }
       set((s) => ({
         backlogTodos: s.backlogTodos.filter((x) => x.id !== id),
+        dailyTodos: s.dailyTodos.filter((x) => x.id !== id),
         weeklyTodos: [...s.weeklyTodos, { ...todo, id: newId, weekStart, completed: false }],
       }));
     } catch (err) {
