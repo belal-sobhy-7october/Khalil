@@ -8,22 +8,28 @@ interface Props {
   onPositionChange?: (x: number, y: number) => void;
 }
 
-export default function DraggableContainer({ id: _id, defaultPosition = { x: 0, y: 0 }, fixed = false, children, onPositionChange }: Props) {
-  const [pos, setPos] = useState(defaultPosition);
+export default function DraggableContainer({ id: _id, defaultPosition, fixed = false, children, onPositionChange }: Props) {
+  const [pos, setPos] = useState({ x: 0, y: 0 });
+  const [visible, setVisible] = useState(false);
   const posRef = useRef(pos);
   posRef.current = pos;
-  const prevDefault = useRef(defaultPosition);
-  useEffect(() => {
-    if (prevDefault.current.x !== defaultPosition.x || prevDefault.current.y !== defaultPosition.y) {
-      prevDefault.current = defaultPosition;
-      setPos(defaultPosition);
-    }
-  }, [defaultPosition.x, defaultPosition.y]);
   const onPositionChangeRef = useRef(onPositionChange);
   onPositionChangeRef.current = onPositionChange;
   const dragging = useRef(false);
   const startMouse = useRef({ x: 0, y: 0 });
   const startPos = useRef({ x: 0, y: 0 });
+  const positionSet = useRef(false);
+
+  useEffect(() => {
+    if (defaultPosition && !positionSet.current) {
+      setPos(defaultPosition);
+      setVisible(true);
+      positionSet.current = true;
+    } else if (!defaultPosition && !positionSet.current) {
+      setVisible(true);
+      positionSet.current = true;
+    }
+  }, [defaultPosition?.x, defaultPosition?.y]);
 
   useEffect(() => {
     const onMove = (e: MouseEvent) => {
@@ -60,7 +66,12 @@ export default function DraggableContainer({ id: _id, defaultPosition = { x: 0, 
 
   return (
     <div
-      style={fixed ? { position: 'fixed', left: pos.x, top: pos.y, zIndex: 50, transition: 'none' } : { transform: `translate(${pos.x}px, ${pos.y}px)`, transition: 'none' }}
+      style={{
+        ...(fixed
+          ? { position: 'fixed', left: pos.x, top: pos.y, zIndex: 50 }
+          : { transform: `translate(${pos.x}px, ${pos.y}px)` }),
+        visibility: visible ? 'visible' : 'hidden',
+      }}
       onMouseDown={onMouseDown}
     >
       {children}
