@@ -12,11 +12,11 @@ export default function DraggableContainer({ id: _id, defaultPosition = { x: 0, 
   const [pos, setPos] = useState(defaultPosition);
   const posRef = useRef(pos);
   posRef.current = pos;
-  const initialized = useRef(false);
+  const prevDefault = useRef(defaultPosition);
   useEffect(() => {
-    if (!initialized.current && (defaultPosition.x !== 0 || defaultPosition.y !== 0)) {
+    if (prevDefault.current.x !== defaultPosition.x || prevDefault.current.y !== defaultPosition.y) {
+      prevDefault.current = defaultPosition;
       setPos(defaultPosition);
-      initialized.current = true;
     }
   }, [defaultPosition.x, defaultPosition.y]);
   const onPositionChangeRef = useRef(onPositionChange);
