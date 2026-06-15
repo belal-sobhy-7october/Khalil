@@ -16,7 +16,7 @@ export default function DraggableContainer({
   onPositionChange,
 }: Props) {
   const [pos, setPos] = useState(() => defaultPosition ?? null);
-  const posRef = useRef(pos);
+  const posRef = useRef<{ x: number; y: number } | null>(pos);
   posRef.current = pos;
   const onPositionChangeRef = useRef(onPositionChange);
   onPositionChangeRef.current = onPositionChange;
