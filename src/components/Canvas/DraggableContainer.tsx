@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect, type ReactNode } from 'react';
+import { useRef, useState, useEffect, type ReactNode } from "react";
 
 interface Props {
   id: string;
@@ -10,12 +10,13 @@ interface Props {
 
 export default function DraggableContainer({
   id: _id,
-  defaultPosition = { x: 0, y: 0 },
+  defaultPosition,
   fixed = false,
   children,
   onPositionChange,
 }: Props) {
-  const [pos, setPos] = useState(defaultPosition);
+  const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
+  const initializedRef = useRef(false);
   const posRef = useRef(pos);
   posRef.current = pos;
   const onPositionChangeRef = useRef(onPositionChange);
@@ -23,6 +24,19 @@ export default function DraggableContainer({
   const dragging = useRef(false);
   const startMouse = useRef({ x: 0, y: 0 });
   const startPos = useRef({ x: 0, y: 0 });
+
+  // Initialize position from defaultPosition only once
+  useEffect(() => {
+    if (!initializedRef.current && defaultPosition) {
+      setPos(defaultPosition);
+      initializedRef.current = true;
+    }
+  }, [defaultPosition]);
+
+  // Don't render until we have a valid position
+  if (!pos) {
+    return null;
+  }
 
   useEffect(() => {
     const onMove = (e: MouseEvent) => {
@@ -42,18 +56,19 @@ export default function DraggableContainer({
       dragging.current = false;
       onPositionChangeRef.current?.(posRef.current.x, posRef.current.y);
     };
-    window.addEventListener('mousemove', onMove);
-    window.addEventListener('mouseup', onUp);
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
     return () => {
-      window.removeEventListener('mousemove', onMove);
-      window.removeEventListener('mouseup', onUp);
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
     };
   }, [fixed]);
 
   const onMouseDown = (e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
-    if (target.closest('input, textarea, button, select, a, [role="button"]')) return;
-    if (!target.closest('.drag-handle')) return;
+    if (target.closest('input, textarea, button, select, a, [role="button"]'))
+      return;
+    if (!target.closest(".drag-handle")) return;
     dragging.current = true;
     startMouse.current = { x: e.clientX, y: e.clientY };
     startPos.current = { ...pos };
@@ -64,7 +79,7 @@ export default function DraggableContainer({
     <div
       style={
         fixed
-          ? { position: 'fixed', left: pos.x, top: pos.y, zIndex: 50 }
+          ? { position: "fixed", left: pos.x, top: pos.y, zIndex: 50 }
           : { transform: `translate(${pos.x}px, ${pos.y}px)` }
       }
       onMouseDown={onMouseDown}
