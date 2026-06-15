@@ -31,11 +31,9 @@ function App() {
   const addStickyNoteStore = useAppStore((s) => s.addStickyNote);
   const updateStickyNoteStore = useAppStore((s) => s.updateStickyNote);
   const deleteStickyNoteStore = useAppStore((s) => s.deleteStickyNote);
-  const updateStickyNotePositionStore = useAppStore((s) => s.updateStickyNotePosition);
   const addTodoNoteStore = useAppStore((s) => s.addTodoNote);
   const updateTodoNoteStore = useAppStore((s) => s.updateTodoNote);
   const deleteTodoNoteStore = useAppStore((s) => s.deleteTodoNote);
-  const updateTodoNotePositionStore = useAppStore((s) => s.updateTodoNotePosition);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const initialized = useRef(false);
@@ -161,14 +159,15 @@ function App() {
         </div>
 
         <BookmarksVault />
+      </div>
 
+      <div className="fixed top-20 start-4 z-40 flex flex-col gap-3 w-56">
         {stickyNotes.map((note) => (
           <StickyNote
             key={note.id}
             note={note}
             onDelete={deleteStickyNote}
             onUpdate={updateStickyNote}
-            onPositionChange={(x, y) => updateStickyNotePositionStore(note.id, x, y)}
           />
         ))}
         {todoNotes.map((note) => (
@@ -177,7 +176,6 @@ function App() {
             note={note}
             onDelete={deleteTodoNote}
             onUpdate={updateTodoNote}
-            onPositionChange={(x, y) => updateTodoNotePositionStore(note.id, x, y)}
           />
         ))}
       </div>

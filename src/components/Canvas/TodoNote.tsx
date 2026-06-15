@@ -1,25 +1,22 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import DraggableContainer from './DraggableContainer';
-import { GripVertical, Trash2, Plus, Check } from 'lucide-react';
+import { Trash2, Plus, Check } from 'lucide-react';
 
-interface TodoItemData {
+export interface TodoItemData {
   id: string;
   text: string;
   done: boolean;
 }
 
-interface TodoNoteData {
+export interface TodoNoteData {
   id: string;
   title: string;
   items: TodoItemData[];
-  position: { x: number; y: number };
 }
 
 interface Props {
   note: TodoNoteData;
   onDelete: (id: string) => void;
   onUpdate: (id: string, updated: Partial<TodoNoteData>) => void;
-  onPositionChange: (x: number, y: number) => void;
 }
 
 export function createTodoNote(): TodoNoteData {
@@ -27,13 +24,10 @@ export function createTodoNote(): TodoNoteData {
     id: crypto.randomUUID(),
     title: '',
     items: [],
-    position: { x: typeof window !== 'undefined' ? window.innerWidth - 280 : 0, y: 180 },
   };
 }
 
-export type { TodoNoteData };
-
-export default function TodoNote({ note, onDelete, onUpdate, onPositionChange }: Props) {
+export default function TodoNote({ note, onDelete, onUpdate }: Props) {
   const [title, setTitle] = useState(note.title);
   const [items, setItems] = useState(note.items);
   const [newItemText, setNewItemText] = useState('');
@@ -82,83 +76,75 @@ export default function TodoNote({ note, onDelete, onUpdate, onPositionChange }:
   };
 
   return (
-    <DraggableContainer
-      id={`todonote-${note.id}`}
-      defaultPosition={note.position}
-      fixed={true}
-      onPositionChange={onPositionChange}
-    >
-      <div className="w-56 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/50 rounded-xl overflow-hidden z-50">
-        <div className="drag-handle flex items-center justify-between px-3 py-2 bg-amber-100/50 dark:bg-amber-900/30 border-b border-amber-200/50 dark:border-amber-800/30 cursor-grab active:cursor-grabbing">
-          <GripVertical size={14} className="text-amber-400 dark:text-amber-500 shrink-0" />
-          <input
-            ref={titleRef}
-            value={title}
-            onChange={(e) => handleTitleChange(e.target.value)}
-            placeholder="قائمة..."
-            className="flex-1 min-w-0 mx-2 text-sm font-medium text-ink bg-transparent placeholder-ink-lighter focus:outline-none"
-            dir="auto"
-          />
-          <button
-            onClick={() => onDelete(note.id)}
-            className="p-1 rounded text-amber-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-all"
-          >
-            <Trash2 size={12} />
-          </button>
-        </div>
-
-        <div className="max-h-[200px] overflow-y-auto" style={{ scrollbarColor: "#6B3A2A transparent" }}>
-          {items.map((item) => (
-            <div
-              key={item.id}
-              className="flex items-center gap-2 px-3 py-1.5 group/item hover:bg-amber-100/30 dark:hover:bg-amber-900/20 transition-colors"
-            >
-              <button
-                onClick={() => toggleItem(item.id)}
-                className={`shrink-0 w-4 h-4 rounded border flex items-center justify-center transition-colors ${
-                  item.done
-                    ? 'bg-amber-500 border-amber-500 text-white'
-                    : 'border-amber-300 dark:border-amber-600 hover:border-amber-400'
-                }`}
-              >
-                {item.done && <Check size={10} strokeWidth={3} />}
-              </button>
-              <span
-                className={`flex-1 text-sm truncate ${
-                  item.done ? 'line-through text-ink-lighter' : 'text-ink'
-                }`}
-                dir="auto"
-              >
-                {item.text}
-              </span>
-              <button
-                onClick={() => deleteItem(item.id)}
-                className="shrink-0 text-amber-400 hover:text-red-500 transition-all"
-              >
-                <Trash2 size={10} />
-              </button>
-            </div>
-          ))}
-        </div>
-
-        <div className="flex items-center gap-2 border-t border-amber-200/50 dark:border-amber-800/30 px-3 py-2">
-          <input
-            value={newItemText}
-            onChange={(e) => setNewItemText(e.target.value)}
-            onKeyDown={handleItemKeyDown}
-            placeholder="إضافة..."
-            className="flex-1 text-sm bg-transparent text-ink placeholder-ink-lighter focus:outline-none"
-            dir="auto"
-          />
-          <button
-            onClick={addItem}
-            disabled={!newItemText.trim()}
-            className="shrink-0 p-1 rounded text-amber-400 hover:text-amber-600 disabled:opacity-30 transition-colors"
-          >
-            <Plus size={14} />
-          </button>
-        </div>
+    <div className="w-full bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/50 rounded-xl overflow-hidden">
+      <div className="flex items-center justify-between px-3 py-2 bg-amber-100/50 dark:bg-amber-900/30 border-b border-amber-200/50 dark:border-amber-800/30">
+        <input
+          ref={titleRef}
+          value={title}
+          onChange={(e) => handleTitleChange(e.target.value)}
+          placeholder="قائمة..."
+          className="flex-1 min-w-0 mx-2 text-sm font-medium text-ink bg-transparent placeholder-ink-lighter focus:outline-none"
+          dir="auto"
+        />
+        <button
+          onClick={() => onDelete(note.id)}
+          className="p-1 rounded text-amber-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-all"
+        >
+          <Trash2 size={12} />
+        </button>
       </div>
-    </DraggableContainer>
+
+      <div className="max-h-[200px] overflow-y-auto" style={{ scrollbarColor: "#6B3A2A transparent" }}>
+        {items.map((item) => (
+          <div
+            key={item.id}
+            className="flex items-center gap-2 px-3 py-1.5 group/item hover:bg-amber-100/30 dark:hover:bg-amber-900/20 transition-colors"
+          >
+            <button
+              onClick={() => toggleItem(item.id)}
+              className={`shrink-0 w-4 h-4 rounded border flex items-center justify-center transition-colors ${
+                item.done
+                  ? 'bg-amber-500 border-amber-500 text-white'
+                  : 'border-amber-300 dark:border-amber-600 hover:border-amber-400'
+              }`}
+            >
+              {item.done && <Check size={10} strokeWidth={3} />}
+            </button>
+            <span
+              className={`flex-1 text-sm truncate ${
+                item.done ? 'line-through text-ink-lighter' : 'text-ink'
+              }`}
+              dir="auto"
+            >
+              {item.text}
+            </span>
+            <button
+              onClick={() => deleteItem(item.id)}
+              className="shrink-0 text-amber-400 hover:text-red-500 transition-all"
+            >
+              <Trash2 size={10} />
+            </button>
+          </div>
+        ))}
+      </div>
+
+      <div className="flex items-center gap-2 border-t border-amber-200/50 dark:border-amber-800/30 px-3 py-2">
+        <input
+          value={newItemText}
+          onChange={(e) => setNewItemText(e.target.value)}
+          onKeyDown={handleItemKeyDown}
+          placeholder="إضافة..."
+          className="flex-1 text-sm bg-transparent text-ink placeholder-ink-lighter focus:outline-none"
+          dir="auto"
+        />
+        <button
+          onClick={addItem}
+          disabled={!newItemText.trim()}
+          className="shrink-0 p-1 rounded text-amber-400 hover:text-amber-600 disabled:opacity-30 transition-colors"
+        >
+          <Plus size={14} />
+        </button>
+      </div>
+    </div>
   );
 }

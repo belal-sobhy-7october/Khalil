@@ -87,11 +87,9 @@ interface AppStore {
   addStickyNote: (note: StickyNoteData) => Promise<void>;
   updateStickyNote: (id: string, text: string) => Promise<void>;
   deleteStickyNote: (id: string) => Promise<void>;
-  updateStickyNotePosition: (id: string, x: number, y: number) => Promise<void>;
   addTodoNote: (note: TodoNoteData) => Promise<void>;
   updateTodoNote: (id: string, updated: Partial<TodoNoteData>) => Promise<void>;
   deleteTodoNote: (id: string) => Promise<void>;
-  updateTodoNotePosition: (id: string, x: number, y: number) => Promise<void>;
 }
 
 function getToday(): string {
@@ -160,9 +158,11 @@ export const useAppStore = create<AppStore>()((set, get) => ({
         supabase.from('sub_track_entries').select('*').eq('user_id', userId).order('date'),
         supabase.from('bookmark_categories').select('*').eq('user_id', userId).order('name'),
         supabase.from('bookmarks').select('*').eq('user_id', userId).order('created_at'),
+        supabase.from('sticky_notes').select('*').eq('user_id', userId).order('created_at'),
+        supabase.from('todo_notes').select('*').eq('user_id', userId).order('created_at'),
       ]);
 
-      const [dailyFocusRes, dailyTodoRes, weeklyTodoRes, backlogTodoRes, lifeCategoryRes, subTrackRes, subTrackEntryRes, bookmarkCategoryRes, bookmarkRes] = results;
+      const [dailyFocusRes, dailyTodoRes, weeklyTodoRes, backlogTodoRes, lifeCategoryRes, subTrackRes, subTrackEntryRes, bookmarkCategoryRes, bookmarkRes, stickyNotesRes, todoNotesRes] = results;
 
       dailyFocusRes.error && console.error('[loadUserData] daily_focus error:', dailyFocusRes.error);
       dailyTodoRes.error && console.error('[loadUserData] daily_todos error:', dailyTodoRes.error);
@@ -173,6 +173,8 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       subTrackEntryRes.error && console.error('[loadUserData] sub_track_entries error:', subTrackEntryRes.error);
       bookmarkCategoryRes.error && console.error('[loadUserData] bookmark_categories error:', bookmarkCategoryRes.error);
       bookmarkRes.error && console.error('[loadUserData] bookmarks error:', bookmarkRes.error);
+      stickyNotesRes.error && console.error('[loadUserData] sticky_notes error:', stickyNotesRes.error);
+      todoNotesRes.error && console.error('[loadUserData] todo_notes error:', todoNotesRes.error);
 
       const dailyFocusRows = dailyFocusRes.data;
       const dailyTodoRows = dailyTodoRes.data;
@@ -214,6 +216,15 @@ export const useAppStore = create<AppStore>()((set, get) => ({
         subTrackEntries: (subTrackEntryRows || []).map(mapSubTrackEntry),
         bookmarkCategories: (bookmarkCategoryRows || []).map(mapBookmarkCategory),
         bookmarks: (bookmarkRows || []).map(mapBookmark),
+        stickyNotes: (stickyNotesRes.data || []).map((r: Record<string, unknown>) => ({
+          id: r.id as string,
+          text: r.text as string,
+        })),
+        todoNotes: (todoNotesRes.data || []).map((r: Record<string, unknown>) => ({
+          id: r.id as string,
+          title: r.title as string,
+          items: (r.items as { id: string; text: string; done: boolean }[]) || [],
+        })),
         isLoading: false,
       });
 
@@ -223,8 +234,6 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       } else {
         console.log('[loadUserData] Data loaded successfully from existing Supabase rows');
       }
-
-      await get().loadNotes();
     } catch (err) {
       console.error('[loadUserData] Failed to load user data:', err);
       set({ isLoading: false });
@@ -736,13 +745,11 @@ export const useAppStore = create<AppStore>()((set, get) => ({
         stickyNotes: (stickyRes.data || []).map((r: Record<string, unknown>) => ({
           id: r.id as string,
           text: r.text as string,
-          position: { x: r.pos_x as number, y: r.pos_y as number },
         })),
         todoNotes: (todoRes.data || []).map((r: Record<string, unknown>) => ({
           id: r.id as string,
           title: r.title as string,
           items: (r.items as { id: string; text: string; done: boolean }[]) || [],
-          position: { x: r.pos_x as number, y: r.pos_y as number },
         })),
       });
     } catch (err) {
@@ -754,7 +761,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     const userId = get().session?.user?.id;
     if (!userId) return;
     try {
-      await supabase.from('sticky_notes').insert({ id: note.id, user_id: userId, text: note.text, pos_x: note.position.x, pos_y: note.position.y });
+      await supabase.from('sticky_notes').insert({ id: note.id, user_id: userId, text: note.text });
       set((s) => ({ stickyNotes: [...s.stickyNotes, note] }));
     } catch (err) { console.error('Failed to add sticky note:', err); }
   },
@@ -773,18 +780,11 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     } catch (err) { console.error('Failed to delete sticky note:', err); }
   },
 
-  updateStickyNotePosition: async (id, x, y) => {
-    try {
-      await supabase.from('sticky_notes').update({ pos_x: x, pos_y: y }).eq('id', id);
-      set((s) => ({ stickyNotes: s.stickyNotes.map((n) => n.id === id ? { ...n, position: { x, y } } : n) }));
-    } catch (err) { console.error('Failed to update sticky note position:', err); }
-  },
-
   addTodoNote: async (note) => {
     const userId = get().session?.user?.id;
     if (!userId) return;
     try {
-      await supabase.from('todo_notes').insert({ id: note.id, user_id: userId, title: note.title, items: note.items, pos_x: note.position.x, pos_y: note.position.y });
+      await supabase.from('todo_notes').insert({ id: note.id, user_id: userId, title: note.title, items: note.items });
       set((s) => ({ todoNotes: [...s.todoNotes, note] }));
     } catch (err) { console.error('Failed to add todo note:', err); }
   },
@@ -794,7 +794,6 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       const dbData: Record<string, unknown> = {};
       if (updated.title !== undefined) dbData.title = updated.title;
       if (updated.items !== undefined) dbData.items = updated.items;
-      if (updated.position !== undefined) { dbData.pos_x = updated.position.x; dbData.pos_y = updated.position.y; }
       await supabase.from('todo_notes').update(dbData).eq('id', id);
       set((s) => ({ todoNotes: s.todoNotes.map((n) => n.id === id ? { ...n, ...updated } : n) }));
     } catch (err) { console.error('Failed to update todo note:', err); }
@@ -807,12 +806,6 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     } catch (err) { console.error('Failed to delete todo note:', err); }
   },
 
-  updateTodoNotePosition: async (id, x, y) => {
-    try {
-      await supabase.from('todo_notes').update({ pos_x: x, pos_y: y }).eq('id', id);
-      set((s) => ({ todoNotes: s.todoNotes.map((n) => n.id === id ? { ...n, position: { x, y } } : n) }));
-    } catch (err) { console.error('Failed to update todo note position:', err); }
-  },
 }));
 
 async function seedDefaults() {
