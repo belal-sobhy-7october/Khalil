@@ -5,7 +5,7 @@ interface Props {
   defaultPosition?: { x: number; y: number };
   fixed?: boolean;
   children: ReactNode;
-  onPositionChange?: (x: number, y: number) => void;
+  onPositionChange?: (x: number; y: number) => void;
 }
 
 export default function DraggableContainer({
@@ -15,8 +15,7 @@ export default function DraggableContainer({
   children,
   onPositionChange,
 }: Props) {
-  const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
-  const initializedRef = useRef(false);
+  const [pos, setPos] = useState(() => defaultPosition ?? null);
   const posRef = useRef(pos);
   posRef.current = pos;
   const onPositionChangeRef = useRef(onPositionChange);
@@ -24,14 +23,6 @@ export default function DraggableContainer({
   const dragging = useRef(false);
   const startMouse = useRef({ x: 0, y: 0 });
   const startPos = useRef({ x: 0, y: 0 });
-
-  // Initialize position from defaultPosition only once
-  useEffect(() => {
-    if (!initializedRef.current && defaultPosition) {
-      setPos(defaultPosition);
-      initializedRef.current = true;
-    }
-  }, [defaultPosition]);
 
   // Don't render until we have a valid position
   if (!pos) {
@@ -54,7 +45,7 @@ export default function DraggableContainer({
     const onUp = () => {
       if (!dragging.current) return;
       dragging.current = false;
-      onPositionChangeRef.current?.(posRef.current.x, posRef.current.y);
+      if (posRef.current) onPositionChangeRef.current?.(posRef.current.x, posRef.current.y);
     };
     window.addEventListener("mousemove", onMove);
     window.addEventListener("mouseup", onUp);
