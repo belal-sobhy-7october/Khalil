@@ -5,7 +5,7 @@ interface Props {
   defaultPosition?: { x: number; y: number };
   fixed?: boolean;
   children: ReactNode;
-  onPositionChange?: (x: number; y: number) => void;
+  onPositionChange?: (x: number, y: number) => void;
 }
 
 export default function DraggableContainer({
