@@ -26,13 +26,15 @@ export default function DashboardLayout({
     if (section === 'life') {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
-      const el = document.getElementById(`section-${section}`);
-      if (el) {
-        const headerOffset = 72;
-        const elementPosition = el.getBoundingClientRect().top + window.scrollY;
-        const offsetPosition = elementPosition - headerOffset;
-        window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
-      }
+      setTimeout(() => {
+        const el = document.getElementById(`section-${section}`);
+        if (el) {
+          const headerOffset = 72;
+          const elementPosition = el.getBoundingClientRect().top + window.scrollY;
+          const offsetPosition = elementPosition - headerOffset;
+          window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
+        }
+      }, 50);
     }
   };
 
