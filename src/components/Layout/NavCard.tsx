@@ -6,8 +6,8 @@ import {
 import { useTranslation } from '../../i18n/useTranslation';
 import CalligraphyWatermark from '../Common/CalligraphyWatermark';
 const navItems = [
-  { id: 'life', labelKey: 'nav.life', icon: <Heart size={16} /> },
   { id: 'todo', labelKey: 'nav.todo', icon: <CheckSquare size={16} /> },
+  { id: 'life', labelKey: 'nav.life', icon: <Heart size={16} /> },
   { id: 'bookmarks', labelKey: 'nav.bookmarks', icon: <Bookmark size={16} /> },
 ];
 export default function NavCard({

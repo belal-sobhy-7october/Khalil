@@ -32,8 +32,8 @@ export default function Sidebar({
   };
 
   const navItems: NavItem[] = [
-    { id: 'life', label: t('nav.life'), icon: <Heart size={18} /> },
     { id: 'todo', label: t('nav.todo'), icon: <CheckSquare size={18} /> },
+    { id: 'life', label: t('nav.life'), icon: <Heart size={18} /> },
     { id: 'bookmarks', label: t('nav.bookmarks'), icon: <Bookmark size={18} /> },
   ];
 

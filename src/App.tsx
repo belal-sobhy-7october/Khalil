@@ -140,9 +140,13 @@ function App() {
   return (
     <DashboardLayout activeSection={activeSection} onSectionChange={handleSectionChange}>
       <div className="space-y-8 max-w-4xl mx-auto canvas-area" style={{ position: 'relative' }}>
+        <div>
+          <DailyFocus />
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           <div className="lg:col-span-7">
-            <LifePillars />
+            <DailyTodo />
           </div>
           <div className="lg:col-span-5">
             <WeeklyTodo />
@@ -150,12 +154,11 @@ function App() {
         </div>
 
         <div>
-          <DailyFocus />
+          <BacklogTodo />
         </div>
 
         <div>
-          <DailyTodo />
-          <BacklogTodo />
+          <LifePillars />
         </div>
 
         <BookmarksVault />
