@@ -27,15 +27,15 @@ import {
   Zap,
   Book,
   Utensils,
-  ShoppingBag,
-  Car,
   Home,
   Plane,
   Camera,
   Headphones,
-  Watch,
-  Shirt,
   Leaf,
+  Trophy,
+  GraduationCap,
+  Clock,
+  Users,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppStore } from '../../store/appStore';
@@ -53,6 +53,7 @@ const iconMap: Record<string, React.ReactNode> = {
   target: <Target size={18} />,
   dumbbell: <Dumbbell size={18} />,
   moon: <Moon size={18} />,
+  crescent: <Moon size={18} />,
   coffee: <Coffee size={18} />,
   music: <Music size={18} />,
   pen: <Pen size={18} />,
@@ -62,18 +63,18 @@ const iconMap: Record<string, React.ReactNode> = {
   zap: <Zap size={18} />,
   book: <Book size={18} />,
   utensils: <Utensils size={18} />,
-  'shopping-bag': <ShoppingBag size={18} />,
-  car: <Car size={18} />,
   home: <Home size={18} />,
   plane: <Plane size={18} />,
   camera: <Camera size={18} />,
   headphones: <Headphones size={18} />,
-  watch: <Watch size={18} />,
-  shirt: <Shirt size={18} />,
   leaf: <Leaf size={18} />,
+  trophy: <Trophy size={18} />,
+  'graduation-cap': <GraduationCap size={18} />,
+  clock: <Clock size={18} />,
+  users: <Users size={18} />,
 };
 
-const iconOptions = ['heart', 'brain', 'book-open', 'code', 'star', 'bookmark', 'folder', 'target', 'dumbbell', 'moon', 'coffee', 'music', 'pen', 'globe', 'smile', 'sun', 'zap', 'book', 'utensils', 'shopping-bag', 'car', 'home', 'plane', 'camera', 'headphones', 'watch', 'shirt', 'leaf'] as const;
+const iconOptions = ['heart', 'brain', 'book-open', 'code', 'star', 'bookmark', 'folder', 'target', 'dumbbell', 'moon', 'crescent', 'coffee', 'music', 'pen', 'globe', 'smile', 'sun', 'zap', 'book', 'utensils', 'home', 'plane', 'camera', 'headphones', 'leaf', 'trophy', 'graduation-cap', 'clock', 'users'] as const;
 
 const pillColors: Record<string, { bg: string; border: string; accent: string; pill: string; text: string }> = {
   terracotta: {
