@@ -51,9 +51,9 @@ export default function DailyFocus() {
       <div className="relative bg-card border border-border-subtle rounded-xl p-4 md:p-5 overflow-hidden">
         <CalligraphyWatermark character="خ" opacity={0.04} />
         <div className="relative z-10">
-          <div className="flex items-center justify-center gap-2 mb-2">
-            <Target size={18} className="text-clay-soft" />
-            <span className="text-xs uppercase tracking-[0.15em] text-ink-light font-medium">
+          <div className="flex items-center justify-center gap-2 mb-1">
+            <Target size={16} className="text-clay-soft" />
+            <span className="text-[10px] uppercase tracking-[0.15em] text-ink-light font-medium">
               {t('dailyFocus.subtitle')}
             </span>
           </div>
@@ -78,19 +78,19 @@ export default function DailyFocus() {
                       onKeyDown={handleKeyDown}
                       placeholder={t('dailyFocus.placeholder')}
                       dir={isRTL ? 'rtl' : 'ltr'}
-                      className="flex-1 bg-ink/5 border border-border-subtle rounded-lg px-4 py-3 text-ink placeholder-ink-lighter text-lg font-medium focus:outline-none focus:ring-2 focus:ring-clay-soft/30 focus:border-transparent transition-all"
+                      className="flex-1 bg-ink/5 border border-border-subtle rounded-lg px-4 py-2 text-ink placeholder-ink-lighter text-sm font-medium focus:outline-none focus:ring-2 focus:ring-clay-soft/30 focus:border-transparent transition-all"
                     />
                     <div className="flex gap-2">
                       <button
                         onClick={handleSave}
-                        className="px-5 py-3 bg-clay-soft hover:bg-clay-soft-dark text-white rounded-lg text-sm font-medium transition-colors whitespace-nowrap"
+                        className="px-4 py-2 bg-clay-soft hover:bg-clay-soft-dark text-white rounded-lg text-sm font-medium transition-colors whitespace-nowrap"
                       >
                         {t('dailyFocus.save')}
                       </button>
                       {dailyFocus.text && (
                         <button
                           onClick={handleClear}
-                          className="px-5 py-3 bg-ink/5 hover:bg-ink/10 rounded-lg text-sm font-medium transition-colors whitespace-nowrap text-ink-light"
+                          className="px-4 py-2 bg-ink/5 hover:bg-ink/10 rounded-lg text-sm font-medium transition-colors whitespace-nowrap text-ink-light"
                         >
                           {t('dailyFocus.clear')}
                         </button>
@@ -106,7 +106,7 @@ export default function DailyFocus() {
                     transition={{ duration: 0.2 }}
                     className="flex items-center justify-center gap-3 group"
                   >
-                    <h2 className="text-2xl md:text-3xl font-bold font-amiri text-ink leading-relaxed text-center">
+                    <h2 className="text-xl md:text-2xl font-bold font-amiri text-ink leading-relaxed text-center">
                       {dailyFocus.text}
                     </h2>
                     <button
@@ -123,7 +123,7 @@ export default function DailyFocus() {
                 )}
               </AnimatePresence>
 
-              <p className="text-[10px] text-ink-light/50 mt-4 tracking-wide text-center">
+              <p className="text-[10px] text-ink-light/50 mt-2 tracking-wide text-center">
                 {new Date().toLocaleDateString(isRTL ? 'ar-SA' : 'en-US', {
                   weekday: 'long',
                   year: 'numeric',

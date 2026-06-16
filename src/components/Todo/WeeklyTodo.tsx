@@ -162,7 +162,7 @@ export default function WeeklyTodo() {
                         </div>
 
                         <span
-                          className={`flex-1 text-sm truncate ${
+                          className={`flex-1 min-w-0 text-sm break-words whitespace-normal ${
                             todo.completed
                               ? 'line-through text-ink-lighter'
                               : 'text-ink'

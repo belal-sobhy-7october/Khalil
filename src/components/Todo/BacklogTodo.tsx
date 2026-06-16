@@ -65,10 +65,10 @@ export default function BacklogTodo() {
   return (
     <section>
       <div className="bg-card border border-border-subtle rounded-xl overflow-hidden">
-        <div className="p-5 md:p-6 border-b border-border-subtle">
-          <div className="flex items-center gap-2 mb-4">
-            <Archive size={20} className="text-ink-light" />
-            <h2 className="text-base font-semibold text-ink">
+        <div className="p-3 md:p-4 border-b border-border-subtle">
+          <div className="flex items-center gap-2 mb-2">
+            <Archive size={16} className="text-ink-light" />
+            <h2 className="text-sm font-semibold text-ink">
               {t('backlog.title')}
             </h2>
           </div>
@@ -116,7 +116,7 @@ export default function BacklogTodo() {
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="p-8 text-center"
+                  className="p-4 text-center"
                 >
                   <Inbox size={36} className="mx-auto text-ink-lighter mb-2" />
                   <p className="text-sm text-ink-light">{t('backlog.empty')}</p>
@@ -154,7 +154,7 @@ export default function BacklogTodo() {
                         </div>
 
                         <span
-                          className={`flex-1 text-sm truncate ${
+                          className={`flex-1 min-w-0 text-sm break-words whitespace-normal ${
                             todo.completed
                               ? 'line-through text-ink-lighter'
                               : 'text-ink'
