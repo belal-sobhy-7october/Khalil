@@ -27,7 +27,12 @@ export default function DashboardLayout({
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
       const el = document.getElementById(`section-${section}`);
-      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      if (el) {
+        const headerOffset = 72;
+        const elementPosition = el.getBoundingClientRect().top + window.scrollY;
+        const offsetPosition = elementPosition - headerOffset;
+        window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
+      }
     }
   };
 
