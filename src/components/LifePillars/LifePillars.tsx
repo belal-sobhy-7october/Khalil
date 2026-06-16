@@ -16,6 +16,26 @@ import {
   Pencil,
   X,
   Check,
+  Dumbbell,
+  Moon,
+  Coffee,
+  Music,
+  Pen,
+  Globe,
+  Smile,
+  Sun,
+  Zap,
+  Book,
+  Utensils,
+  ShoppingBag,
+  Car,
+  Home,
+  Plane,
+  Camera,
+  Headphones,
+  Watch,
+  Shirt,
+  Leaf,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppStore } from '../../store/appStore';
@@ -31,9 +51,29 @@ const iconMap: Record<string, React.ReactNode> = {
   heart: <Heart size={18} />,
   brain: <Brain size={18} />,
   target: <Target size={18} />,
+  dumbbell: <Dumbbell size={18} />,
+  moon: <Moon size={18} />,
+  coffee: <Coffee size={18} />,
+  music: <Music size={18} />,
+  pen: <Pen size={18} />,
+  globe: <Globe size={18} />,
+  smile: <Smile size={18} />,
+  sun: <Sun size={18} />,
+  zap: <Zap size={18} />,
+  book: <Book size={18} />,
+  utensils: <Utensils size={18} />,
+  'shopping-bag': <ShoppingBag size={18} />,
+  car: <Car size={18} />,
+  home: <Home size={18} />,
+  plane: <Plane size={18} />,
+  camera: <Camera size={18} />,
+  headphones: <Headphones size={18} />,
+  watch: <Watch size={18} />,
+  shirt: <Shirt size={18} />,
+  leaf: <Leaf size={18} />,
 };
 
-const iconOptions = ['heart', 'brain', 'book-open', 'code', 'star', 'bookmark', 'folder', 'target'] as const;
+const iconOptions = ['heart', 'brain', 'book-open', 'code', 'star', 'bookmark', 'folder', 'target', 'dumbbell', 'moon', 'coffee', 'music', 'pen', 'globe', 'smile', 'sun', 'zap', 'book', 'utensils', 'shopping-bag', 'car', 'home', 'plane', 'camera', 'headphones', 'watch', 'shirt', 'leaf'] as const;
 
 const pillColors: Record<string, { bg: string; border: string; accent: string; pill: string; text: string }> = {
   terracotta: {
@@ -63,6 +103,41 @@ const pillColors: Record<string, { bg: string; border: string; accent: string; p
     accent: 'bg-slate-500 dark:bg-slate-400',
     pill: 'bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200',
     text: 'text-slate-800 dark:text-slate-200',
+  },
+  rose: {
+    bg: 'bg-rose-100 dark:bg-rose-900/30',
+    border: 'border-rose-300 dark:border-rose-700',
+    accent: 'bg-rose-500 dark:bg-rose-400',
+    pill: 'bg-rose-200 dark:bg-rose-800/50 text-rose-800 dark:text-rose-200',
+    text: 'text-rose-800 dark:text-rose-200',
+  },
+  indigo: {
+    bg: 'bg-indigo-100 dark:bg-indigo-900/30',
+    border: 'border-indigo-300 dark:border-indigo-700',
+    accent: 'bg-indigo-500 dark:bg-indigo-400',
+    pill: 'bg-indigo-200 dark:bg-indigo-800/50 text-indigo-800 dark:text-indigo-200',
+    text: 'text-indigo-800 dark:text-indigo-200',
+  },
+  emerald: {
+    bg: 'bg-emerald-100 dark:bg-emerald-900/30',
+    border: 'border-emerald-300 dark:border-emerald-700',
+    accent: 'bg-emerald-500 dark:bg-emerald-400',
+    pill: 'bg-emerald-200 dark:bg-emerald-800/50 text-emerald-800 dark:text-emerald-200',
+    text: 'text-emerald-800 dark:text-emerald-200',
+  },
+  amber: {
+    bg: 'bg-amber-100 dark:bg-amber-900/30',
+    border: 'border-amber-300 dark:border-amber-700',
+    accent: 'bg-amber-500 dark:bg-amber-400',
+    pill: 'bg-amber-200 dark:bg-amber-800/50 text-amber-800 dark:text-amber-200',
+    text: 'text-amber-800 dark:text-amber-200',
+  },
+  purple: {
+    bg: 'bg-purple-100 dark:bg-purple-900/30',
+    border: 'border-purple-300 dark:border-purple-700',
+    accent: 'bg-purple-500 dark:bg-purple-400',
+    pill: 'bg-purple-200 dark:bg-purple-800/50 text-purple-800 dark:text-purple-200',
+    text: 'text-purple-800 dark:text-purple-200',
   },
 };
 
@@ -316,7 +391,7 @@ export default function LifePillars() {
                 اللون
               </label>
               <div className="flex gap-2">
-                {(['terracotta', 'gold', 'sage', 'slate'] as const).map((colorKey) => (
+                {(['terracotta', 'gold', 'sage', 'slate', 'rose', 'indigo', 'emerald', 'amber', 'purple'] as const).map((colorKey) => (
                   <button
                     key={colorKey}
                     onClick={() => setNewColor(colorKey)}
@@ -333,7 +408,17 @@ export default function LifePillars() {
                             ? '#b8914a'
                             : colorKey === 'sage'
                               ? '#5d8a5d'
-                              : '#737985',
+                              : colorKey === 'slate'
+                                ? '#737985'
+                                : colorKey === 'rose'
+                                  ? '#e11d48'
+                                  : colorKey === 'indigo'
+                                    ? '#4f46e5'
+                                    : colorKey === 'emerald'
+                                      ? '#059669'
+                                      : colorKey === 'amber'
+                                        ? '#d97706'
+                                        : '#7c3aed',
                     }}
                   />
                 ))}

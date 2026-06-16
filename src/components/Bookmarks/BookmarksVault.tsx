@@ -11,6 +11,15 @@ import {
   Video,
   Music,
   Link as LinkIcon,
+  Dumbbell,
+  Pen,
+  Camera,
+  Headphones,
+  ShoppingBag,
+  Home,
+  Plane,
+  Utensils,
+  Star,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppStore } from '../../store/appStore';
@@ -23,7 +32,18 @@ const categoryIcons: Record<string, React.ReactNode> = {
   video: <Video size={16} />,
   book: <BookOpen size={16} />,
   music: <Music size={16} />,
+  dumbbell: <Dumbbell size={16} />,
+  pen: <Pen size={16} />,
+  camera: <Camera size={16} />,
+  headphones: <Headphones size={16} />,
+  shopping: <ShoppingBag size={16} />,
+  home: <Home size={16} />,
+  plane: <Plane size={16} />,
+  food: <Utensils size={16} />,
+  star: <Star size={16} />,
 };
+
+const bookmarkIconOptions = ['general', 'code', 'video', 'book', 'music', 'dumbbell', 'pen', 'camera', 'headphones', 'shopping', 'home', 'plane', 'food', 'star'] as const;
 
 const defaultCategoryIcon = <LinkIcon size={16} />;
 
@@ -151,19 +171,22 @@ export default function BookmarksVault() {
                   className="flex-1 border border-border-subtle rounded-lg px-3 py-2 text-sm bg-ink/3 text-ink placeholder-ink-lighter focus:outline-none focus:ring-2 focus:ring-clay-soft/20"
                 />
 
-                <select
-                  value={newCategory.icon}
-                  onChange={(e) =>
-                    setNewCategory({ ...newCategory, icon: e.target.value })
-                  }
-                  className="border border-border-subtle rounded-lg px-3 py-2 text-sm bg-card text-ink focus:outline-none focus:ring-2 focus:ring-clay-soft/20"
-                >
-                  <option value="general">{t('bookmarks.iconGeneral')}</option>
-                  <option value="code">{t('bookmarks.iconCode')}</option>
-                  <option value="video">{t('bookmarks.iconVideo')}</option>
-                  <option value="book">{t('bookmarks.iconBook')}</option>
-                  <option value="music">{t('bookmarks.iconMusic')}</option>
-                </select>
+                <div className="flex gap-1.5 flex-wrap">
+                  {bookmarkIconOptions.map((iconKey) => (
+                    <button
+                      key={iconKey}
+                      onClick={() => setNewCategory({ ...newCategory, icon: iconKey })}
+                      className={`flex items-center justify-center w-8 h-8 rounded-lg border-2 transition-all ${
+                        newCategory.icon === iconKey
+                          ? 'border-clay-soft bg-clay-soft/10 text-clay-soft'
+                          : 'border-transparent bg-ink/5 text-ink-lighter hover:border-border-subtle'
+                      }`}
+                      title={iconKey}
+                    >
+                      {categoryIcons[iconKey] || defaultCategoryIcon}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <div className="flex justify-end gap-2">
