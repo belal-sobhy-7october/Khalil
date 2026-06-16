@@ -134,7 +134,7 @@ export const translations = {
       daily: 'التركيز اليومي',
       todo: 'المهام',
       backlog: 'المؤجلة',
-      life: 'أهدافي',
+      life: 'المتابعة',
       bookmarks: 'المراجع',
       settings: 'الإعدادات',
     },
@@ -169,7 +169,7 @@ export const translations = {
       empty: 'المؤجلة فارغة. عمل رائع!',
     },
     pillars: {
-      title: 'متابعة أهدافي',
+      title: 'المتابعة',
       deen: 'ديني',
       mind: 'عقلي',
       health: 'صحتي',
