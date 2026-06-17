@@ -25,7 +25,7 @@ function App() {
   const setSession = useAppStore((s) => s.setSession);
   const loadUserData = useAppStore((s) => s.loadUserData);
   const { isRTL } = useTranslation();
-  const [activeSection, setActiveSection] = useState('life');
+  const [activeSection, setActiveSection] = useState('todo');
   const stickyNotes = useAppStore((s) => s.stickyNotes);
   const todoNotes = useAppStore((s) => s.todoNotes);
   const addStickyNoteStore = useAppStore((s) => s.addStickyNote);
