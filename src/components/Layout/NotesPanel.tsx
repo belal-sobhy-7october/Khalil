@@ -1,5 +1,5 @@
-import { useCallback, memo, useRef } from 'react';
-import { motion } from 'framer-motion';
+import { useCallback, memo, useRef, useEffect } from 'react';
+import { motion, useMotionValue } from 'framer-motion';
 import type { StickyNoteData } from '../Canvas/StickyNote';
 import type { TodoNoteData } from '../Canvas/TodoNote';
 import StickyNote from '../Canvas/StickyNote';
@@ -25,10 +25,21 @@ function FloatingNoteCard({
   children: React.ReactNode;
   onUpdatePosition: (id: string, pos: { x: number; y: number }) => void;
 }) {
-  // Keep a ref to the latest position so onDragEnd always uses current coordinates
-  // without depending on a changing prop (prevents callback churn & re-renders)
+  // Motion values track the drag offset only (start at 0).
+  // Position is handled by CSS top/left.
+  const dragX = useMotionValue(0);
+  const dragY = useMotionValue(0);
+
+  // Keep a ref to the latest CSS position so onDragEnd computes correctly.
   const posRef = useRef(position);
   posRef.current = position;
+
+  // After a position update (drag end or external change), reset the drag
+  // transform to 0 so it doesn't accumulate on top of the new CSS position.
+  useEffect(() => {
+    dragX.set(0);
+    dragY.set(0);
+  }, [position.x, position.y, dragX, dragY]);
 
   const handleDragStart = useCallback(() => {
     document.body.style.cursor = 'grabbing';
@@ -37,11 +48,15 @@ function FloatingNoteCard({
   const handleDragEnd = useCallback(
     (_: MouseEvent | TouchEvent | PointerEvent, info: { offset: { x: number; y: number } }) => {
       document.body.style.cursor = 'grab';
+      // Reset the drag transform synchronously so it doesn't pile on top
+      // of the new CSS position after the store update.
+      dragX.set(0);
+      dragY.set(0);
       const newX = posRef.current.x + info.offset.x;
       const newY = posRef.current.y + info.offset.y;
       onUpdatePosition(id, { x: newX, y: newY });
     },
-    [id, onUpdatePosition]
+    [id, onUpdatePosition, dragX, dragY]
   );
 
   return (
@@ -50,12 +65,14 @@ function FloatingNoteCard({
       dragMomentum={false}
       style={{
         position: 'absolute',
-        top: 0,
-        left: 0,
+        top: position.y,
+        left: position.x,
+        x: dragX,
+        y: dragY,
         zIndex: 9999,
         cursor: 'grab',
       }}
-      initial={{ x: position.x, y: position.y }}
+      initial={false}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
       className="pointer-events-auto"
