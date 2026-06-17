@@ -13,9 +13,11 @@ import BacklogTodo from './components/Todo/BacklogTodo';
 
 import LifePillars from './components/LifePillars/LifePillars';
 import BookmarksVault from './components/Bookmarks/BookmarksVault';
-import StickyNote, { createStickyNote } from './components/Canvas/StickyNote';
-import TodoNote, { createTodoNote } from './components/Canvas/TodoNote';
+import { createStickyNote } from './components/Canvas/StickyNote';
+import { createTodoNote } from './components/Canvas/TodoNote';
+import type { StickyNoteData } from './components/Canvas/StickyNote';
 import type { TodoNoteData } from './components/Canvas/TodoNote';
+import NotesPanel from './components/Layout/NotesPanel';
 
 function App() {
   const language = useAppStore((s) => s.language);
@@ -31,9 +33,11 @@ function App() {
   const addStickyNoteStore = useAppStore((s) => s.addStickyNote);
   const updateStickyNoteStore = useAppStore((s) => s.updateStickyNote);
   const deleteStickyNoteStore = useAppStore((s) => s.deleteStickyNote);
+  const reorderStickyNotesStore = useAppStore((s) => s.reorderStickyNotes);
   const addTodoNoteStore = useAppStore((s) => s.addTodoNote);
   const updateTodoNoteStore = useAppStore((s) => s.updateTodoNote);
   const deleteTodoNoteStore = useAppStore((s) => s.deleteTodoNote);
+  const reorderTodoNotesStore = useAppStore((s) => s.reorderTodoNotes);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const initialized = useRef(false);
@@ -55,8 +59,8 @@ function App() {
     addStickyNoteStore(note);
   }, [addStickyNoteStore]);
 
-  const updateStickyNote = useCallback((id: string, text: string) => {
-    updateStickyNoteStore(id, text);
+  const updateStickyNote = useCallback((id: string, data: Partial<StickyNoteData>) => {
+    updateStickyNoteStore(id, data);
   }, [updateStickyNoteStore]);
 
   const deleteStickyNote = useCallback((id: string) => {
@@ -81,6 +85,14 @@ function App() {
   const deleteTodoNote = useCallback((id: string) => {
     deleteTodoNoteStore(id);
   }, [deleteTodoNoteStore]);
+
+  const reorderStickyNotes = useCallback((ids: string[]) => {
+    reorderStickyNotesStore(ids);
+  }, [reorderStickyNotesStore]);
+
+  const reorderTodoNotes = useCallback((ids: string[]) => {
+    reorderTodoNotesStore(ids);
+  }, [reorderTodoNotesStore]);
 
   useEffect(() => {
     document.documentElement.dir = isRTL ? 'rtl' : 'ltr';
@@ -164,24 +176,16 @@ function App() {
         <BookmarksVault />
       </div>
 
-      <div className="fixed top-20 start-4 z-40 flex flex-col gap-3 w-56">
-        {stickyNotes.map((note) => (
-          <StickyNote
-            key={note.id}
-            note={note}
-            onDelete={deleteStickyNote}
-            onUpdate={updateStickyNote}
-          />
-        ))}
-        {todoNotes.map((note) => (
-          <TodoNote
-            key={note.id}
-            note={note}
-            onDelete={deleteTodoNote}
-            onUpdate={updateTodoNote}
-          />
-        ))}
-      </div>
+      <NotesPanel
+        stickyNotes={stickyNotes}
+        todoNotes={todoNotes}
+        onDeleteSticky={deleteStickyNote}
+        onUpdateSticky={updateStickyNote}
+        onDeleteTodo={deleteTodoNote}
+        onUpdateTodo={updateTodoNote}
+        onReorderSticky={reorderStickyNotes}
+        onReorderTodo={reorderTodoNotes}
+      />
 
       <div ref={menuRef} className="fixed bottom-6 end-6 z-50 flex flex-col items-end gap-2">
         <AnimatePresence>

@@ -85,11 +85,13 @@ interface AppStore {
   todoNotes: TodoNoteData[];
   loadNotes: () => Promise<void>;
   addStickyNote: (note: StickyNoteData) => Promise<void>;
-  updateStickyNote: (id: string, text: string) => Promise<void>;
+  updateStickyNote: (id: string, data: Partial<StickyNoteData>) => Promise<void>;
   deleteStickyNote: (id: string) => Promise<void>;
+  reorderStickyNotes: (ids: string[]) => Promise<void>;
   addTodoNote: (note: TodoNoteData) => Promise<void>;
   updateTodoNote: (id: string, updated: Partial<TodoNoteData>) => Promise<void>;
   deleteTodoNote: (id: string) => Promise<void>;
+  reorderTodoNotes: (ids: string[]) => Promise<void>;
 }
 
 function getToday(): string {
@@ -218,6 +220,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
         bookmarks: (bookmarkRows || []).map(mapBookmark),
         stickyNotes: (stickyNotesRes.data || []).map((r: Record<string, unknown>) => ({
           id: r.id as string,
+          title: (r.title as string) || '',
           text: r.text as string,
         })),
         todoNotes: (todoNotesRes.data || []).map((r: Record<string, unknown>) => ({
@@ -744,6 +747,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       set({
         stickyNotes: (stickyRes.data || []).map((r: Record<string, unknown>) => ({
           id: r.id as string,
+          title: (r.title as string) || '',
           text: r.text as string,
         })),
         todoNotes: (todoRes.data || []).map((r: Record<string, unknown>) => ({
@@ -761,15 +765,18 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     const userId = get().session?.user?.id;
     if (!userId) return;
     try {
-      await supabase.from('sticky_notes').insert({ id: note.id, user_id: userId, text: note.text });
+      await supabase.from('sticky_notes').insert({ id: note.id, user_id: userId, title: note.title, text: note.text });
       set((s) => ({ stickyNotes: [...s.stickyNotes, note] }));
     } catch (err) { console.error('Failed to add sticky note:', err); }
   },
 
-  updateStickyNote: async (id, text) => {
+  updateStickyNote: async (id, data) => {
     try {
-      await supabase.from('sticky_notes').update({ text }).eq('id', id);
-      set((s) => ({ stickyNotes: s.stickyNotes.map((n) => n.id === id ? { ...n, text } : n) }));
+      const dbData: Record<string, unknown> = {};
+      if (data.title !== undefined) dbData.title = data.title;
+      if (data.text !== undefined) dbData.text = data.text;
+      await supabase.from('sticky_notes').update(dbData).eq('id', id);
+      set((s) => ({ stickyNotes: s.stickyNotes.map((n) => n.id === id ? { ...n, ...data } : n) }));
     } catch (err) { console.error('Failed to update sticky note:', err); }
   },
 
@@ -778,6 +785,12 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       await supabase.from('sticky_notes').delete().eq('id', id);
       set((s) => ({ stickyNotes: s.stickyNotes.filter((n) => n.id !== id) }));
     } catch (err) { console.error('Failed to delete sticky note:', err); }
+  },
+
+  reorderStickyNotes: async (ids) => {
+    set((s) => ({
+      stickyNotes: ids.map((id) => s.stickyNotes.find((n) => n.id === id)!),
+    }));
   },
 
   addTodoNote: async (note) => {
@@ -804,6 +817,12 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       await supabase.from('todo_notes').delete().eq('id', id);
       set((s) => ({ todoNotes: s.todoNotes.filter((n) => n.id !== id) }));
     } catch (err) { console.error('Failed to delete todo note:', err); }
+  },
+
+  reorderTodoNotes: async (ids) => {
+    set((s) => ({
+      todoNotes: ids.map((id) => s.todoNotes.find((n) => n.id === id)!),
+    }));
   },
 
 }));
