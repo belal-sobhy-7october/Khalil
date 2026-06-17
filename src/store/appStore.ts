@@ -226,6 +226,13 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       }
 
       const focusRow = dailyFocusRows && dailyFocusRows.length > 0 ? dailyFocusRows[0] : null;
+
+      // Build notes from Supabase, then overlay positions from localStorage
+      // so user-dragged coordinates survive re-fetches
+      const cached = loadNotesFromStorage(userId);
+      const cachedStickyMap = cached ? new Map(cached.stickyNotes.map((n) => [n.id, n.position])) : new Map();
+      const cachedTodoMap = cached ? new Map(cached.todoNotes.map((n) => [n.id, n.position])) : new Map();
+
       set({
         dailyFocus: focusRow
           ? { text: focusRow.text, date: focusRow.date }
@@ -238,37 +245,26 @@ export const useAppStore = create<AppStore>()((set, get) => ({
         subTrackEntries: (subTrackEntryRows || []).map(mapSubTrackEntry),
         bookmarkCategories: (bookmarkCategoryRows || []).map(mapBookmarkCategory),
         bookmarks: (bookmarkRows || []).map(mapBookmark),
-        stickyNotes: (stickyNotesRes.data || []).map((r: Record<string, unknown>) => ({
-          id: r.id as string,
-          title: (r.title as string) || '',
-          text: r.text as string,
-          position: (r.position as { x: number; y: number }) || { x: 20, y: 100 },
-        })),
-        todoNotes: (todoNotesRes.data || []).map((r: Record<string, unknown>) => ({
-          id: r.id as string,
-          title: r.title as string,
-          items: (r.items as { id: string; text: string; done: boolean }[]) || [],
-          position: (r.position as { x: number; y: number }) || { x: 40, y: 140 },
-        })),
+        stickyNotes: (stickyNotesRes.data || []).map((r: Record<string, unknown>) => {
+          const id = r.id as string;
+          return {
+            id,
+            title: (r.title as string) || '',
+            text: r.text as string,
+            position: cachedStickyMap.get(id) || (r.position as { x: number; y: number }) || { x: window.innerWidth / 2 - 150, y: window.innerHeight / 2 - 150 },
+          };
+        }),
+        todoNotes: (todoNotesRes.data || []).map((r: Record<string, unknown>) => {
+          const id = r.id as string;
+          return {
+            id,
+            title: r.title as string,
+            items: (r.items as { id: string; text: string; done: boolean }[]) || [],
+            position: cachedTodoMap.get(id) || (r.position as { x: number; y: number }) || { x: window.innerWidth / 2 - 100, y: window.innerHeight / 2 - 100 },
+          };
+        }),
         isLoading: false,
       });
-
-      // Merge localStorage positions over Supabase data for persisted drag coordinates
-      const cached = loadNotesFromStorage(userId);
-      if (cached) {
-        const cachedStickyMap = new Map(cached.stickyNotes.map((n) => [n.id, n]));
-        const cachedTodoMap = new Map(cached.todoNotes.map((n) => [n.id, n]));
-        set((s) => ({
-          stickyNotes: s.stickyNotes.map((n) => {
-            const cached = cachedStickyMap.get(n.id);
-            return cached ? { ...n, position: cached.position } : n;
-          }),
-          todoNotes: s.todoNotes.map((n) => {
-            const cached = cachedTodoMap.get(n.id);
-            return cached ? { ...n, position: cached.position } : n;
-          }),
-        }));
-      }
 
       if (!lifeCategoryRows || lifeCategoryRows.length === 0) {
         console.log('[loadUserData] No categories found — seeding defaults');
@@ -779,7 +775,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     const userId = get().session?.user?.id;
     if (!userId) return;
 
-    // Prefer localStorage cache for immediate render, then sync from Supabase
+    // First render from localStorage positions (instant, no flash)
     const cached = loadNotesFromStorage(userId);
     if (cached) {
       set({ stickyNotes: cached.stickyNotes, todoNotes: cached.todoNotes });
@@ -790,38 +786,26 @@ export const useAppStore = create<AppStore>()((set, get) => ({
         supabase.from('sticky_notes').select('*').eq('user_id', userId).order('created_at'),
         supabase.from('todo_notes').select('*').eq('user_id', userId).order('created_at'),
       ]);
+
+      // Positions from localStorage always win over Supabase defaults
+      const cachedStickyMap = cached ? new Map(cached.stickyNotes.map((n) => [n.id, n.position])) : new Map();
+      const cachedTodoMap = cached ? new Map(cached.todoNotes.map((n) => [n.id, n.position])) : new Map();
+
       const freshSticky = (stickyRes.data || []).map((r: Record<string, unknown>) => ({
         id: r.id as string,
         title: (r.title as string) || '',
         text: r.text as string,
-        position: (r.position as { x: number; y: number }) || { x: 20, y: 100 },
+        position: cachedStickyMap.get(r.id as string) || (r.position as { x: number; y: number }) || { x: window.innerWidth / 2 - 150, y: window.innerHeight / 2 - 150 },
       }));
       const freshTodo = (todoRes.data || []).map((r: Record<string, unknown>) => ({
         id: r.id as string,
         title: r.title as string,
         items: (r.items as { id: string; text: string; done: boolean }[]) || [],
-        position: (r.position as { x: number; y: number }) || { x: 40, y: 140 },
+        position: cachedTodoMap.get(r.id as string) || (r.position as { x: number; y: number }) || { x: window.innerWidth / 2 - 100, y: window.innerHeight / 2 - 100 },
       }));
 
-      // Merge cached positions over fresh data to preserve drag coordinates
-      if (cached) {
-        const cachedStickyMap = new Map(cached.stickyNotes.map((n) => [n.id, n]));
-        const cachedTodoMap = new Map(cached.todoNotes.map((n) => [n.id, n]));
-        set({
-          stickyNotes: freshSticky.map((n) => {
-            const cached = cachedStickyMap.get(n.id);
-            return cached ? { ...n, position: cached.position } : n;
-          }),
-          todoNotes: freshTodo.map((n) => {
-            const cached = cachedTodoMap.get(n.id);
-            return cached ? { ...n, position: cached.position } : n;
-          }),
-        });
-      } else {
-        set({ stickyNotes: freshSticky, todoNotes: freshTodo });
-      }
-
-      saveNotesToStorage(userId, get().stickyNotes, get().todoNotes);
+      set({ stickyNotes: freshSticky, todoNotes: freshTodo });
+      saveNotesToStorage(userId, freshSticky, freshTodo);
     } catch (err) {
       console.error('Failed to load notes:', err);
     }

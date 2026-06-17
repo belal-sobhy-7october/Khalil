@@ -1,4 +1,4 @@
-import { useCallback, memo } from 'react';
+import { useCallback, memo, useRef } from 'react';
 import { motion } from 'framer-motion';
 import type { StickyNoteData } from '../Canvas/StickyNote';
 import type { TodoNoteData } from '../Canvas/TodoNote';
@@ -25,6 +25,11 @@ function FloatingNoteCard({
   children: React.ReactNode;
   onUpdatePosition: (id: string, pos: { x: number; y: number }) => void;
 }) {
+  // Keep a ref to the latest position so onDragEnd always uses current coordinates
+  // without depending on a changing prop (prevents callback churn & re-renders)
+  const posRef = useRef(position);
+  posRef.current = position;
+
   const handleDragStart = useCallback(() => {
     document.body.style.cursor = 'grabbing';
   }, []);
@@ -32,11 +37,11 @@ function FloatingNoteCard({
   const handleDragEnd = useCallback(
     (_: MouseEvent | TouchEvent | PointerEvent, info: { offset: { x: number; y: number } }) => {
       document.body.style.cursor = 'grab';
-      const newX = position.x + info.offset.x;
-      const newY = position.y + info.offset.y;
+      const newX = posRef.current.x + info.offset.x;
+      const newY = posRef.current.y + info.offset.y;
       onUpdatePosition(id, { x: newX, y: newY });
     },
-    [id, position, onUpdatePosition]
+    [id, onUpdatePosition]
   );
 
   return (
@@ -47,7 +52,7 @@ function FloatingNoteCard({
         position: 'absolute',
         top: 0,
         left: 0,
-        zIndex: 100,
+        zIndex: 9999,
         cursor: 'grab',
       }}
       initial={{ x: position.x, y: position.y }}

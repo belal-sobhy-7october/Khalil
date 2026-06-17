@@ -94,9 +94,12 @@ function App() {
   }, [theme]);
 
   useEffect(() => {
+    let dataLoaded = false;
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
-      if (session) {
+      if (session && !dataLoaded) {
+        dataLoaded = true;
         loadUserData().finally(() => useAppStore.setState({ isLoading: false }));
       } else {
         useAppStore.setState({ isLoading: false });
@@ -110,9 +113,11 @@ function App() {
         return;
       }
       setSession(session);
-      if (session) {
+      // Only reload data if we haven't already loaded it
+      if (session && !dataLoaded) {
+        dataLoaded = true;
         loadUserData().finally(() => useAppStore.setState({ isLoading: false }));
-      } else {
+      } else if (!session) {
         useAppStore.setState({ isLoading: false });
       }
     });
