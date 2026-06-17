@@ -227,11 +227,37 @@ export const useAppStore = create<AppStore>()((set, get) => ({
 
       const focusRow = dailyFocusRows && dailyFocusRows.length > 0 ? dailyFocusRows[0] : null;
 
-      // Build notes from Supabase, then overlay positions from localStorage
-      // so user-dragged coordinates survive re-fetches
+      // Hydrate from localStorage immediately so notes survive even if
+      // the Supabase queries below fail entirely (network error, RLS
+      // misconfiguration, etc.).
       const cached = loadNotesFromStorage(userId);
-      const cachedStickyMap = cached ? new Map(cached.stickyNotes.map((n) => [n.id, n.position])) : new Map();
-      const cachedTodoMap = cached ? new Map(cached.todoNotes.map((n) => [n.id, n.position])) : new Map();
+      if (cached) {
+        set({ stickyNotes: cached.stickyNotes, todoNotes: cached.todoNotes });
+      }
+
+      const supabaseSticky = (stickyNotesRes.data || []).map((r: Record<string, unknown>) => {
+        const id = r.id as string;
+        const cachedPos = cached?.stickyNotes.find((n) => n.id === id)?.position;
+        return {
+          id,
+          title: (r.title as string) || '',
+          text: r.text as string,
+          position: cachedPos || (r.position as { x: number; y: number }) || { x: window.innerWidth / 2 - 150, y: window.innerHeight / 2 - 150 },
+        };
+      });
+      const supabaseTodo = (todoNotesRes.data || []).map((r: Record<string, unknown>) => {
+        const id = r.id as string;
+        const cachedPos = cached?.todoNotes.find((n) => n.id === id)?.position;
+        return {
+          id,
+          title: r.title as string,
+          items: (r.items as { id: string; text: string; done: boolean }[]) || [],
+          position: cachedPos || (r.position as { x: number; y: number }) || { x: window.innerWidth / 2 - 100, y: window.innerHeight / 2 - 100 },
+        };
+      });
+
+      const stickyNotes = supabaseSticky.length > 0 ? supabaseSticky : (cached?.stickyNotes || []);
+      const todoNotes = supabaseTodo.length > 0 ? supabaseTodo : (cached?.todoNotes || []);
 
       set({
         dailyFocus: focusRow
@@ -245,26 +271,14 @@ export const useAppStore = create<AppStore>()((set, get) => ({
         subTrackEntries: (subTrackEntryRows || []).map(mapSubTrackEntry),
         bookmarkCategories: (bookmarkCategoryRows || []).map(mapBookmarkCategory),
         bookmarks: (bookmarkRows || []).map(mapBookmark),
-        stickyNotes: (stickyNotesRes.data || []).map((r: Record<string, unknown>) => {
-          const id = r.id as string;
-          return {
-            id,
-            title: (r.title as string) || '',
-            text: r.text as string,
-            position: cachedStickyMap.get(id) || (r.position as { x: number; y: number }) || { x: window.innerWidth / 2 - 150, y: window.innerHeight / 2 - 150 },
-          };
-        }),
-        todoNotes: (todoNotesRes.data || []).map((r: Record<string, unknown>) => {
-          const id = r.id as string;
-          return {
-            id,
-            title: r.title as string,
-            items: (r.items as { id: string; text: string; done: boolean }[]) || [],
-            position: cachedTodoMap.get(id) || (r.position as { x: number; y: number }) || { x: window.innerWidth / 2 - 100, y: window.innerHeight / 2 - 100 },
-          };
-        }),
+        stickyNotes,
+        todoNotes,
         isLoading: false,
       });
+
+      // Persist merged notes back to localStorage so drag coordinates are
+      // always up-to-date after a Supabase sync.
+      saveNotesToStorage(userId, stickyNotes, todoNotes);
 
       if (!lifeCategoryRows || lifeCategoryRows.length === 0) {
         console.log('[loadUserData] No categories found — seeding defaults');
@@ -787,25 +801,34 @@ export const useAppStore = create<AppStore>()((set, get) => ({
         supabase.from('todo_notes').select('*').eq('user_id', userId).order('created_at'),
       ]);
 
-      // Positions from localStorage always win over Supabase defaults
-      const cachedStickyMap = cached ? new Map(cached.stickyNotes.map((n) => [n.id, n.position])) : new Map();
-      const cachedTodoMap = cached ? new Map(cached.todoNotes.map((n) => [n.id, n.position])) : new Map();
+      // Positions from localStorage always win over Supabase defaults;
+      // if Supabase returns empty, fall back to cached data entirely.
+      const supabaseSticky = (stickyRes.data || []).map((r: Record<string, unknown>) => {
+        const id = r.id as string;
+        const cachedPos = cached?.stickyNotes.find((n) => n.id === id)?.position;
+        return {
+          id,
+          title: (r.title as string) || '',
+          text: r.text as string,
+          position: cachedPos || (r.position as { x: number; y: number }) || { x: window.innerWidth / 2 - 150, y: window.innerHeight / 2 - 150 },
+        };
+      });
+      const supabaseTodo = (todoRes.data || []).map((r: Record<string, unknown>) => {
+        const id = r.id as string;
+        const cachedPos = cached?.todoNotes.find((n) => n.id === id)?.position;
+        return {
+          id,
+          title: r.title as string,
+          items: (r.items as { id: string; text: string; done: boolean }[]) || [],
+          position: cachedPos || (r.position as { x: number; y: number }) || { x: window.innerWidth / 2 - 100, y: window.innerHeight / 2 - 100 },
+        };
+      });
 
-      const freshSticky = (stickyRes.data || []).map((r: Record<string, unknown>) => ({
-        id: r.id as string,
-        title: (r.title as string) || '',
-        text: r.text as string,
-        position: cachedStickyMap.get(r.id as string) || (r.position as { x: number; y: number }) || { x: window.innerWidth / 2 - 150, y: window.innerHeight / 2 - 150 },
-      }));
-      const freshTodo = (todoRes.data || []).map((r: Record<string, unknown>) => ({
-        id: r.id as string,
-        title: r.title as string,
-        items: (r.items as { id: string; text: string; done: boolean }[]) || [],
-        position: cachedTodoMap.get(r.id as string) || (r.position as { x: number; y: number }) || { x: window.innerWidth / 2 - 100, y: window.innerHeight / 2 - 100 },
-      }));
+      const stickyNotes = supabaseSticky.length > 0 ? supabaseSticky : (cached?.stickyNotes || []);
+      const todoNotes = supabaseTodo.length > 0 ? supabaseTodo : (cached?.todoNotes || []);
 
-      set({ stickyNotes: freshSticky, todoNotes: freshTodo });
-      saveNotesToStorage(userId, freshSticky, freshTodo);
+      set({ stickyNotes, todoNotes });
+      saveNotesToStorage(userId, stickyNotes, todoNotes);
     } catch (err) {
       console.error('Failed to load notes:', err);
     }
