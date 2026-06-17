@@ -110,6 +110,26 @@ function generateId(): string {
   return crypto.randomUUID();
 }
 
+function notesStorageKey(userId: string): string {
+  return `khalil-notes-${userId}`;
+}
+
+function saveNotesToStorage(userId: string, stickyNotes: StickyNoteData[], todoNotes: TodoNoteData[]) {
+  try {
+    localStorage.setItem(notesStorageKey(userId), JSON.stringify({ stickyNotes, todoNotes }));
+  } catch { /* quota exceeded, silently ignore */ }
+}
+
+function loadNotesFromStorage(userId: string): { stickyNotes: StickyNoteData[]; todoNotes: TodoNoteData[] } | null {
+  try {
+    const raw = localStorage.getItem(notesStorageKey(userId));
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
 export const useAppStore = create<AppStore>()((set, get) => ({
   language: (() => {
     if (typeof window !== 'undefined') {
@@ -232,6 +252,23 @@ export const useAppStore = create<AppStore>()((set, get) => ({
         })),
         isLoading: false,
       });
+
+      // Merge localStorage positions over Supabase data for persisted drag coordinates
+      const cached = loadNotesFromStorage(userId);
+      if (cached) {
+        const cachedStickyMap = new Map(cached.stickyNotes.map((n) => [n.id, n]));
+        const cachedTodoMap = new Map(cached.todoNotes.map((n) => [n.id, n]));
+        set((s) => ({
+          stickyNotes: s.stickyNotes.map((n) => {
+            const cached = cachedStickyMap.get(n.id);
+            return cached ? { ...n, position: cached.position } : n;
+          }),
+          todoNotes: s.todoNotes.map((n) => {
+            const cached = cachedTodoMap.get(n.id);
+            return cached ? { ...n, position: cached.position } : n;
+          }),
+        }));
+      }
 
       if (!lifeCategoryRows || lifeCategoryRows.length === 0) {
         console.log('[loadUserData] No categories found — seeding defaults');
@@ -741,25 +778,50 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   loadNotes: async () => {
     const userId = get().session?.user?.id;
     if (!userId) return;
+
+    // Prefer localStorage cache for immediate render, then sync from Supabase
+    const cached = loadNotesFromStorage(userId);
+    if (cached) {
+      set({ stickyNotes: cached.stickyNotes, todoNotes: cached.todoNotes });
+    }
+
     try {
       const [stickyRes, todoRes] = await Promise.all([
         supabase.from('sticky_notes').select('*').eq('user_id', userId).order('created_at'),
         supabase.from('todo_notes').select('*').eq('user_id', userId).order('created_at'),
       ]);
-      set({
-        stickyNotes: (stickyRes.data || []).map((r: Record<string, unknown>) => ({
-          id: r.id as string,
-          title: (r.title as string) || '',
-          text: r.text as string,
-          position: (r.position as { x: number; y: number }) || { x: 20, y: 100 },
-        })),
-        todoNotes: (todoRes.data || []).map((r: Record<string, unknown>) => ({
-          id: r.id as string,
-          title: r.title as string,
-          items: (r.items as { id: string; text: string; done: boolean }[]) || [],
-          position: (r.position as { x: number; y: number }) || { x: 40, y: 140 },
-        })),
-      });
+      const freshSticky = (stickyRes.data || []).map((r: Record<string, unknown>) => ({
+        id: r.id as string,
+        title: (r.title as string) || '',
+        text: r.text as string,
+        position: (r.position as { x: number; y: number }) || { x: 20, y: 100 },
+      }));
+      const freshTodo = (todoRes.data || []).map((r: Record<string, unknown>) => ({
+        id: r.id as string,
+        title: r.title as string,
+        items: (r.items as { id: string; text: string; done: boolean }[]) || [],
+        position: (r.position as { x: number; y: number }) || { x: 40, y: 140 },
+      }));
+
+      // Merge cached positions over fresh data to preserve drag coordinates
+      if (cached) {
+        const cachedStickyMap = new Map(cached.stickyNotes.map((n) => [n.id, n]));
+        const cachedTodoMap = new Map(cached.todoNotes.map((n) => [n.id, n]));
+        set({
+          stickyNotes: freshSticky.map((n) => {
+            const cached = cachedStickyMap.get(n.id);
+            return cached ? { ...n, position: cached.position } : n;
+          }),
+          todoNotes: freshTodo.map((n) => {
+            const cached = cachedTodoMap.get(n.id);
+            return cached ? { ...n, position: cached.position } : n;
+          }),
+        });
+      } else {
+        set({ stickyNotes: freshSticky, todoNotes: freshTodo });
+      }
+
+      saveNotesToStorage(userId, get().stickyNotes, get().todoNotes);
     } catch (err) {
       console.error('Failed to load notes:', err);
     }
@@ -770,7 +832,11 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     if (!userId) return;
     try {
       await supabase.from('sticky_notes').insert({ id: note.id, user_id: userId, title: note.title, text: note.text, position: note.position });
-      set((s) => ({ stickyNotes: [...s.stickyNotes, note] }));
+      set((s) => {
+        const updated = [...s.stickyNotes, note];
+        if (userId) saveNotesToStorage(userId, updated, s.todoNotes);
+        return { stickyNotes: updated };
+      });
     } catch (err) { console.error('Failed to add sticky note:', err); }
   },
 
@@ -781,14 +847,24 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       if (data.text !== undefined) dbData.text = data.text;
       if (data.position !== undefined) dbData.position = data.position;
       await supabase.from('sticky_notes').update(dbData).eq('id', id);
-      set((s) => ({ stickyNotes: s.stickyNotes.map((n) => n.id === id ? { ...n, ...data } : n) }));
+      set((s) => {
+        const updated = s.stickyNotes.map((n) => (n.id === id ? { ...n, ...data } : n));
+        const userId = s.session?.user?.id;
+        if (userId) saveNotesToStorage(userId, updated, s.todoNotes);
+        return { stickyNotes: updated };
+      });
     } catch (err) { console.error('Failed to update sticky note:', err); }
   },
 
   deleteStickyNote: async (id) => {
     try {
       await supabase.from('sticky_notes').delete().eq('id', id);
-      set((s) => ({ stickyNotes: s.stickyNotes.filter((n) => n.id !== id) }));
+      set((s) => {
+        const updated = s.stickyNotes.filter((n) => n.id !== id);
+        const userId = s.session?.user?.id;
+        if (userId) saveNotesToStorage(userId, updated, s.todoNotes);
+        return { stickyNotes: updated };
+      });
     } catch (err) { console.error('Failed to delete sticky note:', err); }
   },
 
@@ -803,7 +879,11 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     if (!userId) return;
     try {
       await supabase.from('todo_notes').insert({ id: note.id, user_id: userId, title: note.title, items: note.items, position: note.position });
-      set((s) => ({ todoNotes: [...s.todoNotes, note] }));
+      set((s) => {
+        const updated = [...s.todoNotes, note];
+        if (userId) saveNotesToStorage(userId, s.stickyNotes, updated);
+        return { todoNotes: updated };
+      });
     } catch (err) { console.error('Failed to add todo note:', err); }
   },
 
@@ -814,14 +894,24 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       if (updated.items !== undefined) dbData.items = updated.items;
       if (updated.position !== undefined) dbData.position = updated.position;
       await supabase.from('todo_notes').update(dbData).eq('id', id);
-      set((s) => ({ todoNotes: s.todoNotes.map((n) => n.id === id ? { ...n, ...updated } : n) }));
+      set((s) => {
+        const updatedTodos = s.todoNotes.map((n) => (n.id === id ? { ...n, ...updated } : n));
+        const userId = s.session?.user?.id;
+        if (userId) saveNotesToStorage(userId, s.stickyNotes, updatedTodos);
+        return { todoNotes: updatedTodos };
+      });
     } catch (err) { console.error('Failed to update todo note:', err); }
   },
 
   deleteTodoNote: async (id) => {
     try {
       await supabase.from('todo_notes').delete().eq('id', id);
-      set((s) => ({ todoNotes: s.todoNotes.filter((n) => n.id !== id) }));
+      set((s) => {
+        const updated = s.todoNotes.filter((n) => n.id !== id);
+        const userId = s.session?.user?.id;
+        if (userId) saveNotesToStorage(userId, s.stickyNotes, updated);
+        return { todoNotes: updated };
+      });
     } catch (err) { console.error('Failed to delete todo note:', err); }
   },
 

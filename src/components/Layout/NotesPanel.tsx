@@ -26,20 +26,23 @@ function FloatingNoteCard({
   onUpdatePosition: (id: string, pos: { x: number; y: number }) => void;
 }) {
   const handleDragEnd = useCallback(
-    (_: MouseEvent | TouchEvent | PointerEvent, info: { point: { x: number; y: number } }) => {
-      onUpdatePosition(id, { x: info.point.x, y: info.point.y });
+    (_: MouseEvent | TouchEvent | PointerEvent, info: { offset: { x: number; y: number } }) => {
+      const newX = position.x + info.offset.x;
+      const newY = position.y + info.offset.y;
+      onUpdatePosition(id, { x: newX, y: newY });
     },
-    [id, onUpdatePosition]
+    [id, position, onUpdatePosition]
   );
 
   return (
     <motion.div
       drag
       dragMomentum={false}
-      initial={false}
-      style={{ x: position.x, y: position.y, position: 'absolute', left: 0, top: 0 }}
+      dragElastic={0}
+      initial={{ x: position.x, y: position.y }}
       onDragEnd={handleDragEnd}
-      className="pointer-events-auto z-40"
+      style={{ position: 'absolute', zIndex: 50 }}
+      className="pointer-events-auto"
     >
       {children}
     </motion.div>
