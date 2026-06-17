@@ -5,6 +5,7 @@ export interface StickyNoteData {
   id: string;
   title: string;
   text: string;
+  position: { x: number; y: number };
 }
 
 interface Props {
@@ -13,11 +14,19 @@ interface Props {
   onUpdate: (id: string, data: Partial<StickyNoteData>) => void;
 }
 
+function randomOffset() {
+  return {
+    x: 20 + Math.random() * 280,
+    y: 100 + Math.random() * 400,
+  };
+}
+
 export function createStickyNote(title = '', text = ''): StickyNoteData {
   return {
     id: crypto.randomUUID(),
     title,
     text,
+    position: randomOffset(),
   };
 }
 

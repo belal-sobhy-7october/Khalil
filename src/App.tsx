@@ -33,11 +33,9 @@ function App() {
   const addStickyNoteStore = useAppStore((s) => s.addStickyNote);
   const updateStickyNoteStore = useAppStore((s) => s.updateStickyNote);
   const deleteStickyNoteStore = useAppStore((s) => s.deleteStickyNote);
-  const reorderStickyNotesStore = useAppStore((s) => s.reorderStickyNotes);
   const addTodoNoteStore = useAppStore((s) => s.addTodoNote);
   const updateTodoNoteStore = useAppStore((s) => s.updateTodoNote);
   const deleteTodoNoteStore = useAppStore((s) => s.deleteTodoNote);
-  const reorderTodoNotesStore = useAppStore((s) => s.reorderTodoNotes);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const initialized = useRef(false);
@@ -85,14 +83,6 @@ function App() {
   const deleteTodoNote = useCallback((id: string) => {
     deleteTodoNoteStore(id);
   }, [deleteTodoNoteStore]);
-
-  const reorderStickyNotes = useCallback((ids: string[]) => {
-    reorderStickyNotesStore(ids);
-  }, [reorderStickyNotesStore]);
-
-  const reorderTodoNotes = useCallback((ids: string[]) => {
-    reorderTodoNotesStore(ids);
-  }, [reorderTodoNotesStore]);
 
   useEffect(() => {
     document.documentElement.dir = isRTL ? 'rtl' : 'ltr';
@@ -183,8 +173,6 @@ function App() {
         onUpdateSticky={updateStickyNote}
         onDeleteTodo={deleteTodoNote}
         onUpdateTodo={updateTodoNote}
-        onReorderSticky={reorderStickyNotes}
-        onReorderTodo={reorderTodoNotes}
       />
 
       <div ref={menuRef} className="fixed bottom-6 end-6 z-50 flex flex-col items-end gap-2">

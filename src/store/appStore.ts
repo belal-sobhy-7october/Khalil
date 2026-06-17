@@ -222,11 +222,13 @@ export const useAppStore = create<AppStore>()((set, get) => ({
           id: r.id as string,
           title: (r.title as string) || '',
           text: r.text as string,
+          position: (r.position as { x: number; y: number }) || { x: 20, y: 100 },
         })),
         todoNotes: (todoNotesRes.data || []).map((r: Record<string, unknown>) => ({
           id: r.id as string,
           title: r.title as string,
           items: (r.items as { id: string; text: string; done: boolean }[]) || [],
+          position: (r.position as { x: number; y: number }) || { x: 40, y: 140 },
         })),
         isLoading: false,
       });
@@ -749,11 +751,13 @@ export const useAppStore = create<AppStore>()((set, get) => ({
           id: r.id as string,
           title: (r.title as string) || '',
           text: r.text as string,
+          position: (r.position as { x: number; y: number }) || { x: 20, y: 100 },
         })),
         todoNotes: (todoRes.data || []).map((r: Record<string, unknown>) => ({
           id: r.id as string,
           title: r.title as string,
           items: (r.items as { id: string; text: string; done: boolean }[]) || [],
+          position: (r.position as { x: number; y: number }) || { x: 40, y: 140 },
         })),
       });
     } catch (err) {
@@ -765,7 +769,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     const userId = get().session?.user?.id;
     if (!userId) return;
     try {
-      await supabase.from('sticky_notes').insert({ id: note.id, user_id: userId, title: note.title, text: note.text });
+      await supabase.from('sticky_notes').insert({ id: note.id, user_id: userId, title: note.title, text: note.text, position: note.position });
       set((s) => ({ stickyNotes: [...s.stickyNotes, note] }));
     } catch (err) { console.error('Failed to add sticky note:', err); }
   },
@@ -775,6 +779,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       const dbData: Record<string, unknown> = {};
       if (data.title !== undefined) dbData.title = data.title;
       if (data.text !== undefined) dbData.text = data.text;
+      if (data.position !== undefined) dbData.position = data.position;
       await supabase.from('sticky_notes').update(dbData).eq('id', id);
       set((s) => ({ stickyNotes: s.stickyNotes.map((n) => n.id === id ? { ...n, ...data } : n) }));
     } catch (err) { console.error('Failed to update sticky note:', err); }
@@ -797,7 +802,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     const userId = get().session?.user?.id;
     if (!userId) return;
     try {
-      await supabase.from('todo_notes').insert({ id: note.id, user_id: userId, title: note.title, items: note.items });
+      await supabase.from('todo_notes').insert({ id: note.id, user_id: userId, title: note.title, items: note.items, position: note.position });
       set((s) => ({ todoNotes: [...s.todoNotes, note] }));
     } catch (err) { console.error('Failed to add todo note:', err); }
   },
@@ -807,6 +812,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       const dbData: Record<string, unknown> = {};
       if (updated.title !== undefined) dbData.title = updated.title;
       if (updated.items !== undefined) dbData.items = updated.items;
+      if (updated.position !== undefined) dbData.position = updated.position;
       await supabase.from('todo_notes').update(dbData).eq('id', id);
       set((s) => ({ todoNotes: s.todoNotes.map((n) => n.id === id ? { ...n, ...updated } : n) }));
     } catch (err) { console.error('Failed to update todo note:', err); }

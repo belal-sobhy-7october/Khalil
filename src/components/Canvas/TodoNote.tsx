@@ -11,6 +11,7 @@ export interface TodoNoteData {
   id: string;
   title: string;
   items: TodoItemData[];
+  position: { x: number; y: number };
 }
 
 interface Props {
@@ -19,11 +20,19 @@ interface Props {
   onUpdate: (id: string, updated: Partial<TodoNoteData>) => void;
 }
 
+function randomOffset() {
+  return {
+    x: 20 + Math.random() * 280,
+    y: 100 + Math.random() * 400,
+  };
+}
+
 export function createTodoNote(): TodoNoteData {
   return {
     id: crypto.randomUUID(),
     title: '',
     items: [],
+    position: randomOffset(),
   };
 }
 

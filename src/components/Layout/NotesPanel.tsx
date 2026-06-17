@@ -1,23 +1,9 @@
-import { useMemo, useCallback } from 'react';
-import {
-  DndContext,
-  closestCenter,
-  PointerSensor,
-  TouchSensor,
-  useSensor,
-  useSensors,
-  type DragEndEvent,
-} from '@dnd-kit/core';
-import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { useCallback, memo } from 'react';
+import { motion } from 'framer-motion';
 import type { StickyNoteData } from '../Canvas/StickyNote';
 import type { TodoNoteData } from '../Canvas/TodoNote';
 import StickyNote from '../Canvas/StickyNote';
 import TodoNote from '../Canvas/TodoNote';
-import { SortableNoteItem } from './SortableNoteItem';
-
-type NoteItem =
-  | { type: 'sticky'; data: StickyNoteData }
-  | { type: 'todo'; data: TodoNoteData };
 
 interface Props {
   stickyNotes: StickyNoteData[];
@@ -26,9 +12,41 @@ interface Props {
   onUpdateSticky: (id: string, data: Partial<StickyNoteData>) => void;
   onDeleteTodo: (id: string) => void;
   onUpdateTodo: (id: string, updated: Partial<TodoNoteData>) => void;
-  onReorderSticky: (ids: string[]) => void;
-  onReorderTodo: (ids: string[]) => void;
 }
+
+function FloatingNoteCard({
+  id,
+  position,
+  children,
+  onUpdatePosition,
+}: {
+  id: string;
+  position: { x: number; y: number };
+  children: React.ReactNode;
+  onUpdatePosition: (id: string, pos: { x: number; y: number }) => void;
+}) {
+  const handleDragEnd = useCallback(
+    (_: MouseEvent | TouchEvent | PointerEvent, info: { point: { x: number; y: number } }) => {
+      onUpdatePosition(id, { x: info.point.x, y: info.point.y });
+    },
+    [id, onUpdatePosition]
+  );
+
+  return (
+    <motion.div
+      drag
+      dragMomentum={false}
+      initial={false}
+      style={{ x: position.x, y: position.y, position: 'absolute', left: 0, top: 0 }}
+      onDragEnd={handleDragEnd}
+      className="pointer-events-auto z-40"
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+const FloatingNoteCardMemo = memo(FloatingNoteCard);
 
 export default function NotesPanel({
   stickyNotes,
@@ -37,73 +55,51 @@ export default function NotesPanel({
   onUpdateSticky,
   onDeleteTodo,
   onUpdateTodo,
-  onReorderSticky,
-  onReorderTodo,
 }: Props) {
-  const items: NoteItem[] = useMemo(() => {
-    const combined: NoteItem[] = [
-      ...stickyNotes.map((n) => ({ type: 'sticky' as const, data: n })),
-      ...todoNotes.map((n) => ({ type: 'todo' as const, data: n })),
-    ];
-    return combined;
-  }, [stickyNotes, todoNotes]);
-
-  const itemIds = useMemo(() => items.map((item) => item.data.id), [items]);
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } })
+  const handleStickyPosition = useCallback(
+    (id: string, pos: { x: number; y: number }) => {
+      onUpdateSticky(id, { position: pos });
+    },
+    [onUpdateSticky]
   );
 
-  const handleDragEnd = useCallback(
-    (event: DragEndEvent) => {
-      const { active, over } = event;
-      if (!over || active.id === over.id) return;
-
-      const oldIndex = items.findIndex((i) => i.data.id === active.id);
-      const newIndex = items.findIndex((i) => i.data.id === over.id);
-      if (oldIndex === -1 || newIndex === -1) return;
-
-      const reordered = [...items];
-      const [moved] = reordered.splice(oldIndex, 1);
-      reordered.splice(newIndex, 0, moved);
-
-      const stickyIds = reordered
-        .filter((i): i is NoteItem & { type: 'sticky' } => i.type === 'sticky')
-        .map((i) => i.data.id);
-      const todoIds = reordered
-        .filter((i): i is NoteItem & { type: 'todo' } => i.type === 'todo')
-        .map((i) => i.data.id);
-
-      onReorderSticky(stickyIds);
-      onReorderTodo(todoIds);
+  const handleTodoPosition = useCallback(
+    (id: string, pos: { x: number; y: number }) => {
+      onUpdateTodo(id, { position: pos });
     },
-    [items, onReorderSticky, onReorderTodo]
+    [onUpdateTodo]
   );
 
   return (
-    <div className="fixed top-20 start-4 z-40 flex flex-col gap-3 w-56">
-      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-        <SortableContext items={itemIds} strategy={verticalListSortingStrategy}>
-          {items.map((item) => (
-            <SortableNoteItem key={item.data.id} id={item.data.id}>
-              {item.type === 'sticky' ? (
-                <StickyNote
-                  note={item.data}
-                  onDelete={onDeleteSticky}
-                  onUpdate={onUpdateSticky}
-                />
-              ) : (
-                <TodoNote
-                  note={item.data}
-                  onDelete={onDeleteTodo}
-                  onUpdate={onUpdateTodo}
-                />
-              )}
-            </SortableNoteItem>
-          ))}
-        </SortableContext>
-      </DndContext>
+    <div className="fixed inset-0 pointer-events-none z-30">
+      {stickyNotes.map((note) => (
+        <FloatingNoteCardMemo
+          key={note.id}
+          id={note.id}
+          position={note.position}
+          onUpdatePosition={handleStickyPosition}
+        >
+          <StickyNote
+            note={note}
+            onDelete={onDeleteSticky}
+            onUpdate={onUpdateSticky}
+          />
+        </FloatingNoteCardMemo>
+      ))}
+      {todoNotes.map((note) => (
+        <FloatingNoteCardMemo
+          key={note.id}
+          id={note.id}
+          position={note.position}
+          onUpdatePosition={handleTodoPosition}
+        >
+          <TodoNote
+            note={note}
+            onDelete={onDeleteTodo}
+            onUpdate={onUpdateTodo}
+          />
+        </FloatingNoteCardMemo>
+      ))}
     </div>
   );
 }
