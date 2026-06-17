@@ -25,8 +25,13 @@ function FloatingNoteCard({
   children: React.ReactNode;
   onUpdatePosition: (id: string, pos: { x: number; y: number }) => void;
 }) {
+  const handleDragStart = useCallback(() => {
+    document.body.style.cursor = 'grabbing';
+  }, []);
+
   const handleDragEnd = useCallback(
     (_: MouseEvent | TouchEvent | PointerEvent, info: { offset: { x: number; y: number } }) => {
+      document.body.style.cursor = 'grab';
       const newX = position.x + info.offset.x;
       const newY = position.y + info.offset.y;
       onUpdatePosition(id, { x: newX, y: newY });
@@ -38,10 +43,16 @@ function FloatingNoteCard({
     <motion.div
       drag
       dragMomentum={false}
-      dragElastic={0}
+      style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        zIndex: 100,
+        cursor: 'grab',
+      }}
       initial={{ x: position.x, y: position.y }}
+      onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
-      style={{ position: 'absolute', zIndex: 50 }}
       className="pointer-events-auto"
     >
       {children}

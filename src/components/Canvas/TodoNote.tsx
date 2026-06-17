@@ -20,10 +20,10 @@ interface Props {
   onUpdate: (id: string, updated: Partial<TodoNoteData>) => void;
 }
 
-function randomOffset() {
+function spawnCenter() {
   return {
-    x: 20 + Math.random() * 280,
-    y: 100 + Math.random() * 400,
+    x: window.innerWidth / 2 - 150,
+    y: window.innerHeight / 2 - 150,
   };
 }
 
@@ -32,7 +32,7 @@ export function createTodoNote(): TodoNoteData {
     id: crypto.randomUUID(),
     title: '',
     items: [],
-    position: randomOffset(),
+    position: spawnCenter(),
   };
 }
 

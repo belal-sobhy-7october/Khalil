@@ -14,10 +14,10 @@ interface Props {
   onUpdate: (id: string, data: Partial<StickyNoteData>) => void;
 }
 
-function randomOffset() {
+function spawnCenter() {
   return {
-    x: 20 + Math.random() * 280,
-    y: 100 + Math.random() * 400,
+    x: window.innerWidth / 2 - 150,
+    y: window.innerHeight / 2 - 150,
   };
 }
 
@@ -26,7 +26,7 @@ export function createStickyNote(title = '', text = ''): StickyNoteData {
     id: crypto.randomUUID(),
     title,
     text,
-    position: randomOffset(),
+    position: spawnCenter(),
   };
 }
 
