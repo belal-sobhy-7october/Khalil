@@ -4,7 +4,7 @@
 -- 1. daily_focus
 create table daily_focus (
   id uuid default gen_random_uuid() primary key,
-  user_id uuid references auth.users(id) on delete cascade not null,
+  user_id uuid references auth.users(id) on delete cascade not null unique,
   text text default '',
   date date default current_date
 );
@@ -35,7 +35,8 @@ create table daily_todos (
   completed boolean default false,
   priority text default 'medium',
   created_at bigint default extract(epoch from now()) * 1000,
-  date date default current_date
+  date date default current_date,
+  sort_order int default 0
 );
 
 alter table daily_todos enable row level security;
@@ -64,7 +65,8 @@ create table weekly_todos (
   completed boolean default false,
   priority text default 'medium',
   created_at bigint default extract(epoch from now()) * 1000,
-  week_start date
+  week_start date,
+  sort_order int default 0
 );
 
 alter table weekly_todos enable row level security;
@@ -92,7 +94,8 @@ create table backlog_todos (
   text text not null,
   completed boolean default false,
   priority text default 'medium',
-  created_at bigint default extract(epoch from now()) * 1000
+  created_at bigint default extract(epoch from now()) * 1000,
+  sort_order int default 0
 );
 
 alter table backlog_todos enable row level security;
@@ -258,4 +261,62 @@ create policy "Users can update their own bookmarks"
 
 create policy "Users can delete their own bookmarks"
   on bookmarks for delete
+  using (auth.uid() = user_id);
+
+-- 10. sticky_notes (column notes)
+create table sticky_notes (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references auth.users(id) on delete cascade not null,
+  title text default '',
+  text text default '',
+  position jsonb default '{"x": 20, "y": 100}',
+  sort_order int default 0,
+  created_at bigint default extract(epoch from now()) * 1000
+);
+
+alter table sticky_notes enable row level security;
+
+create policy "Users can view their own sticky notes"
+  on sticky_notes for select
+  using (auth.uid() = user_id);
+
+create policy "Users can insert their own sticky notes"
+  on sticky_notes for insert
+  with check (auth.uid() = user_id);
+
+create policy "Users can update their own sticky notes"
+  on sticky_notes for update
+  using (auth.uid() = user_id);
+
+create policy "Users can delete their own sticky notes"
+  on sticky_notes for delete
+  using (auth.uid() = user_id);
+
+-- 11. todo_notes (column todo lists)
+create table todo_notes (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references auth.users(id) on delete cascade not null,
+  title text default '',
+  items jsonb default '[]',
+  position jsonb default '{"x": 40, "y": 140}',
+  sort_order int default 0,
+  created_at bigint default extract(epoch from now()) * 1000
+);
+
+alter table todo_notes enable row level security;
+
+create policy "Users can view their own todo notes"
+  on todo_notes for select
+  using (auth.uid() = user_id);
+
+create policy "Users can insert their own todo notes"
+  on todo_notes for insert
+  with check (auth.uid() = user_id);
+
+create policy "Users can update their own todo notes"
+  on todo_notes for update
+  using (auth.uid() = user_id);
+
+create policy "Users can delete their own todo notes"
+  on todo_notes for delete
   using (auth.uid() = user_id);

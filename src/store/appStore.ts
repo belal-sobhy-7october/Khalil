@@ -1,8 +1,6 @@
 import { create } from 'zustand';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
-import type { StickyNoteData } from '../components/Canvas/StickyNote';
-import type { TodoNoteData } from '../components/Canvas/TodoNote';
 import type {
   Language,
   Priority,
@@ -15,6 +13,8 @@ import type {
   SubTrackEntry,
   BookmarkCategory,
   Bookmark,
+  StickyNoteData,
+  TodoNoteData,
 } from '../types';
 
 interface AppStore {
@@ -83,7 +83,6 @@ interface AppStore {
 
   stickyNotes: StickyNoteData[];
   todoNotes: TodoNoteData[];
-  loadNotes: () => Promise<void>;
   addStickyNote: (note: StickyNoteData) => Promise<void>;
   updateStickyNote: (id: string, data: Partial<StickyNoteData>) => Promise<void>;
   deleteStickyNote: (id: string) => Promise<void>;
@@ -110,23 +109,26 @@ function generateId(): string {
   return crypto.randomUUID();
 }
 
-function notesStorageKey(userId: string): string {
-  return `khalil-notes-${userId}`;
+function logError(context: string, error: unknown) {
+  const msg = error && typeof error === 'object' ? (error as any).message || String(error) : String(error);
+  const details = error && typeof error === 'object' ? (error as any).details || '' : '';
+  console.error(`[${context}] ${msg}`, details);
 }
 
-function saveNotesToStorage(userId: string, stickyNotes: StickyNoteData[], todoNotes: TodoNoteData[]) {
+async function supabaseCall<T>(
+  promise: PromiseLike<{ data: T | null; error: any }>,
+  context: string
+): Promise<{ data: T | null; success: boolean }> {
   try {
-    localStorage.setItem(notesStorageKey(userId), JSON.stringify({ stickyNotes, todoNotes }));
-  } catch { /* quota exceeded, silently ignore */ }
-}
-
-function loadNotesFromStorage(userId: string): { stickyNotes: StickyNoteData[]; todoNotes: TodoNoteData[] } | null {
-  try {
-    const raw = localStorage.getItem(notesStorageKey(userId));
-    if (!raw) return null;
-    return JSON.parse(raw);
-  } catch {
-    return null;
+    const { data, error } = await promise;
+    if (error) {
+      logError(context, error);
+      return { data: null, success: false };
+    }
+    return { data, success: true };
+  } catch (err) {
+    logError(context, err);
+    return { data: null, success: false };
   }
 }
 
@@ -170,21 +172,18 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     console.log('[loadUserData] Fetching data for user:', userId);
 
     try {
-      const results = await Promise.all([
+      // Load core tables — these must exist
+      const [dailyFocusRes, dailyTodoRes, weeklyTodoRes, backlogTodoRes, lifeCategoryRes, subTrackRes, subTrackEntryRes, bookmarkCategoryRes, bookmarkRes] = await Promise.all([
         supabase.from('daily_focus').select('*').eq('user_id', userId).limit(1),
-        supabase.from('daily_todos').select('*').eq('user_id', userId).order('created_at'),
-        supabase.from('weekly_todos').select('*').eq('user_id', userId).order('created_at'),
-        supabase.from('backlog_todos').select('*').eq('user_id', userId).order('created_at'),
+        supabase.from('daily_todos').select('*').eq('user_id', userId).order('sort_order'),
+        supabase.from('weekly_todos').select('*').eq('user_id', userId).order('sort_order'),
+        supabase.from('backlog_todos').select('*').eq('user_id', userId).order('sort_order'),
         supabase.from('life_categories').select('*').eq('user_id', userId).order('sort_order'),
         supabase.from('sub_tracks').select('*').eq('user_id', userId).order('sort_order'),
         supabase.from('sub_track_entries').select('*').eq('user_id', userId).order('date'),
         supabase.from('bookmark_categories').select('*').eq('user_id', userId).order('name'),
         supabase.from('bookmarks').select('*').eq('user_id', userId).order('created_at'),
-        supabase.from('sticky_notes').select('*').eq('user_id', userId).order('created_at'),
-        supabase.from('todo_notes').select('*').eq('user_id', userId).order('created_at'),
       ]);
-
-      const [dailyFocusRes, dailyTodoRes, weeklyTodoRes, backlogTodoRes, lifeCategoryRes, subTrackRes, subTrackEntryRes, bookmarkCategoryRes, bookmarkRes, stickyNotesRes, todoNotesRes] = results;
 
       dailyFocusRes.error && console.error('[loadUserData] daily_focus error:', dailyFocusRes.error);
       dailyTodoRes.error && console.error('[loadUserData] daily_todos error:', dailyTodoRes.error);
@@ -195,8 +194,6 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       subTrackEntryRes.error && console.error('[loadUserData] sub_track_entries error:', subTrackEntryRes.error);
       bookmarkCategoryRes.error && console.error('[loadUserData] bookmark_categories error:', bookmarkCategoryRes.error);
       bookmarkRes.error && console.error('[loadUserData] bookmarks error:', bookmarkRes.error);
-      stickyNotesRes.error && console.error('[loadUserData] sticky_notes error:', stickyNotesRes.error);
-      todoNotesRes.error && console.error('[loadUserData] todo_notes error:', todoNotesRes.error);
 
       const dailyFocusRows = dailyFocusRes.data;
       const dailyTodoRows = dailyTodoRes.data;
@@ -227,37 +224,29 @@ export const useAppStore = create<AppStore>()((set, get) => ({
 
       const focusRow = dailyFocusRows && dailyFocusRows.length > 0 ? dailyFocusRows[0] : null;
 
-      // Hydrate from localStorage immediately so notes survive even if
-      // the Supabase queries below fail entirely (network error, RLS
-      // misconfiguration, etc.).
-      const cached = loadNotesFromStorage(userId);
-      if (cached) {
-        set({ stickyNotes: cached.stickyNotes, todoNotes: cached.todoNotes });
-      }
+      // ── Notes loading ──
 
-      const supabaseSticky = (stickyNotesRes.data || []).map((r: Record<string, unknown>) => {
-        const id = r.id as string;
-        const cachedPos = cached?.stickyNotes.find((n) => n.id === id)?.position;
-        return {
-          id,
-          title: (r.title as string) || '',
-          text: r.text as string,
-          position: cachedPos || (r.position as { x: number; y: number }) || { x: window.innerWidth / 2 - 150, y: window.innerHeight / 2 - 150 },
-        };
-      });
-      const supabaseTodo = (todoNotesRes.data || []).map((r: Record<string, unknown>) => {
-        const id = r.id as string;
-        const cachedPos = cached?.todoNotes.find((n) => n.id === id)?.position;
-        return {
-          id,
-          title: r.title as string,
-          items: (r.items as { id: string; text: string; done: boolean }[]) || [],
-          position: cachedPos || (r.position as { x: number; y: number }) || { x: window.innerWidth / 2 - 100, y: window.innerHeight / 2 - 100 },
-        };
-      });
+      let notesStickyData: Record<string, unknown>[] = [];
+      let notesTodoData: Record<string, unknown>[] = [];
+      const [sRes, tRes] = await Promise.all([
+        supabaseCall(supabase.from('sticky_notes').select('*').eq('user_id', userId).order('sort_order'), 'load sticky_notes'),
+        supabaseCall(supabase.from('todo_notes').select('*').eq('user_id', userId).order('sort_order'), 'load todo_notes'),
+      ]);
+      if (sRes.success) notesStickyData = (sRes.data || []) as Record<string, unknown>[];
+      if (tRes.success) notesTodoData = (tRes.data || []) as Record<string, unknown>[];
 
-      const stickyNotes = supabaseSticky.length > 0 ? supabaseSticky : (cached?.stickyNotes || []);
-      const todoNotes = supabaseTodo.length > 0 ? supabaseTodo : (cached?.todoNotes || []);
+      const stickyNotes = notesStickyData.map((r) => ({
+        id: r.id as string,
+        title: (r.title as string) || '',
+        text: r.text as string,
+        sortOrder: (r.sort_order as number) ?? 0,
+      }));
+      const todoNotes = notesTodoData.map((r) => ({
+        id: r.id as string,
+        title: r.title as string,
+        items: (r.items as { id: string; text: string; done: boolean }[]) || [],
+        sortOrder: (r.sort_order as number) ?? 0,
+      }));
 
       set({
         dailyFocus: focusRow
@@ -276,10 +265,6 @@ export const useAppStore = create<AppStore>()((set, get) => ({
         isLoading: false,
       });
 
-      // Persist merged notes back to localStorage so drag coordinates are
-      // always up-to-date after a Supabase sync.
-      saveNotesToStorage(userId, stickyNotes, todoNotes);
-
       if (!lifeCategoryRows || lifeCategoryRows.length === 0) {
         console.log('[loadUserData] No categories found — seeding defaults');
         await seedDefaults();
@@ -297,11 +282,15 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     const userId = get().session?.user?.id;
     if (!userId) return;
     try {
-      const existing = await supabase.from('daily_focus').select('id').eq('user_id', userId).maybeSingle();
-      if (existing?.data?.id) {
-        await supabase.from('daily_focus').update({ text: focus.text, date: focus.date }).eq('id', existing.data.id);
-      } else {
-        await supabase.from('daily_focus').insert({ user_id: userId, text: focus.text, date: focus.date });
+      const { error } = await supabase
+        .from('daily_focus')
+        .upsert(
+          { user_id: userId, text: focus.text, date: focus.date },
+          { onConflict: 'user_id' }
+        );
+      if (error) {
+        console.error('Failed to set daily focus:', error);
+        return;
       }
       set({ dailyFocus: focus });
     } catch (err) {
@@ -311,48 +300,58 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   clearDailyFocus: async () => {
     const userId = get().session?.user?.id;
     if (!userId) return;
-    try {
-      await supabase.from('daily_focus').delete().eq('user_id', userId);
-      set({ dailyFocus: { text: '', date: getToday() } });
-    } catch (err) {
-      console.error('Failed to clear daily focus:', err);
-    }
+    const { success } = await supabaseCall(supabase.from('daily_focus').delete().eq('user_id', userId), 'clearDailyFocus');
+    if (!success) return;
+    set({ dailyFocus: { text: '', date: getToday() } });
   },
 
   dailyTodos: [],
   addDailyTodo: async (text, priority) => {
     const userId = get().session?.user?.id;
-    if (!userId) return;
+    console.group('CREATE_DAILY_TODO');
+    console.log('text:', text, 'priority:', priority);
+    console.log('user:', userId);
+    if (!userId) { console.error('NO USER ID - aborting'); console.groupEnd(); return; }
     const id = generateId();
-    const todo = { id, user_id: userId, text, completed: false, priority, created_at: Date.now(), date: getToday() };
-    try {
-      await supabase.from('daily_todos').insert(todo);
-      set((s) => ({
-        dailyTodos: [...s.dailyTodos, { id, text, completed: false, priority, createdAt: Date.now(), date: getToday() }],
-      }));
-    } catch (err) {
-      console.error('Failed to add daily todo:', err);
+    const sortOrder = get().dailyTodos.length;
+    const payload = { id, user_id: userId, text, completed: false, priority, created_at: Date.now(), date: getToday(), sort_order: sortOrder };
+    console.log('payload:', JSON.stringify(payload, null, 2));
+    console.log('table: daily_todos');
+    console.groupEnd();
+    const { data, error } = await supabase.from('daily_todos').insert(payload).select().single();
+    console.group('SUPABASE_RESPONSE');
+    console.log('response data:', data);
+    console.log('error:', error);
+    if (error) {
+      console.error('INSERT FAILED:', error.message, error.details, error.code, error.hint);
+      console.groupEnd();
+      throw error;
     }
+    console.log('INSERT SUCCEEDED, verifying with select...');
+    const { data: verifyData, error: verifyError } = await supabase.from('daily_todos').select('*').eq('id', id).single();
+    if (verifyError) {
+      console.error('VERIFY FAILED:', verifyError);
+    } else {
+      console.log('VERIFIED row in DB:', verifyData);
+    }
+    console.groupEnd();
+    set((s) => ({
+      dailyTodos: [...s.dailyTodos, { id, text, completed: false, priority, createdAt: Date.now(), date: getToday(), sortOrder }],
+    }));
   },
   toggleDailyTodo: async (id) => {
-    try {
-      const todo = get().dailyTodos.find((t) => t.id === id);
-      if (!todo) return;
-      await supabase.from('daily_todos').update({ completed: !todo.completed }).eq('id', id);
-      set((s) => ({
-        dailyTodos: s.dailyTodos.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t)),
-      }));
-    } catch (err) {
-      console.error('Failed to toggle daily todo:', err);
-    }
+    const todo = get().dailyTodos.find((t) => t.id === id);
+    if (!todo) return;
+    const { success } = await supabaseCall(supabase.from('daily_todos').update({ completed: !todo.completed }).eq('id', id), 'toggleDailyTodo');
+    if (!success) return;
+    set((s) => ({
+      dailyTodos: s.dailyTodos.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t)),
+    }));
   },
   removeDailyTodo: async (id) => {
-    try {
-      await supabase.from('daily_todos').delete().eq('id', id);
-      set((s) => ({ dailyTodos: s.dailyTodos.filter((t) => t.id !== id) }));
-    } catch (err) {
-      console.error('Failed to remove daily todo:', err);
-    }
+    const { success } = await supabaseCall(supabase.from('daily_todos').delete().eq('id', id), 'removeDailyTodo');
+    if (!success) return;
+    set((s) => ({ dailyTodos: s.dailyTodos.filter((t) => t.id !== id) }));
   },
 
   weeklyTodos: [],
@@ -360,35 +359,27 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     const userId = get().session?.user?.id;
     if (!userId) return;
     const id = generateId();
+    const sortOrder = get().weeklyTodos.length;
     const weekStart = getWeekStart();
-    try {
-      await supabase.from('weekly_todos').insert({ id, user_id: userId, text, completed: false, priority, created_at: Date.now(), week_start: weekStart });
-      set((s) => ({
-        weeklyTodos: [...s.weeklyTodos, { id, text, completed: false, priority, createdAt: Date.now(), weekStart }],
-      }));
-    } catch (err) {
-      console.error('Failed to add weekly todo:', err);
-    }
+    const { success } = await supabaseCall(supabase.from('weekly_todos').insert({ id, user_id: userId, text, completed: false, priority, created_at: Date.now(), week_start: weekStart, sort_order: sortOrder }), 'addWeeklyTodo');
+    if (!success) return;
+    set((s) => ({
+      weeklyTodos: [...s.weeklyTodos, { id, text, completed: false, priority, createdAt: Date.now(), weekStart, sortOrder }],
+    }));
   },
   toggleWeeklyTodo: async (id) => {
-    try {
-      const todo = get().weeklyTodos.find((t) => t.id === id);
-      if (!todo) return;
-      await supabase.from('weekly_todos').update({ completed: !todo.completed }).eq('id', id);
-      set((s) => ({
-        weeklyTodos: s.weeklyTodos.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t)),
-      }));
-    } catch (err) {
-      console.error('Failed to toggle weekly todo:', err);
-    }
+    const todo = get().weeklyTodos.find((t) => t.id === id);
+    if (!todo) return;
+    const { success } = await supabaseCall(supabase.from('weekly_todos').update({ completed: !todo.completed }).eq('id', id), 'toggleWeeklyTodo');
+    if (!success) return;
+    set((s) => ({
+      weeklyTodos: s.weeklyTodos.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t)),
+    }));
   },
   removeWeeklyTodo: async (id) => {
-    try {
-      await supabase.from('weekly_todos').delete().eq('id', id);
-      set((s) => ({ weeklyTodos: s.weeklyTodos.filter((t) => t.id !== id) }));
-    } catch (err) {
-      console.error('Failed to remove weekly todo:', err);
-    }
+    const { success } = await supabaseCall(supabase.from('weekly_todos').delete().eq('id', id), 'removeWeeklyTodo');
+    if (!success) return;
+    set((s) => ({ weeklyTodos: s.weeklyTodos.filter((t) => t.id !== id) }));
   },
 
   backlogTodos: [],
@@ -396,49 +387,65 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     const userId = get().session?.user?.id;
     if (!userId) return;
     const id = generateId();
-    try {
-      await supabase.from('backlog_todos').insert({ id, user_id: userId, text, completed: false, priority, created_at: Date.now() });
-      set((s) => ({
-        backlogTodos: [...s.backlogTodos, { id, text, completed: false, priority, createdAt: Date.now() }],
-      }));
-    } catch (err) {
-      console.error('Failed to add backlog todo:', err);
-    }
+    const sortOrder = get().backlogTodos.length;
+    const { success } = await supabaseCall(supabase.from('backlog_todos').insert({ id, user_id: userId, text, completed: false, priority, created_at: Date.now(), sort_order: sortOrder }), 'addBacklogTodo');
+    if (!success) return;
+    set((s) => ({
+      backlogTodos: [...s.backlogTodos, { id, text, completed: false, priority, createdAt: Date.now(), sortOrder }],
+    }));
   },
   toggleBacklogTodo: async (id) => {
-    try {
-      const todo = get().backlogTodos.find((t) => t.id === id);
-      if (!todo) return;
-      await supabase.from('backlog_todos').update({ completed: !todo.completed }).eq('id', id);
-      set((s) => ({
-        backlogTodos: s.backlogTodos.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t)),
-      }));
-    } catch (err) {
-      console.error('Failed to toggle backlog todo:', err);
-    }
+    const todo = get().backlogTodos.find((t) => t.id === id);
+    if (!todo) return;
+    const { success } = await supabaseCall(supabase.from('backlog_todos').update({ completed: !todo.completed }).eq('id', id), 'toggleBacklogTodo');
+    if (!success) return;
+    set((s) => ({
+      backlogTodos: s.backlogTodos.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t)),
+    }));
   },
   removeBacklogTodo: async (id) => {
-    try {
-      await supabase.from('backlog_todos').delete().eq('id', id);
-      set((s) => ({ backlogTodos: s.backlogTodos.filter((t) => t.id !== id) }));
-    } catch (err) {
-      console.error('Failed to remove backlog todo:', err);
-    }
+    const { success } = await supabaseCall(supabase.from('backlog_todos').delete().eq('id', id), 'removeBacklogTodo');
+    if (!success) return;
+    set((s) => ({ backlogTodos: s.backlogTodos.filter((t) => t.id !== id) }));
   },
   reorderDailyTodos: async (ids) => {
-    set((s) => ({
-      dailyTodos: ids.map((id) => s.dailyTodos.find((t) => t.id === id)!),
-    }));
+    const items = ids.map((id, index) => {
+      const t = get().dailyTodos.find((x) => x.id === id)!;
+      return { ...t, sortOrder: index };
+    });
+    const results = await Promise.all(
+      items.map((t) =>
+        supabaseCall(supabase.from('daily_todos').update({ sort_order: t.sortOrder }).eq('id', t.id), 'reorderDailyTodos')
+      )
+    );
+    if (results.some((r) => !r.success)) return;
+    set({ dailyTodos: items });
   },
   reorderWeeklyTodos: async (ids) => {
-    set((s) => ({
-      weeklyTodos: ids.map((id) => s.weeklyTodos.find((t) => t.id === id)!),
-    }));
+    const items = ids.map((id, index) => {
+      const t = get().weeklyTodos.find((x) => x.id === id)!;
+      return { ...t, sortOrder: index };
+    });
+    const results = await Promise.all(
+      items.map((t) =>
+        supabaseCall(supabase.from('weekly_todos').update({ sort_order: t.sortOrder }).eq('id', t.id), 'reorderWeeklyTodos')
+      )
+    );
+    if (results.some((r) => !r.success)) return;
+    set({ weeklyTodos: items });
   },
   reorderBacklogTodos: async (ids) => {
-    set((s) => ({
-      backlogTodos: ids.map((id) => s.backlogTodos.find((t) => t.id === id)!),
-    }));
+    const items = ids.map((id, index) => {
+      const t = get().backlogTodos.find((x) => x.id === id)!;
+      return { ...t, sortOrder: index };
+    });
+    const results = await Promise.all(
+      items.map((t) =>
+        supabaseCall(supabase.from('backlog_todos').update({ sort_order: t.sortOrder }).eq('id', t.id), 'reorderBacklogTodos')
+      )
+    );
+    if (results.some((r) => !r.success)) return;
+    set({ backlogTodos: items });
   },
   moveToDaily: async (id) => {
     const todo = get().backlogTodos.find((x) => x.id === id) || get().weeklyTodos.find((x) => x.id === id);
@@ -448,21 +455,21 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     if (!userId) return;
     const newId = generateId();
     const today = getToday();
-    try {
-      await supabase.from('daily_todos').insert({ id: newId, user_id: userId, text: todo.text, completed: false, priority: todo.priority, created_at: Date.now(), date: today });
-      if (fromBacklog) {
-        await supabase.from('backlog_todos').delete().eq('id', id);
-      } else {
-        await supabase.from('weekly_todos').delete().eq('id', id);
-      }
-      set((s) => ({
-        backlogTodos: s.backlogTodos.filter((x) => x.id !== id),
-        weeklyTodos: s.weeklyTodos.filter((x) => x.id !== id),
-        dailyTodos: [...s.dailyTodos, { ...todo, id: newId, date: today, completed: false }],
-      }));
-    } catch (err) {
-      console.error('Failed to move to daily:', err);
-    }
+    const sortOrder = get().dailyTodos.length;
+    const insertOk = await supabaseCall(supabase.from('daily_todos').insert({ id: newId, user_id: userId, text: todo.text, completed: false, priority: todo.priority, created_at: Date.now(), date: today, sort_order: sortOrder }), 'moveToDaily insert');
+    if (!insertOk.success) return;
+    const { success: deleteOk } = await supabaseCall(
+      fromBacklog
+        ? supabase.from('backlog_todos').delete().eq('id', id)
+        : supabase.from('weekly_todos').delete().eq('id', id),
+      'moveToDaily delete'
+    );
+    if (!deleteOk) return;
+    set((s) => ({
+      backlogTodos: s.backlogTodos.filter((x) => x.id !== id),
+      weeklyTodos: s.weeklyTodos.filter((x) => x.id !== id),
+      dailyTodos: [...s.dailyTodos, { ...todo, id: newId, date: today, completed: false, sortOrder }],
+    }));
   },
   moveToWeekly: async (id) => {
     const todo = get().backlogTodos.find((x) => x.id === id) || get().dailyTodos.find((x) => x.id === id);
@@ -472,21 +479,21 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     if (!userId) return;
     const newId = generateId();
     const weekStart = getWeekStart();
-    try {
-      await supabase.from('weekly_todos').insert({ id: newId, user_id: userId, text: todo.text, completed: false, priority: todo.priority, created_at: Date.now(), week_start: weekStart });
-      if (fromBacklog) {
-        await supabase.from('backlog_todos').delete().eq('id', id);
-      } else {
-        await supabase.from('daily_todos').delete().eq('id', id);
-      }
-      set((s) => ({
-        backlogTodos: s.backlogTodos.filter((x) => x.id !== id),
-        dailyTodos: s.dailyTodos.filter((x) => x.id !== id),
-        weeklyTodos: [...s.weeklyTodos, { ...todo, id: newId, weekStart, completed: false }],
-      }));
-    } catch (err) {
-      console.error('Failed to move to weekly:', err);
-    }
+    const sortOrder = get().weeklyTodos.length;
+    const insertOk = await supabaseCall(supabase.from('weekly_todos').insert({ id: newId, user_id: userId, text: todo.text, completed: false, priority: todo.priority, created_at: Date.now(), week_start: weekStart, sort_order: sortOrder }), 'moveToWeekly insert');
+    if (!insertOk.success) return;
+    const { success: deleteOk } = await supabaseCall(
+      fromBacklog
+        ? supabase.from('backlog_todos').delete().eq('id', id)
+        : supabase.from('daily_todos').delete().eq('id', id),
+      'moveToWeekly delete'
+    );
+    if (!deleteOk) return;
+    set((s) => ({
+      backlogTodos: s.backlogTodos.filter((x) => x.id !== id),
+      dailyTodos: s.dailyTodos.filter((x) => x.id !== id),
+      weeklyTodos: [...s.weeklyTodos, { ...todo, id: newId, weekStart, completed: false, sortOrder }],
+    }));
   },
   moveToBacklog: async (id, from) => {
     const todos = from === 'daily' ? get().dailyTodos : get().weeklyTodos;
@@ -496,21 +503,22 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     if (!userId) return;
     const newId = generateId();
     const table = from === 'daily' ? 'daily_todos' : 'weekly_todos';
-    try {
-      await supabase.from('backlog_todos').insert({ id: newId, user_id: userId, text: todo.text, completed: false, priority: todo.priority, created_at: Date.now() });
-      await supabase.from(table).delete().eq('id', id);
-      if (from === 'daily') {
-        set((s) => ({
-          dailyTodos: s.dailyTodos.filter((x) => x.id !== id),
-          backlogTodos: [...s.backlogTodos, { id: newId, text: todo.text, completed: false, priority: todo.priority, createdAt: Date.now() }],
-        }));
-      } else {
-        set((s) => ({
-          weeklyTodos: s.weeklyTodos.filter((x) => x.id !== id),
-          backlogTodos: [...s.backlogTodos, { id: newId, text: todo.text, completed: false, priority: todo.priority, createdAt: Date.now() }],
-        }));
-      }
-    } catch (err) { console.error('Failed to move to backlog:', err); }
+    const sortOrder = get().backlogTodos.length;
+    const insertOk = await supabaseCall(supabase.from('backlog_todos').insert({ id: newId, user_id: userId, text: todo.text, completed: false, priority: todo.priority, created_at: Date.now(), sort_order: sortOrder }), 'moveToBacklog insert');
+    if (!insertOk.success) return;
+    const { success: deleteOk } = await supabaseCall(supabase.from(table).delete().eq('id', id), 'moveToBacklog delete');
+    if (!deleteOk) return;
+    if (from === 'daily') {
+      set((s) => ({
+        dailyTodos: s.dailyTodos.filter((x) => x.id !== id),
+        backlogTodos: [...s.backlogTodos, { id: newId, text: todo.text, completed: false, priority: todo.priority, createdAt: Date.now(), sortOrder }],
+      }));
+    } else {
+      set((s) => ({
+        weeklyTodos: s.weeklyTodos.filter((x) => x.id !== id),
+        backlogTodos: [...s.backlogTodos, { id: newId, text: todo.text, completed: false, priority: todo.priority, createdAt: Date.now(), sortOrder }],
+      }));
+    }
   },
 
   lifeCategories: [],
@@ -518,34 +526,25 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     const userId = get().session?.user?.id;
     if (!userId) return;
     const id = cat.id || generateId();
-    try {
-      await supabase.from('life_categories').insert({ id, user_id: userId, name: cat.name, name_key: cat.nameKey, icon: cat.icon, color: cat.color, sort_order: cat.sortOrder });
-      set((s) => ({ lifeCategories: [...s.lifeCategories, { ...cat, id }] }));
-    } catch (err) {
-      console.error('Failed to add life category:', err);
-    }
+    const { success } = await supabaseCall(supabase.from('life_categories').insert({ id, user_id: userId, name: cat.name, name_key: cat.nameKey, icon: cat.icon, color: cat.color, sort_order: cat.sortOrder }), 'addLifeCategory');
+    if (!success) return;
+    set((s) => ({ lifeCategories: [...s.lifeCategories, { ...cat, id }] }));
   },
   removeLifeCategory: async (id) => {
-    try {
-      await supabase.from('life_categories').delete().eq('id', id);
-      set((s) => ({
-        lifeCategories: s.lifeCategories.filter((c) => c.id !== id),
-        subTracks: s.subTracks.filter((t) => t.categoryId !== id),
-        subTrackEntries: s.subTrackEntries.filter((e) => !s.subTracks.some((t) => t.id === e.trackId && t.categoryId === id)),
-      }));
-    } catch (err) {
-      console.error('Failed to remove life category:', err);
-    }
+    const { success } = await supabaseCall(supabase.from('life_categories').delete().eq('id', id), 'removeLifeCategory');
+    if (!success) return;
+    set((s) => ({
+      lifeCategories: s.lifeCategories.filter((c) => c.id !== id),
+      subTracks: s.subTracks.filter((t) => t.categoryId !== id),
+      subTrackEntries: s.subTrackEntries.filter((e) => !s.subTracks.some((t) => t.id === e.trackId && t.categoryId === id)),
+    }));
   },
   updateLifeCategory: async (id, data) => {
-    try {
-      await supabase.from('life_categories').update({ name: data.name, name_key: data.nameKey, icon: data.icon, color: data.color, sort_order: data.sortOrder }).eq('id', id);
-      set((s) => ({
-        lifeCategories: s.lifeCategories.map((c) => (c.id === id ? { ...c, ...data } : c)),
-      }));
-    } catch (err) {
-      console.error('Failed to update life category:', err);
-    }
+    const { success } = await supabaseCall(supabase.from('life_categories').update({ name: data.name, name_key: data.nameKey, icon: data.icon, color: data.color, sort_order: data.sortOrder }).eq('id', id), 'updateLifeCategory');
+    if (!success) return;
+    set((s) => ({
+      lifeCategories: s.lifeCategories.map((c) => (c.id === id ? { ...c, ...data } : c)),
+    }));
   },
   addPillar: async (name, icon = 'heart', colorTheme = 'terracotta') => {
     const userId = get().session?.user?.id;
@@ -579,69 +578,58 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   deletePillar: async (id) => {
     const userId = get().session?.user?.id;
     if (!userId) return;
-    try {
-      const { error: tracksError } = await supabase.from('sub_tracks').delete().eq('category_id', id).eq('user_id', userId);
-      if (tracksError) { console.error('Failed to delete pillar sub_tracks:', tracksError); return; }
-      const { error } = await supabase.from('life_categories').delete().eq('id', id).eq('user_id', userId);
-      if (error) { console.error('Failed to delete pillar:', error); return; }
-      set((s) => {
-        const trackIds = s.subTracks.filter((t) => t.categoryId === id).map((t) => t.id);
-        return {
-          lifeCategories: s.lifeCategories.filter((c) => c.id !== id),
-          subTracks: s.subTracks.filter((t) => t.categoryId !== id),
-          subTrackEntries: s.subTrackEntries.filter((e) => !trackIds.includes(e.trackId)),
-        };
-      });
-    } catch (err) {
-      console.error('Failed to delete pillar:', err);
-    }
+    const { success: tracksOk } = await supabaseCall(supabase.from('sub_tracks').delete().eq('category_id', id).eq('user_id', userId), 'deletePillar sub_tracks');
+    if (!tracksOk) return;
+    const { success: catOk } = await supabaseCall(supabase.from('life_categories').delete().eq('id', id).eq('user_id', userId), 'deletePillar categories');
+    if (!catOk) return;
+    set((s) => {
+      const trackIds = s.subTracks.filter((t) => t.categoryId === id).map((t) => t.id);
+      return {
+        lifeCategories: s.lifeCategories.filter((c) => c.id !== id),
+        subTracks: s.subTracks.filter((t) => t.categoryId !== id),
+        subTrackEntries: s.subTrackEntries.filter((e) => !trackIds.includes(e.trackId)),
+      };
+    });
   },
 
   subTracks: [],
   addSubTrack: async (track) => {
     const userId = get().session?.user?.id;
     if (!userId) return;
-    try {
-      const { data, error } = await supabase.from('sub_tracks').insert({
+    const { data, success } = await supabaseCall(
+      supabase.from('sub_tracks').insert({
         user_id: userId, category_id: track.categoryId, name: track.name, name_key: track.nameKey, icon: track.icon, progress_type: track.progressType, target: track.target, unit: track.unit, current_value: track.currentValue, sort_order: track.sortOrder,
-      }).select().single();
-      if (error) { console.error('Failed to add sub track:', error); return; }
-      set((s) => ({ subTracks: [...s.subTracks, { ...track, id: data.id }] }));
-    } catch (err) {
-      console.error('Failed to add sub track:', err);
-    }
+      }).select().single(),
+      'addSubTrack'
+    );
+    if (!success || !data) return;
+    const row = data as { id: string };
+    set((s) => ({ subTracks: [...s.subTracks, { ...track, id: row.id }] }));
   },
   removeSubTrack: async (id) => {
     const userId = get().session?.user?.id;
     if (!userId) return;
-    try {
-      const { error } = await supabase.from('sub_tracks').delete().eq('id', id).eq('user_id', userId);
-      if (error) { console.error('Failed to remove sub track:', error); return; }
-      set((s) => ({
-        subTracks: s.subTracks.filter((t) => t.id !== id),
-        subTrackEntries: s.subTrackEntries.filter((e) => e.trackId !== id),
-      }));
-    } catch (err) {
-      console.error('Failed to remove sub track:', err);
-    }
+    const { success } = await supabaseCall(supabase.from('sub_tracks').delete().eq('id', id).eq('user_id', userId), 'removeSubTrack');
+    if (!success) return;
+    set((s) => ({
+      subTracks: s.subTracks.filter((t) => t.id !== id),
+      subTrackEntries: s.subTrackEntries.filter((e) => e.trackId !== id),
+    }));
   },
   updateSubTrack: async (id, data) => {
-    try {
-      const dbData: Record<string, unknown> = {};
-      if (data.name !== undefined) dbData.name = data.name;
-      if (data.icon !== undefined) dbData.icon = data.icon;
-      if (data.progressType !== undefined) dbData.progress_type = data.progressType;
-      if (data.target !== undefined) dbData.target = data.target;
-      if (data.unit !== undefined) dbData.unit = data.unit;
-      if (data.currentValue !== undefined) dbData.current_value = data.currentValue;
-      if (data.sortOrder !== undefined) dbData.sort_order = data.sortOrder;
-      await supabase.from('sub_tracks').update(dbData).eq('id', id);
-      set((s) => ({
-        subTracks: s.subTracks.map((t) => (t.id === id ? { ...t, ...data } : t)),
-      }));
-    } catch (err) {
-      console.error('Failed to update sub track:', err);
-    }
+    const dbData: Record<string, unknown> = {};
+    if (data.name !== undefined) dbData.name = data.name;
+    if (data.icon !== undefined) dbData.icon = data.icon;
+    if (data.progressType !== undefined) dbData.progress_type = data.progressType;
+    if (data.target !== undefined) dbData.target = data.target;
+    if (data.unit !== undefined) dbData.unit = data.unit;
+    if (data.currentValue !== undefined) dbData.current_value = data.currentValue;
+    if (data.sortOrder !== undefined) dbData.sort_order = data.sortOrder;
+    const { success } = await supabaseCall(supabase.from('sub_tracks').update(dbData).eq('id', id), 'updateSubTrack');
+    if (!success) return;
+    set((s) => ({
+      subTracks: s.subTracks.map((t) => (t.id === id ? { ...t, ...data } : t)),
+    }));
   },
   incrementSubTrack: async (id, value = 1) => {
     const track = get().subTracks.find((t) => t.id === id);
@@ -677,29 +665,24 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     const today = getToday();
     const existing = get().subTrackEntries.find((e) => e.trackId === id && e.date === today);
     if (existing) {
-      try {
-        await supabase.from('sub_track_entries').delete().eq('id', existing.id);
-        set((s) => ({
-          subTrackEntries: s.subTrackEntries.filter((e) => e.id !== existing.id),
-        }));
-      } catch (err) {
-        console.error('Failed to toggle habit off:', err);
-      }
+      const { success } = await supabaseCall(supabase.from('sub_track_entries').delete().eq('id', existing.id), 'toggleSubTrackHabit off');
+      if (!success) return;
+      set((s) => ({
+        subTrackEntries: s.subTrackEntries.filter((e) => e.id !== existing.id),
+      }));
     } else {
       const entryId = generateId();
       const track = get().subTracks.find((t) => t.id === id);
-      try {
-        await supabase.from('sub_track_entries').insert({ id: entryId, user_id: userId, track_id: id, value: 1, date: today, note: '' });
-        await supabase.from('sub_tracks').update({ current_value: (track?.currentValue || 0) + 1 }).eq('id', id);
-        set((s) => ({
-          subTrackEntries: [...s.subTrackEntries, { id: entryId, trackId: id, value: 1, date: today, note: '' }],
-          subTracks: s.subTracks.map((t) =>
-            t.id === id ? { ...t, currentValue: t.currentValue + 1 } : t
-          ),
-        }));
-      } catch (err) {
-        console.error('Failed to toggle habit on:', err);
-      }
+      const entryOk = await supabaseCall(supabase.from('sub_track_entries').insert({ id: entryId, user_id: userId, track_id: id, value: 1, date: today, note: '' }), 'toggleSubTrackHabit entry');
+      if (!entryOk.success) return;
+      const trackOk = await supabaseCall(supabase.from('sub_tracks').update({ current_value: (track?.currentValue || 0) + 1 }).eq('id', id), 'toggleSubTrackHabit update');
+      if (!trackOk.success) return;
+      set((s) => ({
+        subTrackEntries: [...s.subTrackEntries, { id: entryId, trackId: id, value: 1, date: today, note: '' }],
+        subTracks: s.subTracks.map((t) =>
+          t.id === id ? { ...t, currentValue: t.currentValue + 1 } : t
+        ),
+      }));
     }
   },
 
@@ -708,20 +691,14 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     const userId = get().session?.user?.id;
     if (!userId) return;
     const id = entry.id || generateId();
-    try {
-      await supabase.from('sub_track_entries').insert({ id, user_id: userId, track_id: entry.trackId, value: entry.value, date: entry.date, note: entry.note });
-      set((s) => ({ subTrackEntries: [...s.subTrackEntries, { ...entry, id }] }));
-    } catch (err) {
-      console.error('Failed to add sub track entry:', err);
-    }
+    const { success } = await supabaseCall(supabase.from('sub_track_entries').insert({ id, user_id: userId, track_id: entry.trackId, value: entry.value, date: entry.date, note: entry.note }), 'addSubTrackEntry');
+    if (!success) return;
+    set((s) => ({ subTrackEntries: [...s.subTrackEntries, { ...entry, id }] }));
   },
   removeSubTrackEntry: async (id) => {
-    try {
-      await supabase.from('sub_track_entries').delete().eq('id', id);
-      set((s) => ({ subTrackEntries: s.subTrackEntries.filter((e) => e.id !== id) }));
-    } catch (err) {
-      console.error('Failed to remove sub track entry:', err);
-    }
+    const { success } = await supabaseCall(supabase.from('sub_track_entries').delete().eq('id', id), 'removeSubTrackEntry');
+    if (!success) return;
+    set((s) => ({ subTrackEntries: s.subTrackEntries.filter((e) => e.id !== id) }));
   },
   getSubTrackEntryToday: (trackId) => {
     return get().subTrackEntries.find((e) => e.trackId === trackId && e.date === getToday());
@@ -737,7 +714,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     const id = generateId();
     const { error } = await supabase
       .from('bookmark_categories')
-      .insert({ id, user_id: userId, name: category.name, icon: category.icon });
+      .insert({ id, user_id: userId, name: category.name, icon: category.icon, color: category.color });
     if (error) {
       console.error('Failed to add bookmark category:', error.message, error.details);
       return;
@@ -745,187 +722,169 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     set((s) => ({ bookmarkCategories: [...s.bookmarkCategories, { ...category, id }] }));
   },
   removeBookmarkCategory: async (id) => {
-    try {
-      await supabase.from('bookmark_categories').delete().eq('id', id);
-      set((s) => ({
-        bookmarkCategories: s.bookmarkCategories.filter((c) => c.id !== id),
-        bookmarks: s.bookmarks.filter((b) => b.categoryId !== id),
-      }));
-    } catch (err) {
-      console.error('Failed to remove bookmark category:', err);
-    }
+    const { success } = await supabaseCall(supabase.from('bookmark_categories').delete().eq('id', id), 'removeBookmarkCategory');
+    if (!success) return;
+    set((s) => ({
+      bookmarkCategories: s.bookmarkCategories.filter((c) => c.id !== id),
+      bookmarks: s.bookmarks.filter((b) => b.categoryId !== id),
+    }));
   },
   addBookmark: async (bookmark) => {
     const userId = get().session?.user?.id;
     if (!userId) return;
     const id = generateId();
-    const { error } = await supabase
-      .from('bookmarks')
-      .insert({
+    const { success } = await supabaseCall(
+      supabase.from('bookmarks').insert({
         id,
         user_id: userId,
         category_id: bookmark.categoryId,
         title: bookmark.title,
         url: bookmark.url,
         description: bookmark.description ?? '',
+        note: bookmark.note ?? '',
         created_at: Date.now(),
-      });
-    if (error) {
-      console.error('Failed to add bookmark:', error.message, error.details);
-      return;
-    }
+      }),
+      'addBookmark'
+    );
+    if (!success) return;
     set((s) => ({ bookmarks: [...s.bookmarks, { ...bookmark, id }] }));
   },
   removeBookmark: async (id) => {
-    try {
-      await supabase.from('bookmarks').delete().eq('id', id);
-      set((s) => ({ bookmarks: s.bookmarks.filter((b) => b.id !== id) }));
-    } catch (err) {
-      console.error('Failed to remove bookmark:', err);
-    }
-  },
-
-  loadNotes: async () => {
-    const userId = get().session?.user?.id;
-    if (!userId) return;
-
-    // First render from localStorage positions (instant, no flash)
-    const cached = loadNotesFromStorage(userId);
-    if (cached) {
-      set({ stickyNotes: cached.stickyNotes, todoNotes: cached.todoNotes });
-    }
-
-    try {
-      const [stickyRes, todoRes] = await Promise.all([
-        supabase.from('sticky_notes').select('*').eq('user_id', userId).order('created_at'),
-        supabase.from('todo_notes').select('*').eq('user_id', userId).order('created_at'),
-      ]);
-
-      // Positions from localStorage always win over Supabase defaults;
-      // if Supabase returns empty, fall back to cached data entirely.
-      const supabaseSticky = (stickyRes.data || []).map((r: Record<string, unknown>) => {
-        const id = r.id as string;
-        const cachedPos = cached?.stickyNotes.find((n) => n.id === id)?.position;
-        return {
-          id,
-          title: (r.title as string) || '',
-          text: r.text as string,
-          position: cachedPos || (r.position as { x: number; y: number }) || { x: window.innerWidth / 2 - 150, y: window.innerHeight / 2 - 150 },
-        };
-      });
-      const supabaseTodo = (todoRes.data || []).map((r: Record<string, unknown>) => {
-        const id = r.id as string;
-        const cachedPos = cached?.todoNotes.find((n) => n.id === id)?.position;
-        return {
-          id,
-          title: r.title as string,
-          items: (r.items as { id: string; text: string; done: boolean }[]) || [],
-          position: cachedPos || (r.position as { x: number; y: number }) || { x: window.innerWidth / 2 - 100, y: window.innerHeight / 2 - 100 },
-        };
-      });
-
-      const stickyNotes = supabaseSticky.length > 0 ? supabaseSticky : (cached?.stickyNotes || []);
-      const todoNotes = supabaseTodo.length > 0 ? supabaseTodo : (cached?.todoNotes || []);
-
-      set({ stickyNotes, todoNotes });
-      saveNotesToStorage(userId, stickyNotes, todoNotes);
-    } catch (err) {
-      console.error('Failed to load notes:', err);
-    }
+    const { success } = await supabaseCall(supabase.from('bookmarks').delete().eq('id', id), 'removeBookmark');
+    if (!success) return;
+    set((s) => ({ bookmarks: s.bookmarks.filter((b) => b.id !== id) }));
   },
 
   addStickyNote: async (note) => {
     const userId = get().session?.user?.id;
-    if (!userId) return;
-    try {
-      await supabase.from('sticky_notes').insert({ id: note.id, user_id: userId, title: note.title, text: note.text, position: note.position });
-      set((s) => {
-        const updated = [...s.stickyNotes, note];
-        if (userId) saveNotesToStorage(userId, updated, s.todoNotes);
-        return { stickyNotes: updated };
-      });
-    } catch (err) { console.error('Failed to add sticky note:', err); }
+    console.group('CREATE_STICKY_NOTE');
+    console.log('note id:', note.id, 'title:', note.title, 'text:', note.text);
+    console.log('user:', userId);
+    if (!userId) { console.error('NO USER ID - aborting'); console.groupEnd(); return; }
+    const sortOrder = get().stickyNotes.length;
+    const payload = { id: note.id, user_id: userId, title: note.title, text: note.text, sort_order: sortOrder };
+    console.log('payload:', JSON.stringify(payload, null, 2));
+    console.log('table: sticky_notes');
+    console.groupEnd();
+    const { data, error } = await supabase.from('sticky_notes').insert(payload).select().single();
+    console.group('SUPABASE_RESPONSE');
+    console.log('response data:', data);
+    console.log('error:', error);
+    if (error) {
+      console.error('INSERT FAILED:', error.message, error.details, error.code, error.hint);
+      console.groupEnd();
+      throw error;
+    }
+    console.log('INSERT SUCCEEDED, verifying with select...');
+    const { data: verifyData, error: verifyError } = await supabase.from('sticky_notes').select('*').eq('id', note.id).single();
+    if (verifyError) {
+      console.error('VERIFY FAILED:', verifyError);
+    } else {
+      console.log('VERIFIED row in DB:', verifyData);
+    }
+    console.groupEnd();
+    set((s) => ({
+      stickyNotes: [...s.stickyNotes, { ...note, sortOrder }],
+    }));
   },
 
   updateStickyNote: async (id, data) => {
-    try {
-      const dbData: Record<string, unknown> = {};
-      if (data.title !== undefined) dbData.title = data.title;
-      if (data.text !== undefined) dbData.text = data.text;
-      if (data.position !== undefined) dbData.position = data.position;
-      await supabase.from('sticky_notes').update(dbData).eq('id', id);
-      set((s) => {
-        const updated = s.stickyNotes.map((n) => (n.id === id ? { ...n, ...data } : n));
-        const userId = s.session?.user?.id;
-        if (userId) saveNotesToStorage(userId, updated, s.todoNotes);
-        return { stickyNotes: updated };
-      });
-    } catch (err) { console.error('Failed to update sticky note:', err); }
+    const dbData: Record<string, unknown> = {};
+    if (data.title !== undefined) dbData.title = data.title;
+    if (data.text !== undefined) dbData.text = data.text;
+    const { success } = await supabaseCall(supabase.from('sticky_notes').update(dbData).eq('id', id), 'updateStickyNote');
+    if (!success) return;
+    set((s) => ({
+      stickyNotes: s.stickyNotes.map((n) => (n.id === id ? { ...n, ...data } : n)),
+    }));
   },
 
   deleteStickyNote: async (id) => {
-    try {
-      await supabase.from('sticky_notes').delete().eq('id', id);
-      set((s) => {
-        const updated = s.stickyNotes.filter((n) => n.id !== id);
-        const userId = s.session?.user?.id;
-        if (userId) saveNotesToStorage(userId, updated, s.todoNotes);
-        return { stickyNotes: updated };
-      });
-    } catch (err) { console.error('Failed to delete sticky note:', err); }
+    const { success } = await supabaseCall(supabase.from('sticky_notes').delete().eq('id', id), 'deleteStickyNote');
+    if (!success) return;
+    set((s) => ({
+      stickyNotes: s.stickyNotes.filter((n) => n.id !== id),
+    }));
   },
 
   reorderStickyNotes: async (ids) => {
-    set((s) => ({
-      stickyNotes: ids.map((id) => s.stickyNotes.find((n) => n.id === id)!),
-    }));
+    const items = ids.map((id, index) => {
+      const n = get().stickyNotes.find((x) => x.id === id)!;
+      return { ...n, sortOrder: index };
+    });
+    const results = await Promise.all(
+      items.map((n) =>
+        supabaseCall(supabase.from('sticky_notes').update({ sort_order: n.sortOrder }).eq('id', n.id), 'reorderStickyNotes')
+      )
+    );
+    if (results.some((r) => !r.success)) return;
+    set({ stickyNotes: items });
   },
 
   addTodoNote: async (note) => {
     const userId = get().session?.user?.id;
-    if (!userId) return;
-    try {
-      await supabase.from('todo_notes').insert({ id: note.id, user_id: userId, title: note.title, items: note.items, position: note.position });
-      set((s) => {
-        const updated = [...s.todoNotes, note];
-        if (userId) saveNotesToStorage(userId, s.stickyNotes, updated);
-        return { todoNotes: updated };
-      });
-    } catch (err) { console.error('Failed to add todo note:', err); }
+    console.group('CREATE_TODO_NOTE');
+    console.log('note id:', note.id, 'title:', note.title, 'items:', JSON.stringify(note.items));
+    console.log('user:', userId);
+    if (!userId) { console.error('NO USER ID - aborting'); console.groupEnd(); return; }
+    const sortOrder = get().todoNotes.length;
+    const payload = { id: note.id, user_id: userId, title: note.title, items: note.items, sort_order: sortOrder };
+    console.log('payload:', JSON.stringify(payload, null, 2));
+    console.log('table: todo_notes');
+    console.groupEnd();
+    const { data, error } = await supabase.from('todo_notes').insert(payload).select().single();
+    console.group('SUPABASE_RESPONSE');
+    console.log('response data:', data);
+    console.log('error:', error);
+    if (error) {
+      console.error('INSERT FAILED:', error.message, error.details, error.code, error.hint);
+      console.groupEnd();
+      throw error;
+    }
+    console.log('INSERT SUCCEEDED, verifying with select...');
+    const { data: verifyData, error: verifyError } = await supabase.from('todo_notes').select('*').eq('id', note.id).single();
+    if (verifyError) {
+      console.error('VERIFY FAILED:', verifyError);
+    } else {
+      console.log('VERIFIED row in DB:', verifyData);
+    }
+    console.groupEnd();
+    set((s) => ({
+      todoNotes: [...s.todoNotes, { ...note, sortOrder }],
+    }));
   },
 
   updateTodoNote: async (id, updated) => {
-    try {
-      const dbData: Record<string, unknown> = {};
-      if (updated.title !== undefined) dbData.title = updated.title;
-      if (updated.items !== undefined) dbData.items = updated.items;
-      if (updated.position !== undefined) dbData.position = updated.position;
-      await supabase.from('todo_notes').update(dbData).eq('id', id);
-      set((s) => {
-        const updatedTodos = s.todoNotes.map((n) => (n.id === id ? { ...n, ...updated } : n));
-        const userId = s.session?.user?.id;
-        if (userId) saveNotesToStorage(userId, s.stickyNotes, updatedTodos);
-        return { todoNotes: updatedTodos };
-      });
-    } catch (err) { console.error('Failed to update todo note:', err); }
+    const dbData: Record<string, unknown> = {};
+    if (updated.title !== undefined) dbData.title = updated.title;
+    if (updated.items !== undefined) dbData.items = updated.items;
+    const { success } = await supabaseCall(supabase.from('todo_notes').update(dbData).eq('id', id), 'updateTodoNote');
+    if (!success) return;
+    set((s) => ({
+      todoNotes: s.todoNotes.map((n) => (n.id === id ? { ...n, ...updated } : n)),
+    }));
   },
 
   deleteTodoNote: async (id) => {
-    try {
-      await supabase.from('todo_notes').delete().eq('id', id);
-      set((s) => {
-        const updated = s.todoNotes.filter((n) => n.id !== id);
-        const userId = s.session?.user?.id;
-        if (userId) saveNotesToStorage(userId, s.stickyNotes, updated);
-        return { todoNotes: updated };
-      });
-    } catch (err) { console.error('Failed to delete todo note:', err); }
+    const { success } = await supabaseCall(supabase.from('todo_notes').delete().eq('id', id), 'deleteTodoNote');
+    if (!success) return;
+    set((s) => ({
+      todoNotes: s.todoNotes.filter((n) => n.id !== id),
+    }));
   },
 
   reorderTodoNotes: async (ids) => {
-    set((s) => ({
-      todoNotes: ids.map((id) => s.todoNotes.find((n) => n.id === id)!),
-    }));
+    const items = ids.map((id, index) => {
+      const n = get().todoNotes.find((x) => x.id === id)!;
+      return { ...n, sortOrder: index };
+    });
+    const results = await Promise.all(
+      items.map((n) =>
+        supabaseCall(supabase.from('todo_notes').update({ sort_order: n.sortOrder }).eq('id', n.id), 'reorderTodoNotes')
+      )
+    );
+    if (results.some((r) => !r.success)) return;
+    set({ todoNotes: items });
   },
 
 }));
@@ -1036,15 +995,15 @@ function set(state: Partial<AppStore>) {
 }
 
 function mapDailyTodo(row: Record<string, unknown>): DailyTodo {
-  return { id: row.id as string, text: row.text as string, completed: row.completed as boolean, priority: row.priority as Priority, createdAt: typeof row.created_at === "number" ? row.created_at : new Date(row.created_at as string).getTime() || Date.now(), date: row.date as string };
+  return { id: row.id as string, text: row.text as string, completed: row.completed as boolean, priority: row.priority as Priority, createdAt: typeof row.created_at === "number" ? row.created_at : new Date(row.created_at as string).getTime() || Date.now(), date: row.date as string, sortOrder: (row.sort_order as number) ?? 0 };
 }
 
 function mapWeeklyTodo(row: Record<string, unknown>): WeeklyTodo {
-  return { id: row.id as string, text: row.text as string, completed: row.completed as boolean, priority: row.priority as Priority, createdAt: typeof row.created_at === "number" ? row.created_at : new Date(row.created_at as string).getTime() || Date.now(), weekStart: row.week_start as string };
+  return { id: row.id as string, text: row.text as string, completed: row.completed as boolean, priority: row.priority as Priority, createdAt: typeof row.created_at === "number" ? row.created_at : new Date(row.created_at as string).getTime() || Date.now(), weekStart: row.week_start as string, sortOrder: (row.sort_order as number) ?? 0 };
 }
 
 function mapBacklogTodo(row: Record<string, unknown>): BacklogTodo {
-  return { id: row.id as string, text: row.text as string, completed: row.completed as boolean, priority: row.priority as Priority, createdAt: typeof row.created_at === "number" ? row.created_at : new Date(row.created_at as string).getTime() || Date.now() };
+  return { id: row.id as string, text: row.text as string, completed: row.completed as boolean, priority: row.priority as Priority, createdAt: typeof row.created_at === "number" ? row.created_at : new Date(row.created_at as string).getTime() || Date.now(), sortOrder: (row.sort_order as number) ?? 0 };
 }
 
 function mapLifeCategory(row: Record<string, unknown>): LifeCategory {
@@ -1060,9 +1019,9 @@ function mapSubTrackEntry(row: Record<string, unknown>): SubTrackEntry {
 }
 
 function mapBookmarkCategory(row: Record<string, unknown>): BookmarkCategory {
-  return { id: row.id as string, name: row.name as string, icon: (row.icon as string) || 'general' };
+  return { id: row.id as string, name: row.name as string, icon: (row.icon as string) || 'general', color: (row.color as string) || 'terracotta' };
 }
 
 function mapBookmark(row: Record<string, unknown>): Bookmark {
-  return { id: row.id as string, categoryId: row.category_id as string, title: row.title as string, url: row.url as string, description: (row.description as string) || '' };
+  return { id: row.id as string, categoryId: row.category_id as string, title: row.title as string, url: row.url as string, description: (row.description as string) || '', note: (row.note as string) || '' };
 }

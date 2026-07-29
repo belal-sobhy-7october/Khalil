@@ -1,7 +1,10 @@
-import { useCallback, memo, useRef, useEffect } from 'react';
-import { motion, useMotionValue } from 'framer-motion';
-import type { StickyNoteData } from '../Canvas/StickyNote';
-import type { TodoNoteData } from '../Canvas/TodoNote';
+import { memo, useCallback, useMemo, useState } from 'react';
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import type { DragEndEvent } from '@dnd-kit/core';
+import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { GripVertical, ChevronDown, ChevronUp } from 'lucide-react';
+import type { StickyNoteData, TodoNoteData } from '../../types';
 import StickyNote from '../Canvas/StickyNote';
 import TodoNote from '../Canvas/TodoNote';
 
@@ -10,132 +13,178 @@ interface Props {
   todoNotes: TodoNoteData[];
   onDeleteSticky: (id: string) => void;
   onUpdateSticky: (id: string, data: Partial<StickyNoteData>) => void;
+  onReorderSticky: (ids: string[]) => void;
   onDeleteTodo: (id: string) => void;
   onUpdateTodo: (id: string, updated: Partial<TodoNoteData>) => void;
+  onReorderTodo: (ids: string[]) => void;
 }
 
-function FloatingNoteCard({
+type NoteItem = { id: string; type: 'sticky' | 'todo' };
+
+const SortableNoteItem = memo(function SortableNoteItem({
   id,
-  position,
   children,
-  onUpdatePosition,
 }: {
   id: string;
-  position: { x: number; y: number };
   children: React.ReactNode;
-  onUpdatePosition: (id: string, pos: { x: number; y: number }) => void;
 }) {
-  // Motion values track the drag offset only (start at 0).
-  // Position is handled by CSS top/left.
-  const dragX = useMotionValue(0);
-  const dragY = useMotionValue(0);
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
 
-  // Keep a ref to the latest CSS position so onDragEnd computes correctly.
-  const posRef = useRef(position);
-  posRef.current = position;
-
-  // After a position update (drag end or external change), reset the drag
-  // transform to 0 so it doesn't accumulate on top of the new CSS position.
-  useEffect(() => {
-    dragX.set(0);
-    dragY.set(0);
-  }, [position.x, position.y, dragX, dragY]);
-
-  const handleDragStart = useCallback(() => {
-    document.body.style.cursor = 'grabbing';
-  }, []);
-
-  const handleDragEnd = useCallback(
-    (_: MouseEvent | TouchEvent | PointerEvent, info: { offset: { x: number; y: number } }) => {
-      document.body.style.cursor = 'grab';
-      // Reset the drag transform synchronously so it doesn't pile on top
-      // of the new CSS position after the store update.
-      dragX.set(0);
-      dragY.set(0);
-      const newX = posRef.current.x + info.offset.x;
-      const newY = posRef.current.y + info.offset.y;
-      onUpdatePosition(id, { x: newX, y: newY });
-    },
-    [id, onUpdatePosition, dragX, dragY]
-  );
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition: isDragging ? 'none' : transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 10 : undefined,
+    willChange: isDragging ? 'transform' : undefined,
+  };
 
   return (
-    <motion.div
-      drag
-      dragMomentum={false}
-      style={{
-        position: 'absolute',
-        top: position.y,
-        left: position.x,
-        x: dragX,
-        y: dragY,
-        zIndex: 9999,
-        cursor: 'grab',
-      }}
-      initial={false}
-      onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
-      className="pointer-events-auto"
-    >
-      {children}
-    </motion.div>
+    <div ref={setNodeRef} style={style} className="flex items-start gap-1 group/drag">
+      <div
+        {...attributes}
+        {...listeners}
+        className="shrink-0 mt-3 opacity-20 group-hover/drag:opacity-60 hover:!opacity-100 cursor-grab active:cursor-grabbing p-1 text-ink-lighter transition-opacity touch-none"
+      >
+        <GripVertical size={14} />
+      </div>
+      <div className="flex-1 min-w-0">
+        {children}
+      </div>
+    </div>
   );
-}
-
-const FloatingNoteCardMemo = memo(FloatingNoteCard);
+});
 
 export default function NotesPanel({
   stickyNotes,
   todoNotes,
   onDeleteSticky,
   onUpdateSticky,
+  onReorderSticky,
   onDeleteTodo,
   onUpdateTodo,
+  onReorderTodo,
 }: Props) {
-  const handleStickyPosition = useCallback(
-    (id: string, pos: { x: number; y: number }) => {
-      onUpdateSticky(id, { position: pos });
-    },
-    [onUpdateSticky]
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
   );
 
-  const handleTodoPosition = useCallback(
-    (id: string, pos: { x: number; y: number }) => {
-      onUpdateTodo(id, { position: pos });
-    },
-    [onUpdateTodo]
-  );
+  const items = useMemo<NoteItem[]>(() => [
+    ...stickyNotes.map((n) => ({ id: `sticky-${n.id}`, type: 'sticky' as const })),
+    ...todoNotes.map((n) => ({ id: `todo-${n.id}`, type: 'todo' as const })),
+  ], [stickyNotes, todoNotes]);
+
+  const itemIds = useMemo(() => items.map((i) => i.id), [items]);
+
+  const handleDragEnd = useCallback((event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const prefix = (id: string) => id.startsWith('sticky-') ? 'sticky' : 'todo';
+    const activeType = prefix(active.id as string);
+    const overType = prefix(over.id as string);
+
+    if (activeType !== overType) return;
+
+    const extractId = (prefixed: string) => prefixed.replace(/^(sticky|todo)-/, '');
+
+    if (activeType === 'sticky') {
+      const ids = stickyNotes.map((n) => n.id);
+      const oldIdx = ids.indexOf(extractId(active.id as string));
+      const newIdx = ids.indexOf(extractId(over.id as string));
+      if (oldIdx === -1 || newIdx === -1) return;
+      const reordered = [...ids];
+      reordered.splice(oldIdx, 1);
+      reordered.splice(newIdx, 0, ids[oldIdx]);
+      onReorderSticky(reordered);
+    } else {
+      const ids = todoNotes.map((n) => n.id);
+      const oldIdx = ids.indexOf(extractId(active.id as string));
+      const newIdx = ids.indexOf(extractId(over.id as string));
+      if (oldIdx === -1 || newIdx === -1) return;
+      const reordered = [...ids];
+      reordered.splice(oldIdx, 1);
+      reordered.splice(newIdx, 0, ids[oldIdx]);
+      onReorderTodo(reordered);
+    }
+  }, [stickyNotes, todoNotes, onReorderSticky, onReorderTodo]);
 
   return (
-    <div className="fixed inset-0 pointer-events-none z-30">
-      {stickyNotes.map((note) => (
-        <FloatingNoteCardMemo
-          key={note.id}
-          id={note.id}
-          position={note.position}
-          onUpdatePosition={handleStickyPosition}
+    <>
+      {/* Desktop: fixed right column */}
+      <div className="hidden lg:block fixed end-0 top-14 bottom-0 w-72 z-30 bg-surface border-s border-border-subtle overflow-y-auto p-4 space-y-3" style={{ scrollbarWidth: 'thin' }}>
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="text-xs font-semibold text-ink-light uppercase tracking-wider">ملاحظات</h2>
+        </div>
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext items={itemIds} strategy={verticalListSortingStrategy}>
+            <div className="space-y-3">
+              {stickyNotes.map((note) => (
+                <SortableNoteItem key={`sticky-${note.id}`} id={`sticky-${note.id}`}>
+                  <StickyNote
+                    note={note}
+                    onDelete={onDeleteSticky}
+                    onUpdate={onUpdateSticky}
+                  />
+                </SortableNoteItem>
+              ))}
+              {todoNotes.map((note) => (
+                <SortableNoteItem key={`todo-${note.id}`} id={`todo-${note.id}`}>
+                  <TodoNote
+                    note={note}
+                    onDelete={onDeleteTodo}
+                    onUpdate={onUpdateTodo}
+                  />
+                </SortableNoteItem>
+              ))}
+              {stickyNotes.length === 0 && todoNotes.length === 0 && (
+                <p className="text-xs text-ink-light text-center py-8">لا توجد ملاحظات</p>
+              )}
+            </div>
+          </SortableContext>
+        </DndContext>
+      </div>
+
+      {/* Mobile: collapsible accordion at bottom */}
+      <div className="lg:hidden mt-8 border-t border-border-subtle pt-4">
+        <button
+          onClick={() => setMobileOpen((v) => !v)}
+          className="flex items-center gap-2 text-sm font-medium text-ink mb-2 w-full text-start"
         >
-          <StickyNote
-            note={note}
-            onDelete={onDeleteSticky}
-            onUpdate={onUpdateSticky}
-          />
-        </FloatingNoteCardMemo>
-      ))}
-      {todoNotes.map((note) => (
-        <FloatingNoteCardMemo
-          key={note.id}
-          id={note.id}
-          position={note.position}
-          onUpdatePosition={handleTodoPosition}
-        >
-          <TodoNote
-            note={note}
-            onDelete={onDeleteTodo}
-            onUpdate={onUpdateTodo}
-          />
-        </FloatingNoteCardMemo>
-      ))}
-    </div>
+          {mobileOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+          ملاحظات ({stickyNotes.length + todoNotes.length})
+        </button>
+        {mobileOpen && (
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <SortableContext items={itemIds} strategy={verticalListSortingStrategy}>
+              <div className="space-y-3">
+                {stickyNotes.map((note) => (
+                  <SortableNoteItem key={`sticky-${note.id}`} id={`sticky-${note.id}`}>
+                    <StickyNote
+                      note={note}
+                      onDelete={onDeleteSticky}
+                      onUpdate={onUpdateSticky}
+                    />
+                  </SortableNoteItem>
+                ))}
+                {todoNotes.map((note) => (
+                  <SortableNoteItem key={`todo-${note.id}`} id={`todo-${note.id}`}>
+                    <TodoNote
+                      note={note}
+                      onDelete={onDeleteTodo}
+                      onUpdate={onUpdateTodo}
+                    />
+                  </SortableNoteItem>
+                ))}
+                {stickyNotes.length === 0 && todoNotes.length === 0 && (
+                  <p className="text-xs text-ink-light text-center py-4">لا توجد ملاحظات</p>
+                )}
+              </div>
+            </SortableContext>
+          </DndContext>
+        )}
+      </div>
+    </>
   );
 }

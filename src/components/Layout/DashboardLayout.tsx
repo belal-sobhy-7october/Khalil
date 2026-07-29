@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import Sidebar from './Sidebar';
 import Header from './Header';
 import NavCard from './NavCard';
-import { useTranslation } from '../../i18n/useTranslation';
 import { motion } from 'framer-motion';
 export default function DashboardLayout({
   children,
@@ -14,29 +13,19 @@ export default function DashboardLayout({
   onSectionChange: (section: string) => void;
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { language } = useTranslation();
-
-  useEffect(() => {
-    document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
-    document.documentElement.lang = language;
-  }, [language]);
 
   const handleSectionChange = (section: string) => {
     onSectionChange(section);
 
-    if (section === 'todo') {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else {
-      setTimeout(() => {
-        const el = document.getElementById(`section-${section}`);
-        if (el) {
-          const headerOffset = 90;
-          const elementPosition = el.getBoundingClientRect().top + window.scrollY;
-          const offsetPosition = elementPosition - headerOffset;
-          window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
-        }
-      }, 50);
-    }
+    setTimeout(() => {
+      const el = document.getElementById(`section-${section}`);
+      if (el) {
+        const headerOffset = 90;
+        const elementPosition = el.getBoundingClientRect().top + window.scrollY;
+        const offsetPosition = elementPosition - headerOffset;
+        window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
+      }
+    }, 50);
   };
 
   useEffect(() => {

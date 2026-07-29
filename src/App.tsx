@@ -1,6 +1,15 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback, lazy, Suspense } from 'react';
 import { Plus, StickyNote as StickyNoteIcon, ListTodo } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import {
+  useFloating,
+  autoUpdate,
+  offset,
+  flip,
+  shift,
+  useClick,
+  useDismiss,
+  useInteractions,
+} from '@floating-ui/react';
 import { supabase } from './lib/supabase';
 import { useAppStore } from './store/appStore';
 import { useTranslation } from './i18n/useTranslation';
@@ -11,13 +20,13 @@ import DailyTodo from './components/Todo/DailyTodo';
 import WeeklyTodo from './components/Todo/WeeklyTodo';
 import BacklogTodo from './components/Todo/BacklogTodo';
 
-import LifePillars from './components/LifePillars/LifePillars';
-import BookmarksVault from './components/Bookmarks/BookmarksVault';
 import { createStickyNote } from './components/Canvas/StickyNote';
 import { createTodoNote } from './components/Canvas/TodoNote';
-import type { StickyNoteData } from './components/Canvas/StickyNote';
-import type { TodoNoteData } from './components/Canvas/TodoNote';
-import NotesPanel from './components/Layout/NotesPanel';
+import type { StickyNoteData, TodoNoteData } from './types';
+
+const LifePillars = lazy(() => import('./components/LifePillars/LifePillars'));
+const BookmarksVault = lazy(() => import('./components/Bookmarks/BookmarksVault'));
+const NotesPanel = lazy(() => import('./components/Layout/NotesPanel'));
 
 function App() {
   const language = useAppStore((s) => s.language);
@@ -33,24 +42,25 @@ function App() {
   const addStickyNoteStore = useAppStore((s) => s.addStickyNote);
   const updateStickyNoteStore = useAppStore((s) => s.updateStickyNote);
   const deleteStickyNoteStore = useAppStore((s) => s.deleteStickyNote);
+  const reorderStickyNotes = useAppStore((s) => s.reorderStickyNotes);
   const addTodoNoteStore = useAppStore((s) => s.addTodoNote);
   const updateTodoNoteStore = useAppStore((s) => s.updateTodoNote);
   const deleteTodoNoteStore = useAppStore((s) => s.deleteTodoNote);
+  const reorderTodoNotes = useAppStore((s) => s.reorderTodoNotes);
   const [menuOpen, setMenuOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
   const initialized = useRef(false);
 
-  useEffect(() => {
-    const onMouseDown = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setMenuOpen(false);
-      }
-    };
-    if (menuOpen) {
-      document.addEventListener('mousedown', onMouseDown);
-      return () => document.removeEventListener('mousedown', onMouseDown);
-    }
-  }, [menuOpen]);
+  const { refs, floatingStyles, context } = useFloating({
+    placement: isRTL ? 'left-start' : 'right-start',
+    middleware: [offset(8), flip({ padding: 8 }), shift({ padding: 8 })],
+    whileElementsMounted: autoUpdate,
+    open: menuOpen,
+    onOpenChange: setMenuOpen,
+  });
+
+  const click = useClick(context);
+  const dismiss = useDismiss(context);
+  const { getReferenceProps, getFloatingProps } = useInteractions([click, dismiss]);
 
   const addStickyNote = useCallback(() => {
     const note = createStickyNote();
@@ -84,6 +94,14 @@ function App() {
     deleteTodoNoteStore(id);
   }, [deleteTodoNoteStore]);
 
+  const handleReorderSticky = useCallback((ids: string[]) => {
+    reorderStickyNotes(ids);
+  }, [reorderStickyNotes]);
+
+  const handleReorderTodo = useCallback((ids: string[]) => {
+    reorderTodoNotes(ids);
+  }, [reorderTodoNotes]);
+
   useEffect(() => {
     document.documentElement.dir = isRTL ? 'rtl' : 'ltr';
     document.documentElement.lang = language;
@@ -113,7 +131,6 @@ function App() {
         return;
       }
       setSession(session);
-      // Only reload data if we haven't already loaded it
       if (session && !dataLoaded) {
         dataLoaded = true;
         loadUserData().finally(() => useAppStore.setState({ isLoading: false }));
@@ -145,79 +162,92 @@ function App() {
   }
 
   return (
-    <DashboardLayout activeSection={activeSection} onSectionChange={handleSectionChange}>
-      <div className="space-y-8 max-w-4xl mx-auto canvas-area" style={{ position: 'relative' }}>
-        <div>
-          <DailyFocus />
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          <div className="lg:col-span-7">
-            <DailyTodo />
+    <>
+      <DashboardLayout activeSection={activeSection} onSectionChange={handleSectionChange}>
+        <div className="space-y-8 max-w-4xl mx-auto canvas-area" style={{ position: 'relative' }}>
+          <div>
+            <DailyFocus />
           </div>
-          <div className="lg:col-span-5">
-            <WeeklyTodo />
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            <div className="lg:col-span-7">
+              <DailyTodo />
+            </div>
+            <div className="lg:col-span-5">
+              <WeeklyTodo />
+            </div>
           </div>
+
+          <div>
+            <BacklogTodo />
+          </div>
+
+          <Suspense fallback={<div className="h-32" />}>
+            <LifePillars />
+          </Suspense>
+
+          <Suspense fallback={<div className="h-8" />}>
+            <BookmarksVault />
+          </Suspense>
         </div>
+      </DashboardLayout>
 
-        <div>
-          <BacklogTodo />
-        </div>
+      <Suspense fallback={null}>
+        <NotesPanel
+          stickyNotes={stickyNotes}
+          todoNotes={todoNotes}
+          onDeleteSticky={deleteStickyNote}
+          onUpdateSticky={updateStickyNote}
+          onReorderSticky={handleReorderSticky}
+          onDeleteTodo={deleteTodoNote}
+          onUpdateTodo={updateTodoNote}
+          onReorderTodo={handleReorderTodo}
+        />
+      </Suspense>
 
-        <div>
-          <LifePillars />
-        </div>
-
-        <BookmarksVault />
-      </div>
-
-      <NotesPanel
-        stickyNotes={stickyNotes}
-        todoNotes={todoNotes}
-        onDeleteSticky={deleteStickyNote}
-        onUpdateSticky={updateStickyNote}
-        onDeleteTodo={deleteTodoNote}
-        onUpdateTodo={updateTodoNote}
-      />
-
-      <div ref={menuRef} className="fixed bottom-6 end-6 z-50 flex flex-col items-end gap-2">
-        <AnimatePresence>
-          {menuOpen && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 10 }}
-              className="flex flex-col gap-1"
-            >
-              <button
-                onClick={addTodoNote}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-card border border-border-subtle text-sm text-ink hover:bg-ink/5 transition-all shadow-sm whitespace-nowrap"
-              >
-                <ListTodo size={15} />
-                <span>قائمة</span>
-              </button>
-              <button
-                onClick={addTextNote}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-card border border-border-subtle text-sm text-ink hover:bg-ink/5 transition-all shadow-sm whitespace-nowrap"
-              >
-                <StickyNoteIcon size={15} />
-                <span>ملاحظة</span>
-              </button>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        <button
-          onClick={() => setMenuOpen((v) => !v)}
-          className={`w-12 h-12 rounded-full bg-clay-soft hover:bg-clay-soft-dark text-white shadow-lg hover:shadow-xl transition-all flex items-center justify-center ${
-            menuOpen ? 'rotate-45' : ''
+      <div
+        ref={refs.setFloating}
+        style={{
+          ...floatingStyles,
+          pointerEvents: menuOpen ? 'auto' : 'none',
+          willChange: 'transform',
+        }}
+        className="z-50 transition-opacity duration-150 ease-out"
+        {...getFloatingProps()}
+      >
+        <div
+          className={`flex flex-col gap-1 transition-all duration-150 ease-out ${
+            menuOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
           }`}
-          aria-label="Add note"
         >
-          <Plus size={22} />
-        </button>
+          <button
+            onClick={addTodoNote}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-card border border-border-subtle text-sm text-ink hover:bg-ink/5 transition-all shadow-sm whitespace-nowrap"
+          >
+            <ListTodo size={15} />
+            <span>قائمة</span>
+          </button>
+          <button
+            onClick={addTextNote}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-card border border-border-subtle text-sm text-ink hover:bg-ink/5 transition-all shadow-sm whitespace-nowrap"
+          >
+            <StickyNoteIcon size={15} />
+            <span>ملاحظة</span>
+          </button>
+        </div>
       </div>
-    </DashboardLayout>
+
+      <button
+        ref={refs.setReference}
+        className={`fixed bottom-6 end-6 z-50 w-12 h-12 rounded-full bg-clay-soft hover:bg-clay-soft-dark text-white shadow-lg hover:shadow-xl transition-all flex items-center justify-center ${
+          menuOpen ? 'rotate-45' : ''
+        }`}
+        aria-label="Add note"
+        {...getReferenceProps()}
+      >
+        <Plus size={22} />
+      </button>
+    </>
   );
 }
 
