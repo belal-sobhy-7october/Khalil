@@ -209,7 +209,7 @@ function App() {
           pointerEvents: menuOpen ? 'auto' : 'none',
           willChange: 'transform',
         }}
-        className="z-50 transition-opacity duration-150 ease-out"
+        className="z-30 transition-opacity duration-150 ease-out"
         {...getFloatingProps()}
       >
         <div
@@ -236,7 +236,7 @@ function App() {
 
       <button
         ref={refs.setReference}
-        className={`fixed bottom-6 end-6 z-50 w-12 h-12 rounded-full bg-clay-soft hover:bg-clay-soft-dark text-white shadow-lg hover:shadow-xl transition-all flex items-center justify-center ${
+        className={`fixed bottom-6 end-6 z-30 w-12 h-12 rounded-full bg-clay-soft hover:bg-clay-soft-dark text-white shadow-lg hover:shadow-xl transition-all flex items-center justify-center ${
           menuOpen ? 'rotate-45' : ''
         }`}
         aria-label="Add note"

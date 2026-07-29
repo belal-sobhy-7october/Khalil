@@ -669,7 +669,8 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   incrementSubTrack: async (id, value = 1) => {
     const track = get().subTracks.find((t) => t.id === id);
     if (!track) return;
-    const newValue = track.currentValue + value;
+    // Clamped: currentValue never exceeds target so the progress bar stays meaningful
+    const newValue = Math.min(track.currentValue + value, track.target);
     try {
       const { error } = await supabase.from('sub_tracks').update({ current_value: newValue }).eq('id', id);
       if (error) { console.error('Failed to increment sub track:', error); return; }

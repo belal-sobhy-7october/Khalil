@@ -113,7 +113,7 @@ export default function NotesPanel({
   return (
     <>
       {/* Desktop: fixed right column */}
-      <div className="hidden lg:block fixed end-0 top-14 bottom-0 w-72 z-30 bg-surface border-s border-border-subtle overflow-y-auto p-4 space-y-3" style={{ scrollbarWidth: 'thin' }}>
+      <div className="hidden lg:block fixed end-0 top-14 bottom-0 w-72 z-20 bg-surface border-s border-border-subtle overflow-y-auto p-4 space-y-3" style={{ scrollbarWidth: 'thin' }}>
         <div className="flex items-center justify-between mb-2">
           <h2 className="text-xs font-semibold text-ink-light uppercase tracking-wider">ملاحظات</h2>
         </div>

@@ -585,9 +585,16 @@ function AddTrackForm({ categoryId }: { categoryId: string }) {
   const [name, setName] = useState('');
   const [target, setTarget] = useState('10');
   const [unit, setUnit] = useState('');
+  const [targetError, setTargetError] = useState('');
 
   const handleAdd = () => {
     if (!name.trim()) return;
+    const parsed = Number(target);
+    if (parsed < 0) {
+      setTargetError('القيمة لا يمكن أن تكون سالبة');
+      return;
+    }
+    setTargetError('');
     addSubTrack({
       id: `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
       categoryId,
@@ -595,7 +602,7 @@ function AddTrackForm({ categoryId }: { categoryId: string }) {
       nameKey: name.trim().toLowerCase().replace(/\s+/g, '_'),
       icon: 'star',
       progressType: 'counter',
-      target: Math.max(1, Number(target) || 10),
+      target: isNaN(parsed) ? 10 : Math.floor(parsed),
       unit: unit.trim() || 'unit',
       currentValue: 0,
       sortOrder: 99,
@@ -638,11 +645,14 @@ function AddTrackForm({ categoryId }: { categoryId: string }) {
               </label>
               <input
                 type="number"
-                min="1"
+                min="0"
                 value={target}
-                onChange={(e) => setTarget(e.target.value)}
+                onChange={(e) => { setTarget(e.target.value); setTargetError(''); }}
                 className="w-full border border-border-subtle rounded-lg px-3 py-2 text-sm bg-ink/3 text-ink focus:outline-none focus:ring-1 focus:ring-clay-soft/30"
               />
+              {targetError && (
+                <p className="text-[10px] text-red-500 mt-1 text-end">{targetError}</p>
+              )}
             </div>
 
             <div className="flex-1">
