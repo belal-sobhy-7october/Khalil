@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { Trash2 } from 'lucide-react';
 import type { StickyNoteData } from '../../types';
 
@@ -26,16 +26,21 @@ export default function StickyNote({ note, onDelete, onUpdate }: Props) {
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
   }, []);
 
+  const persist = useCallback((newTitle: string, newText: string) => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      onUpdate(note.id, { title: newTitle, text: newText });
+    }, 400);
+  }, [note.id, onUpdate]);
+
   const handleTitleChange = (value: string) => {
     setTitle(value);
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => onUpdate(note.id, { title: value }), 400);
+    persist(value, text);
   };
 
   const handleTextChange = (value: string) => {
     setText(value);
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => onUpdate(note.id, { text: value }), 400);
+    persist(title, value);
   };
 
   return (

@@ -132,6 +132,29 @@ async function supabaseCall<T>(
   }
 }
 
+async function rolloverStaleTodos(userId: string) {
+  const today = getToday();
+  const weekStart = getWeekStart();
+
+  const { error: dailyErr } = await supabase
+    .from('daily_todos')
+    .update({ date: today })
+    .eq('user_id', userId)
+    .eq('completed', false)
+    .lt('date', today);
+
+  if (dailyErr) console.error('[rollover] daily_todos error:', dailyErr);
+
+  const { error: weeklyErr } = await supabase
+    .from('weekly_todos')
+    .update({ week_start: weekStart })
+    .eq('user_id', userId)
+    .eq('completed', false)
+    .neq('week_start', weekStart);
+
+  if (weeklyErr) console.error('[rollover] weekly_todos error:', weeklyErr);
+}
+
 export const useAppStore = create<AppStore>()((set, get) => ({
   language: (() => {
     if (typeof window !== 'undefined') {
@@ -172,11 +195,16 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     console.log('[loadUserData] Fetching data for user:', userId);
 
     try {
+      await rolloverStaleTodos(userId);
+
+      const today = getToday();
+      const weekStart = getWeekStart();
+
       // Load core tables — these must exist
       const [dailyFocusRes, dailyTodoRes, weeklyTodoRes, backlogTodoRes, lifeCategoryRes, subTrackRes, subTrackEntryRes, bookmarkCategoryRes, bookmarkRes] = await Promise.all([
         supabase.from('daily_focus').select('*').eq('user_id', userId).limit(1),
-        supabase.from('daily_todos').select('*').eq('user_id', userId).order('sort_order'),
-        supabase.from('weekly_todos').select('*').eq('user_id', userId).order('sort_order'),
+        supabase.from('daily_todos').select('*').eq('user_id', userId).eq('date', today).order('sort_order'),
+        supabase.from('weekly_todos').select('*').eq('user_id', userId).eq('week_start', weekStart).order('sort_order'),
         supabase.from('backlog_todos').select('*').eq('user_id', userId).order('sort_order'),
         supabase.from('life_categories').select('*').eq('user_id', userId).order('sort_order'),
         supabase.from('sub_tracks').select('*').eq('user_id', userId).order('sort_order'),
@@ -223,6 +251,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       }
 
       const focusRow = dailyFocusRows && dailyFocusRows.length > 0 ? dailyFocusRows[0] : null;
+      const validFocus = focusRow && focusRow.date === getToday() ? focusRow : null;
 
       // ── Notes loading ──
 
@@ -249,8 +278,8 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       }));
 
       set({
-        dailyFocus: focusRow
-          ? { text: focusRow.text, date: focusRow.date }
+        dailyFocus: validFocus
+          ? { text: validFocus.text, date: validFocus.date }
           : { text: '', date: getToday() },
         dailyTodos: (dailyTodoRows || []).map(mapDailyTodo),
         weeklyTodos: (weeklyTodoRows || []).map(mapWeeklyTodo),
@@ -313,7 +342,8 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     console.log('user:', userId);
     if (!userId) { console.error('NO USER ID - aborting'); console.groupEnd(); return; }
     const id = generateId();
-    const sortOrder = get().dailyTodos.length;
+    const maxSortOrder = get().dailyTodos.reduce((max, t) => Math.max(max, t.sortOrder), -1);
+    const sortOrder = maxSortOrder + 1;
     const payload = { id, user_id: userId, text, completed: false, priority, created_at: Date.now(), date: getToday(), sort_order: sortOrder };
     console.log('payload:', JSON.stringify(payload, null, 2));
     console.log('table: daily_todos');
@@ -359,7 +389,8 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     const userId = get().session?.user?.id;
     if (!userId) return;
     const id = generateId();
-    const sortOrder = get().weeklyTodos.length;
+    const maxSortOrder = get().weeklyTodos.reduce((max, t) => Math.max(max, t.sortOrder), -1);
+    const sortOrder = maxSortOrder + 1;
     const weekStart = getWeekStart();
     const { success } = await supabaseCall(supabase.from('weekly_todos').insert({ id, user_id: userId, text, completed: false, priority, created_at: Date.now(), week_start: weekStart, sort_order: sortOrder }), 'addWeeklyTodo');
     if (!success) return;
@@ -387,7 +418,8 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     const userId = get().session?.user?.id;
     if (!userId) return;
     const id = generateId();
-    const sortOrder = get().backlogTodos.length;
+    const maxSortOrder = get().backlogTodos.reduce((max, t) => Math.max(max, t.sortOrder), -1);
+    const sortOrder = maxSortOrder + 1;
     const { success } = await supabaseCall(supabase.from('backlog_todos').insert({ id, user_id: userId, text, completed: false, priority, created_at: Date.now(), sort_order: sortOrder }), 'addBacklogTodo');
     if (!success) return;
     set((s) => ({
@@ -455,7 +487,8 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     if (!userId) return;
     const newId = generateId();
     const today = getToday();
-    const sortOrder = get().dailyTodos.length;
+    const maxSortOrder = get().dailyTodos.reduce((max, t) => Math.max(max, t.sortOrder), -1);
+    const sortOrder = maxSortOrder + 1;
     const insertOk = await supabaseCall(supabase.from('daily_todos').insert({ id: newId, user_id: userId, text: todo.text, completed: false, priority: todo.priority, created_at: Date.now(), date: today, sort_order: sortOrder }), 'moveToDaily insert');
     if (!insertOk.success) return;
     const { success: deleteOk } = await supabaseCall(
@@ -479,7 +512,8 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     if (!userId) return;
     const newId = generateId();
     const weekStart = getWeekStart();
-    const sortOrder = get().weeklyTodos.length;
+    const maxSortOrder = get().weeklyTodos.reduce((max, t) => Math.max(max, t.sortOrder), -1);
+    const sortOrder = maxSortOrder + 1;
     const insertOk = await supabaseCall(supabase.from('weekly_todos').insert({ id: newId, user_id: userId, text: todo.text, completed: false, priority: todo.priority, created_at: Date.now(), week_start: weekStart, sort_order: sortOrder }), 'moveToWeekly insert');
     if (!insertOk.success) return;
     const { success: deleteOk } = await supabaseCall(
@@ -503,7 +537,8 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     if (!userId) return;
     const newId = generateId();
     const table = from === 'daily' ? 'daily_todos' : 'weekly_todos';
-    const sortOrder = get().backlogTodos.length;
+    const maxSortOrder = get().backlogTodos.reduce((max, t) => Math.max(max, t.sortOrder), -1);
+    const sortOrder = maxSortOrder + 1;
     const insertOk = await supabaseCall(supabase.from('backlog_todos').insert({ id: newId, user_id: userId, text: todo.text, completed: false, priority: todo.priority, created_at: Date.now(), sort_order: sortOrder }), 'moveToBacklog insert');
     if (!insertOk.success) return;
     const { success: deleteOk } = await supabaseCall(supabase.from(table).delete().eq('id', id), 'moveToBacklog delete');
