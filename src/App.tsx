@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback, lazy, Suspense } from 'react';
+import { useEffect, useState, useCallback, lazy, Suspense } from 'react';
 import { Plus, StickyNote as StickyNoteIcon, ListTodo } from 'lucide-react';
 import {
   useFloating,
@@ -48,7 +48,6 @@ function App() {
   const deleteTodoNoteStore = useAppStore((s) => s.deleteTodoNote);
   const reorderTodoNotes = useAppStore((s) => s.reorderTodoNotes);
   const [menuOpen, setMenuOpen] = useState(false);
-  const initialized = useRef(false);
 
   const { refs, floatingStyles, context } = useFloating({
     placement: isRTL ? 'left-start' : 'right-start',
@@ -113,23 +112,21 @@ function App() {
 
   useEffect(() => {
     let dataLoaded = false;
+    let sessionResolved = false;
 
     supabase.auth.getSession().then(({ data: { session } }) => {
+      sessionResolved = true;
       setSession(session);
-      if (session && !dataLoaded) {
+      if (session) {
         dataLoaded = true;
         loadUserData().finally(() => useAppStore.setState({ isLoading: false }));
       } else {
         useAppStore.setState({ isLoading: false });
       }
-      initialized.current = true;
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!initialized.current) {
-        initialized.current = true;
-        return;
-      }
+      if (!sessionResolved) return;
       setSession(session);
       if (session && !dataLoaded) {
         dataLoaded = true;
@@ -142,9 +139,9 @@ function App() {
     return () => subscription.unsubscribe();
   }, []);
 
-  const handleSectionChange = (section: string) => {
+  const handleSectionChange = useCallback((section: string) => {
     setActiveSection(section);
-  };
+  }, []);
 
   if (isLoading) {
     return (

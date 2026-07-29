@@ -482,6 +482,7 @@ function useLongPress(callback: (step: number) => void) {
     onMouseLeave: stop,
     onTouchStart: start,
     onTouchEnd: stop,
+    onTouchCancel: stop,
   };
 }
 

@@ -21,26 +21,45 @@ export default function StickyNote({ note, onDelete, onUpdate }: Props) {
   const [title, setTitle] = useState(note.title);
   const [text, setText] = useState(note.text);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const titleRef = useRef(note.title);
+  const textRef = useRef(note.text);
+  const lastSentRef = useRef({ title: note.title, text: note.text });
 
   useEffect(() => {
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
   }, []);
 
-  const persist = useCallback((newTitle: string, newText: string) => {
+  useEffect(() => {
+    const hasLocalChanges = titleRef.current !== lastSentRef.current.title || textRef.current !== lastSentRef.current.text;
+    if (!hasLocalChanges) {
+      if (titleRef.current !== note.title || textRef.current !== note.text) {
+        setTitle(note.title);
+        setText(note.text);
+        titleRef.current = note.title;
+        textRef.current = note.text;
+      }
+    }
+    lastSentRef.current = { title: note.title, text: note.text };
+  }, [note.title, note.text, note.id]);
+
+  const persist = useCallback(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
-      onUpdate(note.id, { title: newTitle, text: newText });
+      onUpdate(note.id, { title: titleRef.current, text: textRef.current });
+      lastSentRef.current = { title: titleRef.current, text: textRef.current };
     }, 400);
   }, [note.id, onUpdate]);
 
   const handleTitleChange = (value: string) => {
+    titleRef.current = value;
     setTitle(value);
-    persist(value, text);
+    persist();
   };
 
   const handleTextChange = (value: string) => {
+    textRef.current = value;
     setText(value);
-    persist(title, value);
+    persist();
   };
 
   return (

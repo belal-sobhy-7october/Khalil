@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Trash2, Plus, Check } from 'lucide-react';
-import type { TodoNoteData, TodoItemData } from '../../types';
+import type { TodoNoteData } from '../../types';
 
 interface Props {
   note: TodoNoteData;
@@ -23,42 +23,65 @@ export default function TodoNote({ note, onDelete, onUpdate }: Props) {
   const [newItemText, setNewItemText] = useState('');
   const titleRef = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const titleRef2 = useRef(note.title);
+  const itemsRef = useRef(note.items);
+  const lastSentRef = useRef({ title: note.title, items: note.items });
 
   useEffect(() => {
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
   }, []);
 
-  const persist = useCallback((newTitle: string, newItems: TodoItemData[]) => {
+  useEffect(() => {
+    const hasLocalChanges =
+      titleRef2.current !== lastSentRef.current.title ||
+      itemsRef.current !== lastSentRef.current.items;
+    if (!hasLocalChanges) {
+      if (titleRef2.current !== note.title || itemsRef.current !== note.items) {
+        setTitle(note.title);
+        setItems(note.items);
+        titleRef2.current = note.title;
+        itemsRef.current = note.items;
+      }
+    }
+    lastSentRef.current = { title: note.title, items: note.items };
+  }, [note.title, note.items, note.id]);
+
+  const persist = useCallback(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
-      onUpdate(note.id, { title: newTitle, items: newItems });
+      onUpdate(note.id, { title: titleRef2.current, items: itemsRef.current });
+      lastSentRef.current = { title: titleRef2.current, items: itemsRef.current };
     }, 300);
   }, [note.id, onUpdate]);
 
   const handleTitleChange = (value: string) => {
+    titleRef2.current = value;
     setTitle(value);
-    persist(value, items);
+    persist();
   };
 
   const toggleItem = (itemId: string) => {
-    const next = items.map((it) => it.id === itemId ? { ...it, done: !it.done } : it);
+    const next = itemsRef.current.map((it) => it.id === itemId ? { ...it, done: !it.done } : it);
+    itemsRef.current = next;
     setItems(next);
-    persist(title, next);
+    persist();
   };
 
   const deleteItem = (itemId: string) => {
-    const next = items.filter((it) => it.id !== itemId);
+    const next = itemsRef.current.filter((it) => it.id !== itemId);
+    itemsRef.current = next;
     setItems(next);
-    persist(title, next);
+    persist();
   };
 
   const addItem = () => {
     const text = newItemText.trim();
     if (!text) return;
-    const next = [...items, { id: crypto.randomUUID(), text, done: false }];
+    const next = [...itemsRef.current, { id: crypto.randomUUID(), text, done: false }];
+    itemsRef.current = next;
     setItems(next);
     setNewItemText('');
-    persist(title, next);
+    persist();
   };
 
   const handleItemKeyDown = (e: React.KeyboardEvent) => {
