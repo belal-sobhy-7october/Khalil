@@ -1,15 +1,17 @@
+import { memo } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { GripVertical } from 'lucide-react';
 
-export function SortableTodoItem({ id, children }: { id: string; children: React.ReactNode }) {
+export const SortableTodoItem = memo(function SortableTodoItem({ id, children }: { id: string; children: React.ReactNode }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
 
   const style = {
     transform: CSS.Transform.toString(transform),
-    transition,
+    transition: isDragging ? 'none' : transition,
     opacity: isDragging ? 0.5 : 1,
     zIndex: isDragging ? 10 : undefined,
+    willChange: isDragging ? 'transform' : undefined,
   };
 
   return (
@@ -26,4 +28,4 @@ export function SortableTodoItem({ id, children }: { id: string; children: React
       </div>
     </div>
   );
-}
+});

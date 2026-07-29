@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 import {
   Calendar,
   Plus,
@@ -15,7 +15,7 @@ import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-ki
 import { SortableTodoItem } from './SortableTodoItem';
 import { useAppStore } from '../../store/appStore';
 import { useTranslation } from '../../i18n/useTranslation';
-import type { Priority } from '../../types';
+import type { Priority, WeeklyTodo as WeeklyTodoType } from '../../types';
 
 const priorityColors: Record<Priority, { bg: string; text: string; dot: string }> = {
   high: { bg: 'bg-red-50 dark:bg-red-950/30', text: 'text-red-600 dark:text-red-400', dot: 'bg-red-500 dark:bg-red-400' },
@@ -37,23 +37,23 @@ export default function WeeklyTodo() {
 
   const completed = todos.filter((t) => t.completed).length;
 
-  const handleAdd = () => {
+  const handleAdd = useCallback(() => {
     if (text.trim()) {
       addTodo(text.trim(), priority);
       setText('');
     }
-  };
+  }, [text, priority, addTodo]);
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'Enter') handleAdd();
-  };
+  }, [handleAdd]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } })
   );
 
-  const handleDragEnd = (event: any) => {
+  const handleDragEnd = useCallback((event: any) => {
     const { active, over } = event;
     if (active.id !== over?.id) {
       const oldIndex = todos.findIndex((t) => t.id === active.id);
@@ -61,7 +61,9 @@ export default function WeeklyTodo() {
       const newOrder = arrayMove(todos, oldIndex, newIndex);
       reorderWeeklyTodos(newOrder.map((t) => t.id));
     }
-  };
+  }, [todos, reorderWeeklyTodos]);
+
+  const itemIds = useMemo(() => todos.map((t) => t.id), [todos]);
 
   return (
     <section>
@@ -130,72 +132,16 @@ export default function WeeklyTodo() {
                   <p className="text-sm text-ink-light">{t('weekly.empty')}</p>
                 </motion.div>
               ) : (
-                <SortableContext items={todos.map((t) => t.id)} strategy={verticalListSortingStrategy}>
+                <SortableContext items={itemIds} strategy={verticalListSortingStrategy}>
                   {todos.map((todo) => (
                     <SortableTodoItem key={todo.id} id={todo.id}>
-                      <motion.div
-                        layout
-                        initial={{ opacity: 0, y: -8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, x: -20, height: 0, marginBottom: 0 }}
-                        transition={{ duration: 0.2 }}
-                        className={`group flex items-center gap-3 p-3 min-w-0 rounded-lg hover:bg-ink/3 transition-colors ${
-                          todo.completed ? 'opacity-60' : ''
-                        }`}
-                      >
-                        <button
-                          onClick={() => toggleTodo(todo.id)}
-                          className="shrink-0 text-ink-lighter hover:text-gold-soft transition-colors"
-                        >
-                          {todo.completed ? (
-                            <CheckCircle size={20} className="text-sage-soft" />
-                          ) : (
-                            <Circle size={20} />
-                          )}
-                        </button>
-
-                        <div className={`flex items-center gap-2 min-w-0 ${priorityColors[todo.priority].bg} px-2 py-0.5 rounded`}>
-                          <span className={`w-1.5 h-1.5 rounded-full ${priorityColors[todo.priority].dot}`} />
-                          <span className={`text-[10px] uppercase tracking-wider font-medium ${priorityColors[todo.priority].text}`}>
-                            {todo.priority}
-                          </span>
-                        </div>
-
-                        <span
-                          className={`flex-1 min-w-0 text-sm break-words whitespace-normal ${
-                            todo.completed
-                              ? 'line-through text-ink-lighter'
-                              : 'text-ink'
-                          }`}
-                          dir="auto"
-                        >
-                          {todo.text}
-                        </span>
-
-                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all shrink-0">
-                          <button
-                            onClick={() => moveToDaily(todo.id)}
-                            className="p-1.5 rounded-md text-clay-soft hover:text-clay-soft-dark hover:bg-ink/5 transition-all"
-                            title="نقل لليوم"
-                          >
-                            <Sun size={14} />
-                          </button>
-                          <button
-                            onClick={() => moveToBacklog(todo.id, 'weekly')}
-                            className="p-1.5 rounded-md text-ink-lighter hover:text-ink hover:bg-ink/5 transition-all"
-                            title="نقل للمؤجلة"
-                          >
-                            <Archive size={14} />
-                          </button>
-                          <button
-                            onClick={() => removeTodo(todo.id)}
-                            className="p-1.5 rounded-md text-ink-lighter hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-all"
-                            title="حذف"
-                          >
-                            <Trash2 size={14} />
-                          </button>
-                        </div>
-                      </motion.div>
+                      <WeeklyTodoItem
+                        todo={todo}
+                        onToggle={toggleTodo}
+                        onRemove={removeTodo}
+                        onMoveToDaily={moveToDaily}
+                        onMoveToBacklog={moveToBacklog}
+                      />
                     </SortableTodoItem>
                   ))}
                 </SortableContext>
@@ -207,3 +153,82 @@ export default function WeeklyTodo() {
     </section>
   );
 }
+
+const WeeklyTodoItem = memo(function WeeklyTodoItem({
+  todo,
+  onToggle,
+  onRemove,
+  onMoveToDaily,
+  onMoveToBacklog,
+}: {
+  todo: WeeklyTodoType;
+  onToggle: (id: string) => void;
+  onRemove: (id: string) => void;
+  onMoveToDaily: (id: string) => void;
+  onMoveToBacklog: (id: string, source: 'weekly') => void;
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -8 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, x: -20, height: 0, marginBottom: 0 }}
+      transition={{ duration: 0.2 }}
+      className={`group flex items-center gap-3 p-3 min-w-0 rounded-lg hover:bg-ink/3 transition-colors ${
+        todo.completed ? 'opacity-60' : ''
+      }`}
+    >
+      <button
+        onClick={() => onToggle(todo.id)}
+        className="shrink-0 text-ink-lighter hover:text-gold-soft transition-colors"
+      >
+        {todo.completed ? (
+          <CheckCircle size={20} className="text-sage-soft" />
+        ) : (
+          <Circle size={20} />
+        )}
+      </button>
+
+      <div className={`flex items-center gap-2 min-w-0 ${priorityColors[todo.priority].bg} px-2 py-0.5 rounded`}>
+        <span className={`w-1.5 h-1.5 rounded-full ${priorityColors[todo.priority].dot}`} />
+        <span className={`text-[10px] uppercase tracking-wider font-medium ${priorityColors[todo.priority].text}`}>
+          {todo.priority}
+        </span>
+      </div>
+
+      <span
+        className={`flex-1 min-w-0 text-sm break-words whitespace-normal ${
+          todo.completed
+            ? 'line-through text-ink-lighter'
+            : 'text-ink'
+        }`}
+        dir="auto"
+      >
+        {todo.text}
+      </span>
+
+      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all shrink-0">
+        <button
+          onClick={() => onMoveToDaily(todo.id)}
+          className="p-1.5 rounded-md text-clay-soft hover:text-clay-soft-dark hover:bg-ink/5 transition-all"
+          title="نقل لليوم"
+        >
+          <Sun size={14} />
+        </button>
+        <button
+          onClick={() => onMoveToBacklog(todo.id, 'weekly')}
+          className="p-1.5 rounded-md text-ink-lighter hover:text-ink hover:bg-ink/5 transition-all"
+          title="نقل للمؤجلة"
+        >
+          <Archive size={14} />
+        </button>
+        <button
+          onClick={() => onRemove(todo.id)}
+          className="p-1.5 rounded-md text-ink-lighter hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-all"
+          title="حذف"
+        >
+          <Trash2 size={14} />
+        </button>
+      </div>
+    </motion.div>
+  );
+});

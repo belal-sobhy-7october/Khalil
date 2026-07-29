@@ -13,6 +13,7 @@ export interface TodoItem {
   completed: boolean;
   priority: Priority;
   createdAt: number;
+  sortOrder: number;
 }
 
 export interface DailyTodo extends TodoItem {
@@ -29,6 +30,7 @@ export interface BookmarkCategory {
   id: string;
   name: string;
   icon: string;
+  color: string;
 }
 
 export interface Bookmark {
@@ -37,6 +39,7 @@ export interface Bookmark {
   url: string;
   categoryId: string;
   description: string;
+  note: string;
 }
 
 export type SubTrackType = 'counter' | 'percentage' | 'habit';
@@ -69,4 +72,24 @@ export interface SubTrackEntry {
   value: number;
   date: string;
   note: string;
+}
+
+export interface StickyNoteData {
+  id: string;
+  title: string;
+  text: string;
+  sortOrder: number;
+}
+
+export interface TodoItemData {
+  id: string;
+  text: string;
+  done: boolean;
+}
+
+export interface TodoNoteData {
+  id: string;
+  title: string;
+  items: TodoItemData[];
+  sortOrder: number;
 }

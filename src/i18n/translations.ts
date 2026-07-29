@@ -94,6 +94,8 @@ export const translations = {
       selectCategory: 'Select category',
       categoryNamePlaceholder: 'Category name',
       titlePlaceholder: 'Title',
+      color: 'Color',
+      notePlaceholder: 'Note (optional)',
     },
     common: {
       add: 'Add',
@@ -219,6 +221,8 @@ export const translations = {
       selectCategory: 'اختر تصنيفاً',
       categoryNamePlaceholder: 'اسم التصنيف',
       titlePlaceholder: 'العنوان',
+      color: 'اللون',
+      notePlaceholder: 'ملاحظة (اختياري)',
     },
     common: {
       add: 'إضافة',

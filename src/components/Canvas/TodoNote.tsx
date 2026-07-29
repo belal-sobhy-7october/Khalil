@@ -1,18 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Trash2, Plus, Check } from 'lucide-react';
-
-export interface TodoItemData {
-  id: string;
-  text: string;
-  done: boolean;
-}
-
-export interface TodoNoteData {
-  id: string;
-  title: string;
-  items: TodoItemData[];
-  position: { x: number; y: number };
-}
+import type { TodoNoteData, TodoItemData } from '../../types';
 
 interface Props {
   note: TodoNoteData;
@@ -20,19 +8,12 @@ interface Props {
   onUpdate: (id: string, updated: Partial<TodoNoteData>) => void;
 }
 
-function spawnCenter() {
-  return {
-    x: window.innerWidth / 2 - 150,
-    y: window.innerHeight / 2 - 150,
-  };
-}
-
 export function createTodoNote(): TodoNoteData {
   return {
     id: crypto.randomUUID(),
     title: '',
     items: [],
-    position: spawnCenter(),
+    sortOrder: 0,
   };
 }
 

@@ -47,6 +47,20 @@ const bookmarkIconOptions = ['general', 'code', 'video', 'book', 'music', 'dumbb
 
 const defaultCategoryIcon = <LinkIcon size={16} />;
 
+const categoryColors: Record<string, string> = {
+  terracotta: '#d46430',
+  gold: '#b8914a',
+  sage: '#5d8a5d',
+  slate: '#737985',
+  rose: '#e11d48',
+  indigo: '#4f46e5',
+  emerald: '#059669',
+  amber: '#d97706',
+  purple: '#7c3aed',
+};
+
+const colorOptions = ['terracotta', 'gold', 'sage', 'slate', 'rose', 'indigo', 'emerald', 'amber', 'purple'] as const;
+
 export default function BookmarksVault() {
   const { t, isRTL } = useTranslation();
   const categories = useAppStore((s) => s.bookmarkCategories);
@@ -59,8 +73,8 @@ export default function BookmarksVault() {
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [showCategoryForm, setShowCategoryForm] = useState(false);
   const [showBookmarkForm, setShowBookmarkForm] = useState(false);
-  const [newCategory, setNewCategory] = useState({ name: '', icon: 'general' });
-  const [newBookmark, setNewBookmark] = useState({ title: '', url: '', description: '', categoryId: '' });
+  const [newCategory, setNewCategory] = useState({ name: '', icon: 'general', color: 'terracotta' });
+  const [newBookmark, setNewBookmark] = useState({ title: '', url: '', description: '', note: '', categoryId: '' });
 
   const filteredBookmarks = activeCategory
     ? bookmarks.filter((b) => b.categoryId === activeCategory)
@@ -71,8 +85,9 @@ export default function BookmarksVault() {
       addCategory({
         name: newCategory.name.trim(),
         icon: newCategory.icon,
+        color: newCategory.color,
       });
-      setNewCategory({ name: '', icon: 'general' });
+      setNewCategory({ name: '', icon: 'general', color: 'terracotta' });
       setShowCategoryForm(false);
     }
   };
@@ -84,8 +99,9 @@ export default function BookmarksVault() {
         url: newBookmark.url.trim().startsWith('http') ? newBookmark.url.trim() : `https://${newBookmark.url.trim()}`,
         categoryId: newBookmark.categoryId,
         description: newBookmark.description.trim(),
+        note: newBookmark.note.trim(),
       });
-      setNewBookmark({ title: '', url: '', description: '', categoryId: '' });
+      setNewBookmark({ title: '', url: '', description: '', note: '', categoryId: '' });
       setShowBookmarkForm(false);
     }
   };
@@ -136,6 +152,7 @@ export default function BookmarksVault() {
                 : 'bg-ink/5 text-ink-light hover:bg-ink/10 hover:text-ink'
             }`}
           >
+            <span className="w-2 h-2 rounded-full" style={{ backgroundColor: categoryColors[cat.color] || cat.color }} />
             {categoryIcons[cat.icon] || defaultCategoryIcon}
             <span>{cat.name}</span>
             <button
@@ -185,6 +202,27 @@ export default function BookmarksVault() {
                     >
                       {categoryIcons[iconKey] || defaultCategoryIcon}
                     </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-ink-light mb-2">
+                  {t('bookmarks.color')}
+                </label>
+                <div className="flex gap-2">
+                  {colorOptions.map((colorKey) => (
+                    <button
+                      key={colorKey}
+                      onClick={() => setNewCategory({ ...newCategory, color: colorKey })}
+                      className={`flex items-center justify-center w-8 h-8 rounded-full border-2 transition-all ${
+                        newCategory.color === colorKey
+                          ? 'border-ink scale-110'
+                          : 'border-transparent'
+                      }`}
+                      style={{ backgroundColor: categoryColors[colorKey] }}
+                      title={colorKey}
+                    />
                   ))}
                 </div>
               </div>
@@ -259,6 +297,14 @@ export default function BookmarksVault() {
                     className="flex-1 border border-border-subtle rounded-lg px-3 py-2 text-sm bg-ink/3 text-ink placeholder-ink-lighter focus:outline-none focus:ring-2 focus:ring-clay-soft/20"
                   />
                 </div>
+                <textarea
+                  value={newBookmark.note}
+                  onChange={(e) => setNewBookmark({ ...newBookmark, note: e.target.value })}
+                  placeholder={t('bookmarks.notePlaceholder')}
+                  dir={isRTL ? 'rtl' : 'ltr'}
+                  rows={3}
+                  className="w-full border border-border-subtle rounded-lg px-3 py-2 text-sm bg-ink/3 text-ink placeholder-ink-lighter focus:outline-none focus:ring-2 focus:ring-clay-soft/20 resize-none"
+                />
                 <div className="flex gap-2 justify-end">
                   <button
                     onClick={() => setShowBookmarkForm(false)}
@@ -331,6 +377,11 @@ function BookmarkCard({ bookmark, onRemove }: { bookmark: BookmarkType; onRemove
           {bookmark.description && (
             <p className="text-xs text-ink-light mt-0.5 line-clamp-2">
               {bookmark.description}
+            </p>
+          )}
+          {bookmark.note && (
+            <p className="text-xs text-ink-lighter italic mt-1 line-clamp-2 border-t border-border-subtle pt-1">
+              {bookmark.note}
             </p>
           )}
           <p className="text-[10px] text-ink-lighter mt-1 truncate">

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 import {
   CheckSquare,
   Plus,
@@ -38,23 +38,23 @@ export default function DailyTodo() {
 
   const completed = todos.filter((t) => t.completed).length;
 
-  const handleAdd = () => {
+  const handleAdd = useCallback(() => {
     if (text.trim()) {
       addTodo(text.trim(), priority);
       setText('');
     }
-  };
+  }, [text, priority, addTodo]);
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'Enter') handleAdd();
-  };
+  }, [handleAdd]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } })
   );
 
-  const handleDragEnd = (event: any) => {
+  const handleDragEnd = useCallback((event: any) => {
     const { active, over } = event;
     if (active.id !== over?.id) {
       const oldIndex = todos.findIndex((t) => t.id === active.id);
@@ -62,7 +62,9 @@ export default function DailyTodo() {
       const newOrder = arrayMove(todos, oldIndex, newIndex);
       reorderDailyTodos(newOrder.map((t) => t.id));
     }
-  };
+  }, [todos, reorderDailyTodos]);
+
+  const itemIds = useMemo(() => todos.map((t) => t.id), [todos]);
 
   return (
     <section id="section-todo">
@@ -131,15 +133,15 @@ export default function DailyTodo() {
                   <p className="text-sm text-ink-light">{t('todo.empty')}</p>
                 </motion.div>
               ) : (
-                <SortableContext items={todos.map((t) => t.id)} strategy={verticalListSortingStrategy}>
+                <SortableContext items={itemIds} strategy={verticalListSortingStrategy}>
                   {todos.map((todo) => (
                     <SortableTodoItem key={todo.id} id={todo.id}>
                       <TodoItem
                         todo={todo}
-                        onToggle={() => toggleTodo(todo.id)}
-                        onRemove={() => removeTodo(todo.id)}
-                        onMoveToWeekly={() => moveToWeekly(todo.id)}
-                        onMoveToBacklog={() => moveToBacklog(todo.id, 'daily')}
+                        onToggle={toggleTodo}
+                        onRemove={removeTodo}
+                        onMoveToWeekly={moveToWeekly}
+                        onMoveToBacklog={moveToBacklog}
                       />
                     </SortableTodoItem>
                   ))}
@@ -153,7 +155,7 @@ export default function DailyTodo() {
   );
 }
 
-function TodoItem({
+const TodoItem = memo(function TodoItem({
   todo,
   onToggle,
   onRemove,
@@ -161,16 +163,15 @@ function TodoItem({
   onMoveToBacklog,
 }: {
   todo: DailyTodoType;
-  onToggle: () => void;
-  onRemove: () => void;
-  onMoveToWeekly: () => void;
-  onMoveToBacklog: () => void;
+  onToggle: (id: string) => void;
+  onRemove: (id: string) => void;
+  onMoveToWeekly: (id: string) => void;
+  onMoveToBacklog: (id: string, source: 'daily') => void;
 }) {
   const colors = priorityColors[todo.priority];
 
   return (
     <motion.div
-      layout
       initial={{ opacity: 0, y: -8 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, x: -20, height: 0, marginBottom: 0 }}
@@ -180,7 +181,7 @@ function TodoItem({
       }`}
     >
       <button
-        onClick={onToggle}
+        onClick={() => onToggle(todo.id)}
         className="shrink-0 text-ink-lighter hover:text-clay-soft transition-colors"
       >
         {todo.completed ? (
@@ -210,21 +211,21 @@ function TodoItem({
 
       <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all shrink-0">
         <button
-          onClick={onMoveToWeekly}
+          onClick={() => onMoveToWeekly(todo.id)}
           className="p-1.5 rounded-md text-gold-soft hover:text-gold-soft-dark hover:bg-ink/5 transition-all"
           title="نقل للأسبوع"
         >
           <Calendar size={14} />
         </button>
         <button
-          onClick={onMoveToBacklog}
+          onClick={() => onMoveToBacklog(todo.id, 'daily')}
           className="p-1.5 rounded-md text-ink-lighter hover:text-ink hover:bg-ink/5 transition-all"
           title="نقل للمؤجلة"
         >
           <Archive size={14} />
         </button>
         <button
-          onClick={onRemove}
+          onClick={() => onRemove(todo.id)}
           className="p-1.5 rounded-md text-ink-lighter hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-all"
           title="حذف"
         >
@@ -233,4 +234,4 @@ function TodoItem({
       </div>
     </motion.div>
   );
-}
+});

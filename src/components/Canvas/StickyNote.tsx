@@ -1,12 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Trash2 } from 'lucide-react';
-
-export interface StickyNoteData {
-  id: string;
-  title: string;
-  text: string;
-  position: { x: number; y: number };
-}
+import type { StickyNoteData } from '../../types';
 
 interface Props {
   note: StickyNoteData;
@@ -14,19 +8,12 @@ interface Props {
   onUpdate: (id: string, data: Partial<StickyNoteData>) => void;
 }
 
-function spawnCenter() {
-  return {
-    x: window.innerWidth / 2 - 150,
-    y: window.innerHeight / 2 - 150,
-  };
-}
-
 export function createStickyNote(title = '', text = ''): StickyNoteData {
   return {
     id: crypto.randomUUID(),
     title,
     text,
-    position: spawnCenter(),
+    sortOrder: 0,
   };
 }
 
