@@ -28,22 +28,25 @@ interface AppStore {
   setSession: (session: Session | null) => void;
   loadUserData: () => Promise<void>;
 
+  error: string | null;
+  clearError: () => void;
+
   dailyFocus: DailyFocus;
   setDailyFocus: (focus: DailyFocus) => Promise<void>;
   clearDailyFocus: () => Promise<void>;
 
   dailyTodos: DailyTodo[];
-  addDailyTodo: (text: string, priority: Priority) => Promise<void>;
+  addDailyTodo: (text: string, priority: Priority) => Promise<{ success: boolean }>;
   toggleDailyTodo: (id: string) => Promise<void>;
   removeDailyTodo: (id: string) => Promise<void>;
 
   weeklyTodos: WeeklyTodo[];
-  addWeeklyTodo: (text: string, priority: Priority) => Promise<void>;
+  addWeeklyTodo: (text: string, priority: Priority) => Promise<{ success: boolean }>;
   toggleWeeklyTodo: (id: string) => Promise<void>;
   removeWeeklyTodo: (id: string) => Promise<void>;
 
   backlogTodos: BacklogTodo[];
-  addBacklogTodo: (text: string, priority: Priority) => Promise<void>;
+  addBacklogTodo: (text: string, priority: Priority) => Promise<{ success: boolean }>;
   toggleBacklogTodo: (id: string) => Promise<void>;
   removeBacklogTodo: (id: string) => Promise<void>;
   reorderDailyTodos: (ids: string[]) => Promise<void>;
@@ -94,15 +97,22 @@ interface AppStore {
 }
 
 function getToday(): string {
-  return new Date().toISOString().split('T')[0];
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
 }
 
 function getWeekStart(): string {
-  const now = new Date();
-  const day = now.getDay();
-  const diff = now.getDate() - day + (day === 0 ? -6 : 1);
-  const monday = new Date(now.setDate(diff));
-  return monday.toISOString().split('T')[0];
+  const d = new Date();
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+  const monday = new Date(d.getFullYear(), d.getMonth(), diff);
+  const y = monday.getFullYear();
+  const m = String(monday.getMonth() + 1).padStart(2, '0');
+  const dayStr = String(monday.getDate()).padStart(2, '0');
+  return `${y}-${m}-${dayStr}`;
 }
 
 function generateId(): string {
@@ -113,6 +123,12 @@ function logError(context: string, error: unknown) {
   const msg = error && typeof error === 'object' ? (error as any).message || String(error) : String(error);
   const details = error && typeof error === 'object' ? (error as any).details || '' : '';
   console.error(`[${context}] ${msg}`, details);
+  const msgStr = String(msg);
+  if (msgStr.includes('PGRST204') || msgStr.includes('column') || msgStr.includes('not found')) {
+    console.error(
+      `[${context}] Schema cache issue detected. Run pending migrations and reload PostgREST schema cache: NOTIFY pgrst, 'reload schema';`
+    );
+  }
 }
 
 async function supabaseCall<T>(
@@ -180,6 +196,9 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     return { theme: next };
   }),
 
+  error: null,
+  clearError: () => set({ error: null }),
+
   session: null,
   isLoading: true,
   setSession: (session) => set({ session }),
@@ -187,12 +206,12 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   loadUserData: async () => {
     const userId = get().session?.user?.id;
     if (!userId) {
-      console.log('[loadUserData] No user ID, skipping');
+      if (import.meta.env.DEV) console.log('[loadUserData] No user ID, skipping');
       set({ isLoading: false });
       return;
     }
 
-    console.log('[loadUserData] Fetching data for user:', userId);
+    if (import.meta.env.DEV) console.log('[loadUserData] Fetching data for user:', userId);
 
     try {
       await rolloverStaleTodos(userId);
@@ -233,21 +252,18 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       const bookmarkCategoryRows = bookmarkCategoryRes.data;
       const bookmarkRows = bookmarkRes.data;
 
-      console.log('[loadUserData] Fetched rows:', {
-        dailyFocus: dailyFocusRows?.length ?? 0,
-        dailyTodos: dailyTodoRows?.length ?? 0,
-        weeklyTodos: weeklyTodoRows?.length ?? 0,
-        backlogTodos: backlogTodoRows?.length ?? 0,
-        lifeCategories: lifeCategoryRows?.length ?? 0,
-        subTracks: subTrackRows?.length ?? 0,
-        subTrackEntries: subTrackEntryRows?.length ?? 0,
-        bookmarkCategories: bookmarkCategoryRows?.length ?? 0,
-        bookmarks: bookmarkRows?.length ?? 0,
-      });
-      console.log('[loadUserData] subTracks fetched:', subTrackRows);
-      if (subTrackRows && subTrackRows.length > 0) {
-        console.log('[loadUserData] First subTrack raw:', subTrackRows[0]);
-        console.log('[loadUserData] First subTrack mapped:', mapSubTrack(subTrackRows[0]));
+      if (import.meta.env.DEV) {
+        console.log('[loadUserData] Fetched rows:', {
+          dailyFocus: dailyFocusRows?.length ?? 0,
+          dailyTodos: dailyTodoRows?.length ?? 0,
+          weeklyTodos: weeklyTodoRows?.length ?? 0,
+          backlogTodos: backlogTodoRows?.length ?? 0,
+          lifeCategories: lifeCategoryRows?.length ?? 0,
+          subTracks: subTrackRows?.length ?? 0,
+          subTrackEntries: subTrackEntryRows?.length ?? 0,
+          bookmarkCategories: bookmarkCategoryRows?.length ?? 0,
+          bookmarks: bookmarkRows?.length ?? 0,
+        });
       }
 
       const focusRow = dailyFocusRows && dailyFocusRows.length > 0 ? dailyFocusRows[0] : null;
@@ -295,10 +311,10 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       });
 
       if (!lifeCategoryRows || lifeCategoryRows.length === 0) {
-        console.log('[loadUserData] No categories found — seeding defaults');
+        if (import.meta.env.DEV) console.log('[loadUserData] No categories found — seeding defaults');
         await seedDefaults();
       } else {
-        console.log('[loadUserData] Data loaded successfully from existing Supabase rows');
+        if (import.meta.env.DEV) console.log('[loadUserData] Data loaded successfully from existing Supabase rows');
       }
     } catch (err) {
       console.error('[loadUserData] Failed to load user data:', err);
@@ -337,37 +353,25 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   dailyTodos: [],
   addDailyTodo: async (text, priority) => {
     const userId = get().session?.user?.id;
-    console.group('CREATE_DAILY_TODO');
-    console.log('text:', text, 'priority:', priority);
-    console.log('user:', userId);
-    if (!userId) { console.error('NO USER ID - aborting'); console.groupEnd(); return; }
+    if (!userId) return { success: false };
     const id = generateId();
     const maxSortOrder = get().dailyTodos.reduce((max, t) => Math.max(max, t.sortOrder), -1);
     const sortOrder = maxSortOrder + 1;
-    const payload = { id, user_id: userId, text, completed: false, priority, created_at: Date.now(), date: getToday(), sort_order: sortOrder };
-    console.log('payload:', JSON.stringify(payload, null, 2));
-    console.log('table: daily_todos');
-    console.groupEnd();
-    const { data, error } = await supabase.from('daily_todos').insert(payload).select().single();
-    console.group('SUPABASE_RESPONSE');
-    console.log('response data:', data);
-    console.log('error:', error);
-    if (error) {
-      console.error('INSERT FAILED:', error.message, error.details, error.code, error.hint);
-      console.groupEnd();
-      throw error;
+    const newTodo = { id, text, completed: false, priority, createdAt: Date.now(), date: getToday(), sortOrder };
+    set((s) => ({ dailyTodos: [...s.dailyTodos, newTodo] }));
+    const { success } = await supabaseCall(
+      supabase.from('daily_todos').insert({
+        id, user_id: userId, text, completed: false, priority,
+        created_at: Date.now(), date: getToday(), sort_order: sortOrder,
+      }),
+      'addDailyTodo'
+    );
+    if (!success) {
+      set((s) => ({ dailyTodos: s.dailyTodos.filter((t) => t.id !== id) }));
+      set({ error: 'Failed to add daily todo. Please try again.' });
+      return { success: false };
     }
-    console.log('INSERT SUCCEEDED, verifying with select...');
-    const { data: verifyData, error: verifyError } = await supabase.from('daily_todos').select('*').eq('id', id).single();
-    if (verifyError) {
-      console.error('VERIFY FAILED:', verifyError);
-    } else {
-      console.log('VERIFIED row in DB:', verifyData);
-    }
-    console.groupEnd();
-    set((s) => ({
-      dailyTodos: [...s.dailyTodos, { id, text, completed: false, priority, createdAt: Date.now(), date: getToday(), sortOrder }],
-    }));
+    return { success: true };
   },
   toggleDailyTodo: async (id) => {
     const todo = get().dailyTodos.find((t) => t.id === id);
@@ -387,16 +391,26 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   weeklyTodos: [],
   addWeeklyTodo: async (text, priority) => {
     const userId = get().session?.user?.id;
-    if (!userId) return;
+    if (!userId) return { success: false };
     const id = generateId();
     const maxSortOrder = get().weeklyTodos.reduce((max, t) => Math.max(max, t.sortOrder), -1);
     const sortOrder = maxSortOrder + 1;
     const weekStart = getWeekStart();
-    const { success } = await supabaseCall(supabase.from('weekly_todos').insert({ id, user_id: userId, text, completed: false, priority, created_at: Date.now(), week_start: weekStart, sort_order: sortOrder }), 'addWeeklyTodo');
-    if (!success) return;
-    set((s) => ({
-      weeklyTodos: [...s.weeklyTodos, { id, text, completed: false, priority, createdAt: Date.now(), weekStart, sortOrder }],
-    }));
+    const newTodo = { id, text, completed: false, priority, createdAt: Date.now(), weekStart, sortOrder };
+    set((s) => ({ weeklyTodos: [...s.weeklyTodos, newTodo] }));
+    const { success } = await supabaseCall(
+      supabase.from('weekly_todos').insert({
+        id, user_id: userId, text, completed: false, priority,
+        created_at: Date.now(), week_start: weekStart, sort_order: sortOrder,
+      }),
+      'addWeeklyTodo'
+    );
+    if (!success) {
+      set((s) => ({ weeklyTodos: s.weeklyTodos.filter((t) => t.id !== id) }));
+      set({ error: 'Failed to add weekly todo. Please try again.' });
+      return { success: false };
+    }
+    return { success: true };
   },
   toggleWeeklyTodo: async (id) => {
     const todo = get().weeklyTodos.find((t) => t.id === id);
@@ -416,15 +430,25 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   backlogTodos: [],
   addBacklogTodo: async (text, priority) => {
     const userId = get().session?.user?.id;
-    if (!userId) return;
+    if (!userId) return { success: false };
     const id = generateId();
     const maxSortOrder = get().backlogTodos.reduce((max, t) => Math.max(max, t.sortOrder), -1);
     const sortOrder = maxSortOrder + 1;
-    const { success } = await supabaseCall(supabase.from('backlog_todos').insert({ id, user_id: userId, text, completed: false, priority, created_at: Date.now(), sort_order: sortOrder }), 'addBacklogTodo');
-    if (!success) return;
-    set((s) => ({
-      backlogTodos: [...s.backlogTodos, { id, text, completed: false, priority, createdAt: Date.now(), sortOrder }],
-    }));
+    const newTodo = { id, text, completed: false, priority, createdAt: Date.now(), sortOrder };
+    set((s) => ({ backlogTodos: [...s.backlogTodos, newTodo] }));
+    const { success } = await supabaseCall(
+      supabase.from('backlog_todos').insert({
+        id, user_id: userId, text, completed: false, priority,
+        created_at: Date.now(), sort_order: sortOrder,
+      }),
+      'addBacklogTodo'
+    );
+    if (!success) {
+      set((s) => ({ backlogTodos: s.backlogTodos.filter((t) => t.id !== id) }));
+      set({ error: 'Failed to add backlog todo. Please try again.' });
+      return { success: false };
+    }
+    return { success: true };
   },
   toggleBacklogTodo: async (id) => {
     const todo = get().backlogTodos.find((t) => t.id === id);
@@ -441,42 +465,54 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     set((s) => ({ backlogTodos: s.backlogTodos.filter((t) => t.id !== id) }));
   },
   reorderDailyTodos: async (ids) => {
+    const userId = get().session?.user?.id;
+    if (!userId) return;
     const items = ids.map((id, index) => {
       const t = get().dailyTodos.find((x) => x.id === id)!;
       return { ...t, sortOrder: index };
     });
-    const results = await Promise.all(
-      items.map((t) =>
-        supabaseCall(supabase.from('daily_todos').update({ sort_order: t.sortOrder }).eq('id', t.id), 'reorderDailyTodos')
-      )
+    const { success } = await supabaseCall(
+      supabase.from('daily_todos').upsert(
+        items.map((t) => ({ id: t.id, user_id: userId, sort_order: t.sortOrder })),
+        { onConflict: 'id' }
+      ),
+      'reorderDailyTodos'
     );
-    if (results.some((r) => !r.success)) return;
+    if (!success) return;
     set({ dailyTodos: items });
   },
   reorderWeeklyTodos: async (ids) => {
+    const userId = get().session?.user?.id;
+    if (!userId) return;
     const items = ids.map((id, index) => {
       const t = get().weeklyTodos.find((x) => x.id === id)!;
       return { ...t, sortOrder: index };
     });
-    const results = await Promise.all(
-      items.map((t) =>
-        supabaseCall(supabase.from('weekly_todos').update({ sort_order: t.sortOrder }).eq('id', t.id), 'reorderWeeklyTodos')
-      )
+    const { success } = await supabaseCall(
+      supabase.from('weekly_todos').upsert(
+        items.map((t) => ({ id: t.id, user_id: userId, sort_order: t.sortOrder })),
+        { onConflict: 'id' }
+      ),
+      'reorderWeeklyTodos'
     );
-    if (results.some((r) => !r.success)) return;
+    if (!success) return;
     set({ weeklyTodos: items });
   },
   reorderBacklogTodos: async (ids) => {
+    const userId = get().session?.user?.id;
+    if (!userId) return;
     const items = ids.map((id, index) => {
       const t = get().backlogTodos.find((x) => x.id === id)!;
       return { ...t, sortOrder: index };
     });
-    const results = await Promise.all(
-      items.map((t) =>
-        supabaseCall(supabase.from('backlog_todos').update({ sort_order: t.sortOrder }).eq('id', t.id), 'reorderBacklogTodos')
-      )
+    const { success } = await supabaseCall(
+      supabase.from('backlog_todos').upsert(
+        items.map((t) => ({ id: t.id, user_id: userId, sort_order: t.sortOrder })),
+        { onConflict: 'id' }
+      ),
+      'reorderBacklogTodos'
     );
-    if (results.some((r) => !r.success)) return;
+    if (!success) return;
     set({ backlogTodos: items });
   },
   moveToDaily: async (id) => {
@@ -748,11 +784,15 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     const userId = get().session?.user?.id;
     if (!userId) return;
     const id = generateId();
-    const { error } = await supabase
-      .from('bookmark_categories')
-      .insert({ id, user_id: userId, name: category.name, icon: category.icon, color: category.color });
-    if (error) {
-      console.error('Failed to add bookmark category:', error.message, error.details);
+    const { success } = await supabaseCall(
+      supabase.from('bookmark_categories').insert({
+        id, user_id: userId, name: category.name,
+        icon: category.icon, color: category.color,
+      }),
+      'addBookmarkCategory'
+    );
+    if (!success) {
+      set({ error: 'Failed to add bookmark category. Please try again.' });
       return;
     }
     set((s) => ({ bookmarkCategories: [...s.bookmarkCategories, { ...category, id }] }));
@@ -782,7 +822,10 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       }),
       'addBookmark'
     );
-    if (!success) return;
+    if (!success) {
+      set({ error: 'Failed to add bookmark. Please try again.' });
+      return;
+    }
     set((s) => ({ bookmarks: [...s.bookmarks, { ...bookmark, id }] }));
   },
   removeBookmark: async (id) => {
@@ -793,32 +836,20 @@ export const useAppStore = create<AppStore>()((set, get) => ({
 
   addStickyNote: async (note) => {
     const userId = get().session?.user?.id;
-    console.group('CREATE_STICKY_NOTE');
-    console.log('note id:', note.id, 'title:', note.title, 'text:', note.text);
-    console.log('user:', userId);
-    if (!userId) { console.error('NO USER ID - aborting'); console.groupEnd(); return; }
+    if (import.meta.env.DEV) console.log('[addStickyNote]', note.id, note.title);
+    if (!userId) return;
     const sortOrder = get().stickyNotes.length;
-    const payload = { id: note.id, user_id: userId, title: note.title, text: note.text, sort_order: sortOrder };
-    console.log('payload:', JSON.stringify(payload, null, 2));
-    console.log('table: sticky_notes');
-    console.groupEnd();
-    const { data, error } = await supabase.from('sticky_notes').insert(payload).select().single();
-    console.group('SUPABASE_RESPONSE');
-    console.log('response data:', data);
-    console.log('error:', error);
-    if (error) {
-      console.error('INSERT FAILED:', error.message, error.details, error.code, error.hint);
-      console.groupEnd();
-      throw error;
+    const { success } = await supabaseCall(
+      supabase.from('sticky_notes').insert({
+        id: note.id, user_id: userId, title: note.title,
+        text: note.text, sort_order: sortOrder,
+      }),
+      'addStickyNote'
+    );
+    if (!success) {
+      set({ error: 'Failed to save sticky note. Please try again.' });
+      return;
     }
-    console.log('INSERT SUCCEEDED, verifying with select...');
-    const { data: verifyData, error: verifyError } = await supabase.from('sticky_notes').select('*').eq('id', note.id).single();
-    if (verifyError) {
-      console.error('VERIFY FAILED:', verifyError);
-    } else {
-      console.log('VERIFIED row in DB:', verifyData);
-    }
-    console.groupEnd();
     set((s) => ({
       stickyNotes: [...s.stickyNotes, { ...note, sortOrder }],
     }));
@@ -844,47 +875,39 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   },
 
   reorderStickyNotes: async (ids) => {
+    const userId = get().session?.user?.id;
+    if (!userId) return;
     const items = ids.map((id, index) => {
       const n = get().stickyNotes.find((x) => x.id === id)!;
       return { ...n, sortOrder: index };
     });
-    const results = await Promise.all(
-      items.map((n) =>
-        supabaseCall(supabase.from('sticky_notes').update({ sort_order: n.sortOrder }).eq('id', n.id), 'reorderStickyNotes')
-      )
+    const { success } = await supabaseCall(
+      supabase.from('sticky_notes').upsert(
+        items.map((n) => ({ id: n.id, user_id: userId, sort_order: n.sortOrder })),
+        { onConflict: 'id' }
+      ),
+      'reorderStickyNotes'
     );
-    if (results.some((r) => !r.success)) return;
+    if (!success) return;
     set({ stickyNotes: items });
   },
 
   addTodoNote: async (note) => {
     const userId = get().session?.user?.id;
-    console.group('CREATE_TODO_NOTE');
-    console.log('note id:', note.id, 'title:', note.title, 'items:', JSON.stringify(note.items));
-    console.log('user:', userId);
-    if (!userId) { console.error('NO USER ID - aborting'); console.groupEnd(); return; }
+    if (import.meta.env.DEV) console.log('[addTodoNote]', note.id, note.title);
+    if (!userId) return;
     const sortOrder = get().todoNotes.length;
-    const payload = { id: note.id, user_id: userId, title: note.title, items: note.items, sort_order: sortOrder };
-    console.log('payload:', JSON.stringify(payload, null, 2));
-    console.log('table: todo_notes');
-    console.groupEnd();
-    const { data, error } = await supabase.from('todo_notes').insert(payload).select().single();
-    console.group('SUPABASE_RESPONSE');
-    console.log('response data:', data);
-    console.log('error:', error);
-    if (error) {
-      console.error('INSERT FAILED:', error.message, error.details, error.code, error.hint);
-      console.groupEnd();
-      throw error;
+    const { success } = await supabaseCall(
+      supabase.from('todo_notes').insert({
+        id: note.id, user_id: userId, title: note.title,
+        items: note.items, sort_order: sortOrder,
+      }),
+      'addTodoNote'
+    );
+    if (!success) {
+      set({ error: 'Failed to save todo note. Please try again.' });
+      return;
     }
-    console.log('INSERT SUCCEEDED, verifying with select...');
-    const { data: verifyData, error: verifyError } = await supabase.from('todo_notes').select('*').eq('id', note.id).single();
-    if (verifyError) {
-      console.error('VERIFY FAILED:', verifyError);
-    } else {
-      console.log('VERIFIED row in DB:', verifyData);
-    }
-    console.groupEnd();
     set((s) => ({
       todoNotes: [...s.todoNotes, { ...note, sortOrder }],
     }));
@@ -910,16 +933,20 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   },
 
   reorderTodoNotes: async (ids) => {
+    const userId = get().session?.user?.id;
+    if (!userId) return;
     const items = ids.map((id, index) => {
       const n = get().todoNotes.find((x) => x.id === id)!;
       return { ...n, sortOrder: index };
     });
-    const results = await Promise.all(
-      items.map((n) =>
-        supabaseCall(supabase.from('todo_notes').update({ sort_order: n.sortOrder }).eq('id', n.id), 'reorderTodoNotes')
-      )
+    const { success } = await supabaseCall(
+      supabase.from('todo_notes').upsert(
+        items.map((n) => ({ id: n.id, user_id: userId, sort_order: n.sortOrder })),
+        { onConflict: 'id' }
+      ),
+      'reorderTodoNotes'
     );
-    if (results.some((r) => !r.success)) return;
+    if (!success) return;
     set({ todoNotes: items });
   },
 
@@ -928,11 +955,11 @@ export const useAppStore = create<AppStore>()((set, get) => ({
 async function seedDefaults() {
   const userId = useAppStore.getState().session?.user?.id;
   if (!userId) {
-    console.log('[seedDefaults] No user ID, skipping');
+    if (import.meta.env.DEV) console.log('[seedDefaults] No user ID, skipping');
     return;
   }
 
-  console.log('[seedDefaults] Seeding default data for user:', userId);
+  if (import.meta.env.DEV) console.log('[seedDefaults] Seeding default data for user:', userId);
 
   const categories = [
     { id: generateId(), name: 'ديني', nameKey: 'pillars.deen', icon: 'book-open', color: 'terracotta', sortOrder: 1 },
@@ -959,7 +986,7 @@ async function seedDefaults() {
       return;
     }
 
-    console.log('[seedDefaults] Inserted life_categories:', insertedCategories);
+    if (import.meta.env.DEV) console.log('[seedDefaults] Inserted life_categories:', insertedCategories);
 
     if (!insertedCategories || insertedCategories.length === 0) {
       console.error('[seedDefaults] No life_categories returned after insert');
@@ -995,12 +1022,11 @@ async function seedDefaults() {
         sort_order: t.sortOrder,
       }));
 
-      console.log('[seed] About to insert sub_tracks:', tracksToInsert);
-      console.log('[seed] Category ID map:', [...catIdMap.entries()]);
+      if (import.meta.env.DEV) console.log('[seed] About to insert sub_tracks:', tracksToInsert);
 
       const { data: insertedTracks, error: trackError } = await supabase.from('sub_tracks').insert(tracksToInsert).select();
 
-      console.log('[seed] sub_tracks insert result:', insertedTracks, 'error:', trackError);
+      if (import.meta.env.DEV) console.log('[seed] sub_tracks insert result:', insertedTracks, 'error:', trackError);
 
       if (trackError) {
         console.error('[seedDefaults] sub_tracks insert error:', trackError);
@@ -1008,7 +1034,7 @@ async function seedDefaults() {
       }
     }
 
-    console.log('[seedDefaults] Successfully seeded', categories.length, 'categories and', tracks.length, 'tracks');
+    if (import.meta.env.DEV) console.log('[seedDefaults] Successfully seeded', categories.length, 'categories and', tracks.length, 'tracks');
 
     set({
       lifeCategories: insertedCategories.map((c: Record<string, unknown>) => ({

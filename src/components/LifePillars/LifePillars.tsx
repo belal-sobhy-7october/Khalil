@@ -253,7 +253,7 @@ export default function LifePillars() {
                   )}
                   {!isEditing && (
                     <span className={`text-xs px-2 py-0.5 rounded-full ${colors.pill} shrink-0`}>
-                      {tracks.filter((t) => t.currentValue > 0).length}/{tracks.length}
+                      {tracks.filter((t) => t.currentValue >= t.target && t.target > 0).length}/{tracks.length}
                     </span>
                   )}
                 </div>

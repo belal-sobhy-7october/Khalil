@@ -22,6 +22,7 @@ export default function TodoNote({ note, onDelete, onUpdate }: Props) {
   const [items, setItems] = useState(note.items);
   const [newItemText, setNewItemText] = useState('');
   const titleRef = useRef<HTMLInputElement>(null);
+  const newItemInputRef = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const titleRef2 = useRef(note.title);
   const itemsRef = useRef(note.items);
@@ -95,6 +96,12 @@ export default function TodoNote({ note, onDelete, onUpdate }: Props) {
           ref={titleRef}
           value={title}
           onChange={(e) => handleTitleChange(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              newItemInputRef.current?.focus();
+            }
+          }}
           placeholder="قائمة..."
           className="flex-1 min-w-0 mx-2 text-sm font-medium text-ink bg-transparent placeholder-ink-lighter focus:outline-none"
           dir="auto"
@@ -143,6 +150,7 @@ export default function TodoNote({ note, onDelete, onUpdate }: Props) {
 
       <div className="flex items-center gap-2 border-t border-amber-200/50 dark:border-amber-800/30 px-3 py-2">
         <input
+          ref={newItemInputRef}
           value={newItemText}
           onChange={(e) => setNewItemText(e.target.value)}
           onKeyDown={handleItemKeyDown}

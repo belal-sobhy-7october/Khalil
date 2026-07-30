@@ -47,6 +47,8 @@ function App() {
   const updateTodoNoteStore = useAppStore((s) => s.updateTodoNote);
   const deleteTodoNoteStore = useAppStore((s) => s.deleteTodoNote);
   const reorderTodoNotes = useAppStore((s) => s.reorderTodoNotes);
+  const appError = useAppStore((s) => s.error);
+  const clearAppError = useAppStore((s) => s.clearError);
   const [menuOpen, setMenuOpen] = useState(false);
 
   const { refs, floatingStyles, context } = useFloating({
@@ -100,6 +102,13 @@ function App() {
   const handleReorderTodo = useCallback((ids: string[]) => {
     reorderTodoNotes(ids);
   }, [reorderTodoNotes]);
+
+  useEffect(() => {
+    if (appError) {
+      const timer = setTimeout(() => clearAppError(), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [appError, clearAppError]);
 
   useEffect(() => {
     document.documentElement.dir = isRTL ? 'rtl' : 'ltr';
@@ -161,6 +170,14 @@ function App() {
   return (
     <>
       <DashboardLayout activeSection={activeSection} onSectionChange={handleSectionChange}>
+        {appError && (
+          <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 max-w-md w-full mx-4">
+            <div className="bg-red-500 text-white text-sm px-4 py-3 rounded-xl shadow-lg flex items-center gap-2">
+              <span className="flex-1">{appError}</span>
+              <button onClick={clearAppError} className="font-bold hover:opacity-70 shrink-0">&times;</button>
+            </div>
+          </div>
+        )}
         <div className="space-y-8 max-w-4xl mx-auto canvas-area" style={{ position: 'relative' }}>
           <div>
             <DailyFocus />

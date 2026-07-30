@@ -20,6 +20,7 @@ export function createStickyNote(title = '', text = ''): StickyNoteData {
 export default function StickyNote({ note, onDelete, onUpdate }: Props) {
   const [title, setTitle] = useState(note.title);
   const [text, setText] = useState(note.text);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const titleRef = useRef(note.title);
   const textRef = useRef(note.text);
@@ -68,6 +69,12 @@ export default function StickyNote({ note, onDelete, onUpdate }: Props) {
         <input
           value={title}
           onChange={(e) => handleTitleChange(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              textareaRef.current?.focus();
+            }
+          }}
           placeholder="ملاحظة"
           className="flex-1 min-w-0 mx-2 text-sm font-medium text-ink bg-transparent placeholder-ink-lighter focus:outline-none"
           dir="auto"
@@ -80,6 +87,7 @@ export default function StickyNote({ note, onDelete, onUpdate }: Props) {
         </button>
       </div>
       <textarea
+        ref={textareaRef}
         value={text}
         onChange={(e) => handleTextChange(e.target.value)}
         placeholder="اكتب ملاحظة..."

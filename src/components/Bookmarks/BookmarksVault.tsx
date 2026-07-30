@@ -146,7 +146,7 @@ export default function BookmarksVault() {
           <div
             key={cat.id}
             onClick={() => setActiveCategory(cat.id)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-full transition-all cursor-pointer ${
+            className={`flex items-center gap-2.5 px-4 py-1.5 text-sm rounded-full transition-all cursor-pointer ${
               activeCategory === cat.id
                 ? 'bg-clay-soft text-white'
                 : 'bg-ink/5 text-ink-light hover:bg-ink/10 hover:text-ink'
@@ -158,9 +158,13 @@ export default function BookmarksVault() {
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                removeCategory(cat.id);
+                const count = bookmarks.filter((b) => b.categoryId === cat.id).length;
+                const msg = count > 0
+                  ? `هل أنت متأكد من حذف تصنيف "${cat.name}"؟ سيتم حذف ${count} مرجع مرتبط به.`
+                  : `هل أنت متأكد من حذف تصنيف "${cat.name}"؟`;
+                if (window.confirm(msg)) removeCategory(cat.id);
               }}
-              className="ml-1 hover:text-red-300 dark:hover:text-red-400"
+              className="mr-2 hover:text-red-300 dark:hover:text-red-400"
             >
               <Trash2 size={10} />
             </button>
@@ -360,11 +364,11 @@ function BookmarkCard({ bookmark, onRemove }: { bookmark: BookmarkType; onRemove
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
-          onRemove();
+          if (window.confirm('هل أنت متأكد من حذف هذا المرجع؟')) onRemove();
         }}
-        className="absolute top-2 right-2 p-1.5 rounded-lg opacity-0 group-hover:opacity-100 text-ink-lighter hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-all"
+        className="absolute top-2 left-2 p-2 rounded-lg opacity-0 group-hover:opacity-100 text-ink-lighter hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-all"
       >
-        <Trash2 size={12} />
+        <Trash2 size={14} />
       </button>
       <div className="flex items-start gap-3">
         <div className="p-2 rounded-lg bg-ink/5 text-clay-soft">

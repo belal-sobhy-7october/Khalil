@@ -29,15 +29,20 @@ export default function WeeklyTodo() {
   const reorderWeeklyTodos = useAppStore((s) => s.reorderWeeklyTodos);
   const [text, setText] = useState('');
   const [priority, setPriority] = useState<Priority>('medium');
+  const error = useAppStore((s) => s.error);
+  const clearError = useAppStore((s) => s.clearError);
 
   const completed = todos.filter((t) => t.completed).length;
 
-  const handleAdd = useCallback(() => {
+  const handleAdd = useCallback(async () => {
     if (text.trim()) {
-      addTodo(text.trim(), priority);
-      setText('');
+      clearError();
+      const result = await addTodo(text.trim(), priority);
+      if (result.success) {
+        setText('');
+      }
     }
-  }, [text, priority, addTodo]);
+  }, [text, priority, addTodo, clearError]);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'Enter') handleAdd();
@@ -112,6 +117,12 @@ export default function WeeklyTodo() {
               <Plus size={18} />
             </button>
           </div>
+          {error && (
+            <div className="mt-2 text-xs text-red-500 bg-red-50 dark:bg-red-950/30 px-3 py-1.5 rounded-lg flex items-center gap-2">
+              <span className="flex-1">{error}</span>
+              <button onClick={clearError} className="font-bold hover:opacity-70">&times;</button>
+            </div>
+          )}
         </div>
 
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
