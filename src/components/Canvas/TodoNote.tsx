@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Trash2, Plus, Check } from 'lucide-react';
 import type { TodoNoteData } from '../../types';
+import { useTranslation } from '../../i18n/useTranslation';
 
 interface Props {
   note: TodoNoteData;
@@ -18,6 +19,7 @@ export function createTodoNote(): TodoNoteData {
 }
 
 export default function TodoNote({ note, onDelete, onUpdate }: Props) {
+  const { t } = useTranslation();
   const [title, setTitle] = useState(note.title);
   const [items, setItems] = useState(note.items);
   const [newItemText, setNewItemText] = useState('');
@@ -102,7 +104,7 @@ export default function TodoNote({ note, onDelete, onUpdate }: Props) {
               newItemInputRef.current?.focus();
             }
           }}
-          placeholder="قائمة..."
+          placeholder={t('notes.listPlaceholder')}
           className="flex-1 min-w-0 mx-2 text-sm font-medium text-ink bg-transparent placeholder-ink-lighter focus:outline-none"
           dir="auto"
         />
@@ -154,7 +156,7 @@ export default function TodoNote({ note, onDelete, onUpdate }: Props) {
           value={newItemText}
           onChange={(e) => setNewItemText(e.target.value)}
           onKeyDown={handleItemKeyDown}
-          placeholder="إضافة..."
+          placeholder={t('notes.addItemPlaceholder')}
           className="flex-1 text-sm bg-transparent text-ink placeholder-ink-lighter focus:outline-none"
           dir="auto"
         />

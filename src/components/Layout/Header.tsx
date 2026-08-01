@@ -48,6 +48,7 @@ export default function Header({
           <button
             onClick={handleLogout}
             title={t('auth.logout')}
+            aria-label={t('auth.logout')}
             className="flex items-center justify-center w-8 h-8 rounded-lg text-ink-lighter hover:text-red-400 hover:bg-red-50/50 dark:hover:bg-red-950/20 border border-transparent hover:border-red-200 dark:hover:border-red-900 transition-all"
           >
             <LogOut size={15} />

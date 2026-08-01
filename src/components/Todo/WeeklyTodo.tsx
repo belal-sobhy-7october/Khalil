@@ -173,6 +173,8 @@ const WeeklyTodoItem = memo(function WeeklyTodoItem({
   onMoveToDaily: (id: string) => void;
   onMoveToBacklog: (id: string, source: 'weekly') => void;
 }) {
+  const { t } = useTranslation();
+
   return (
     <motion.div
       initial={{ opacity: 0, y: -8 }}
@@ -211,6 +213,12 @@ const WeeklyTodoItem = memo(function WeeklyTodoItem({
       >
         {todo.text}
       </span>
+
+      {todo.rolloverCount > 0 && (
+        <span className="shrink-0 text-[10px] text-ink-light bg-ink/5 px-1.5 py-0.5 rounded-full whitespace-nowrap">
+          {t('todo.carriedOver')} {todo.rolloverCount}x
+        </span>
+      )}
 
       <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all shrink-0">
         <button

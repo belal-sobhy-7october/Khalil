@@ -18,10 +18,12 @@ export interface TodoItem {
 
 export interface DailyTodo extends TodoItem {
   date: string;
+  rolloverCount: number;
 }
 
 export interface WeeklyTodo extends TodoItem {
   weekStart: string;
+  rolloverCount: number;
 }
 
 export interface BacklogTodo extends TodoItem {}

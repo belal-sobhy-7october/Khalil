@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Trash2 } from 'lucide-react';
 import type { StickyNoteData } from '../../types';
+import { useTranslation } from '../../i18n/useTranslation';
 
 interface Props {
   note: StickyNoteData;
@@ -18,6 +19,7 @@ export function createStickyNote(title = '', text = ''): StickyNoteData {
 }
 
 export default function StickyNote({ note, onDelete, onUpdate }: Props) {
+  const { t } = useTranslation();
   const [title, setTitle] = useState(note.title);
   const [text, setText] = useState(note.text);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -75,7 +77,7 @@ export default function StickyNote({ note, onDelete, onUpdate }: Props) {
               textareaRef.current?.focus();
             }
           }}
-          placeholder="ملاحظة"
+          placeholder={t('notes.notePlaceholder')}
           className="flex-1 min-w-0 mx-2 text-sm font-medium text-ink bg-transparent placeholder-ink-lighter focus:outline-none"
           dir="auto"
         />
@@ -90,7 +92,7 @@ export default function StickyNote({ note, onDelete, onUpdate }: Props) {
         ref={textareaRef}
         value={text}
         onChange={(e) => handleTextChange(e.target.value)}
-        placeholder="اكتب ملاحظة..."
+        placeholder={t('notes.notesPlaceholder')}
         className="w-full min-h-[100px] p-3 text-sm text-ink bg-transparent placeholder-ink-lighter resize-none focus:outline-none leading-relaxed"
         style={{ scrollbarColor: '#6B3A2A transparent' }}
         dir="auto"

@@ -186,7 +186,7 @@ export default function LifePillars() {
   };
 
   const handleDelete = (id: string) => {
-    if (window.confirm('هل أنت متأكد من حذف هذا الركن بجميع مساراته الفرعية؟')) {
+    if (window.confirm(t('pillars.confirmDeleteMessage'))) {
       if (editingId === id) cancelEdit();
       deletePillar(id);
     }
@@ -344,7 +344,7 @@ export default function LifePillars() {
             className="w-full flex items-center justify-center gap-1.5 py-3 rounded-xl text-sm text-ink-light hover:text-ink border-2 border-dashed border-border-subtle hover:border-ink-lighter transition-all group"
           >
             <Plus size={16} className="group-hover:scale-110 transition-transform" />
-            <span className="font-amiri">إضافة ركن جديد</span>
+            <span className="font-amiri">{t('pillars.addPillar')}</span>
           </button>
         ) : (
           <motion.div
@@ -354,21 +354,21 @@ export default function LifePillars() {
           >
             <div>
               <label className="block text-xs font-medium text-ink-light mb-1 font-amiri">
-                اسم الركن
+                {t('pillars.pillarName')}
               </label>
               <input
                 type="text"
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleAddPillar()}
-                placeholder="مثل: مالي، نفسي، اجتماعي..."
+                placeholder={t('pillars.namePlaceholder')}
                 className="w-full border border-border-subtle rounded-lg px-3 py-2 text-sm bg-ink/3 text-ink placeholder-ink-lighter focus:outline-none focus:ring-1 focus:ring-clay-soft/30"
               />
             </div>
 
             <div>
               <label className="block text-xs font-medium text-ink-light mb-2 font-amiri">
-                الأيقونة
+                {t('pillars.icon')}
               </label>
               <div className="flex gap-2 flex-wrap">
                 {iconOptions.map((iconKey) => (
@@ -389,7 +389,7 @@ export default function LifePillars() {
 
             <div>
               <label className="block text-xs font-medium text-ink-light mb-2 font-amiri">
-                اللون
+                {t('pillars.color')}
               </label>
               <div className="flex gap-2">
                 {(['terracotta', 'gold', 'sage', 'slate', 'rose', 'indigo', 'emerald', 'amber', 'purple'] as const).map((colorKey) => (
@@ -536,6 +536,7 @@ function SubTrackRow({ track, colors }: { track: SubTrack; colors: (typeof pillC
             <>
               <button
                 {...incPress}
+                aria-label={t('pillars.trackIncrement').replace('{name}', track.name)}
                 className="flex items-center justify-center w-5 h-5 rounded text-ink-lighter hover:text-ink hover:bg-ink/10 transition-all select-none"
               >
                 <Plus size={11} />
@@ -543,6 +544,7 @@ function SubTrackRow({ track, colors }: { track: SubTrack; colors: (typeof pillC
               <button
                 {...decPress}
                 disabled={track.currentValue <= 0}
+                aria-label={t('pillars.trackDecrement').replace('{name}', track.name)}
                 className="flex items-center justify-center w-5 h-5 rounded text-ink-lighter hover:text-ink hover:bg-ink/10 disabled:opacity-25 disabled:cursor-not-allowed transition-all select-none"
               >
                 <Minus size={11} />
@@ -553,12 +555,14 @@ function SubTrackRow({ track, colors }: { track: SubTrack; colors: (typeof pillC
               <button
                 {...decPress}
                 disabled={track.currentValue <= 0}
+                aria-label={t('pillars.trackDecrement').replace('{name}', track.name)}
                 className="flex items-center justify-center w-5 h-5 rounded text-ink-lighter hover:text-ink hover:bg-ink/10 disabled:opacity-25 disabled:cursor-not-allowed transition-all select-none"
               >
                 <Minus size={11} />
               </button>
               <button
                 {...incPress}
+                aria-label={t('pillars.trackIncrement').replace('{name}', track.name)}
                 className="flex items-center justify-center w-5 h-5 rounded text-ink-lighter hover:text-ink hover:bg-ink/10 transition-all select-none"
               >
                 <Plus size={11} />
@@ -569,6 +573,7 @@ function SubTrackRow({ track, colors }: { track: SubTrack; colors: (typeof pillC
 
         <button
           onClick={() => removeSubTrack(track.id)}
+          aria-label={t('pillars.trackDelete').replace('{name}', track.name)}
           className="flex items-center justify-center w-5 h-5 rounded opacity-0 group-hover:opacity-100 text-ink-lighter hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-all"
         >
           <Trash2 size={11} />
@@ -591,7 +596,7 @@ function AddTrackForm({ categoryId }: { categoryId: string }) {
     if (!name.trim()) return;
     const parsed = Number(target);
     if (parsed < 0) {
-      setTargetError('القيمة لا يمكن أن تكون سالبة');
+      setTargetError(t('pillars.targetError'));
       return;
     }
     setTargetError('');

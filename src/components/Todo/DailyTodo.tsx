@@ -175,6 +175,7 @@ const TodoItem = memo(function TodoItem({
   onMoveToBacklog: (id: string, source: 'daily') => void;
 }) {
   const colors = priorityColors[todo.priority];
+  const { t } = useTranslation();
 
   return (
     <motion.div
@@ -214,6 +215,12 @@ const TodoItem = memo(function TodoItem({
       >
         {todo.text}
       </span>
+
+      {todo.rolloverCount > 0 && (
+        <span className="shrink-0 text-[10px] text-ink-light bg-ink/5 px-1.5 py-0.5 rounded-full whitespace-nowrap">
+          {t('todo.carriedOver')} {todo.rolloverCount}x
+        </span>
+      )}
 
       <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all shrink-0">
         <button

@@ -1,6 +1,6 @@
 export default function CalligraphyWatermark({ character = 'خ', opacity = 0.06 }) {
   return (
-    <div className="calligraphy-watermark">
+    <div className="calligraphy-watermark" aria-hidden="true">
       <svg viewBox="0 0 100 100" fill="currentColor" style={{ opacity }}>
         <text
           x="50"

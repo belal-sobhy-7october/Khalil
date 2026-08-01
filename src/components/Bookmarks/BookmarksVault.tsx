@@ -159,9 +159,9 @@ export default function BookmarksVault() {
               onClick={(e) => {
                 e.stopPropagation();
                 const count = bookmarks.filter((b) => b.categoryId === cat.id).length;
-                const msg = count > 0
-                  ? `هل أنت متأكد من حذف تصنيف "${cat.name}"؟ سيتم حذف ${count} مرجع مرتبط به.`
-                  : `هل أنت متأكد من حذف تصنيف "${cat.name}"؟`;
+                const msg = t(count > 0 ? 'bookmarks.confirmDeleteCategoryWithCount' : 'bookmarks.confirmDeleteCategory')
+                  .replace('{name}', cat.name)
+                  .replace('{count}', String(count));
                 if (window.confirm(msg)) removeCategory(cat.id);
               }}
               className="mr-2 hover:text-red-300 dark:hover:text-red-400"
@@ -349,6 +349,8 @@ export default function BookmarksVault() {
 }
 
 function BookmarkCard({ bookmark, onRemove }: { bookmark: BookmarkType; onRemove: () => void }) {
+  const { t } = useTranslation();
+
   return (
     <motion.a
       layout
@@ -364,7 +366,7 @@ function BookmarkCard({ bookmark, onRemove }: { bookmark: BookmarkType; onRemove
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
-          if (window.confirm('هل أنت متأكد من حذف هذا المرجع؟')) onRemove();
+          if (window.confirm(t('bookmarks.confirmDeleteBookmark'))) onRemove();
         }}
         className="absolute top-2 left-2 p-2 rounded-lg opacity-0 group-hover:opacity-100 text-ink-lighter hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-all"
       >

@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
+import { getToday, getWeekStart } from './dateHelpers';
 import type {
   Language,
   Priority,
@@ -96,25 +97,6 @@ interface AppStore {
   reorderTodoNotes: (ids: string[]) => Promise<void>;
 }
 
-function getToday(): string {
-  const d = new Date();
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
-}
-
-function getWeekStart(): string {
-  const d = new Date();
-  const day = d.getDay();
-  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-  const monday = new Date(d.getFullYear(), d.getMonth(), diff);
-  const y = monday.getFullYear();
-  const m = String(monday.getMonth() + 1).padStart(2, '0');
-  const dayStr = String(monday.getDate()).padStart(2, '0');
-  return `${y}-${m}-${dayStr}`;
-}
-
 function generateId(): string {
   return crypto.randomUUID();
 }
@@ -152,23 +134,13 @@ async function rolloverStaleTodos(userId: string) {
   const today = getToday();
   const weekStart = getWeekStart();
 
-  const { error: dailyErr } = await supabase
-    .from('daily_todos')
-    .update({ date: today })
-    .eq('user_id', userId)
-    .eq('completed', false)
-    .lt('date', today);
+  const { error } = await supabase.rpc('rollover_stale_todos', {
+    p_user_id: userId,
+    p_today: today,
+    p_week_start: weekStart,
+  });
 
-  if (dailyErr) console.error('[rollover] daily_todos error:', dailyErr);
-
-  const { error: weeklyErr } = await supabase
-    .from('weekly_todos')
-    .update({ week_start: weekStart })
-    .eq('user_id', userId)
-    .eq('completed', false)
-    .neq('week_start', weekStart);
-
-  if (weeklyErr) console.error('[rollover] weekly_todos error:', weeklyErr);
+  if (error) console.error('[rollover] error:', error);
 }
 
 export const useAppStore = create<AppStore>()((set, get) => ({
@@ -357,7 +329,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     const id = generateId();
     const maxSortOrder = get().dailyTodos.reduce((max, t) => Math.max(max, t.sortOrder), -1);
     const sortOrder = maxSortOrder + 1;
-    const newTodo = { id, text, completed: false, priority, createdAt: Date.now(), date: getToday(), sortOrder };
+    const newTodo = { id, text, completed: false, priority, createdAt: Date.now(), date: getToday(), sortOrder, rolloverCount: 0 };
     set((s) => ({ dailyTodos: [...s.dailyTodos, newTodo] }));
     const { success } = await supabaseCall(
       supabase.from('daily_todos').insert({
@@ -396,7 +368,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     const maxSortOrder = get().weeklyTodos.reduce((max, t) => Math.max(max, t.sortOrder), -1);
     const sortOrder = maxSortOrder + 1;
     const weekStart = getWeekStart();
-    const newTodo = { id, text, completed: false, priority, createdAt: Date.now(), weekStart, sortOrder };
+    const newTodo = { id, text, completed: false, priority, createdAt: Date.now(), weekStart, sortOrder, rolloverCount: 0 };
     set((s) => ({ weeklyTodos: [...s.weeklyTodos, newTodo] }));
     const { success } = await supabaseCall(
       supabase.from('weekly_todos').insert({
@@ -525,19 +497,30 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     const today = getToday();
     const maxSortOrder = get().dailyTodos.reduce((max, t) => Math.max(max, t.sortOrder), -1);
     const sortOrder = maxSortOrder + 1;
-    const insertOk = await supabaseCall(supabase.from('daily_todos').insert({ id: newId, user_id: userId, text: todo.text, completed: false, priority: todo.priority, created_at: Date.now(), date: today, sort_order: sortOrder }), 'moveToDaily insert');
-    if (!insertOk.success) return;
-    const { success: deleteOk } = await supabaseCall(
-      fromBacklog
-        ? supabase.from('backlog_todos').delete().eq('id', id)
-        : supabase.from('weekly_todos').delete().eq('id', id),
-      'moveToDaily delete'
+    const { success } = await supabaseCall(
+      supabase.rpc('move_todo_item', {
+        p_id: id,
+        p_from_table: fromBacklog ? 'backlog_todos' : 'weekly_todos',
+        p_to_table: 'daily_todos',
+        p_payload: {
+          id: newId,
+          user_id: userId,
+          text: todo.text,
+          completed: false,
+          priority: todo.priority,
+          created_at: Date.now(),
+          date: today,
+          sort_order: sortOrder,
+        },
+        p_user_id: userId,
+      }),
+      'moveToDaily'
     );
-    if (!deleteOk) return;
+    if (!success) return;
     set((s) => ({
       backlogTodos: s.backlogTodos.filter((x) => x.id !== id),
       weeklyTodos: s.weeklyTodos.filter((x) => x.id !== id),
-      dailyTodos: [...s.dailyTodos, { ...todo, id: newId, date: today, completed: false, sortOrder }],
+      dailyTodos: [...s.dailyTodos, { ...todo, id: newId, date: today, completed: false, sortOrder, rolloverCount: 0 }],
     }));
   },
   moveToWeekly: async (id) => {
@@ -550,19 +533,30 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     const weekStart = getWeekStart();
     const maxSortOrder = get().weeklyTodos.reduce((max, t) => Math.max(max, t.sortOrder), -1);
     const sortOrder = maxSortOrder + 1;
-    const insertOk = await supabaseCall(supabase.from('weekly_todos').insert({ id: newId, user_id: userId, text: todo.text, completed: false, priority: todo.priority, created_at: Date.now(), week_start: weekStart, sort_order: sortOrder }), 'moveToWeekly insert');
-    if (!insertOk.success) return;
-    const { success: deleteOk } = await supabaseCall(
-      fromBacklog
-        ? supabase.from('backlog_todos').delete().eq('id', id)
-        : supabase.from('daily_todos').delete().eq('id', id),
-      'moveToWeekly delete'
+    const { success } = await supabaseCall(
+      supabase.rpc('move_todo_item', {
+        p_id: id,
+        p_from_table: fromBacklog ? 'backlog_todos' : 'daily_todos',
+        p_to_table: 'weekly_todos',
+        p_payload: {
+          id: newId,
+          user_id: userId,
+          text: todo.text,
+          completed: false,
+          priority: todo.priority,
+          created_at: Date.now(),
+          week_start: weekStart,
+          sort_order: sortOrder,
+        },
+        p_user_id: userId,
+      }),
+      'moveToWeekly'
     );
-    if (!deleteOk) return;
+    if (!success) return;
     set((s) => ({
       backlogTodos: s.backlogTodos.filter((x) => x.id !== id),
       dailyTodos: s.dailyTodos.filter((x) => x.id !== id),
-      weeklyTodos: [...s.weeklyTodos, { ...todo, id: newId, weekStart, completed: false, sortOrder }],
+      weeklyTodos: [...s.weeklyTodos, { ...todo, id: newId, weekStart, completed: false, sortOrder, rolloverCount: 0 }],
     }));
   },
   moveToBacklog: async (id, from) => {
@@ -575,10 +569,25 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     const table = from === 'daily' ? 'daily_todos' : 'weekly_todos';
     const maxSortOrder = get().backlogTodos.reduce((max, t) => Math.max(max, t.sortOrder), -1);
     const sortOrder = maxSortOrder + 1;
-    const insertOk = await supabaseCall(supabase.from('backlog_todos').insert({ id: newId, user_id: userId, text: todo.text, completed: false, priority: todo.priority, created_at: Date.now(), sort_order: sortOrder }), 'moveToBacklog insert');
-    if (!insertOk.success) return;
-    const { success: deleteOk } = await supabaseCall(supabase.from(table).delete().eq('id', id), 'moveToBacklog delete');
-    if (!deleteOk) return;
+    const { success } = await supabaseCall(
+      supabase.rpc('move_todo_item', {
+        p_id: id,
+        p_from_table: table,
+        p_to_table: 'backlog_todos',
+        p_payload: {
+          id: newId,
+          user_id: userId,
+          text: todo.text,
+          completed: false,
+          priority: todo.priority,
+          created_at: Date.now(),
+          sort_order: sortOrder,
+        },
+        p_user_id: userId,
+      }),
+      'moveToBacklog'
+    );
+    if (!success) return;
     if (from === 'daily') {
       set((s) => ({
         dailyTodos: s.dailyTodos.filter((x) => x.id !== id),
@@ -735,27 +744,29 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     const userId = get().session?.user?.id;
     if (!userId) return;
     const today = getToday();
-    const existing = get().subTrackEntries.find((e) => e.trackId === id && e.date === today);
-    if (existing) {
-      const { success } = await supabaseCall(supabase.from('sub_track_entries').delete().eq('id', existing.id), 'toggleSubTrackHabit off');
-      if (!success) return;
-      set((s) => ({
-        subTrackEntries: s.subTrackEntries.filter((e) => e.id !== existing.id),
-      }));
-    } else {
-      const entryId = generateId();
-      const track = get().subTracks.find((t) => t.id === id);
-      const entryOk = await supabaseCall(supabase.from('sub_track_entries').insert({ id: entryId, user_id: userId, track_id: id, value: 1, date: today, note: '' }), 'toggleSubTrackHabit entry');
-      if (!entryOk.success) return;
-      const trackOk = await supabaseCall(supabase.from('sub_tracks').update({ current_value: (track?.currentValue || 0) + 1 }).eq('id', id), 'toggleSubTrackHabit update');
-      if (!trackOk.success) return;
-      set((s) => ({
-        subTrackEntries: [...s.subTrackEntries, { id: entryId, trackId: id, value: 1, date: today, note: '' }],
+    const { data, success } = await supabaseCall<{ is_on: boolean; new_value: number; entry_id: string | null }[]>(
+      supabase.rpc('toggle_sub_track_habit', { p_track_id: id, p_user_id: userId, p_date: today }),
+      'toggleSubTrackHabit'
+    );
+    if (!success) return;
+    const result = data?.[0];
+    if (!result) return;
+    set((s) => {
+      if (result.is_on) {
+        return {
+          subTrackEntries: [...s.subTrackEntries, { id: result.entry_id!, trackId: id, value: 1, date: today, note: '' }],
+          subTracks: s.subTracks.map((t) =>
+            t.id === id ? { ...t, currentValue: result.new_value } : t
+          ),
+        };
+      }
+      return {
+        subTrackEntries: s.subTrackEntries.filter((e) => e.trackId !== id || e.date !== today),
         subTracks: s.subTracks.map((t) =>
-          t.id === id ? { ...t, currentValue: t.currentValue + 1 } : t
+          t.id === id ? { ...t, currentValue: result.new_value } : t
         ),
-      }));
-    }
+      };
+    });
   },
 
   subTrackEntries: [],
@@ -1057,11 +1068,11 @@ function set(state: Partial<AppStore>) {
 }
 
 function mapDailyTodo(row: Record<string, unknown>): DailyTodo {
-  return { id: row.id as string, text: row.text as string, completed: row.completed as boolean, priority: row.priority as Priority, createdAt: typeof row.created_at === "number" ? row.created_at : new Date(row.created_at as string).getTime() || Date.now(), date: row.date as string, sortOrder: (row.sort_order as number) ?? 0 };
+  return { id: row.id as string, text: row.text as string, completed: row.completed as boolean, priority: row.priority as Priority, createdAt: typeof row.created_at === "number" ? row.created_at : new Date(row.created_at as string).getTime() || Date.now(), date: row.date as string, sortOrder: (row.sort_order as number) ?? 0, rolloverCount: (row.rollover_count as number) ?? 0 };
 }
 
 function mapWeeklyTodo(row: Record<string, unknown>): WeeklyTodo {
-  return { id: row.id as string, text: row.text as string, completed: row.completed as boolean, priority: row.priority as Priority, createdAt: typeof row.created_at === "number" ? row.created_at : new Date(row.created_at as string).getTime() || Date.now(), weekStart: row.week_start as string, sortOrder: (row.sort_order as number) ?? 0 };
+  return { id: row.id as string, text: row.text as string, completed: row.completed as boolean, priority: row.priority as Priority, createdAt: typeof row.created_at === "number" ? row.created_at : new Date(row.created_at as string).getTime() || Date.now(), weekStart: row.week_start as string, sortOrder: (row.sort_order as number) ?? 0, rolloverCount: (row.rollover_count as number) ?? 0 };
 }
 
 function mapBacklogTodo(row: Record<string, unknown>): BacklogTodo {

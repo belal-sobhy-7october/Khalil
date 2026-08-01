@@ -23,3 +23,5 @@ dist-ssr
 *.sln
 *.sw?
 .env
+.aider*
+backup_before_migrations_*.sql
