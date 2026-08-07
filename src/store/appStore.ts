@@ -186,7 +186,8 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     if (import.meta.env.DEV) console.log('[loadUserData] Fetching data for user:', userId);
 
     try {
-      await rolloverStaleTodos(userId);
+      // Disabled rollover to prevent deleted todos from reappearing on refresh
+      // await rolloverStaleTodos(userId);
 
       const today = getToday();
       const weekStart = getWeekStart();
