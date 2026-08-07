@@ -130,19 +130,6 @@ async function supabaseCall<T>(
   }
 }
 
-async function rolloverStaleTodos(userId: string) {
-  const today = getToday();
-  const weekStart = getWeekStart();
-
-  const { error } = await supabase.rpc('rollover_stale_todos', {
-    p_user_id: userId,
-    p_today: today,
-    p_week_start: weekStart,
-  });
-
-  if (error) console.error('[rollover] error:', error);
-}
-
 export const useAppStore = create<AppStore>()((set, get) => ({
   language: (() => {
     if (typeof window !== 'undefined') {
