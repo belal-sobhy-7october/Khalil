@@ -183,11 +183,11 @@ function App() {
             <DailyFocus />
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-            <div className="lg:col-span-7">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+            <div>
               <DailyTodo />
             </div>
-            <div className="lg:col-span-5">
+            <div>
               <WeeklyTodo />
             </div>
           </div>

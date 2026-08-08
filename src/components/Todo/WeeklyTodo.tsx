@@ -8,6 +8,7 @@ import {
   Circle,
   CheckCircle,
   Flag,
+  AlertTriangle,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DndContext, closestCenter, PointerSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core';
@@ -174,6 +175,20 @@ const WeeklyTodoItem = memo(function WeeklyTodoItem({
   onMoveToBacklog: (id: string, source: 'weekly') => void;
 }) {
   const { t } = useTranslation();
+  const [showConfirm, setShowConfirm] = useState(false);
+
+  const handleDelete = useCallback(() => {
+    setShowConfirm(true);
+  }, []);
+
+  const confirmDelete = useCallback(() => {
+    setShowConfirm(false);
+    onRemove(todo.id);
+  }, [todo.id, onRemove]);
+
+  const cancelDelete = useCallback(() => {
+    setShowConfirm(false);
+  }, []);
 
   return (
     <motion.div
@@ -181,13 +196,14 @@ const WeeklyTodoItem = memo(function WeeklyTodoItem({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, x: -20, height: 0, marginBottom: 0 }}
       transition={{ duration: 0.2 }}
-      className={`group flex items-center gap-3 p-3 min-w-0 rounded-lg hover:bg-ink/3 transition-colors ${
+      className={`group flex items-center gap-2 sm:gap-3 p-3 rounded-lg hover:bg-ink/3 transition-colors ${
         todo.completed ? 'opacity-60' : ''
       }`}
     >
       <button
         onClick={() => onToggle(todo.id)}
         className="shrink-0 text-ink-lighter hover:text-gold-soft transition-colors"
+        aria-label={todo.completed ? 'Mark as incomplete' : 'Mark as complete'}
       >
         {todo.completed ? (
           <CheckCircle size={20} className="text-sage-soft" />
@@ -196,19 +212,26 @@ const WeeklyTodoItem = memo(function WeeklyTodoItem({
         )}
       </button>
 
-      <div className={`flex items-center gap-2 min-w-0 ${priorityColors[todo.priority].bg} px-2 py-0.5 rounded`}>
+      <div className={`flex items-center gap-1.5 shrink-0 ${priorityColors[todo.priority].bg} px-2 py-0.5 rounded`}>
         <span className={`w-1.5 h-1.5 rounded-full ${priorityColors[todo.priority].dot}`} />
-        <span className={`text-[10px] uppercase tracking-wider font-medium ${priorityColors[todo.priority].text}`}>
+        <span className={`text-[10px] uppercase tracking-wider font-medium ${priorityColors[todo.priority].text} whitespace-nowrap`}>
           {todo.priority}
         </span>
       </div>
 
       <span
-        className={`flex-1 min-w-0 text-sm break-words whitespace-normal ${
+        className={`flex-1 min-w-0 text-sm leading-relaxed ${
           todo.completed
             ? 'line-through text-ink-lighter'
             : 'text-ink'
         }`}
+        style={{
+          wordBreak: 'break-word',
+          overflowWrap: 'break-word',
+          hyphens: 'auto',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+        }}
         dir="auto"
       >
         {todo.text}
@@ -220,11 +243,12 @@ const WeeklyTodoItem = memo(function WeeklyTodoItem({
         </span>
       )}
 
-      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all shrink-0">
+      <div className="flex gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-all">
         <button
           onClick={() => onMoveToDaily(todo.id)}
           className="p-1.5 rounded-md text-clay-soft hover:text-clay-soft-dark hover:bg-ink/5 transition-all"
           title="نقل لليوم"
+          aria-label="Move to daily"
         >
           <Sun size={14} />
         </button>
@@ -232,16 +256,39 @@ const WeeklyTodoItem = memo(function WeeklyTodoItem({
           onClick={() => onMoveToBacklog(todo.id, 'weekly')}
           className="p-1.5 rounded-md text-ink-lighter hover:text-ink hover:bg-ink/5 transition-all"
           title="نقل للمؤجلة"
+          aria-label="Move to backlog"
         >
           <Archive size={14} />
         </button>
-        <button
-          onClick={() => onRemove(todo.id)}
-          className="p-1.5 rounded-md text-ink-lighter hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-all"
-          title="حذف"
-        >
-          <Trash2 size={14} />
-        </button>
+        {showConfirm ? (
+          <>
+            <button
+              onClick={confirmDelete}
+              className="p-1.5 rounded-md text-red-600 hover:text-red-700 hover:bg-red-100 dark:hover:bg-red-950/30 transition-all"
+              title="تأكيد الحذف"
+              aria-label="Confirm delete"
+            >
+              <AlertTriangle size={14} />
+            </button>
+            <button
+              onClick={cancelDelete}
+              className="p-1.5 rounded-md text-ink-lighter hover:text-ink hover:bg-ink/5 transition-all"
+              title="إلغاء"
+              aria-label="Cancel delete"
+            >
+              <Circle size={14} />
+            </button>
+          </>
+        ) : (
+          <button
+            onClick={handleDelete}
+            className="p-1.5 rounded-md text-ink-lighter hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-all"
+            title="حذف"
+            aria-label="Delete task"
+          >
+            <Trash2 size={14} />
+          </button>
+        )}
       </div>
     </motion.div>
   );
