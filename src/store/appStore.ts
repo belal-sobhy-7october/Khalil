@@ -116,17 +116,17 @@ function logError(context: string, error: unknown) {
 async function supabaseCall<T>(
   promise: PromiseLike<{ data: T | null; error: any }>,
   context: string
-): Promise<{ data: T | null; success: boolean }> {
+): Promise<{ data: T | null; success: boolean; error?: any }> {
   try {
     const { data, error } = await promise;
     if (error) {
       logError(context, error);
-      return { data: null, success: false };
+      return { data: null, success: false, error };
     }
     return { data, success: true };
   } catch (err) {
     logError(context, err);
-    return { data: null, success: false };
+    return { data: null, success: false, error: err };
   }
 }
 
@@ -270,12 +270,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
         isLoading: false,
       });
 
-      if (!lifeCategoryRows || lifeCategoryRows.length === 0) {
-        if (import.meta.env.DEV) console.log('[loadUserData] No categories found — seeding defaults');
-        await seedDefaults();
-      } else {
-        if (import.meta.env.DEV) console.log('[loadUserData] Data loaded successfully from existing Supabase rows');
-      }
+      if (import.meta.env.DEV) console.log('[loadUserData] Data loaded successfully from existing Supabase rows');
     } catch (err) {
       console.error('[loadUserData] Failed to load user data:', err);
       set({ isLoading: false });
@@ -646,18 +641,38 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   deletePillar: async (id) => {
     const userId = get().session?.user?.id;
     if (!userId) return;
-    const { success: tracksOk } = await supabaseCall(supabase.from('sub_tracks').delete().eq('category_id', id).eq('user_id', userId), 'deletePillar sub_tracks');
-    if (!tracksOk) return;
-    const { success: catOk } = await supabaseCall(supabase.from('life_categories').delete().eq('id', id).eq('user_id', userId), 'deletePillar categories');
-    if (!catOk) return;
-    set((s) => {
-      const trackIds = s.subTracks.filter((t) => t.categoryId === id).map((t) => t.id);
-      return {
-        lifeCategories: s.lifeCategories.filter((c) => c.id !== id),
-        subTracks: s.subTracks.filter((t) => t.categoryId !== id),
-        subTrackEntries: s.subTrackEntries.filter((e) => !trackIds.includes(e.trackId)),
-      };
-    });
+    const deletedCategory = get().lifeCategories.find((c) => c.id === id);
+    const deletedTracks = get().subTracks.filter((t) => t.categoryId === id);
+    const deletedEntries = get().subTrackEntries.filter((e) => deletedTracks.some((t) => t.id === e.trackId));
+    console.log('[deletePillar] Deleting category:', id, 'with tracks:', deletedTracks.length);
+    set((s) => ({
+      lifeCategories: s.lifeCategories.filter((c) => c.id !== id),
+      subTracks: s.subTracks.filter((t) => t.categoryId !== id),
+      subTrackEntries: s.subTrackEntries.filter((e) => !deletedTracks.some((t) => t.id === e.trackId)),
+    }));
+    const { success: tracksOk, error: tracksError } = await supabaseCall(supabase.from('sub_tracks').delete().eq('category_id', id).eq('user_id', userId), 'deletePillar sub_tracks');
+    if (!tracksOk) {
+      console.error('[deletePillar] Failed to delete tracks:', tracksError);
+      set((s) => ({
+        lifeCategories: [...s.lifeCategories, deletedCategory].filter(Boolean),
+        subTracks: [...s.subTracks, ...deletedTracks],
+        subTrackEntries: [...s.subTrackEntries, ...deletedEntries],
+      }));
+      set({ error: 'Failed to delete category. Please try again.' });
+      return;
+    }
+    const { success: catOk, error: catError } = await supabaseCall(supabase.from('life_categories').delete().eq('id', id).eq('user_id', userId), 'deletePillar categories');
+    if (!catOk) {
+      console.error('[deletePillar] Failed to delete category:', catError);
+      set((s) => ({
+        lifeCategories: [...s.lifeCategories, deletedCategory].filter(Boolean),
+        subTracks: [...s.subTracks, ...deletedTracks],
+        subTrackEntries: [...s.subTrackEntries, ...deletedEntries],
+      }));
+      set({ error: 'Failed to delete category. Please try again.' });
+      return;
+    }
+    console.log('[deletePillar] Successfully deleted category:', id);
   },
 
   subTracks: [],
@@ -950,110 +965,6 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   },
 
 }));
-
-async function seedDefaults() {
-  const userId = useAppStore.getState().session?.user?.id;
-  if (!userId) {
-    if (import.meta.env.DEV) console.log('[seedDefaults] No user ID, skipping');
-    return;
-  }
-
-  if (import.meta.env.DEV) console.log('[seedDefaults] Seeding default data for user:', userId);
-
-  const categories = [
-    { id: generateId(), name: 'ديني', nameKey: 'pillars.deen', icon: 'book-open', color: 'terracotta', sortOrder: 1 },
-    { id: generateId(), name: 'عقلي', nameKey: 'pillars.mind', icon: 'brain', color: 'gold', sortOrder: 2 },
-    { id: generateId(), name: 'صحتي', nameKey: 'pillars.health', icon: 'heart', color: 'sage', sortOrder: 3 },
-    { id: generateId(), name: 'برمجتي', nameKey: 'pillars.career', icon: 'code', color: 'slate', sortOrder: 4 },
-  ];
-
-  try {
-    const { data: insertedCategories, error: catError } = await supabase.from('life_categories').insert(
-      categories.map((c) => ({
-        id: c.id,
-        user_id: userId,
-        name: c.name,
-        name_key: c.nameKey,
-        icon: c.icon,
-        color: c.color,
-        sort_order: c.sortOrder,
-      }))
-    ).select();
-
-    if (catError) {
-      console.error('[seedDefaults] life_categories insert error:', catError);
-      return;
-    }
-
-    if (import.meta.env.DEV) console.log('[seedDefaults] Inserted life_categories:', insertedCategories);
-
-    if (!insertedCategories || insertedCategories.length === 0) {
-      console.error('[seedDefaults] No life_categories returned after insert');
-      return;
-    }
-
-    // Build mapping: old local category id -> actual Supabase-generated UUID
-    const catIdMap = new Map<string, string>();
-    insertedCategories.forEach((cat, i) => {
-      catIdMap.set(categories[i].id, cat.id);
-    });
-
-    const tracks = [
-      { id: generateId(), categoryId: catIdMap.get(categories[0].id)!, name: 'القرآن', nameKey: 'subTracks.quran', icon: 'book-open', progressType: 'counter' as const, target: 604, unit: 'pages', currentValue: 0, sortOrder: 1 },
-      { id: generateId(), categoryId: catIdMap.get(categories[0].id)!, name: 'رياض الصالحين', nameKey: 'subTracks.riyadh', icon: 'bookmark', progressType: 'counter' as const, target: 190, unit: 'pages', currentValue: 0, sortOrder: 2 },
-      { id: generateId(), categoryId: catIdMap.get(categories[0].id)!, name: 'العقيدة', nameKey: 'subTracks.aqeedah', icon: 'star', progressType: 'counter' as const, target: 30, unit: 'lectures', currentValue: 0, sortOrder: 3 },
-      { id: generateId(), categoryId: catIdMap.get(categories[3].id)!, name: 'Data Structures', nameKey: 'subTracks.dsa', icon: 'code', progressType: 'counter' as const, target: 150, unit: 'videos', currentValue: 0, sortOrder: 1 },
-      { id: generateId(), categoryId: catIdMap.get(categories[3].id)!, name: 'Node.js Project', nameKey: 'subTracks.nodeProject', icon: 'folder', progressType: 'counter' as const, target: 60, unit: 'hours', currentValue: 0, sortOrder: 2 },
-    ];
-
-    if (tracks.length > 0) {
-      const tracksToInsert = tracks.map((t) => ({
-        id: t.id,
-        user_id: userId,
-        category_id: t.categoryId,
-        name: t.name,
-        name_key: t.nameKey,
-        icon: t.icon,
-        progress_type: t.progressType,
-        target: t.target,
-        unit: t.unit,
-        current_value: t.currentValue,
-        sort_order: t.sortOrder,
-      }));
-
-      if (import.meta.env.DEV) console.log('[seed] About to insert sub_tracks:', tracksToInsert);
-
-      const { data: insertedTracks, error: trackError } = await supabase.from('sub_tracks').insert(tracksToInsert).select();
-
-      if (import.meta.env.DEV) console.log('[seed] sub_tracks insert result:', insertedTracks, 'error:', trackError);
-
-      if (trackError) {
-        console.error('[seedDefaults] sub_tracks insert error:', trackError);
-        return;
-      }
-    }
-
-    if (import.meta.env.DEV) console.log('[seedDefaults] Successfully seeded', categories.length, 'categories and', tracks.length, 'tracks');
-
-    set({
-      lifeCategories: insertedCategories.map((c: Record<string, unknown>) => ({
-        id: c.id as string,
-        name: c.name as string,
-        nameKey: (c.name_key as string) || '',
-        icon: c.icon as string,
-        color: c.color as string,
-        sortOrder: c.sort_order as number,
-      })),
-      subTracks: tracks,
-    });
-  } catch (err) {
-    console.error('[seedDefaults] Failed to seed defaults:', err);
-  }
-}
-
-function set(state: Partial<AppStore>) {
-  useAppStore.setState(state);
-}
 
 function mapDailyTodo(row: Record<string, unknown>): DailyTodo {
   return { id: row.id as string, text: row.text as string, completed: row.completed as boolean, priority: row.priority as Priority, createdAt: typeof row.created_at === "number" ? row.created_at : new Date(row.created_at as string).getTime() || Date.now(), date: row.date as string, sortOrder: (row.sort_order as number) ?? 0, rolloverCount: (row.rollover_count as number) ?? 0 };
