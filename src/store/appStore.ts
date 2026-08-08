@@ -654,7 +654,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     if (!tracksOk) {
       console.error('[deletePillar] Failed to delete tracks:', tracksError);
       set((s) => ({
-        lifeCategories: [...s.lifeCategories, deletedCategory].filter(Boolean),
+        lifeCategories: deletedCategory ? [...s.lifeCategories, deletedCategory] : s.lifeCategories,
         subTracks: [...s.subTracks, ...deletedTracks],
         subTrackEntries: [...s.subTrackEntries, ...deletedEntries],
       }));
@@ -665,7 +665,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     if (!catOk) {
       console.error('[deletePillar] Failed to delete category:', catError);
       set((s) => ({
-        lifeCategories: [...s.lifeCategories, deletedCategory].filter(Boolean),
+        lifeCategories: deletedCategory ? [...s.lifeCategories, deletedCategory] : s.lifeCategories,
         subTracks: [...s.subTracks, ...deletedTracks],
         subTrackEntries: [...s.subTrackEntries, ...deletedEntries],
       }));
