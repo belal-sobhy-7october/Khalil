@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DndContext, closestCenter, PointerSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core';
+import type { DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
 import { SortableTodoItem } from './SortableTodoItem';
 import { useAppStore } from '../../store/appStore';
@@ -29,6 +30,7 @@ export default function DailyTodo() {
   const moveToWeekly = useAppStore((s) => s.moveToWeekly);
   const moveToBacklog = useAppStore((s) => s.moveToBacklog);
   const reorderDailyTodos = useAppStore((s) => s.reorderDailyTodos);
+  const pendingMovements = useAppStore((s) => s.pendingMovements);
   const [text, setText] = useState('');
   const [priority, setPriority] = useState<Priority>('medium');
   const error = useAppStore((s) => s.error);
@@ -55,9 +57,9 @@ export default function DailyTodo() {
     useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } })
   );
 
-  const handleDragEnd = useCallback((event: any) => {
+  const handleDragEnd = useCallback((event: DragEndEvent) => {
     const { active, over } = event;
-    if (active.id !== over?.id) {
+    if (over && active.id !== over.id) {
       const oldIndex = todos.findIndex((t) => t.id === active.id);
       const newIndex = todos.findIndex((t) => t.id === over.id);
       const newOrder = arrayMove(todos, oldIndex, newIndex);
@@ -149,6 +151,7 @@ export default function DailyTodo() {
                         onRemove={removeTodo}
                         onMoveToWeekly={moveToWeekly}
                         onMoveToBacklog={moveToBacklog}
+                        isMoving={pendingMovements.has(todo.id)}
                       />
                     </SortableTodoItem>
                   ))}
@@ -168,12 +171,14 @@ const TodoItem = memo(function TodoItem({
   onRemove,
   onMoveToWeekly,
   onMoveToBacklog,
+  isMoving,
 }: {
   todo: DailyTodoType;
   onToggle: (id: string) => void;
   onRemove: (id: string) => void;
   onMoveToWeekly: (id: string) => void;
   onMoveToBacklog: (id: string, source: 'daily') => void;
+  isMoving: boolean;
 }) {
   const colors = priorityColors[todo.priority];
   const { t } = useTranslation();
@@ -248,7 +253,8 @@ const TodoItem = memo(function TodoItem({
       <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all shrink-0">
         <button
           onClick={() => onMoveToWeekly(todo.id)}
-          className="p-1.5 rounded-md text-gold-soft hover:text-gold-soft-dark hover:bg-ink/5 transition-all"
+          disabled={isMoving}
+          className="p-1.5 rounded-md text-gold-soft hover:text-gold-soft-dark hover:bg-ink/5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           title="نقل للأسبوع"
           aria-label="Move to weekly"
         >
@@ -256,7 +262,8 @@ const TodoItem = memo(function TodoItem({
         </button>
         <button
           onClick={() => onMoveToBacklog(todo.id, 'daily')}
-          className="p-1.5 rounded-md text-ink-lighter hover:text-ink hover:bg-ink/5 transition-all"
+          disabled={isMoving}
+          className="p-1.5 rounded-md text-ink-lighter hover:text-ink hover:bg-ink/5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           title="نقل للمؤجلة"
           aria-label="Move to backlog"
         >

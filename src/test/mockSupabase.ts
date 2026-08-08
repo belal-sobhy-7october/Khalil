@@ -32,7 +32,7 @@ const chainable = {
   },
   rpc: vi.fn().mockReturnThis(),
   then: (onfulfilled?: (value: SupabaseMockResult) => unknown) =>
-    Promise.resolve(mockSupabaseResponse).then(onfulfilled),
+    Promise.resolve({ data: mockSupabaseResponse.data, error: mockSupabaseResponse.error }).then(onfulfilled),
 };
 
 export const mockSupabase = chainable;

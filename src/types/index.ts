@@ -14,19 +14,25 @@ export interface TodoItem {
   priority: Priority;
   createdAt: number;
   sortOrder: number;
+  gate: 'daily' | 'weekly' | 'backlog';
+  updatedAt: number;
 }
 
 export interface DailyTodo extends TodoItem {
   date: string;
   rolloverCount: number;
+  gate: 'daily';
 }
 
 export interface WeeklyTodo extends TodoItem {
   weekStart: string;
   rolloverCount: number;
+  gate: 'weekly';
 }
 
-export interface BacklogTodo extends TodoItem {}
+export interface BacklogTodo extends TodoItem {
+  gate: 'backlog';
+}
 
 export interface BookmarkCategory {
   id: string;
