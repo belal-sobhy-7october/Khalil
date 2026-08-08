@@ -186,10 +186,8 @@ export default function LifePillars() {
   };
 
   const handleDelete = (id: string) => {
-    if (window.confirm(t('pillars.confirmDeleteMessage'))) {
-      if (editingId === id) cancelEdit();
-      deletePillar(id);
-    }
+    if (editingId === id) cancelEdit();
+    deletePillar(id);
   };
 
   const handleAddPillar = () => {
