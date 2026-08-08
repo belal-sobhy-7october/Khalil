@@ -1,7 +1,7 @@
-import { Languages, Sun, Moon, Menu, X, LogOut } from 'lucide-react';
+import { Languages, Sun, Moon, Menu, X } from 'lucide-react';
 import { useTranslation } from '../../i18n/useTranslation';
 import { useAppStore } from '../../store/appStore';
-import { supabase } from '../../lib/supabase';
+import AccountMenu from './AccountMenu';
 
 export default function Header({
   isOpen,
@@ -13,10 +13,6 @@ export default function Header({
   const { t, toggleLanguage, language } = useTranslation();
   const theme = useAppStore((s) => s.theme);
   const toggleTheme = useAppStore((s) => s.toggleTheme);
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-  };
 
   return (
     <header className="fixed top-0 inset-x-0 z-20 h-14 bg-card border-b border-border-subtle">
@@ -45,14 +41,7 @@ export default function Header({
             <span>{theme === 'light' ? t('theme.dark') : t('theme.light')}</span>
           </button>
           <div className="w-px h-5 bg-border-subtle mx-1" />
-          <button
-            onClick={handleLogout}
-            title={t('auth.logout')}
-            aria-label={t('auth.logout')}
-            className="flex items-center justify-center w-8 h-8 rounded-lg text-ink-lighter hover:text-red-400 hover:bg-red-50/50 dark:hover:bg-red-950/20 border border-transparent hover:border-red-200 dark:hover:border-red-900 transition-all"
-          >
-            <LogOut size={15} />
-          </button>
+          <AccountMenu />
         </div>
       </div>
     </header>

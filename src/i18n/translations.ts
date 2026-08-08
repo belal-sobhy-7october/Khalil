@@ -130,6 +130,7 @@ export const translations = {
     auth: {
       login: 'Sign in with Google 🔑',
       logout: 'Logout',
+      accountSettings: 'Account & Settings',
       loading: 'Loading...',
       loginTitle: 'Sign in to your dashboard',
       loginSubtitle: 'Your data is securely stored in the cloud',
@@ -277,6 +278,7 @@ export const translations = {
     auth: {
       login: 'تسجيل الدخول بـ Google 🔑',
       logout: 'تسجيل الخروج',
+      accountSettings: 'الحساب والإعدادات',
       loading: 'جارٍ التحميل...',
       loginTitle: 'سجل الدخول للوصول إلى لوحة التحكم',
       loginSubtitle: 'بياناتك محفوظة بشكل آمن في السحابة',
