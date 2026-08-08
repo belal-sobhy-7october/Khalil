@@ -9,6 +9,7 @@ import {
   CheckCircle,
   Flag,
   ListChecks,
+  AlertTriangle,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DndContext, closestCenter, PointerSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core';
@@ -176,6 +177,20 @@ const TodoItem = memo(function TodoItem({
 }) {
   const colors = priorityColors[todo.priority];
   const { t } = useTranslation();
+  const [showConfirm, setShowConfirm] = useState(false);
+
+  const handleDelete = useCallback(() => {
+    setShowConfirm(true);
+  }, []);
+
+  const confirmDelete = useCallback(() => {
+    setShowConfirm(false);
+    onRemove(todo.id);
+  }, [todo.id, onRemove]);
+
+  const cancelDelete = useCallback(() => {
+    setShowConfirm(false);
+  }, []);
 
   return (
     <motion.div
@@ -190,6 +205,7 @@ const TodoItem = memo(function TodoItem({
       <button
         onClick={() => onToggle(todo.id)}
         className="shrink-0 text-ink-lighter hover:text-clay-soft transition-colors"
+        aria-label={todo.completed ? 'Mark as incomplete' : 'Mark as complete'}
       >
         {todo.completed ? (
           <CheckCircle size={20} className="text-sage-soft" />
@@ -206,11 +222,18 @@ const TodoItem = memo(function TodoItem({
       </div>
 
       <span
-        className={`flex-1 min-w-0 text-sm break-words whitespace-normal ${
+        className={`flex-1 min-w-0 text-sm leading-relaxed ${
           todo.completed
             ? 'line-through text-ink-lighter'
             : 'text-ink'
         }`}
+        style={{
+          wordBreak: 'break-word',
+          overflowWrap: 'break-word',
+          hyphens: 'auto',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+        }}
         dir="auto"
       >
         {todo.text}
@@ -227,6 +250,7 @@ const TodoItem = memo(function TodoItem({
           onClick={() => onMoveToWeekly(todo.id)}
           className="p-1.5 rounded-md text-gold-soft hover:text-gold-soft-dark hover:bg-ink/5 transition-all"
           title="نقل للأسبوع"
+          aria-label="Move to weekly"
         >
           <Calendar size={14} />
         </button>
@@ -234,16 +258,39 @@ const TodoItem = memo(function TodoItem({
           onClick={() => onMoveToBacklog(todo.id, 'daily')}
           className="p-1.5 rounded-md text-ink-lighter hover:text-ink hover:bg-ink/5 transition-all"
           title="نقل للمؤجلة"
+          aria-label="Move to backlog"
         >
           <Archive size={14} />
         </button>
-        <button
-          onClick={() => onRemove(todo.id)}
-          className="p-1.5 rounded-md text-ink-lighter hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-all"
-          title="حذف"
-        >
-          <Trash2 size={14} />
-        </button>
+        {showConfirm ? (
+          <>
+            <button
+              onClick={confirmDelete}
+              className="p-1.5 rounded-md text-red-600 hover:text-red-700 hover:bg-red-100 dark:hover:bg-red-950/30 transition-all"
+              title="تأكيد الحذف"
+              aria-label="Confirm delete"
+            >
+              <AlertTriangle size={14} />
+            </button>
+            <button
+              onClick={cancelDelete}
+              className="p-1.5 rounded-md text-ink-lighter hover:text-ink hover:bg-ink/5 transition-all"
+              title="إلغاء"
+              aria-label="Cancel delete"
+            >
+              <Circle size={14} />
+            </button>
+          </>
+        ) : (
+          <button
+            onClick={handleDelete}
+            className="p-1.5 rounded-md text-ink-lighter hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-all"
+            title="حذف"
+            aria-label="Delete task"
+          >
+            <Trash2 size={14} />
+          </button>
+        )}
       </div>
     </motion.div>
   );

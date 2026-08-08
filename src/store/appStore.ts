@@ -331,11 +331,19 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   toggleDailyTodo: async (id) => {
     const todo = get().dailyTodos.find((t) => t.id === id);
     if (!todo) return;
-    const { success } = await supabaseCall(supabase.from('daily_todos').update({ completed: !todo.completed }).eq('id', id), 'toggleDailyTodo');
-    if (!success) return;
+    const previousCompleted = todo.completed;
+    // Optimistic update
     set((s) => ({
-      dailyTodos: s.dailyTodos.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t)),
+      dailyTodos: s.dailyTodos.map((t) => (t.id === id ? { ...t, completed: !previousCompleted } : t)),
     }));
+    const { success } = await supabaseCall(supabase.from('daily_todos').update({ completed: !previousCompleted }).eq('id', id), 'toggleDailyTodo');
+    if (!success) {
+      // Rollback on failure
+      set((s) => ({
+        dailyTodos: s.dailyTodos.map((t) => (t.id === id ? { ...t, completed: previousCompleted } : t)),
+      }));
+      return;
+    }
   },
   removeDailyTodo: async (id) => {
     const { success } = await supabaseCall(supabase.from('daily_todos').delete().eq('id', id), 'removeDailyTodo');
@@ -471,15 +479,23 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     set({ backlogTodos: items });
   },
   moveToDaily: async (id) => {
-    const todo = get().backlogTodos.find((x) => x.id === id) || get().weeklyTodos.find((x) => x.id === id);
+    const backlogTodo = get().backlogTodos.find((x) => x.id === id);
+    const weeklyTodo = get().weeklyTodos.find((x) => x.id === id);
+    const todo = backlogTodo || weeklyTodo;
     if (!todo) return;
-    const fromBacklog = get().backlogTodos.some((x) => x.id === id);
+    const fromBacklog = !!backlogTodo;
     const userId = get().session?.user?.id;
     if (!userId) return;
     const newId = generateId();
     const today = getToday();
     const maxSortOrder = get().dailyTodos.reduce((max, t) => Math.max(max, t.sortOrder), -1);
     const sortOrder = maxSortOrder + 1;
+    // Optimistic update
+    set((s) => ({
+      backlogTodos: s.backlogTodos.filter((x) => x.id !== id),
+      weeklyTodos: s.weeklyTodos.filter((x) => x.id !== id),
+      dailyTodos: [...s.dailyTodos, { ...todo, id: newId, date: today, completed: false, sortOrder, rolloverCount: 0 }],
+    }));
     const { success } = await supabaseCall(
       supabase.rpc('move_todo_item', {
         p_id: id,
@@ -499,23 +515,40 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       }),
       'moveToDaily'
     );
-    if (!success) return;
-    set((s) => ({
-      backlogTodos: s.backlogTodos.filter((x) => x.id !== id),
-      weeklyTodos: s.weeklyTodos.filter((x) => x.id !== id),
-      dailyTodos: [...s.dailyTodos, { ...todo, id: newId, date: today, completed: false, sortOrder, rolloverCount: 0 }],
-    }));
+    if (!success) {
+      // Rollback on failure - restore to original array
+      if (fromBacklog && backlogTodo) {
+        set((s) => ({
+          dailyTodos: s.dailyTodos.filter((x) => x.id !== newId),
+          backlogTodos: [...s.backlogTodos, backlogTodo],
+        }));
+      } else if (weeklyTodo) {
+        set((s) => ({
+          dailyTodos: s.dailyTodos.filter((x) => x.id !== newId),
+          weeklyTodos: [...s.weeklyTodos, weeklyTodo],
+        }));
+      }
+      return;
+    }
   },
   moveToWeekly: async (id) => {
-    const todo = get().backlogTodos.find((x) => x.id === id) || get().dailyTodos.find((x) => x.id === id);
+    const backlogTodo = get().backlogTodos.find((x) => x.id === id);
+    const dailyTodo = get().dailyTodos.find((x) => x.id === id);
+    const todo = backlogTodo || dailyTodo;
     if (!todo) return;
-    const fromBacklog = get().backlogTodos.some((x) => x.id === id);
+    const fromBacklog = !!backlogTodo;
     const userId = get().session?.user?.id;
     if (!userId) return;
     const newId = generateId();
     const weekStart = getWeekStart();
     const maxSortOrder = get().weeklyTodos.reduce((max, t) => Math.max(max, t.sortOrder), -1);
     const sortOrder = maxSortOrder + 1;
+    // Optimistic update
+    set((s) => ({
+      backlogTodos: s.backlogTodos.filter((x) => x.id !== id),
+      dailyTodos: s.dailyTodos.filter((x) => x.id !== id),
+      weeklyTodos: [...s.weeklyTodos, { ...todo, id: newId, weekStart, completed: false, sortOrder, rolloverCount: 0 }],
+    }));
     const { success } = await supabaseCall(
       supabase.rpc('move_todo_item', {
         p_id: id,
@@ -535,16 +568,26 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       }),
       'moveToWeekly'
     );
-    if (!success) return;
-    set((s) => ({
-      backlogTodos: s.backlogTodos.filter((x) => x.id !== id),
-      dailyTodos: s.dailyTodos.filter((x) => x.id !== id),
-      weeklyTodos: [...s.weeklyTodos, { ...todo, id: newId, weekStart, completed: false, sortOrder, rolloverCount: 0 }],
-    }));
+    if (!success) {
+      // Rollback on failure
+      if (fromBacklog && backlogTodo) {
+        set((s) => ({
+          weeklyTodos: s.weeklyTodos.filter((x) => x.id !== newId),
+          backlogTodos: [...s.backlogTodos, backlogTodo],
+        }));
+      } else if (dailyTodo) {
+        set((s) => ({
+          weeklyTodos: s.weeklyTodos.filter((x) => x.id !== newId),
+          dailyTodos: [...s.dailyTodos, dailyTodo],
+        }));
+      }
+      return;
+    }
   },
   moveToBacklog: async (id, from) => {
-    const todos = from === 'daily' ? get().dailyTodos : get().weeklyTodos;
-    const todo = todos.find((x) => x.id === id);
+    const dailyTodo = get().dailyTodos.find((x) => x.id === id);
+    const weeklyTodo = get().weeklyTodos.find((x) => x.id === id);
+    const todo = from === 'daily' ? dailyTodo : weeklyTodo;
     if (!todo) return;
     const userId = get().session?.user?.id;
     if (!userId) return;
@@ -552,6 +595,18 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     const table = from === 'daily' ? 'daily_todos' : 'weekly_todos';
     const maxSortOrder = get().backlogTodos.reduce((max, t) => Math.max(max, t.sortOrder), -1);
     const sortOrder = maxSortOrder + 1;
+    // Optimistic update
+    if (from === 'daily') {
+      set((s) => ({
+        dailyTodos: s.dailyTodos.filter((x) => x.id !== id),
+        backlogTodos: [...s.backlogTodos, { ...todo, id: newId, sortOrder }],
+      }));
+    } else {
+      set((s) => ({
+        weeklyTodos: s.weeklyTodos.filter((x) => x.id !== id),
+        backlogTodos: [...s.backlogTodos, { ...todo, id: newId, sortOrder }],
+      }));
+    }
     const { success } = await supabaseCall(
       supabase.rpc('move_todo_item', {
         p_id: id,
@@ -570,17 +625,20 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       }),
       'moveToBacklog'
     );
-    if (!success) return;
-    if (from === 'daily') {
-      set((s) => ({
-        dailyTodos: s.dailyTodos.filter((x) => x.id !== id),
-        backlogTodos: [...s.backlogTodos, { id: newId, text: todo.text, completed: false, priority: todo.priority, createdAt: Date.now(), sortOrder }],
-      }));
-    } else {
-      set((s) => ({
-        weeklyTodos: s.weeklyTodos.filter((x) => x.id !== id),
-        backlogTodos: [...s.backlogTodos, { id: newId, text: todo.text, completed: false, priority: todo.priority, createdAt: Date.now(), sortOrder }],
-      }));
+    if (!success) {
+      // Rollback on failure
+      if (from === 'daily' && dailyTodo) {
+        set((s) => ({
+          backlogTodos: s.backlogTodos.filter((x) => x.id !== newId),
+          dailyTodos: [...s.dailyTodos, dailyTodo],
+        }));
+      } else if (weeklyTodo) {
+        set((s) => ({
+          backlogTodos: s.backlogTodos.filter((x) => x.id !== newId),
+          weeklyTodos: [...s.weeklyTodos, weeklyTodo],
+        }));
+      }
+      return;
     }
   },
 
