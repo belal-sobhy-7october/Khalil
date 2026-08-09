@@ -9,7 +9,6 @@ import {
   CheckCircle,
   Flag,
   ListChecks,
-  AlertTriangle,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DndContext, closestCenter, PointerSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core';
@@ -97,28 +96,28 @@ export default function DailyTodo() {
               dir={isRTL ? 'rtl' : 'ltr'}
               className="flex-1 border border-border-subtle rounded-lg px-4 py-2.5 text-sm bg-ink/3 text-ink placeholder-ink-lighter focus:outline-none focus:ring-2 focus:ring-clay-soft/20 focus:border-transparent transition-all"
             />
-            <div className="flex gap-1">
+            <div className="flex gap-1 flex-shrink-0">
               {(['high', 'medium', 'low'] as Priority[]).map((p) => (
                 <button
                   key={p}
                   onClick={() => setPriority(p)}
-                  className={`p-2 rounded-lg border transition-all ${
+                  className={`p-1.5 sm:p-2 rounded-lg border transition-all ${
                     priority === p
                       ? `${priorityColors[p].bg} ${priorityColors[p].text} border-current`
                       : 'border-border-subtle text-ink-lighter hover:bg-ink/5'
                   }`}
                   title={t(`todo.${p}`)}
                 >
-                  <Flag size={15} />
+                  <Flag size={14} className="sm:size-[15px]" />
                 </button>
               ))}
             </div>
             <button
               onClick={handleAdd}
               disabled={!text.trim()}
-              className="p-2.5 bg-clay-soft hover:bg-clay-soft-dark disabled:opacity-40 text-white rounded-lg transition-colors"
+              className="p-2 sm:p-2.5 bg-clay-soft hover:bg-clay-soft-dark disabled:opacity-40 text-white rounded-lg transition-colors flex-shrink-0"
             >
-              <Plus size={18} />
+              <Plus size={16} className="sm:size-[18px]" />
             </button>
           </div>
           {error && (
@@ -181,21 +180,10 @@ const TodoItem = memo(function TodoItem({
   isMoving: boolean;
 }) {
   const colors = priorityColors[todo.priority];
-  const { t } = useTranslation();
-  const [showConfirm, setShowConfirm] = useState(false);
 
   const handleDelete = useCallback(() => {
-    setShowConfirm(true);
-  }, []);
-
-  const confirmDelete = useCallback(() => {
-    setShowConfirm(false);
     onRemove(todo.id);
   }, [todo.id, onRemove]);
-
-  const cancelDelete = useCallback(() => {
-    setShowConfirm(false);
-  }, []);
 
   return (
     <motion.div
@@ -244,11 +232,6 @@ const TodoItem = memo(function TodoItem({
         {todo.text}
       </span>
 
-      {todo.rolloverCount > 0 && (
-        <span className="shrink-0 text-[10px] text-ink-light bg-ink/5 px-1.5 py-0.5 rounded-full whitespace-nowrap">
-          {t('todo.carriedOver')} {todo.rolloverCount}x
-        </span>
-      )}
 
       <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all shrink-0">
         <button
@@ -269,35 +252,14 @@ const TodoItem = memo(function TodoItem({
         >
           <Archive size={14} />
         </button>
-        {showConfirm ? (
-          <>
-            <button
-              onClick={confirmDelete}
-              className="p-1.5 rounded-md text-red-600 hover:text-red-700 hover:bg-red-100 dark:hover:bg-red-950/30 transition-all"
-              title="تأكيد الحذف"
-              aria-label="Confirm delete"
-            >
-              <AlertTriangle size={14} />
-            </button>
-            <button
-              onClick={cancelDelete}
-              className="p-1.5 rounded-md text-ink-lighter hover:text-ink hover:bg-ink/5 transition-all"
-              title="إلغاء"
-              aria-label="Cancel delete"
-            >
-              <Circle size={14} />
-            </button>
-          </>
-        ) : (
-          <button
-            onClick={handleDelete}
-            className="p-1.5 rounded-md text-ink-lighter hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-all"
-            title="حذف"
-            aria-label="Delete task"
-          >
-            <Trash2 size={14} />
-          </button>
-        )}
+        <button
+          onClick={handleDelete}
+          className="p-1.5 rounded-md text-ink-lighter hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-all"
+          title="حذف"
+          aria-label="Delete task"
+        >
+          <Trash2 size={14} />
+        </button>
       </div>
     </motion.div>
   );

@@ -357,7 +357,10 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   },
   removeDailyTodo: async (id) => {
     const { success } = await supabaseCall(supabase.from('todos').delete().eq('id', id), 'removeDailyTodo');
-    if (!success) return;
+    if (!success) {
+      set({ error: 'Failed to delete task. Please try again.' });
+      return;
+    }
     set((s) => ({ dailyTodos: s.dailyTodos.filter((t) => t.id !== id) }));
   },
 
@@ -397,7 +400,10 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   },
   removeWeeklyTodo: async (id) => {
     const { success } = await supabaseCall(supabase.from('todos').delete().eq('id', id), 'removeWeeklyTodo');
-    if (!success) return;
+    if (!success) {
+      set({ error: 'Failed to delete task. Please try again.' });
+      return;
+    }
     set((s) => ({ weeklyTodos: s.weeklyTodos.filter((t) => t.id !== id) }));
   },
 
@@ -436,7 +442,10 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   },
   removeBacklogTodo: async (id) => {
     const { success } = await supabaseCall(supabase.from('todos').delete().eq('id', id), 'removeBacklogTodo');
-    if (!success) return;
+    if (!success) {
+      set({ error: 'Failed to delete task. Please try again.' });
+      return;
+    }
     set((s) => ({ backlogTodos: s.backlogTodos.filter((t) => t.id !== id) }));
   },
   reorderDailyTodos: async (ids) => {
