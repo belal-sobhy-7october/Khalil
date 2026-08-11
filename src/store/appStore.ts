@@ -185,7 +185,6 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       // await rolloverStaleTodos(userId);
 
       const today = getToday();
-      const weekStart = getWeekStart();
 
       // Load core tables — these must exist
       const [dailyFocusRes, todosRes, lifeCategoryRes, subTrackRes, subTrackEntryRes, bookmarkCategoryRes, bookmarkRes] = await Promise.all([
@@ -216,8 +215,8 @@ export const useAppStore = create<AppStore>()((set, get) => ({
 
       // Split todos by gate
       type TodoRow = { gate: string; date?: string; week_start?: string };
-      const dailyTodoRows = todosRows?.filter((row: TodoRow) => row.gate === 'daily' && row.date === today) || [];
-      const weeklyTodoRows = todosRows?.filter((row: TodoRow) => row.gate === 'weekly' && row.week_start === weekStart) || [];
+      const dailyTodoRows = todosRows?.filter((row: TodoRow) => row.gate === 'daily') || [];
+      const weeklyTodoRows = todosRows?.filter((row: TodoRow) => row.gate === 'weekly') || [];
       const backlogTodoRows = todosRows?.filter((row: TodoRow) => row.gate === 'backlog') || [];
 
       if (import.meta.env.DEV) {
