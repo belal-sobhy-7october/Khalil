@@ -184,8 +184,6 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       // Disabled rollover to prevent deleted todos from reappearing on refresh
       // await rolloverStaleTodos(userId);
 
-      const today = getToday();
-
       // Load core tables — these must exist
       const [dailyFocusRes, todosRes, lifeCategoryRes, subTrackRes, subTrackEntryRes, bookmarkCategoryRes, bookmarkRes] = await Promise.all([
         supabase.from('daily_focus').select('*').eq('user_id', userId).limit(1),
