@@ -16,6 +16,9 @@ import type {
   Bookmark,
   StickyNoteData,
   TodoNoteData,
+  Habit,
+  HabitEntry,
+  DailyMood,
 } from '../types';
 
 interface AppStore {
@@ -96,6 +99,15 @@ interface AppStore {
   updateTodoNote: (id: string, updated: Partial<TodoNoteData>) => Promise<void>;
   deleteTodoNote: (id: string) => Promise<void>;
   reorderTodoNotes: (ids: string[]) => Promise<void>;
+
+  habits: Habit[];
+  habitEntries: HabitEntry[];
+  dailyMoods: DailyMood[];
+  addHabit: (name: string, icon?: string) => Promise<{ success: boolean }>;
+  removeHabit: (id: string) => Promise<void>;
+  reorderHabits: (ids: string[]) => Promise<void>;
+  toggleHabitEntry: (habitId: string, date: string) => Promise<void>;
+  setDailyMood: (date: string, data: { mood?: number | null; motivation?: number | null }) => Promise<void>;
 }
 
 function generateId(): string {
@@ -185,7 +197,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       // await rolloverStaleTodos(userId);
 
       // Load core tables — these must exist
-      const [dailyFocusRes, todosRes, lifeCategoryRes, subTrackRes, subTrackEntryRes, bookmarkCategoryRes, bookmarkRes] = await Promise.all([
+      const [dailyFocusRes, todosRes, lifeCategoryRes, subTrackRes, subTrackEntryRes, bookmarkCategoryRes, bookmarkRes, habitsRes, habitEntriesRes, dailyMoodsRes] = await Promise.all([
         supabase.from('daily_focus').select('*').eq('user_id', userId).limit(1),
         supabase.from('todos').select('*').eq('user_id', userId).order('sort_order'),
         supabase.from('life_categories').select('*').eq('user_id', userId).order('sort_order'),
@@ -193,6 +205,9 @@ export const useAppStore = create<AppStore>()((set, get) => ({
         supabase.from('sub_track_entries').select('*').eq('user_id', userId).order('date'),
         supabase.from('bookmark_categories').select('*').eq('user_id', userId).order('name'),
         supabase.from('bookmarks').select('*').eq('user_id', userId).order('created_at'),
+        supabase.from('habits').select('*').eq('user_id', userId).order('sort_order'),
+        supabase.from('habit_entries').select('*').eq('user_id', userId),
+        supabase.from('daily_mood').select('*').eq('user_id', userId),
       ]);
 
       if (dailyFocusRes.error) console.error('[loadUserData] daily_focus error:', dailyFocusRes.error);
@@ -202,6 +217,9 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       if (subTrackEntryRes.error) console.error('[loadUserData] sub_track_entries error:', subTrackEntryRes.error);
       if (bookmarkCategoryRes.error) console.error('[loadUserData] bookmark_categories error:', bookmarkCategoryRes.error);
       if (bookmarkRes.error) console.error('[loadUserData] bookmarks error:', bookmarkRes.error);
+      if (habitsRes.error) console.error('[loadUserData] habits error:', habitsRes.error);
+      if (habitEntriesRes.error) console.error('[loadUserData] habit_entries error:', habitEntriesRes.error);
+      if (dailyMoodsRes.error) console.error('[loadUserData] daily_mood error:', dailyMoodsRes.error);
 
       const dailyFocusRows = dailyFocusRes.data;
       const todosRows = todosRes.data;
@@ -210,6 +228,9 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       const subTrackEntryRows = subTrackEntryRes.data;
       const bookmarkCategoryRows = bookmarkCategoryRes.data;
       const bookmarkRows = bookmarkRes.data;
+      const habitsRows = habitsRes.data;
+      const habitEntriesRows = habitEntriesRes.data;
+      const dailyMoodsRows = dailyMoodsRes.data;
 
       // Split todos by gate
       type TodoRow = { gate: string; date?: string; week_start?: string };
@@ -229,6 +250,9 @@ export const useAppStore = create<AppStore>()((set, get) => ({
           subTrackEntries: subTrackEntryRows?.length ?? 0,
           bookmarkCategories: bookmarkCategoryRows?.length ?? 0,
           bookmarks: bookmarkRows?.length ?? 0,
+          habits: habitsRows?.length ?? 0,
+          habitEntries: habitEntriesRows?.length ?? 0,
+          dailyMoods: dailyMoodsRows?.length ?? 0,
         });
       }
 
@@ -273,6 +297,9 @@ export const useAppStore = create<AppStore>()((set, get) => ({
         bookmarks: (bookmarkRows || []).map(mapBookmark),
         stickyNotes,
         todoNotes,
+        habits: (habitsRows || []).map(mapHabit),
+        habitEntries: (habitEntriesRows || []).map(mapHabitEntry),
+        dailyMoods: (dailyMoodsRows || []).map(mapDailyMood),
         isLoading: false,
       });
 
@@ -946,6 +973,9 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   bookmarks: [],
   stickyNotes: [],
   todoNotes: [],
+  habits: [],
+  habitEntries: [],
+  dailyMoods: [],
   addBookmarkCategory: async (category) => {
     const userId = get().session?.user?.id;
     if (!userId) return;
@@ -1116,6 +1146,130 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     set({ todoNotes: items });
   },
 
+  addHabit: async (name, icon = 'star') => {
+    const userId = get().session?.user?.id;
+    if (!userId) return { success: false };
+    const id = generateId();
+    const maxSortOrder = get().habits.reduce((max, h) => Math.max(max, h.sortOrder), -1);
+    const sortOrder = maxSortOrder + 1;
+    const newHabit = { id, name, icon, sortOrder, active: true };
+    set((s) => ({ habits: [...s.habits, newHabit] }));
+    const { success } = await supabaseCall(
+      supabase.from('habits').insert({
+        id, user_id: userId, name, icon, sort_order: sortOrder, active: true,
+      }),
+      'addHabit'
+    );
+    if (!success) {
+      set((s) => ({ habits: s.habits.filter((h) => h.id !== id) }));
+      set({ error: 'Failed to add habit. Please try again.' });
+      return { success: false };
+    }
+    return { success: true };
+  },
+  removeHabit: async (id) => {
+    const userId = get().session?.user?.id;
+    if (!userId) return;
+    const deletedHabit = get().habits.find((h) => h.id === id);
+    const deletedEntries = get().habitEntries.filter((e) => e.habitId === id);
+    set((s) => ({
+      habits: s.habits.filter((h) => h.id !== id),
+      habitEntries: s.habitEntries.filter((e) => e.habitId !== id),
+    }));
+    const { success } = await supabaseCall(supabase.from('habits').delete().eq('id', id).eq('user_id', userId), 'removeHabit');
+    if (!success) {
+      set((s) => ({
+        habits: deletedHabit ? [...s.habits, deletedHabit] : s.habits,
+        habitEntries: [...s.habitEntries, ...deletedEntries],
+      }));
+      set({ error: 'Failed to delete habit. Please try again.' });
+      return;
+    }
+  },
+  reorderHabits: async (ids) => {
+    const userId = get().session?.user?.id;
+    if (!userId) return;
+    const items = ids.map((id, index) => {
+      const h = get().habits.find((x) => x.id === id)!;
+      return { ...h, sortOrder: index };
+    });
+    const { success } = await supabaseCall(
+      supabase.from('habits').upsert(
+        items.map((h) => ({ id: h.id, user_id: userId, sort_order: h.sortOrder })),
+        { onConflict: 'id' }
+      ),
+      'reorderHabits'
+    );
+    if (!success) return;
+    set({ habits: items });
+  },
+  toggleHabitEntry: async (habitId, date) => {
+    const userId = get().session?.user?.id;
+    if (!userId) return;
+    const existingEntry = get().habitEntries.find((e) => e.habitId === habitId && e.date === date);
+    if (existingEntry) {
+      // Optimistic delete
+      set((s) => ({ habitEntries: s.habitEntries.filter((e) => e.id !== existingEntry.id) }));
+      const { success } = await supabaseCall(
+        supabase.from('habit_entries').delete().eq('id', existingEntry.id),
+        'toggleHabitEntry delete'
+      );
+      if (!success) {
+        // Rollback
+        set((s) => ({ habitEntries: [...s.habitEntries, existingEntry] }));
+        return;
+      }
+    } else {
+      // Optimistic insert
+      const id = generateId();
+      const newEntry = { id, habitId, date };
+      set((s) => ({ habitEntries: [...s.habitEntries, newEntry] }));
+      const { success } = await supabaseCall(
+        supabase.from('habit_entries').insert({
+          id, user_id: userId, habit_id: habitId, date,
+        }),
+        'toggleHabitEntry insert'
+      );
+      if (!success) {
+        // Rollback
+        set((s) => ({ habitEntries: s.habitEntries.filter((e) => e.id !== id) }));
+        return;
+      }
+    }
+  },
+  setDailyMood: async (date, data) => {
+    const userId = get().session?.user?.id;
+    if (!userId) return;
+    const existingMood = get().dailyMoods.find((m) => m.date === date);
+    const updatedMood: DailyMood = {
+      date,
+      mood: data.mood !== undefined ? data.mood : existingMood?.mood ?? null,
+      motivation: data.motivation !== undefined ? data.motivation : existingMood?.motivation ?? null,
+    };
+    // Optimistic update
+    set((s) => ({
+      dailyMoods: existingMood
+        ? s.dailyMoods.map((m) => (m.date === date ? updatedMood : m))
+        : [...s.dailyMoods, updatedMood],
+    }));
+    const { success } = await supabaseCall(
+      supabase.from('daily_mood').upsert(
+        { user_id: userId, date, mood: updatedMood.mood, motivation: updatedMood.motivation },
+        { onConflict: 'user_id,date' }
+      ),
+      'setDailyMood'
+    );
+    if (!success) {
+      // Rollback
+      set((s) => ({
+        dailyMoods: existingMood
+          ? s.dailyMoods.map((m) => (m.date === date ? existingMood : m))
+          : s.dailyMoods.filter((m) => m.date !== date),
+      }));
+      return;
+    }
+  },
+
 }));
 
 function mapDailyTodo(row: Record<string, unknown>): DailyTodo {
@@ -1179,4 +1333,16 @@ function mapBookmarkCategory(row: Record<string, unknown>): BookmarkCategory {
 
 function mapBookmark(row: Record<string, unknown>): Bookmark {
   return { id: row.id as string, categoryId: row.category_id as string, title: row.title as string, url: row.url as string, description: (row.description as string) || '', note: (row.note as string) || '' };
+}
+
+function mapHabit(row: Record<string, unknown>): Habit {
+  return { id: row.id as string, name: row.name as string, icon: (row.icon as string) || 'star', sortOrder: (row.sort_order as number) ?? 0, active: (row.active as boolean) ?? true };
+}
+
+function mapHabitEntry(row: Record<string, unknown>): HabitEntry {
+  return { id: row.id as string, habitId: row.habit_id as string, date: row.date as string };
+}
+
+function mapDailyMood(row: Record<string, unknown>): DailyMood {
+  return { date: row.date as string, mood: (row.mood as number | null) ?? null, motivation: (row.motivation as number | null) ?? null };
 }

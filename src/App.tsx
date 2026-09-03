@@ -25,6 +25,7 @@ import { createTodoNote } from './components/Canvas/TodoNote';
 import type { StickyNoteData, TodoNoteData } from './types';
 
 const LifePillars = lazy(() => import('./components/LifePillars/LifePillars'));
+const HabitsTracker = lazy(() => import('./components/Habits/HabitsTracker'));
 const BookmarksVault = lazy(() => import('./components/Bookmarks/BookmarksVault'));
 const NotesPanel = lazy(() => import('./components/Layout/NotesPanel'));
 
@@ -35,8 +36,9 @@ function App() {
   const isLoading = useAppStore((s) => s.isLoading);
   const setSession = useAppStore((s) => s.setSession);
   const loadUserData = useAppStore((s) => s.loadUserData);
-  const { isRTL } = useTranslation();
+  const { isRTL, t } = useTranslation();
   const [activeSection, setActiveSection] = useState('todo');
+  const [lifeView, setLifeView] = useState<'tracking' | 'habits'>('tracking');
   const stickyNotes = useAppStore((s) => s.stickyNotes);
   const todoNotes = useAppStore((s) => s.todoNotes);
   const addStickyNoteStore = useAppStore((s) => s.addStickyNote);
@@ -197,7 +199,29 @@ function App() {
           </div>
 
           <Suspense fallback={<div className="h-32" />}>
-            <LifePillars />
+            <div className="flex items-center gap-2 mb-4">
+              <button
+                onClick={() => setLifeView('tracking')}
+                className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                  lifeView === 'tracking'
+                    ? 'bg-clay-soft text-white'
+                    : 'bg-ink/5 text-ink-light hover:bg-ink/10'
+                }`}
+              >
+                {t('habits.toggleTracking')}
+              </button>
+              <button
+                onClick={() => setLifeView('habits')}
+                className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                  lifeView === 'habits'
+                    ? 'bg-clay-soft text-white'
+                    : 'bg-ink/5 text-ink-light hover:bg-ink/10'
+                }`}
+              >
+                {t('habits.toggleHabits')}
+              </button>
+            </div>
+            {lifeView === 'tracking' ? <LifePillars /> : <HabitsTracker />}
           </Suspense>
 
           <Suspense fallback={<div className="h-8" />}>

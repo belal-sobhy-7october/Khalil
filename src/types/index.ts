@@ -101,3 +101,23 @@ export interface TodoNoteData {
   items: TodoItemData[];
   sortOrder: number;
 }
+
+export interface Habit {
+  id: string;
+  name: string;
+  icon: string;
+  sortOrder: number;
+  active: boolean;
+}
+
+export interface HabitEntry {
+  id: string;
+  habitId: string;
+  date: string; // YYYY-MM-DD
+}
+
+export interface DailyMood {
+  date: string;
+  mood: number | null;
+  motivation: number | null;
+}
