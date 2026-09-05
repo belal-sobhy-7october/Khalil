@@ -3,6 +3,7 @@ import {
   Bookmark,
   Heart,
   LogOut,
+  Calendar,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from '../../i18n/useTranslation';
@@ -33,6 +34,7 @@ export default function Sidebar({
 
   const navItems: NavItem[] = [
     { id: 'todo', label: t('nav.todo'), icon: <CheckSquare size={18} /> },
+    { id: 'calendar', label: t('nav.calendar'), icon: <Calendar size={18} /> },
     { id: 'life', label: t('nav.life'), icon: <Heart size={18} /> },
     { id: 'bookmarks', label: t('nav.bookmarks'), icon: <Bookmark size={18} /> },
   ];
@@ -42,7 +44,7 @@ export default function Sidebar({
       <AnimatePresence mode="wait">
         {isOpen && (
           <motion.div
-            className="fixed inset-0 bg-ink/20 z-30 lg:hidden"
+            className="fixed inset-0 bg-ink/20 z-30"
             onClick={onToggle}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

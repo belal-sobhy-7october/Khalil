@@ -1,16 +1,17 @@
 import { useState, useEffect } from 'react';
 import Sidebar from './Sidebar';
 import Header from './Header';
-import NavCard from './NavCard';
 import { motion } from 'framer-motion';
 export default function DashboardLayout({
   children,
   activeSection,
   onSectionChange,
+  allowFullWidth = false,
 }: {
   children: React.ReactNode;
   activeSection: string;
   onSectionChange: (section: string) => void;
+  allowFullWidth?: boolean;
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -72,16 +73,7 @@ export default function DashboardLayout({
       />
 
       <div className="pt-14">
-        <div className="lg:flex lg:max-w-7xl lg:mx-auto lg:gap-8 lg:p-8">
-          <div className="hidden lg:block lg:w-60 shrink-0">
-            <div className="sticky top-24">
-              <NavCard
-                activeSection={activeSection}
-                onSectionChange={handleSectionChange}
-              />
-            </div>
-          </div>
-
+        <div className={allowFullWidth ? "lg:flex lg:w-full lg:gap-8 lg:p-8 lg:pe-72" : "lg:flex lg:max-w-7xl lg:mx-auto lg:gap-8 lg:p-8"}>
           <main id="main-content" className="flex-1 min-w-0 p-5 md:p-8 lg:p-0 relative">
           <motion.div
             initial={{ opacity: 0, y: 12 }}

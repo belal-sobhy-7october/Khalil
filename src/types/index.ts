@@ -121,3 +121,25 @@ export interface DailyMood {
   mood: number | null;
   motivation: number | null;
 }
+
+export type CalendarViewMode = 'day' | 'week' | 'month' | 'agenda' | 'multi-day' | 'multi-week' | 'year';
+
+export interface CalendarEvent {
+  id: string;
+  userId: string;
+  title: string;
+  date: string; // YYYY-MM-DD
+  startTime?: string; // HH:mm
+  endTime?: string; // HH:mm
+  allDay: boolean;
+  completed: boolean;
+  color: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface CalendarState {
+  currentDate: string; // The date currently being viewed (YYYY-MM-DD)
+  viewMode: CalendarViewMode;
+  showOnboarding: boolean;
+}

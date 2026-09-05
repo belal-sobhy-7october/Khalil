@@ -28,6 +28,7 @@ const LifePillars = lazy(() => import('./components/LifePillars/LifePillars'));
 const HabitsTracker = lazy(() => import('./components/Habits/HabitsTracker'));
 const BookmarksVault = lazy(() => import('./components/Bookmarks/BookmarksVault'));
 const NotesPanel = lazy(() => import('./components/Layout/NotesPanel'));
+const Calendar = lazy(() => import('./components/Calendar/Calendar'));
 
 function App() {
   const language = useAppStore((s) => s.language);
@@ -171,120 +172,137 @@ function App() {
 
   return (
     <>
-      <DashboardLayout activeSection={activeSection} onSectionChange={handleSectionChange}>
-        {appError && (
-          <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 max-w-md w-full mx-4">
-            <div className="bg-red-500 text-white text-sm px-4 py-3 rounded-xl shadow-lg flex items-center gap-2">
-              <span className="flex-1">{appError}</span>
-              <button onClick={clearAppError} className="font-bold hover:opacity-70 shrink-0">&times;</button>
+      {activeSection === 'calendar' ? (
+        <Suspense fallback={
+          <div className="min-h-screen flex items-center justify-center">
+            <div className="flex flex-col items-center gap-3">
+              <div className="w-8 h-8 border-2 border-clay-soft border-t-transparent rounded-full animate-spin" />
+              <span className="text-sm text-ink-light">{t('common.loading')}</span>
             </div>
           </div>
-        )}
-        <div className="space-y-8 max-w-4xl mx-auto canvas-area" style={{ position: 'relative' }}>
-          <div>
-            <DailyFocus />
-          </div>
+        }>
+          <Calendar />
+        </Suspense>
+      ) : (
+        <>
+          <DashboardLayout 
+            activeSection={activeSection} 
+            onSectionChange={handleSectionChange}
+            allowFullWidth={lifeView === 'habits'}
+          >
+            {appError && (
+              <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 max-w-md w-full mx-4">
+                <div className="bg-red-500 text-white text-sm px-4 py-3 rounded-xl shadow-lg flex items-center gap-2">
+                  <span className="flex-1">{appError}</span>
+                  <button onClick={clearAppError} className="font-bold hover:opacity-70 shrink-0">&times;</button>
+                </div>
+              </div>
+            )}
+            <div className="space-y-8 max-w-4xl mx-auto canvas-area" style={{ position: 'relative' }}>
+              <div>
+                <DailyFocus />
+              </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-            <div>
-              <DailyTodo />
-            </div>
-            <div>
-              <WeeklyTodo />
-            </div>
-          </div>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+                <div>
+                  <DailyTodo />
+                </div>
+                <div>
+                  <WeeklyTodo />
+                </div>
+              </div>
 
-          <div>
-            <BacklogTodo />
-          </div>
+              <div>
+                <BacklogTodo />
+              </div>
 
-          <Suspense fallback={<div className="h-32" />}>
-            <div className="flex items-center gap-2 mb-4">
-              <button
-                onClick={() => setLifeView('tracking')}
-                className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                  lifeView === 'tracking'
-                    ? 'bg-clay-soft text-white'
-                    : 'bg-ink/5 text-ink-light hover:bg-ink/10'
-                }`}
-              >
-                {t('habits.toggleTracking')}
-              </button>
-              <button
-                onClick={() => setLifeView('habits')}
-                className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                  lifeView === 'habits'
-                    ? 'bg-clay-soft text-white'
-                    : 'bg-ink/5 text-ink-light hover:bg-ink/10'
-                }`}
-              >
-                {t('habits.toggleHabits')}
-              </button>
+              <Suspense fallback={<div className="h-32" />}>
+                <section id="section-life">
+                  <div className="flex items-center gap-2 mb-4">
+                    <button
+                      onClick={() => setLifeView('tracking')}
+                      className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                        lifeView === 'tracking' ? 'bg-clay-soft text-white' : 'bg-ink/5 text-ink-light hover:bg-ink/10'
+                      }`}
+                    >
+                      {t('habits.toggleTracking')}
+                    </button>
+                    <button
+                      onClick={() => setLifeView('habits')}
+                      className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                        lifeView === 'habits' ? 'bg-clay-soft text-white' : 'bg-ink/5 text-ink-light hover:bg-ink/10'
+                      }`}
+                    >
+                      {t('habits.toggleHabits')}
+                    </button>
+                  </div>
+                  {lifeView === 'tracking' ? <LifePillars /> : <HabitsTracker />}
+                </section>
+              </Suspense>
+
+              <Suspense fallback={<div className="h-8" />}>
+                <BookmarksVault />
+              </Suspense>
             </div>
-            {lifeView === 'tracking' ? <LifePillars /> : <HabitsTracker />}
+          </DashboardLayout>
+          
+          <Suspense fallback={null}>
+            <NotesPanel
+              stickyNotes={stickyNotes}
+              todoNotes={todoNotes}
+              onDeleteSticky={deleteStickyNote}
+              onUpdateSticky={updateStickyNote}
+              onReorderSticky={handleReorderSticky}
+              onDeleteTodo={deleteTodoNote}
+              onUpdateTodo={updateTodoNote}
+              onReorderTodo={handleReorderTodo}
+            />
           </Suspense>
 
-          <Suspense fallback={<div className="h-8" />}>
-            <BookmarksVault />
-          </Suspense>
-        </div>
-      </DashboardLayout>
-
-      <Suspense fallback={null}>
-        <NotesPanel
-          stickyNotes={stickyNotes}
-          todoNotes={todoNotes}
-          onDeleteSticky={deleteStickyNote}
-          onUpdateSticky={updateStickyNote}
-          onReorderSticky={handleReorderSticky}
-          onDeleteTodo={deleteTodoNote}
-          onUpdateTodo={updateTodoNote}
-          onReorderTodo={handleReorderTodo}
-        />
-      </Suspense>
-
-      <div
-        ref={refs.setFloating}
-        style={{
-          ...floatingStyles,
-          pointerEvents: menuOpen ? 'auto' : 'none',
-          willChange: 'transform',
-        }}
-        className="z-30 transition-opacity duration-150 ease-out"
-        {...getFloatingProps()}
-      >
-        <div
-          className={`flex flex-col gap-1 transition-all duration-150 ease-out ${
-            menuOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
-          }`}
-        >
-          <button
-            onClick={addTodoNote}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-card border border-border-subtle text-sm text-ink hover:bg-ink/5 transition-all shadow-sm whitespace-nowrap"
+          <div
+            ref={refs.setFloating}
+            style={{
+              ...floatingStyles,
+              pointerEvents: menuOpen ? 'auto' : 'none',
+              willChange: 'transform',
+            }}
+            className="z-30 transition-opacity duration-150 ease-out"
+            {...getFloatingProps()}
           >
-            <ListTodo size={15} />
-            <span>قائمة</span>
-          </button>
-          <button
-            onClick={addTextNote}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-card border border-border-subtle text-sm text-ink hover:bg-ink/5 transition-all shadow-sm whitespace-nowrap"
-          >
-            <StickyNoteIcon size={15} />
-            <span>ملاحظة</span>
-          </button>
-        </div>
-      </div>
+            <div
+              className={`flex flex-col gap-1 transition-all duration-150 ease-out ${
+                menuOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
+              }`}
+            >
+              <button
+                onClick={addTodoNote}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-card border border-border-subtle text-sm text-ink hover:bg-ink/5 transition-all shadow-sm whitespace-nowrap"
+              >
+                <ListTodo size={15} />
+                <span>قائمة</span>
+              </button>
+              <button
+                onClick={addTextNote}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-card border border-border-subtle text-sm text-ink hover:bg-ink/5 transition-all shadow-sm whitespace-nowrap"
+              >
+                <StickyNoteIcon size={15} />
+                <span>ملاحظة</span>
+              </button>
+            </div>
+          </div>
 
-      <button
-        ref={refs.setReference}
-        className={`fixed bottom-6 end-6 z-30 w-12 h-12 rounded-full bg-clay-soft hover:bg-clay-soft-dark text-white shadow-lg hover:shadow-xl transition-all flex items-center justify-center ${
-          menuOpen ? 'rotate-45' : ''
-        }`}
-        aria-label="Add note"
-        {...getReferenceProps()}
-      >
-        <Plus size={22} />
-      </button>
+          <button
+            ref={refs.setReference}
+            className={`fixed bottom-6 end-6 z-30 w-12 h-12 rounded-full bg-clay-soft hover:bg-clay-soft-dark text-white shadow-lg hover:shadow-xl transition-all flex items-center justify-center ${
+              menuOpen ? 'rotate-45' : ''
+            }`}
+            aria-label="Add note"
+            {...getReferenceProps()}
+          >
+            <Plus size={22} />
+          </button>
+        </>
+      )}
     </>
   );
 }

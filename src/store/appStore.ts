@@ -19,6 +19,8 @@ import type {
   Habit,
   HabitEntry,
   DailyMood,
+  CalendarEvent,
+  CalendarViewMode,
 } from '../types';
 
 interface AppStore {
@@ -108,6 +110,21 @@ interface AppStore {
   reorderHabits: (ids: string[]) => Promise<void>;
   toggleHabitEntry: (habitId: string, date: string) => Promise<void>;
   setDailyMood: (date: string, data: { mood?: number | null; motivation?: number | null }) => Promise<void>;
+
+  calendarEvents: CalendarEvent[];
+  currentDate: string;
+  viewMode: CalendarViewMode;
+  showCalendarOnboarding: boolean;
+  addCalendarEvent: (event: Omit<CalendarEvent, 'id' | 'userId' | 'createdAt' | 'updatedAt'>) => Promise<{ success: boolean }>;
+  updateCalendarEvent: (id: string, data: Partial<CalendarEvent>) => Promise<void>;
+  deleteCalendarEvent: (id: string) => Promise<void>;
+  toggleCalendarEventComplete: (id: string) => Promise<void>;
+  setCurrentDate: (date: string) => void;
+  setViewMode: (mode: CalendarViewMode) => void;
+  navigatePrevious: () => void;
+  navigateNext: () => void;
+  navigateToday: () => void;
+  dismissCalendarOnboarding: () => void;
 }
 
 function generateId(): string {
@@ -197,7 +214,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       // await rolloverStaleTodos(userId);
 
       // Load core tables — these must exist
-      const [dailyFocusRes, todosRes, lifeCategoryRes, subTrackRes, subTrackEntryRes, bookmarkCategoryRes, bookmarkRes, habitsRes, habitEntriesRes, dailyMoodsRes] = await Promise.all([
+      const [dailyFocusRes, todosRes, lifeCategoryRes, subTrackRes, subTrackEntryRes, bookmarkCategoryRes, bookmarkRes, habitsRes, habitEntriesRes, dailyMoodsRes, calendarEventsRes] = await Promise.all([
         supabase.from('daily_focus').select('*').eq('user_id', userId).limit(1),
         supabase.from('todos').select('*').eq('user_id', userId).order('sort_order'),
         supabase.from('life_categories').select('*').eq('user_id', userId).order('sort_order'),
@@ -208,6 +225,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
         supabase.from('habits').select('*').eq('user_id', userId).order('sort_order'),
         supabase.from('habit_entries').select('*').eq('user_id', userId),
         supabase.from('daily_mood').select('*').eq('user_id', userId),
+        supabase.from('calendar_events').select('*').eq('user_id', userId).order('date'),
       ]);
 
       if (dailyFocusRes.error) console.error('[loadUserData] daily_focus error:', dailyFocusRes.error);
@@ -220,6 +238,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       if (habitsRes.error) console.error('[loadUserData] habits error:', habitsRes.error);
       if (habitEntriesRes.error) console.error('[loadUserData] habit_entries error:', habitEntriesRes.error);
       if (dailyMoodsRes.error) console.error('[loadUserData] daily_mood error:', dailyMoodsRes.error);
+      if (calendarEventsRes.error) console.error('[loadUserData] calendar_events error:', calendarEventsRes.error);
 
       const dailyFocusRows = dailyFocusRes.data;
       const todosRows = todosRes.data;
@@ -231,6 +250,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       const habitsRows = habitsRes.data;
       const habitEntriesRows = habitEntriesRes.data;
       const dailyMoodsRows = dailyMoodsRes.data;
+      const calendarEventsRows = calendarEventsRes.data;
 
       // Split todos by gate
       type TodoRow = { gate: string; date?: string; week_start?: string };
@@ -300,6 +320,10 @@ export const useAppStore = create<AppStore>()((set, get) => ({
         habits: (habitsRows || []).map(mapHabit),
         habitEntries: (habitEntriesRows || []).map(mapHabitEntry),
         dailyMoods: (dailyMoodsRows || []).map(mapDailyMood),
+        calendarEvents: (calendarEventsRows || []).map(mapCalendarEvent),
+        currentDate: getToday(),
+        viewMode: 'week',
+        showCalendarOnboarding: !localStorage.getItem('khalil-calendar-onboarding-dismissed'),
         isLoading: false,
       });
 
@@ -311,6 +335,10 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   },
 
   dailyFocus: { text: '', date: getToday() },
+  calendarEvents: [],
+  currentDate: getToday(),
+  viewMode: 'week',
+  showCalendarOnboarding: false,
   setDailyFocus: async (focus) => {
     const userId = get().session?.user?.id;
     if (!userId) return;
@@ -1270,6 +1298,146 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     }
   },
 
+  addCalendarEvent: async (event) => {
+    const userId = get().session?.user?.id;
+    if (!userId) return { success: false };
+    const id = generateId();
+    const now = Date.now();
+    const newEvent: CalendarEvent = {
+      ...event,
+      id,
+      userId,
+      createdAt: now,
+      updatedAt: now,
+    };
+    set((s) => ({ calendarEvents: [...s.calendarEvents, newEvent] }));
+    const { success } = await supabaseCall(
+      supabase.from('calendar_events').insert({
+        id,
+        user_id: userId,
+        title: event.title,
+        date: event.date,
+        start_time: event.startTime,
+        end_time: event.endTime,
+        all_day: event.allDay,
+        completed: event.completed,
+        color: event.color,
+        created_at: now,
+        updated_at: now,
+      }),
+      'addCalendarEvent'
+    );
+    if (!success) {
+      set((s) => ({ calendarEvents: s.calendarEvents.filter((e) => e.id !== id) }));
+      set({ error: 'Failed to add event. Please try again.' });
+      return { success: false };
+    }
+    return { success: true };
+  },
+  updateCalendarEvent: async (id, data) => {
+    const userId = get().session?.user?.id;
+    if (!userId) return;
+    const dbData: Record<string, unknown> = {};
+    if (data.title !== undefined) dbData.title = data.title;
+    if (data.date !== undefined) dbData.date = data.date;
+    if (data.startTime !== undefined) dbData.start_time = data.startTime;
+    if (data.endTime !== undefined) dbData.end_time = data.endTime;
+    if (data.allDay !== undefined) dbData.all_day = data.allDay;
+    if (data.completed !== undefined) dbData.completed = data.completed;
+    if (data.color !== undefined) dbData.color = data.color;
+    dbData.updated_at = Date.now();
+    const { success } = await supabaseCall(supabase.from('calendar_events').update(dbData).eq('id', id).eq('user_id', userId), 'updateCalendarEvent');
+    if (!success) return;
+    set((s) => ({
+      calendarEvents: s.calendarEvents.map((e) => (e.id === id ? { ...e, ...data, updatedAt: Date.now() } : e)),
+    }));
+  },
+  deleteCalendarEvent: async (id) => {
+    const userId = get().session?.user?.id;
+    if (!userId) return;
+    const { success } = await supabaseCall(supabase.from('calendar_events').delete().eq('id', id).eq('user_id', userId), 'deleteCalendarEvent');
+    if (!success) return;
+    set((s) => ({ calendarEvents: s.calendarEvents.filter((e) => e.id !== id) }));
+  },
+  toggleCalendarEventComplete: async (id) => {
+    const event = get().calendarEvents.find((e) => e.id === id);
+    if (!event) return;
+    const { success } = await supabaseCall(supabase.from('calendar_events').update({ completed: !event.completed, updated_at: Date.now() }).eq('id', id), 'toggleCalendarEventComplete');
+    if (!success) return;
+    set((s) => ({
+      calendarEvents: s.calendarEvents.map((e) => (e.id === id ? { ...e, completed: !e.completed } : e)),
+    }));
+  },
+  setCurrentDate: (date) => set({ currentDate: date }),
+  setViewMode: (mode) => set({ viewMode: mode }),
+  navigatePrevious: () => set((s) => {
+    const date = new Date(s.currentDate + 'T00:00:00');
+    let newDate: string;
+    switch (s.viewMode) {
+      case 'day':
+        date.setDate(date.getDate() - 1);
+        newDate = date.toISOString().split('T')[0];
+        break;
+      case 'week':
+      case 'multi-week':
+        date.setDate(date.getDate() - 7);
+        newDate = date.toISOString().split('T')[0];
+        break;
+      case 'month':
+      case 'year':
+        date.setMonth(date.getMonth() - 1);
+        newDate = date.toISOString().split('T')[0];
+        break;
+      case 'multi-day':
+        date.setDate(date.getDate() - 3);
+        newDate = date.toISOString().split('T')[0];
+        break;
+      case 'agenda':
+        date.setDate(date.getDate() - 7);
+        newDate = date.toISOString().split('T')[0];
+        break;
+      default:
+        newDate = s.currentDate;
+    }
+    return { currentDate: newDate };
+  }),
+  navigateNext: () => set((s) => {
+    const date = new Date(s.currentDate + 'T00:00:00');
+    let newDate: string;
+    switch (s.viewMode) {
+      case 'day':
+        date.setDate(date.getDate() + 1);
+        newDate = date.toISOString().split('T')[0];
+        break;
+      case 'week':
+      case 'multi-week':
+        date.setDate(date.getDate() + 7);
+        newDate = date.toISOString().split('T')[0];
+        break;
+      case 'month':
+      case 'year':
+        date.setMonth(date.getMonth() + 1);
+        newDate = date.toISOString().split('T')[0];
+        break;
+      case 'multi-day':
+        date.setDate(date.getDate() + 3);
+        newDate = date.toISOString().split('T')[0];
+        break;
+      case 'agenda':
+        date.setDate(date.getDate() + 7);
+        newDate = date.toISOString().split('T')[0];
+        break;
+      default:
+        newDate = s.currentDate;
+    }
+    return { currentDate: newDate };
+  }),
+  navigateToday: () => set({ currentDate: getToday() }),
+  dismissCalendarOnboarding: () => {
+    localStorage.setItem('khalil-calendar-onboarding-dismissed', 'true');
+    set({ showCalendarOnboarding: false });
+  },
+
 }));
 
 function mapDailyTodo(row: Record<string, unknown>): DailyTodo {
@@ -1345,4 +1513,20 @@ function mapHabitEntry(row: Record<string, unknown>): HabitEntry {
 
 function mapDailyMood(row: Record<string, unknown>): DailyMood {
   return { date: row.date as string, mood: (row.mood as number | null) ?? null, motivation: (row.motivation as number | null) ?? null };
+}
+
+function mapCalendarEvent(row: Record<string, unknown>): CalendarEvent {
+  return {
+    id: row.id as string,
+    userId: row.user_id as string,
+    title: row.title as string,
+    date: row.date as string,
+    startTime: (row.start_time as string) || undefined,
+    endTime: (row.end_time as string) || undefined,
+    allDay: (row.all_day as boolean) ?? false,
+    completed: (row.completed as boolean) ?? false,
+    color: (row.color as string) || 'clay-soft',
+    createdAt: typeof row.created_at === "number" ? row.created_at : new Date(row.created_at as string).getTime() || Date.now(),
+    updatedAt: typeof row.updated_at === "number" ? row.updated_at : new Date(row.updated_at as string).getTime() || Date.now(),
+  };
 }
