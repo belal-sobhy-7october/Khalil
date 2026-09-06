@@ -65,35 +65,6 @@ export default memo(function CalendarDayView({ currentDate, events, onEditEvent,
           <div className="h-12 flex items-center justify-center text-xs text-ink-lighter font-medium border-b border-border-subtle">
             {t('calendar.allDay')}
           </div>
-          {allDayEvents.length > 0 && (
-            <div className="p-2 space-y-1 max-h-32 overflow-y-auto">
-              {allDayEvents.map(event => (
-                <motion.div
-                  key={event.id}
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className={`flex items-center gap-2 px-2 py-1.5 rounded-lg cursor-pointer hover:bg-ink/5 transition-colors ${event.completed ? 'opacity-60' : ''}`}
-                  onClick={() => onEditEvent(event)}
-                  style={{ backgroundColor: `var(--color-${event.color}-100, var(--color-${event.color}-50))` }}
-                >
-                  <button
-                    onClick={(e) => handleComplete(event.id, e)}
-                    className="shrink-0"
-                    aria-label={event.completed ? 'Mark incomplete' : 'Mark complete'}
-                  >
-                    {event.completed ? (
-                      <CheckCircle size={16} className="text-sage-soft" />
-                    ) : (
-                      <Circle size={16} className="text-ink-light" />
-                    )}
-                  </button>
-                  <span className="text-sm truncate font-medium" style={{ color: `var(--color-${event.color}-600)` }}>
-                    {event.title}
-                  </span>
-                </motion.div>
-              ))}
-            </div>
-          )}
           {allDayEvents.length === 0 && (
             <div className="h-12 flex items-center justify-center text-xs text-ink-lighter border-b border-border-subtle" />
           )}
@@ -109,12 +80,45 @@ export default memo(function CalendarDayView({ currentDate, events, onEditEvent,
             {allDayEvents.length > 0 && (
               <div className="row-span-1 bg-ink/3 border-b border-border-subtle" />
             )}
-            {HOURS.map(() => (
-              <div key="" className="border-b border-border-subtle/50" />
+            {HOURS.map((_, i) => (
+              <div key={i} className="border-b border-border-subtle/50" />
             ))}
           </div>
 
-          <div className="relative" style={{ minHeight: allDayEvents.length > 0 ? '1512px' : '1440px' }}>
+          {allDayEvents.length > 0 && (
+            <div className="absolute top-0 left-0 right-0 z-10 bg-card border-b border-border-subtle p-1 max-h-24 overflow-y-auto" style={{ height: '48px' }}>
+              <div className="flex flex-wrap gap-1.5 max-w-full">
+                {allDayEvents.map(event => (
+                  <motion.div
+                    key={event.id}
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex items-center gap-1.5 px-2 py-1 rounded cursor-pointer hover:bg-ink/5 transition-colors text-xs"
+                    onClick={() => onEditEvent(event)}
+                    style={{ 
+                      backgroundColor: `var(--calendar-color-${event.color}-100)`, 
+                      borderLeft: `3px solid var(--calendar-color-${event.color}-500)` 
+                    }}
+                  >
+                    <button
+                      onClick={(e) => handleComplete(event.id, e)}
+                      className="shrink-0"
+                      aria-label={event.completed ? 'Mark incomplete' : 'Mark complete'}
+                    >
+                      {event.completed ? (
+                        <CheckCircle size={12} className="text-sage-soft" />
+                      ) : (
+                        <Circle size={12} className="text-ink-light" />
+                      )}
+                    </button>
+                    <span className="truncate font-medium" style={{ color: `var(--calendar-color-${event.color}-700)` }}>{event.title}</span>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="relative" style={{ minHeight: allDayEvents.length > 0 ? '1512px' : '1440px', marginTop: allDayEvents.length > 0 ? '48px' : 0 }}>
             {timedEvents.map(event => (
               <motion.div
                 key={event.id}
@@ -125,8 +129,8 @@ export default memo(function CalendarDayView({ currentDate, events, onEditEvent,
                 style={{
                   top: `${getEventTop(event.startTime) + (allDayEvents.length > 0 ? 48 : 0)}px`,
                   height: `${getEventHeight(event.startTime, event.endTime)}px`,
-                  backgroundColor: `var(--color-${event.color}-100, var(--color-${event.color}-50))`,
-                  borderLeft: `3px solid var(--color-${event.color}-500)`,
+                  backgroundColor: `var(--calendar-color-${event.color}-100)`,
+                  borderLeft: `3px solid var(--calendar-color-${event.color}-500)`,
                 }}
               >
                 <div className="p-2 flex items-start justify-between">
@@ -143,7 +147,7 @@ export default memo(function CalendarDayView({ currentDate, events, onEditEvent,
                       )}
                     </button>
                     <div className="min-w-0">
-                      <p className="text-sm font-medium truncate" style={{ color: `var(--color-${event.color}-700)` }}>
+                      <p className="text-sm font-medium truncate" style={{ color: `var(--calendar-color-${event.color}-700)` }}>
                         {event.title}
                       </p>
                       {event.startTime && (

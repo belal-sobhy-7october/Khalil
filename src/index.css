@@ -89,7 +89,107 @@
   --color-stone-900: #30261c;
 }
 
+/* Calendar-specific color palette as actual CSS custom properties (for inline styles) */
 :root {
+  --calendar-color-terracotta-50: #fdf4ef;
+  --calendar-color-terracotta-100: #fae6da;
+  --calendar-color-terracotta-200: #f4cab0;
+  --calendar-color-terracotta-300: #eba77d;
+  --calendar-color-terracotta-400: #e07d4d;
+  --calendar-color-terracotta-500: #c4622d;
+  --calendar-color-terracotta-600: #a55023;
+  --calendar-color-terracotta-700: #8a401c;
+  --calendar-color-terracotta-800: #6e3317;
+  --calendar-color-terracotta-900: #5a2913;
+
+  --calendar-color-amber-50: #fffbeb;
+  --calendar-color-amber-100: #fef3c7;
+  --calendar-color-amber-200: #fde68a;
+  --calendar-color-amber-300: #fcd34d;
+  --calendar-color-amber-400: #fbbf24;
+  --calendar-color-amber-500: #f59e0b;
+  --calendar-color-amber-600: #d97706;
+  --calendar-color-amber-700: #b45309;
+  --calendar-color-amber-800: #92400e;
+  --calendar-color-amber-900: #78350f;
+
+  --calendar-color-gold-50: #fbf7ef;
+  --calendar-color-gold-100: #f5edda;
+  --calendar-color-gold-200: #ebd9b3;
+  --calendar-color-gold-300: #dcc085;
+  --calendar-color-gold-400: #c9a96e;
+  --calendar-color-gold-500: #b8914a;
+  --calendar-color-gold-600: #9e773d;
+  --calendar-color-gold-700: #835e34;
+  --calendar-color-gold-800: #6d4d2f;
+  --calendar-color-gold-900: #5c412a;
+
+  --calendar-color-sage-50: #f3f7f3;
+  --calendar-color-sage-100: #e3ede3;
+  --calendar-color-sage-200: #c8dcc8;
+  --calendar-color-sage-300: #a3c4a3;
+  --calendar-color-sage-400: #7daa7d;
+  --calendar-color-sage-500: #5d8a5d;
+  --calendar-color-sage-600: #4d734d;
+  --calendar-color-sage-700: #3f5c3f;
+  --calendar-color-sage-800: #364a36;
+  --calendar-color-sage-900: #2d3d2d;
+
+  --calendar-color-blue-50: #eff6ff;
+  --calendar-color-blue-100: #dbeafe;
+  --calendar-color-blue-200: #bfdbfe;
+  --calendar-color-blue-300: #93c5fd;
+  --calendar-color-blue-400: #60a5fa;
+  --calendar-color-blue-500: #3b82f6;
+  --calendar-color-blue-600: #2563eb;
+  --calendar-color-blue-700: #1d4ed8;
+  --calendar-color-blue-800: #1e40af;
+  --calendar-color-blue-900: #1e3a8a;
+
+  --calendar-color-indigo-50: #eef2ff;
+  --calendar-color-indigo-100: #e0e7ff;
+  --calendar-color-indigo-200: #c7d2fe;
+  --calendar-color-indigo-300: #a5b4fc;
+  --calendar-color-indigo-400: #818cf8;
+  --calendar-color-indigo-500: #6366f1;
+  --calendar-color-indigo-600: #4f46e5;
+  --calendar-color-indigo-700: #4338ca;
+  --calendar-color-indigo-800: #3730a3;
+  --calendar-color-indigo-900: #312e81;
+
+  --calendar-color-purple-50: #faf5ff;
+  --calendar-color-purple-100: #f3e8ff;
+  --calendar-color-purple-200: #e9d5ff;
+  --calendar-color-purple-300: #d8b4fe;
+  --calendar-color-purple-400: #c084fc;
+  --calendar-color-purple-500: #a855f7;
+  --calendar-color-purple-600: #9333ea;
+  --calendar-color-purple-700: #7e22ce;
+  --calendar-color-purple-800: #6b21a8;
+  --calendar-color-purple-900: #581c87;
+
+  --calendar-color-pink-50: #fdf2f8;
+  --calendar-color-pink-100: #fce7f3;
+  --calendar-color-pink-200: #fbcfe8;
+  --calendar-color-pink-300: #f9a8d4;
+  --calendar-color-pink-400: #f472b6;
+  --calendar-color-pink-500: #ec4899;
+  --calendar-color-pink-600: #db2777;
+  --calendar-color-pink-700: #be185d;
+  --calendar-color-pink-800: #9d174d;
+  --calendar-color-pink-900: #831843;
+
+  --calendar-color-rose-50: #fff1f2;
+  --calendar-color-rose-100: #ffe4e6;
+  --calendar-color-rose-200: #fecdd3;
+  --calendar-color-rose-300: #fda4af;
+  --calendar-color-rose-400: #fb7185;
+  --calendar-color-rose-500: #f43f5e;
+  --calendar-color-rose-600: #e11d48;
+  --calendar-color-rose-700: #be123c;
+  --calendar-color-rose-800: #9f1239;
+  --calendar-color-rose-900: #881337;
+
   color-scheme: light;
   --bg-primary: #f6f4ee;
   background-color: var(--bg-primary);

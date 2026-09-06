@@ -105,10 +105,9 @@ export default function Calendar() {
   const handleEventSave = useCallback(async (eventData: Omit<typeof calendarEvents[0], 'id' | 'userId' | 'createdAt' | 'updatedAt'>) => {
     if (editingEvent) {
       await useAppStore.getState().updateCalendarEvent(editingEvent.id, eventData);
-    } else {
-      await addCalendarEvent(eventData);
+      return { success: true };
     }
-    setIsModalOpen(false);
+    return await addCalendarEvent(eventData);
   }, [editingEvent, addCalendarEvent]);
 
   const handleEventDelete = useCallback(async (id: string) => {

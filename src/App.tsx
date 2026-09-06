@@ -38,7 +38,13 @@ function App() {
   const setSession = useAppStore((s) => s.setSession);
   const loadUserData = useAppStore((s) => s.loadUserData);
   const { isRTL, t } = useTranslation();
-  const [activeSection, setActiveSection] = useState('todo');
+  const [activeSection, setActiveSection] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('khalil-active-section');
+      if (stored) return stored;
+    }
+    return 'todo';
+  });
   const [lifeView, setLifeView] = useState<'tracking' | 'habits'>('tracking');
   const stickyNotes = useAppStore((s) => s.stickyNotes);
   const todoNotes = useAppStore((s) => s.todoNotes);
@@ -153,6 +159,9 @@ function App() {
 
   const handleSectionChange = useCallback((section: string) => {
     setActiveSection(section);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('khalil-active-section', section);
+    }
   }, []);
 
   if (isLoading) {
@@ -172,32 +181,32 @@ function App() {
 
   return (
     <>
-      {activeSection === 'calendar' ? (
-        <Suspense fallback={
-          <div className="min-h-screen flex items-center justify-center">
-            <div className="flex flex-col items-center gap-3">
-              <div className="w-8 h-8 border-2 border-clay-soft border-t-transparent rounded-full animate-spin" />
-              <span className="text-sm text-ink-light">{t('common.loading')}</span>
+      <DashboardLayout 
+        activeSection={activeSection} 
+        onSectionChange={handleSectionChange}
+        allowFullWidth={lifeView === 'habits' || activeSection === 'calendar'}
+      >
+        {appError && (
+          <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 max-w-md w-full mx-4">
+            <div className="bg-red-500 text-white text-sm px-4 py-3 rounded-xl shadow-lg flex items-center gap-2">
+              <span className="flex-1">{appError}</span>
+              <button onClick={clearAppError} className="font-bold hover:opacity-70 shrink-0">&times;</button>
             </div>
           </div>
-        }>
-          <Calendar />
-        </Suspense>
-      ) : (
-        <>
-          <DashboardLayout 
-            activeSection={activeSection} 
-            onSectionChange={handleSectionChange}
-            allowFullWidth={lifeView === 'habits'}
-          >
-            {appError && (
-              <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 max-w-md w-full mx-4">
-                <div className="bg-red-500 text-white text-sm px-4 py-3 rounded-xl shadow-lg flex items-center gap-2">
-                  <span className="flex-1">{appError}</span>
-                  <button onClick={clearAppError} className="font-bold hover:opacity-70 shrink-0">&times;</button>
-                </div>
+        )}
+        {activeSection === 'calendar' ? (
+          <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center">
+              <div className="flex flex-col items-center gap-3">
+                <div className="w-8 h-8 border-2 border-clay-soft border-t-transparent rounded-full animate-spin" />
+                <span className="text-sm text-ink-light">{t('common.loading')}</span>
               </div>
-            )}
+            </div>
+          }>
+            <Calendar />
+          </Suspense>
+        ) : (
+          <>
             <div className="space-y-8 max-w-4xl mx-auto canvas-area" style={{ position: 'relative' }}>
               <div>
                 <DailyFocus />
@@ -244,65 +253,65 @@ function App() {
                 <BookmarksVault />
               </Suspense>
             </div>
-          </DashboardLayout>
-          
-          <Suspense fallback={null}>
-            <NotesPanel
-              stickyNotes={stickyNotes}
-              todoNotes={todoNotes}
-              onDeleteSticky={deleteStickyNote}
-              onUpdateSticky={updateStickyNote}
-              onReorderSticky={handleReorderSticky}
-              onDeleteTodo={deleteTodoNote}
-              onUpdateTodo={updateTodoNote}
-              onReorderTodo={handleReorderTodo}
-            />
-          </Suspense>
+          </>
+        )}
+      </DashboardLayout>
+      
+      <Suspense fallback={null}>
+        <NotesPanel
+          stickyNotes={stickyNotes}
+          todoNotes={todoNotes}
+          onDeleteSticky={deleteStickyNote}
+          onUpdateSticky={updateStickyNote}
+          onReorderSticky={handleReorderSticky}
+          onDeleteTodo={deleteTodoNote}
+          onUpdateTodo={updateTodoNote}
+          onReorderTodo={handleReorderTodo}
+        />
+      </Suspense>
 
-          <div
-            ref={refs.setFloating}
-            style={{
-              ...floatingStyles,
-              pointerEvents: menuOpen ? 'auto' : 'none',
-              willChange: 'transform',
-            }}
-            className="z-30 transition-opacity duration-150 ease-out"
-            {...getFloatingProps()}
-          >
-            <div
-              className={`flex flex-col gap-1 transition-all duration-150 ease-out ${
-                menuOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
-              }`}
-            >
-              <button
-                onClick={addTodoNote}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-card border border-border-subtle text-sm text-ink hover:bg-ink/5 transition-all shadow-sm whitespace-nowrap"
-              >
-                <ListTodo size={15} />
-                <span>قائمة</span>
-              </button>
-              <button
-                onClick={addTextNote}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-card border border-border-subtle text-sm text-ink hover:bg-ink/5 transition-all shadow-sm whitespace-nowrap"
-              >
-                <StickyNoteIcon size={15} />
-                <span>ملاحظة</span>
-              </button>
-            </div>
-          </div>
-
+      <div
+        ref={refs.setFloating}
+        style={{
+          ...floatingStyles,
+          pointerEvents: menuOpen ? 'auto' : 'none',
+          willChange: 'transform',
+        }}
+        className="z-30 transition-opacity duration-150 ease-out"
+        {...getFloatingProps()}
+      >
+        <div
+          className={`flex flex-col gap-1 transition-all duration-150 ease-out ${
+            menuOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
+          }`}
+        >
           <button
-            ref={refs.setReference}
-            className={`fixed bottom-6 end-6 z-30 w-12 h-12 rounded-full bg-clay-soft hover:bg-clay-soft-dark text-white shadow-lg hover:shadow-xl transition-all flex items-center justify-center ${
-              menuOpen ? 'rotate-45' : ''
-            }`}
-            aria-label="Add note"
-            {...getReferenceProps()}
+            onClick={addTodoNote}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-card border border-border-subtle text-sm text-ink hover:bg-ink/5 transition-all shadow-sm whitespace-nowrap"
           >
-            <Plus size={22} />
+            <ListTodo size={15} />
+            <span>قائمة</span>
           </button>
-        </>
-      )}
+          <button
+            onClick={addTextNote}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-card border border-border-subtle text-sm text-ink hover:bg-ink/5 transition-all shadow-sm whitespace-nowrap"
+          >
+            <StickyNoteIcon size={15} />
+            <span>ملاحظة</span>
+          </button>
+        </div>
+      </div>
+
+      <button
+        ref={refs.setReference}
+        className={`fixed bottom-6 end-6 z-30 w-12 h-12 rounded-full bg-clay-soft hover:bg-clay-soft-dark text-white shadow-lg hover:shadow-xl transition-all flex items-center justify-center ${
+          menuOpen ? 'rotate-45' : ''
+        }`}
+        aria-label="Add note"
+        {...getReferenceProps()}
+      >
+        <Plus size={22} />
+      </button>
     </>
   );
 }

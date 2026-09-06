@@ -95,7 +95,7 @@ export default memo(function CalendarYearView({ currentDate, events }: CalendarY
             <div className="p-2">
               <div className="grid grid-cols-7 gap-0.5 mb-1">
                 {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => (
-                  <div key={day} className="h-6 flex items-center justify-center text-[10px] text-ink-lighter font-medium">
+                  <div key={`weekday-${i}`} className="h-6 flex items-center justify-center text-[10px] text-ink-lighter font-medium">
                     {isRTL && i === 0 ? 'ح' : isRTL && i === 6 ? 'ن' : day}
                   </div>
                 ))}
@@ -124,7 +124,7 @@ export default memo(function CalendarYearView({ currentDate, events }: CalendarY
                             <div
                               key={event.id}
                               className="w-1.5 h-1.5 rounded-full"
-                              style={{ backgroundColor: `var(--color-${event.color}-500)` }}
+                              style={{ backgroundColor: `var(--calendar-color-${event.color}-500)` }}
                               title={event.title}
                             />
                           ))}

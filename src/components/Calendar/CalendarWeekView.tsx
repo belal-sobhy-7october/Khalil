@@ -113,7 +113,10 @@ export default memo(function CalendarWeekView({ events, onEditEvent, onCompleteE
                         key={event.id}
                         className="flex items-center gap-1.5 px-1.5 py-1 rounded cursor-pointer hover:bg-ink/5 transition-colors text-xs"
                         onClick={() => onEditEvent(event)}
-                        style={{ backgroundColor: `var(--color-${event.color}-100, var(--color-${event.color}-50))` }}
+                        style={{ 
+                          backgroundColor: `var(--calendar-color-${event.color}-100)`, 
+                          borderLeft: `3px solid var(--calendar-color-${event.color}-500)` 
+                        }}
                       >
                         <button
                           onClick={(e) => handleComplete(event.id, e)}
@@ -122,7 +125,7 @@ export default memo(function CalendarWeekView({ events, onEditEvent, onCompleteE
                         >
                           {event.completed ? <CheckCircle size={12} className="text-sage-soft" /> : <Circle size={12} className="text-ink-light" />}
                         </button>
-                        <span className="truncate font-medium" style={{ color: `var(--color-${event.color}-600)` }}>{event.title}</span>
+                        <span className="truncate font-medium" style={{ color: `var(--calendar-color-${event.color}-700)` }}>{event.title}</span>
                       </div>
                     ))}
                   </div>
@@ -130,7 +133,9 @@ export default memo(function CalendarWeekView({ events, onEditEvent, onCompleteE
               </div>
               <div className="relative" style={{ minHeight: '1440px' }}>
                 <div className="absolute inset-0 grid grid-rows-[repeat(24,60px)]">
-                  {HOURS.map(() => <div key="" className="border-b border-border-subtle/50" />)}
+                  {HOURS.map((_, i) => (
+                    <div key={i} className="border-b border-border-subtle/50" />
+                  ))}
                 </div>
                 <div className="relative" style={{ minHeight: '1440px' }}>
                   {timedEvents.map(event => (
@@ -141,8 +146,8 @@ export default memo(function CalendarWeekView({ events, onEditEvent, onCompleteE
                       style={{
                         top: `${getEventTop(event.startTime)}px`,
                         height: `${getEventHeight(event.startTime, event.endTime)}px`,
-                        backgroundColor: `var(--color-${event.color}-100, var(--color-${event.color}-50))`,
-                        borderLeft: `2px solid var(--color-${event.color}-500)`,
+                        backgroundColor: `var(--calendar-color-${event.color}-100)`,
+                        borderLeft: `2px solid var(--calendar-color-${event.color}-500)`,
                       }}
                     >
                       <div className="p-1.5">
@@ -154,7 +159,7 @@ export default memo(function CalendarWeekView({ events, onEditEvent, onCompleteE
                           >
                             {event.completed ? <CheckCircle size={10} className="text-sage-soft" /> : <Circle size={10} className="text-ink-light" />}
                           </button>
-                          <span className="text-xs font-medium truncate" style={{ color: `var(--color-${event.color}-700)` }}>
+                          <span className="text-xs font-medium truncate" style={{ color: `var(--calendar-color-${event.color}-700)` }}>
                             {event.title}
                           </span>
                         </div>

@@ -131,7 +131,7 @@ export default memo(function CalendarAgendaView({ events, onEditEvent, onComplet
                   transition={{ delay: eventIndex * 0.03 }}
                   className="relative group"
                 >
-                  <div className="absolute left-[-4px] top-1 bottom-1 w-1 rounded-full" style={{ backgroundColor: `var(--color-${event.color}-500)` }} />
+                  <div className="absolute left-[-4px] top-1 bottom-1 w-1.5 rounded-full" style={{ backgroundColor: `var(--calendar-color-${event.color}-500)` }} />
                   <div 
                     className={`bg-card border border-border-subtle rounded-xl p-4 hover:bg-ink/3 transition-colors cursor-pointer ${event.completed ? 'opacity-60' : ''}`}
                     onClick={() => onEditEvent(event)}
@@ -149,13 +149,13 @@ export default memo(function CalendarAgendaView({ events, onEditEvent, onComplet
                         )}
                       </button>
                       <div className="flex-1 min-w-0">
-                        <h4 className="font-medium text-ink truncate" style={{ color: `var(--color-${event.color}-700)` }}>
+                        <h4 className="font-medium text-ink truncate" style={{ color: `var(--calendar-color-${event.color}-700)` }}>
                           {event.title}
                         </h4>
                         <div className="flex items-center gap-3 mt-1 text-sm text-ink-light">
                           {event.allDay ? (
                             <span className="flex items-center gap-1 px-2 py-0.5 bg-ink/5 rounded-full text-xs">
-                              <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: `var(--color-${event.color}-500)` }} />
+                              <span className="w-2 h-2 rounded-full" style={{ backgroundColor: `var(--calendar-color-${event.color}-500)` }} />
                               {t('calendar.allDay')}
                             </span>
                           ) : (

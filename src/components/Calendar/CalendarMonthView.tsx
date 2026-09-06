@@ -108,7 +108,10 @@ export default memo(function CalendarMonthView({ currentDate, events, onEditEven
                     animate={{ opacity: 1, y: 0 }}
                     className="flex items-center gap-1.5 px-1.5 py-1 rounded cursor-pointer hover:bg-ink/5 transition-colors text-xs"
                     onClick={() => onEditEvent(event)}
-                    style={{ backgroundColor: `var(--color-${event.color}-100, var(--color-${event.color}-50))` }}
+                    style={{ 
+                      backgroundColor: `var(--calendar-color-${event.color}-100)`, 
+                      borderLeft: `3px solid var(--calendar-color-${event.color}-500)` 
+                    }}
                   >
                     <button
                       onClick={(e) => handleComplete(event.id, e)}
@@ -117,7 +120,7 @@ export default memo(function CalendarMonthView({ currentDate, events, onEditEven
                     >
                       {event.completed ? <CheckCircle size={12} className="text-sage-soft" /> : <Circle size={12} className="text-ink-light" />}
                     </button>
-                    <span className="truncate font-medium" style={{ color: `var(--color-${event.color}-600)` }}>{event.title}</span>
+                    <span className="truncate font-medium" style={{ color: `var(--calendar-color-${event.color}-700)` }}>{event.title}</span>
                     {event.startTime && <span className="text-[10px] opacity-70">{event.startTime}</span>}
                   </motion.div>
                 ))}
