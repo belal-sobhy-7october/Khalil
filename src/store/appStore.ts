@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
-import { getToday, getWeekStart } from './dateHelpers';
+import { getToday, getWeekStart, stepCalendarDate } from './dateHelpers';
 import type {
   Language,
   Priority,
@@ -116,7 +116,7 @@ interface AppStore {
   viewMode: CalendarViewMode;
   showCalendarOnboarding: boolean;
   addCalendarEvent: (event: Omit<CalendarEvent, 'id' | 'userId' | 'createdAt' | 'updatedAt'>) => Promise<{ success: boolean }>;
-  updateCalendarEvent: (id: string, data: Partial<CalendarEvent>) => Promise<void>;
+  updateCalendarEvent: (id: string, data: Partial<CalendarEvent>) => Promise<{ success: boolean }>;
   deleteCalendarEvent: (id: string) => Promise<void>;
   toggleCalendarEventComplete: (id: string) => Promise<void>;
   setCurrentDate: (date: string) => void;
@@ -167,6 +167,81 @@ async function supabaseCall<T>(
   }
 }
 
+// Must match supabase/config.toml's `max_rows` (and the hosted Supabase default):
+// PostgREST silently caps any single response at this many rows.
+const POSTGREST_MAX_ROWS = 1000;
+
+// Pages through a table with .range() until a short page comes back, so tables
+// that outgrow a single PostgREST response (max_rows above) don't silently lose
+// rows. Always orders by `orderColumns` (e.g. ['date', 'id']) so which rows land
+// on which page — and therefore the merged result — is deterministic.
+async function fetchAll<T = Record<string, unknown>>(
+  table: string,
+  userId: string,
+  orderColumns: string[]
+): Promise<{ data: T[] | null; error: unknown }> {
+  const rows: T[] = [];
+  let offset = 0;
+  for (;;) {
+    let query = supabase.from(table).select('*').eq('user_id', userId);
+    for (const column of orderColumns) {
+      query = query.order(column, { ascending: true });
+    }
+    const { data, error } = await query.range(offset, offset + POSTGREST_MAX_ROWS - 1);
+    if (error) {
+      logError(`fetchAll:${table}`, error);
+      return { data: null, error };
+    }
+    const page = (data ?? []) as T[];
+    rows.push(...page);
+    if (page.length < POSTGREST_MAX_ROWS) break;
+    offset += POSTGREST_MAX_ROWS;
+  }
+  if (import.meta.env.DEV && rows.length > POSTGREST_MAX_ROWS) {
+    console.warn(
+      `[fetchAll:${table}] loaded ${rows.length} rows across ${Math.ceil(rows.length / POSTGREST_MAX_ROWS)} pages — ` +
+      `this table has grown past a single PostgREST page (max_rows=${POSTGREST_MAX_ROWS}).`
+    );
+  }
+  return { data: rows, error: null };
+}
+
+function applyReorder<T extends { id: string; sortOrder: number }>(
+  currentList: T[],
+  ids: string[]
+): T[] {
+  const byId = new Map(currentList.map((item) => [item.id, item]));
+  const known = ids
+    .map((id) => byId.get(id))
+    .filter((item): item is T => item !== undefined);
+  const knownIds = new Set(known.map((item) => item.id));
+  const leftover = currentList.filter((item) => !knownIds.has(item.id));
+  return [...known, ...leftover].map((item, index) => ({ ...item, sortOrder: index }));
+}
+
+// Updates only the rows whose sort_order actually changed, via targeted UPDATEs
+// (not upsert) so we never re-send NOT NULL columns like `text`/`gate`/`name`
+// that upsert's INSERT-then-resolve-conflict path would otherwise re-validate.
+async function persistSortOrder<T extends { id: string; sortOrder: number }>(
+  table: string,
+  userId: string,
+  previousItems: T[],
+  nextItems: T[]
+): Promise<{ success: boolean }> {
+  const previousSortOrderById = new Map(previousItems.map((item) => [item.id, item.sortOrder]));
+  const changed = nextItems.filter((item) => previousSortOrderById.get(item.id) !== item.sortOrder);
+  if (changed.length === 0) return { success: true };
+  const results = await Promise.all(
+    changed.map((item) =>
+      supabaseCall(
+        supabase.from(table).update({ sort_order: item.sortOrder }).eq('id', item.id).eq('user_id', userId),
+        `persistSortOrder:${table}`
+      )
+    )
+  );
+  return { success: results.every((r) => r.success) };
+}
+
 export const useAppStore = create<AppStore>()((set, get) => ({
   language: (() => {
     if (typeof window !== 'undefined') {
@@ -213,32 +288,37 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       // Disabled rollover to prevent deleted todos from reappearing on refresh
       // await rolloverStaleTodos(userId);
 
-      // Load core tables — these must exist
+      // Load core tables — these must exist. Tables that can grow past a single
+      // PostgREST page (max_rows in supabase/config.toml) are paged via fetchAll
+      // so rows past the first 1000 aren't silently dropped.
       const [dailyFocusRes, todosRes, lifeCategoryRes, subTrackRes, subTrackEntryRes, bookmarkCategoryRes, bookmarkRes, habitsRes, habitEntriesRes, dailyMoodsRes, calendarEventsRes] = await Promise.all([
         supabase.from('daily_focus').select('*').eq('user_id', userId).limit(1),
-        supabase.from('todos').select('*').eq('user_id', userId).order('sort_order'),
+        fetchAll('todos', userId, ['sort_order', 'id']),
         supabase.from('life_categories').select('*').eq('user_id', userId).order('sort_order'),
         supabase.from('sub_tracks').select('*').eq('user_id', userId).order('sort_order'),
-        supabase.from('sub_track_entries').select('*').eq('user_id', userId).order('date'),
+        fetchAll('sub_track_entries', userId, ['date', 'id']),
         supabase.from('bookmark_categories').select('*').eq('user_id', userId).order('name'),
         supabase.from('bookmarks').select('*').eq('user_id', userId).order('created_at'),
         supabase.from('habits').select('*').eq('user_id', userId).order('sort_order'),
-        supabase.from('habit_entries').select('*').eq('user_id', userId),
-        supabase.from('daily_mood').select('*').eq('user_id', userId),
-        supabase.from('calendar_events').select('*').eq('user_id', userId).order('date'),
+        fetchAll('habit_entries', userId, ['date', 'id']),
+        fetchAll('daily_mood', userId, ['date', 'id']),
+        fetchAll('calendar_events', userId, ['date', 'id']),
       ]);
 
-      if (dailyFocusRes.error) console.error('[loadUserData] daily_focus error:', dailyFocusRes.error);
-      if (todosRes.error) console.error('[loadUserData] todos error:', todosRes.error);
-      if (lifeCategoryRes.error) console.error('[loadUserData] life_categories error:', lifeCategoryRes.error);
-      if (subTrackRes.error) console.error('[loadUserData] sub_tracks error:', subTrackRes.error);
-      if (subTrackEntryRes.error) console.error('[loadUserData] sub_track_entries error:', subTrackEntryRes.error);
-      if (bookmarkCategoryRes.error) console.error('[loadUserData] bookmark_categories error:', bookmarkCategoryRes.error);
-      if (bookmarkRes.error) console.error('[loadUserData] bookmarks error:', bookmarkRes.error);
-      if (habitsRes.error) console.error('[loadUserData] habits error:', habitsRes.error);
-      if (habitEntriesRes.error) console.error('[loadUserData] habit_entries error:', habitEntriesRes.error);
-      if (dailyMoodsRes.error) console.error('[loadUserData] daily_mood error:', dailyMoodsRes.error);
-      if (calendarEventsRes.error) console.error('[loadUserData] calendar_events error:', calendarEventsRes.error);
+      const coreTableErrors = [
+        { table: 'daily_focus', error: dailyFocusRes.error },
+        { table: 'todos', error: todosRes.error },
+        { table: 'life_categories', error: lifeCategoryRes.error },
+        { table: 'sub_tracks', error: subTrackRes.error },
+        { table: 'sub_track_entries', error: subTrackEntryRes.error },
+        { table: 'bookmark_categories', error: bookmarkCategoryRes.error },
+        { table: 'bookmarks', error: bookmarkRes.error },
+        { table: 'habits', error: habitsRes.error },
+        { table: 'habit_entries', error: habitEntriesRes.error },
+        { table: 'daily_mood', error: dailyMoodsRes.error },
+        { table: 'calendar_events', error: calendarEventsRes.error },
+      ].filter((check) => check.error != null);
+      coreTableErrors.forEach(({ table, error }) => console.error(`[loadUserData] ${table} error:`, error));
 
       const dailyFocusRows = dailyFocusRes.data;
       const todosRows = todosRes.data;
@@ -254,9 +334,9 @@ export const useAppStore = create<AppStore>()((set, get) => ({
 
       // Split todos by gate
       type TodoRow = { gate: string; date?: string; week_start?: string };
-      const dailyTodoRows = todosRows?.filter((row: TodoRow) => row.gate === 'daily') || [];
-      const weeklyTodoRows = todosRows?.filter((row: TodoRow) => row.gate === 'weekly') || [];
-      const backlogTodoRows = todosRows?.filter((row: TodoRow) => row.gate === 'backlog') || [];
+      const dailyTodoRows = todosRows?.filter((row) => (row as TodoRow).gate === 'daily') || [];
+      const weeklyTodoRows = todosRows?.filter((row) => (row as TodoRow).gate === 'weekly') || [];
+      const backlogTodoRows = todosRows?.filter((row) => (row as TodoRow).gate === 'backlog') || [];
 
       if (import.meta.env.DEV) {
         console.log('[loadUserData] Fetched rows:', {
@@ -325,12 +405,15 @@ export const useAppStore = create<AppStore>()((set, get) => ({
         viewMode: 'week',
         showCalendarOnboarding: !localStorage.getItem('khalil-calendar-onboarding-dismissed'),
         isLoading: false,
+        error: coreTableErrors.length > 0
+          ? 'errors.loadUserDataPartial'
+          : null,
       });
 
       if (import.meta.env.DEV) console.log('[loadUserData] Data loaded successfully from existing Supabase rows');
     } catch (err) {
       console.error('[loadUserData] Failed to load user data:', err);
-      set({ isLoading: false });
+      set({ isLoading: false, error: 'errors.loadUserData' });
     }
   },
 
@@ -342,28 +425,32 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   setDailyFocus: async (focus) => {
     const userId = get().session?.user?.id;
     if (!userId) return;
-    try {
-      const { error } = await supabase
-        .from('daily_focus')
-        .upsert(
-          { user_id: userId, text: focus.text, date: focus.date },
-          { onConflict: 'user_id' }
-        );
-      if (error) {
-        console.error('Failed to set daily focus:', error);
-        return;
-      }
-      set({ dailyFocus: focus });
-    } catch (err) {
-      console.error('Failed to set daily focus:', err);
+    const previousFocus = get().dailyFocus;
+    // Optimistic update
+    set({ dailyFocus: focus });
+    const { success } = await supabaseCall(
+      supabase.from('daily_focus').upsert(
+        { user_id: userId, text: focus.text, date: focus.date },
+        { onConflict: 'user_id' }
+      ),
+      'setDailyFocus'
+    );
+    if (!success) {
+      // Rollback on failure
+      set({ dailyFocus: previousFocus, error: 'errors.setDailyFocus' });
     }
   },
   clearDailyFocus: async () => {
     const userId = get().session?.user?.id;
     if (!userId) return;
-    const { success } = await supabaseCall(supabase.from('daily_focus').delete().eq('user_id', userId), 'clearDailyFocus');
-    if (!success) return;
+    const previousFocus = get().dailyFocus;
+    // Optimistic update
     set({ dailyFocus: { text: '', date: getToday() } });
+    const { success } = await supabaseCall(supabase.from('daily_focus').delete().eq('user_id', userId), 'clearDailyFocus');
+    if (!success) {
+      // Rollback on failure
+      set({ dailyFocus: previousFocus, error: 'errors.clearDailyFocus' });
+    }
   },
 
   dailyTodos: [],
@@ -385,7 +472,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     );
     if (!success) {
       set((s) => ({ dailyTodos: s.dailyTodos.filter((t) => t.id !== id) }));
-      set({ error: 'Failed to add daily todo. Please try again.' });
+      set({ error: 'errors.addDailyTodo' });
       return { success: false };
     }
     return { success: true };
@@ -403,14 +490,14 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       // Rollback on failure
       set((s) => ({
         dailyTodos: s.dailyTodos.map((t) => (t.id === id ? { ...t, completed: previousCompleted } : t)),
+        error: 'errors.updateTodo',
       }));
-      return;
     }
   },
   removeDailyTodo: async (id) => {
     const { success } = await supabaseCall(supabase.from('todos').delete().eq('id', id), 'removeDailyTodo');
     if (!success) {
-      set({ error: 'Failed to delete task. Please try again.' });
+      set({ error: 'errors.deleteTodo' });
       return;
     }
     set((s) => ({ dailyTodos: s.dailyTodos.filter((t) => t.id !== id) }));
@@ -436,7 +523,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     );
     if (!success) {
       set((s) => ({ weeklyTodos: s.weeklyTodos.filter((t) => t.id !== id) }));
-      set({ error: 'Failed to add weekly todo. Please try again.' });
+      set({ error: 'errors.addWeeklyTodo' });
       return { success: false };
     }
     return { success: true };
@@ -444,16 +531,24 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   toggleWeeklyTodo: async (id) => {
     const todo = get().weeklyTodos.find((t) => t.id === id);
     if (!todo) return;
-    const { success } = await supabaseCall(supabase.from('todos').update({ completed: !todo.completed, updated_at: Date.now() }).eq('id', id), 'toggleWeeklyTodo');
-    if (!success) return;
+    const previousCompleted = todo.completed;
+    // Optimistic update
     set((s) => ({
-      weeklyTodos: s.weeklyTodos.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t)),
+      weeklyTodos: s.weeklyTodos.map((t) => (t.id === id ? { ...t, completed: !previousCompleted } : t)),
     }));
+    const { success } = await supabaseCall(supabase.from('todos').update({ completed: !previousCompleted, updated_at: Date.now() }).eq('id', id), 'toggleWeeklyTodo');
+    if (!success) {
+      // Rollback on failure
+      set((s) => ({
+        weeklyTodos: s.weeklyTodos.map((t) => (t.id === id ? { ...t, completed: previousCompleted } : t)),
+        error: 'errors.updateTodo',
+      }));
+    }
   },
   removeWeeklyTodo: async (id) => {
     const { success } = await supabaseCall(supabase.from('todos').delete().eq('id', id), 'removeWeeklyTodo');
     if (!success) {
-      set({ error: 'Failed to delete task. Please try again.' });
+      set({ error: 'errors.deleteTodo' });
       return;
     }
     set((s) => ({ weeklyTodos: s.weeklyTodos.filter((t) => t.id !== id) }));
@@ -478,7 +573,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     );
     if (!success) {
       set((s) => ({ backlogTodos: s.backlogTodos.filter((t) => t.id !== id) }));
-      set({ error: 'Failed to add backlog todo. Please try again.' });
+      set({ error: 'errors.addBacklogTodo' });
       return { success: false };
     }
     return { success: true };
@@ -486,16 +581,24 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   toggleBacklogTodo: async (id) => {
     const todo = get().backlogTodos.find((t) => t.id === id);
     if (!todo) return;
-    const { success } = await supabaseCall(supabase.from('todos').update({ completed: !todo.completed, updated_at: Date.now() }).eq('id', id), 'toggleBacklogTodo');
-    if (!success) return;
+    const previousCompleted = todo.completed;
+    // Optimistic update
     set((s) => ({
-      backlogTodos: s.backlogTodos.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t)),
+      backlogTodos: s.backlogTodos.map((t) => (t.id === id ? { ...t, completed: !previousCompleted } : t)),
     }));
+    const { success } = await supabaseCall(supabase.from('todos').update({ completed: !previousCompleted, updated_at: Date.now() }).eq('id', id), 'toggleBacklogTodo');
+    if (!success) {
+      // Rollback on failure
+      set((s) => ({
+        backlogTodos: s.backlogTodos.map((t) => (t.id === id ? { ...t, completed: previousCompleted } : t)),
+        error: 'errors.updateTodo',
+      }));
+    }
   },
   removeBacklogTodo: async (id) => {
     const { success } = await supabaseCall(supabase.from('todos').delete().eq('id', id), 'removeBacklogTodo');
     if (!success) {
-      set({ error: 'Failed to delete task. Please try again.' });
+      set({ error: 'errors.deleteTodo' });
       return;
     }
     set((s) => ({ backlogTodos: s.backlogTodos.filter((t) => t.id !== id) }));
@@ -503,53 +606,35 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   reorderDailyTodos: async (ids) => {
     const userId = get().session?.user?.id;
     if (!userId) return;
-    const items = ids.map((id, index) => {
-      const t = get().dailyTodos.find((x) => x.id === id)!;
-      return { ...t, sortOrder: index };
-    });
-    const { success } = await supabaseCall(
-      supabase.from('todos').upsert(
-        items.map((t) => ({ id: t.id, user_id: userId, sort_order: t.sortOrder, updated_at: Date.now() })),
-        { onConflict: 'id' }
-      ),
-      'reorderDailyTodos'
-    );
-    if (!success) return;
-    set({ dailyTodos: items });
+    const previousItems = get().dailyTodos;
+    const nextItems = applyReorder(previousItems, ids);
+    set({ dailyTodos: nextItems });
+    const { success } = await persistSortOrder('todos', userId, previousItems, nextItems);
+    if (!success) {
+      set({ dailyTodos: previousItems, error: 'errors.reorderTodos' });
+    }
   },
   reorderWeeklyTodos: async (ids) => {
     const userId = get().session?.user?.id;
     if (!userId) return;
-    const items = ids.map((id, index) => {
-      const t = get().weeklyTodos.find((x) => x.id === id)!;
-      return { ...t, sortOrder: index };
-    });
-    const { success } = await supabaseCall(
-      supabase.from('todos').upsert(
-        items.map((t) => ({ id: t.id, user_id: userId, sort_order: t.sortOrder, updated_at: Date.now() })),
-        { onConflict: 'id' }
-      ),
-      'reorderWeeklyTodos'
-    );
-    if (!success) return;
-    set({ weeklyTodos: items });
+    const previousItems = get().weeklyTodos;
+    const nextItems = applyReorder(previousItems, ids);
+    set({ weeklyTodos: nextItems });
+    const { success } = await persistSortOrder('todos', userId, previousItems, nextItems);
+    if (!success) {
+      set({ weeklyTodos: previousItems, error: 'errors.reorderTodos' });
+    }
   },
   reorderBacklogTodos: async (ids) => {
     const userId = get().session?.user?.id;
     if (!userId) return;
-    const items = ids.map((id, index) => {
-      const t = get().backlogTodos.find((x) => x.id === id)!;
-      return { ...t, sortOrder: index };
-    });
-    const { success } = await supabaseCall(
-      supabase.from('todos').upsert(
-        items.map((t) => ({ id: t.id, user_id: userId, sort_order: t.sortOrder, updated_at: Date.now() })),
-        { onConflict: 'id' }
-      ),
-      'reorderBacklogTodos'
-    );
-    if (!success) return;
-    set({ backlogTodos: items });
+    const previousItems = get().backlogTodos;
+    const nextItems = applyReorder(previousItems, ids);
+    set({ backlogTodos: nextItems });
+    const { success } = await persistSortOrder('todos', userId, previousItems, nextItems);
+    if (!success) {
+      set({ backlogTodos: previousItems, error: 'errors.reorderTodos' });
+    }
   },
 
   // Track pending movements to prevent duplicate requests
@@ -612,7 +697,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
             weeklyTodos: [...s.weeklyTodos, weeklyTodo],
           }));
         }
-        let errorMessage = 'Failed to move task. Please try again.';
+        let errorMessage = 'errors.moveTask';
         if (data && typeof data === 'object' && 'message' in data) {
           const msg = (data as { message?: string }).message;
           if (typeof msg === 'string' && msg.length > 0) {
@@ -697,7 +782,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
             dailyTodos: [...s.dailyTodos, dailyTodo],
           }));
         }
-        set({ error: data?.message || 'Failed to move task. Please try again.' });
+        set({ error: data?.message || 'errors.moveTask' });
         return;
       }
 
@@ -772,7 +857,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
             weeklyTodos: [...s.weeklyTodos, weeklyTodo],
           }));
         }
-        set({ error: data?.message || 'Failed to move task. Please try again.' });
+        set({ error: data?.message || 'errors.moveTask' });
         return;
       }
 
@@ -797,7 +882,10 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     if (!userId) return;
     const id = cat.id || generateId();
     const { success } = await supabaseCall(supabase.from('life_categories').insert({ id, user_id: userId, name: cat.name, name_key: cat.nameKey, icon: cat.icon, color: cat.color, sort_order: cat.sortOrder }), 'addLifeCategory');
-    if (!success) return;
+    if (!success) {
+      set({ error: 'errors.addLifeCategory' });
+      return;
+    }
     set((s) => ({ lifeCategories: [...s.lifeCategories, { ...cat, id }] }));
   },
   removeLifeCategory: async (id) => {
@@ -810,39 +898,55 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     }));
   },
   updateLifeCategory: async (id, data) => {
-    const { success } = await supabaseCall(supabase.from('life_categories').update({ name: data.name, name_key: data.nameKey, icon: data.icon, color: data.color, sort_order: data.sortOrder }).eq('id', id), 'updateLifeCategory');
-    if (!success) return;
+    const previousCategory = get().lifeCategories.find((c) => c.id === id);
+    if (!previousCategory) return;
+    // Optimistic update
     set((s) => ({
       lifeCategories: s.lifeCategories.map((c) => (c.id === id ? { ...c, ...data } : c)),
     }));
+    const { success } = await supabaseCall(supabase.from('life_categories').update({ name: data.name, name_key: data.nameKey, icon: data.icon, color: data.color, sort_order: data.sortOrder }).eq('id', id), 'updateLifeCategory');
+    if (!success) {
+      // Rollback on failure
+      set((s) => ({
+        lifeCategories: s.lifeCategories.map((c) => (c.id === id ? previousCategory : c)),
+        error: 'errors.updateLifeCategory',
+      }));
+    }
   },
   addPillar: async (name, icon = 'heart', colorTheme = 'terracotta') => {
     const userId = get().session?.user?.id;
     if (!userId) return;
     const sortOrder = get().lifeCategories.length + 1;
-    try {
-      const { data, error } = await supabase.from('life_categories').insert({
+    const { data, success } = await supabaseCall<{ id: string }>(
+      supabase.from('life_categories').insert({
         user_id: userId, name, name_key: '', icon, color: colorTheme, sort_order: sortOrder,
-      }).select().single();
-      if (error) { console.error('Failed to add pillar:', error); return; }
-      set((s) => ({
-        lifeCategories: [...s.lifeCategories, { id: data.id, name, nameKey: '', icon, color: colorTheme, sortOrder }],
-      }));
-    } catch (err) {
-      console.error('Failed to add pillar:', err);
+      }).select().single(),
+      'addPillar'
+    );
+    if (!success || !data) {
+      set({ error: 'errors.addPillar' });
+      return;
     }
+    set((s) => ({
+      lifeCategories: [...s.lifeCategories, { id: data.id, name, nameKey: '', icon, color: colorTheme, sortOrder }],
+    }));
   },
   updatePillar: async (id, newName) => {
     const userId = get().session?.user?.id;
     if (!userId) return;
-    try {
-      const { error } = await supabase.from('life_categories').update({ name: newName }).eq('id', id).eq('user_id', userId);
-      if (error) { console.error('Failed to update pillar:', error); return; }
+    const previousCategory = get().lifeCategories.find((c) => c.id === id);
+    if (!previousCategory) return;
+    // Optimistic update
+    set((s) => ({
+      lifeCategories: s.lifeCategories.map((c) => (c.id === id ? { ...c, name: newName } : c)),
+    }));
+    const { success } = await supabaseCall(supabase.from('life_categories').update({ name: newName }).eq('id', id).eq('user_id', userId), 'updatePillar');
+    if (!success) {
+      // Rollback on failure
       set((s) => ({
-        lifeCategories: s.lifeCategories.map((c) => (c.id === id ? { ...c, name: newName } : c)),
+        lifeCategories: s.lifeCategories.map((c) => (c.id === id ? previousCategory : c)),
+        error: 'errors.updatePillar',
       }));
-    } catch (err) {
-      console.error('Failed to update pillar:', err);
     }
   },
   deletePillar: async (id) => {
@@ -865,7 +969,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
         subTracks: [...s.subTracks, ...deletedTracks],
         subTrackEntries: [...s.subTrackEntries, ...deletedEntries],
       }));
-      set({ error: 'Failed to delete category. Please try again.' });
+      set({ error: 'errors.deletePillar' });
       return;
     }
     const { success: catOk, error: catError } = await supabaseCall(supabase.from('life_categories').delete().eq('id', id).eq('user_id', userId), 'deletePillar categories');
@@ -876,7 +980,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
         subTracks: [...s.subTracks, ...deletedTracks],
         subTrackEntries: [...s.subTrackEntries, ...deletedEntries],
       }));
-      set({ error: 'Failed to delete category. Please try again.' });
+      set({ error: 'errors.deletePillar' });
       return;
     }
     console.log('[deletePillar] Successfully deleted category:', id);
@@ -900,13 +1004,22 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     const userId = get().session?.user?.id;
     if (!userId) return;
     const { success } = await supabaseCall(supabase.from('sub_tracks').delete().eq('id', id).eq('user_id', userId), 'removeSubTrack');
-    if (!success) return;
+    if (!success) {
+      set({ error: 'errors.removeSubTrack' });
+      return;
+    }
     set((s) => ({
       subTracks: s.subTracks.filter((t) => t.id !== id),
       subTrackEntries: s.subTrackEntries.filter((e) => e.trackId !== id),
     }));
   },
   updateSubTrack: async (id, data) => {
+    const previousTrack = get().subTracks.find((t) => t.id === id);
+    if (!previousTrack) return;
+    // Optimistic update
+    set((s) => ({
+      subTracks: s.subTracks.map((t) => (t.id === id ? { ...t, ...data } : t)),
+    }));
     const dbData: Record<string, unknown> = {};
     if (data.name !== undefined) dbData.name = data.name;
     if (data.icon !== undefined) dbData.icon = data.icon;
@@ -916,38 +1029,49 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     if (data.currentValue !== undefined) dbData.current_value = data.currentValue;
     if (data.sortOrder !== undefined) dbData.sort_order = data.sortOrder;
     const { success } = await supabaseCall(supabase.from('sub_tracks').update(dbData).eq('id', id), 'updateSubTrack');
-    if (!success) return;
-    set((s) => ({
-      subTracks: s.subTracks.map((t) => (t.id === id ? { ...t, ...data } : t)),
-    }));
+    if (!success) {
+      // Rollback on failure
+      set((s) => ({
+        subTracks: s.subTracks.map((t) => (t.id === id ? previousTrack : t)),
+        error: 'errors.updateSubTrack',
+      }));
+    }
   },
   incrementSubTrack: async (id, value = 1) => {
     const track = get().subTracks.find((t) => t.id === id);
     if (!track) return;
+    const previousValue = track.currentValue;
     // Clamped: currentValue never exceeds target so the progress bar stays meaningful
-    const newValue = Math.min(track.currentValue + value, track.target);
-    try {
-      const { error } = await supabase.from('sub_tracks').update({ current_value: newValue }).eq('id', id);
-      if (error) { console.error('Failed to increment sub track:', error); return; }
+    const newValue = Math.min(previousValue + value, track.target);
+    // Optimistic update
+    set((s) => ({
+      subTracks: s.subTracks.map((t) => (t.id === id ? { ...t, currentValue: newValue } : t)),
+    }));
+    const { success } = await supabaseCall(supabase.from('sub_tracks').update({ current_value: newValue }).eq('id', id), 'incrementSubTrack');
+    if (!success) {
+      // Rollback on failure
       set((s) => ({
-        subTracks: s.subTracks.map((t) => (t.id === id ? { ...t, currentValue: newValue } : t)),
+        subTracks: s.subTracks.map((t) => (t.id === id ? { ...t, currentValue: previousValue } : t)),
+        error: 'errors.updateSubTrack',
       }));
-    } catch (err) {
-      console.error('Failed to increment sub track:', err);
     }
   },
   decrementSubTrack: async (id, value = 1) => {
     const track = get().subTracks.find((t) => t.id === id);
     if (!track) return;
-    const newValue = Math.max(0, track.currentValue - value);
-    try {
-      const { error } = await supabase.from('sub_tracks').update({ current_value: newValue }).eq('id', id);
-      if (error) { console.error('Failed to decrement sub track:', error); return; }
+    const previousValue = track.currentValue;
+    const newValue = Math.max(0, previousValue - value);
+    // Optimistic update
+    set((s) => ({
+      subTracks: s.subTracks.map((t) => (t.id === id ? { ...t, currentValue: newValue } : t)),
+    }));
+    const { success } = await supabaseCall(supabase.from('sub_tracks').update({ current_value: newValue }).eq('id', id), 'decrementSubTrack');
+    if (!success) {
+      // Rollback on failure
       set((s) => ({
-        subTracks: s.subTracks.map((t) => (t.id === id ? { ...t, currentValue: newValue } : t)),
+        subTracks: s.subTracks.map((t) => (t.id === id ? { ...t, currentValue: previousValue } : t)),
+        error: 'errors.updateSubTrack',
       }));
-    } catch (err) {
-      console.error('Failed to decrement sub track:', err);
     }
   },
   toggleSubTrackHabit: async (id) => {
@@ -958,7 +1082,10 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       supabase.rpc('toggle_sub_track_habit', { p_track_id: id, p_user_id: userId, p_date: today }),
       'toggleSubTrackHabit'
     );
-    if (!success) return;
+    if (!success) {
+      set({ error: 'errors.toggleSubTrackHabit' });
+      return;
+    }
     const result = data?.[0];
     if (!result) return;
     set((s) => {
@@ -1016,14 +1143,17 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       'addBookmarkCategory'
     );
     if (!success) {
-      set({ error: 'Failed to add bookmark category. Please try again.' });
+      set({ error: 'errors.addBookmarkCategory' });
       return;
     }
     set((s) => ({ bookmarkCategories: [...s.bookmarkCategories, { ...category, id }] }));
   },
   removeBookmarkCategory: async (id) => {
     const { success } = await supabaseCall(supabase.from('bookmark_categories').delete().eq('id', id), 'removeBookmarkCategory');
-    if (!success) return;
+    if (!success) {
+      set({ error: 'errors.removeBookmarkCategory' });
+      return;
+    }
     set((s) => ({
       bookmarkCategories: s.bookmarkCategories.filter((c) => c.id !== id),
       bookmarks: s.bookmarks.filter((b) => b.categoryId !== id),
@@ -1047,14 +1177,17 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       'addBookmark'
     );
     if (!success) {
-      set({ error: 'Failed to add bookmark. Please try again.' });
+      set({ error: 'errors.addBookmark' });
       return;
     }
     set((s) => ({ bookmarks: [...s.bookmarks, { ...bookmark, id }] }));
   },
   removeBookmark: async (id) => {
     const { success } = await supabaseCall(supabase.from('bookmarks').delete().eq('id', id), 'removeBookmark');
-    if (!success) return;
+    if (!success) {
+      set({ error: 'errors.removeBookmark' });
+      return;
+    }
     set((s) => ({ bookmarks: s.bookmarks.filter((b) => b.id !== id) }));
   },
 
@@ -1071,7 +1204,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       'addStickyNote'
     );
     if (!success) {
-      set({ error: 'Failed to save sticky note. Please try again.' });
+      set({ error: 'errors.addStickyNote' });
       return;
     }
     set((s) => ({
@@ -1080,19 +1213,31 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   },
 
   updateStickyNote: async (id, data) => {
+    const previousNote = get().stickyNotes.find((n) => n.id === id);
+    if (!previousNote) return;
+    // Optimistic update
+    set((s) => ({
+      stickyNotes: s.stickyNotes.map((n) => (n.id === id ? { ...n, ...data } : n)),
+    }));
     const dbData: Record<string, unknown> = {};
     if (data.title !== undefined) dbData.title = data.title;
     if (data.text !== undefined) dbData.text = data.text;
     const { success } = await supabaseCall(supabase.from('sticky_notes').update(dbData).eq('id', id), 'updateStickyNote');
-    if (!success) return;
-    set((s) => ({
-      stickyNotes: s.stickyNotes.map((n) => (n.id === id ? { ...n, ...data } : n)),
-    }));
+    if (!success) {
+      // Rollback on failure
+      set((s) => ({
+        stickyNotes: s.stickyNotes.map((n) => (n.id === id ? previousNote : n)),
+        error: 'errors.updateStickyNote',
+      }));
+    }
   },
 
   deleteStickyNote: async (id) => {
     const { success } = await supabaseCall(supabase.from('sticky_notes').delete().eq('id', id), 'deleteStickyNote');
-    if (!success) return;
+    if (!success) {
+      set({ error: 'errors.deleteStickyNote' });
+      return;
+    }
     set((s) => ({
       stickyNotes: s.stickyNotes.filter((n) => n.id !== id),
     }));
@@ -1101,19 +1246,13 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   reorderStickyNotes: async (ids) => {
     const userId = get().session?.user?.id;
     if (!userId) return;
-    const items = ids.map((id, index) => {
-      const n = get().stickyNotes.find((x) => x.id === id)!;
-      return { ...n, sortOrder: index };
-    });
-    const { success } = await supabaseCall(
-      supabase.from('sticky_notes').upsert(
-        items.map((n) => ({ id: n.id, user_id: userId, sort_order: n.sortOrder })),
-        { onConflict: 'id' }
-      ),
-      'reorderStickyNotes'
-    );
-    if (!success) return;
-    set({ stickyNotes: items });
+    const previousItems = get().stickyNotes;
+    const nextItems = applyReorder(previousItems, ids);
+    set({ stickyNotes: nextItems });
+    const { success } = await persistSortOrder('sticky_notes', userId, previousItems, nextItems);
+    if (!success) {
+      set({ stickyNotes: previousItems, error: 'errors.reorderStickyNotes' });
+    }
   },
 
   addTodoNote: async (note) => {
@@ -1129,7 +1268,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       'addTodoNote'
     );
     if (!success) {
-      set({ error: 'Failed to save todo note. Please try again.' });
+      set({ error: 'errors.addTodoNote' });
       return;
     }
     set((s) => ({
@@ -1138,19 +1277,31 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   },
 
   updateTodoNote: async (id, updated) => {
+    const previousNote = get().todoNotes.find((n) => n.id === id);
+    if (!previousNote) return;
+    // Optimistic update
+    set((s) => ({
+      todoNotes: s.todoNotes.map((n) => (n.id === id ? { ...n, ...updated } : n)),
+    }));
     const dbData: Record<string, unknown> = {};
     if (updated.title !== undefined) dbData.title = updated.title;
     if (updated.items !== undefined) dbData.items = updated.items;
     const { success } = await supabaseCall(supabase.from('todo_notes').update(dbData).eq('id', id), 'updateTodoNote');
-    if (!success) return;
-    set((s) => ({
-      todoNotes: s.todoNotes.map((n) => (n.id === id ? { ...n, ...updated } : n)),
-    }));
+    if (!success) {
+      // Rollback on failure
+      set((s) => ({
+        todoNotes: s.todoNotes.map((n) => (n.id === id ? previousNote : n)),
+        error: 'errors.updateTodoNote',
+      }));
+    }
   },
 
   deleteTodoNote: async (id) => {
     const { success } = await supabaseCall(supabase.from('todo_notes').delete().eq('id', id), 'deleteTodoNote');
-    if (!success) return;
+    if (!success) {
+      set({ error: 'errors.deleteTodoNote' });
+      return;
+    }
     set((s) => ({
       todoNotes: s.todoNotes.filter((n) => n.id !== id),
     }));
@@ -1159,19 +1310,13 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   reorderTodoNotes: async (ids) => {
     const userId = get().session?.user?.id;
     if (!userId) return;
-    const items = ids.map((id, index) => {
-      const n = get().todoNotes.find((x) => x.id === id)!;
-      return { ...n, sortOrder: index };
-    });
-    const { success } = await supabaseCall(
-      supabase.from('todo_notes').upsert(
-        items.map((n) => ({ id: n.id, user_id: userId, sort_order: n.sortOrder })),
-        { onConflict: 'id' }
-      ),
-      'reorderTodoNotes'
-    );
-    if (!success) return;
-    set({ todoNotes: items });
+    const previousItems = get().todoNotes;
+    const nextItems = applyReorder(previousItems, ids);
+    set({ todoNotes: nextItems });
+    const { success } = await persistSortOrder('todo_notes', userId, previousItems, nextItems);
+    if (!success) {
+      set({ todoNotes: previousItems, error: 'errors.reorderTodoNotes' });
+    }
   },
 
   addHabit: async (name, icon = 'star') => {
@@ -1190,7 +1335,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     );
     if (!success) {
       set((s) => ({ habits: s.habits.filter((h) => h.id !== id) }));
-      set({ error: 'Failed to add habit. Please try again.' });
+      set({ error: 'errors.addHabit' });
       return { success: false };
     }
     return { success: true };
@@ -1210,26 +1355,20 @@ export const useAppStore = create<AppStore>()((set, get) => ({
         habits: deletedHabit ? [...s.habits, deletedHabit] : s.habits,
         habitEntries: [...s.habitEntries, ...deletedEntries],
       }));
-      set({ error: 'Failed to delete habit. Please try again.' });
+      set({ error: 'errors.removeHabit' });
       return;
     }
   },
   reorderHabits: async (ids) => {
     const userId = get().session?.user?.id;
     if (!userId) return;
-    const items = ids.map((id, index) => {
-      const h = get().habits.find((x) => x.id === id)!;
-      return { ...h, sortOrder: index };
-    });
-    const { success } = await supabaseCall(
-      supabase.from('habits').upsert(
-        items.map((h) => ({ id: h.id, user_id: userId, sort_order: h.sortOrder })),
-        { onConflict: 'id' }
-      ),
-      'reorderHabits'
-    );
-    if (!success) return;
-    set({ habits: items });
+    const previousItems = get().habits;
+    const nextItems = applyReorder(previousItems, ids);
+    set({ habits: nextItems });
+    const { success } = await persistSortOrder('habits', userId, previousItems, nextItems);
+    if (!success) {
+      set({ habits: previousItems, error: 'errors.reorderHabits' });
+    }
   },
   toggleHabitEntry: async (habitId, date) => {
     const userId = get().session?.user?.id;
@@ -1244,7 +1383,10 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       );
       if (!success) {
         // Rollback
-        set((s) => ({ habitEntries: [...s.habitEntries, existingEntry] }));
+        set((s) => ({
+          habitEntries: [...s.habitEntries, existingEntry],
+          error: 'errors.toggleHabitEntry',
+        }));
         return;
       }
     } else {
@@ -1260,7 +1402,10 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       );
       if (!success) {
         // Rollback
-        set((s) => ({ habitEntries: s.habitEntries.filter((e) => e.id !== id) }));
+        set((s) => ({
+          habitEntries: s.habitEntries.filter((e) => e.id !== id),
+          error: 'errors.toggleHabitEntry',
+        }));
         return;
       }
     }
@@ -1293,6 +1438,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
         dailyMoods: existingMood
           ? s.dailyMoods.map((m) => (m.date === date ? existingMood : m))
           : s.dailyMoods.filter((m) => m.date !== date),
+        error: 'errors.setDailyMood',
       }));
       return;
     }
@@ -1329,109 +1475,93 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     );
     if (!success) {
       set((s) => ({ calendarEvents: s.calendarEvents.filter((e) => e.id !== id) }));
-      set({ error: 'Failed to add event. Please try again.' });
+      set({ error: 'errors.addCalendarEvent' });
       return { success: false };
     }
     return { success: true };
   },
   updateCalendarEvent: async (id, data) => {
     const userId = get().session?.user?.id;
-    if (!userId) return;
-    const dbData: Record<string, unknown> = {};
+    if (!userId) return { success: false };
+    const previousEvent = get().calendarEvents.find((e) => e.id === id);
+    if (!previousEvent) return { success: false };
+    const now = Date.now();
+
+    // Switching to all-day must clear any existing start/end time both locally
+    // and in the DB — skipping undefined fields (like a normal partial update)
+    // would leave the old times in place and they'd reappear after a reload.
+    const clearsTimes = data.allDay === true;
+    const nextEvent: CalendarEvent = {
+      ...previousEvent,
+      ...data,
+      ...(clearsTimes ? { startTime: undefined, endTime: undefined } : {}),
+      updatedAt: now,
+    };
+
+    // Optimistic update
+    set((s) => ({
+      calendarEvents: s.calendarEvents.map((e) => (e.id === id ? nextEvent : e)),
+    }));
+
+    const dbData: Record<string, unknown> = { updated_at: now };
     if (data.title !== undefined) dbData.title = data.title;
     if (data.date !== undefined) dbData.date = data.date;
-    if (data.startTime !== undefined) dbData.start_time = data.startTime;
-    if (data.endTime !== undefined) dbData.end_time = data.endTime;
     if (data.allDay !== undefined) dbData.all_day = data.allDay;
     if (data.completed !== undefined) dbData.completed = data.completed;
     if (data.color !== undefined) dbData.color = data.color;
-    dbData.updated_at = Date.now();
-    const { success } = await supabaseCall(supabase.from('calendar_events').update(dbData).eq('id', id).eq('user_id', userId), 'updateCalendarEvent');
-    if (!success) return;
-    set((s) => ({
-      calendarEvents: s.calendarEvents.map((e) => (e.id === id ? { ...e, ...data, updatedAt: Date.now() } : e)),
-    }));
+    if (clearsTimes) {
+      dbData.start_time = null;
+      dbData.end_time = null;
+    } else {
+      if (data.startTime !== undefined) dbData.start_time = data.startTime;
+      if (data.endTime !== undefined) dbData.end_time = data.endTime;
+    }
+
+    const { success } = await supabaseCall(
+      supabase.from('calendar_events').update(dbData).eq('id', id).eq('user_id', userId),
+      'updateCalendarEvent'
+    );
+    if (!success) {
+      // Rollback on failure
+      set((s) => ({
+        calendarEvents: s.calendarEvents.map((e) => (e.id === id ? previousEvent : e)),
+        error: 'errors.updateCalendarEvent',
+      }));
+      return { success: false };
+    }
+    return { success: true };
   },
   deleteCalendarEvent: async (id) => {
     const userId = get().session?.user?.id;
     if (!userId) return;
     const { success } = await supabaseCall(supabase.from('calendar_events').delete().eq('id', id).eq('user_id', userId), 'deleteCalendarEvent');
-    if (!success) return;
+    if (!success) {
+      set({ error: 'errors.deleteCalendarEvent' });
+      return;
+    }
     set((s) => ({ calendarEvents: s.calendarEvents.filter((e) => e.id !== id) }));
   },
   toggleCalendarEventComplete: async (id) => {
     const event = get().calendarEvents.find((e) => e.id === id);
     if (!event) return;
-    const { success } = await supabaseCall(supabase.from('calendar_events').update({ completed: !event.completed, updated_at: Date.now() }).eq('id', id), 'toggleCalendarEventComplete');
-    if (!success) return;
+    const previousCompleted = event.completed;
+    // Optimistic update
     set((s) => ({
-      calendarEvents: s.calendarEvents.map((e) => (e.id === id ? { ...e, completed: !e.completed } : e)),
+      calendarEvents: s.calendarEvents.map((e) => (e.id === id ? { ...e, completed: !previousCompleted } : e)),
     }));
+    const { success } = await supabaseCall(supabase.from('calendar_events').update({ completed: !previousCompleted, updated_at: Date.now() }).eq('id', id), 'toggleCalendarEventComplete');
+    if (!success) {
+      // Rollback on failure
+      set((s) => ({
+        calendarEvents: s.calendarEvents.map((e) => (e.id === id ? { ...e, completed: previousCompleted } : e)),
+        error: 'errors.updateCalendarEvent',
+      }));
+    }
   },
   setCurrentDate: (date) => set({ currentDate: date }),
   setViewMode: (mode) => set({ viewMode: mode }),
-  navigatePrevious: () => set((s) => {
-    const date = new Date(s.currentDate + 'T00:00:00');
-    let newDate: string;
-    switch (s.viewMode) {
-      case 'day':
-        date.setDate(date.getDate() - 1);
-        newDate = date.toISOString().split('T')[0];
-        break;
-      case 'week':
-      case 'multi-week':
-        date.setDate(date.getDate() - 7);
-        newDate = date.toISOString().split('T')[0];
-        break;
-      case 'month':
-      case 'year':
-        date.setMonth(date.getMonth() - 1);
-        newDate = date.toISOString().split('T')[0];
-        break;
-      case 'multi-day':
-        date.setDate(date.getDate() - 3);
-        newDate = date.toISOString().split('T')[0];
-        break;
-      case 'agenda':
-        date.setDate(date.getDate() - 7);
-        newDate = date.toISOString().split('T')[0];
-        break;
-      default:
-        newDate = s.currentDate;
-    }
-    return { currentDate: newDate };
-  }),
-  navigateNext: () => set((s) => {
-    const date = new Date(s.currentDate + 'T00:00:00');
-    let newDate: string;
-    switch (s.viewMode) {
-      case 'day':
-        date.setDate(date.getDate() + 1);
-        newDate = date.toISOString().split('T')[0];
-        break;
-      case 'week':
-      case 'multi-week':
-        date.setDate(date.getDate() + 7);
-        newDate = date.toISOString().split('T')[0];
-        break;
-      case 'month':
-      case 'year':
-        date.setMonth(date.getMonth() + 1);
-        newDate = date.toISOString().split('T')[0];
-        break;
-      case 'multi-day':
-        date.setDate(date.getDate() + 3);
-        newDate = date.toISOString().split('T')[0];
-        break;
-      case 'agenda':
-        date.setDate(date.getDate() + 7);
-        newDate = date.toISOString().split('T')[0];
-        break;
-      default:
-        newDate = s.currentDate;
-    }
-    return { currentDate: newDate };
-  }),
+  navigatePrevious: () => set((s) => ({ currentDate: stepCalendarDate(s.currentDate, s.viewMode, -1) })),
+  navigateNext: () => set((s) => ({ currentDate: stepCalendarDate(s.currentDate, s.viewMode, 1) })),
   navigateToday: () => set({ currentDate: getToday() }),
   dismissCalendarOnboarding: () => {
     localStorage.setItem('khalil-calendar-onboarding-dismissed', 'true');

@@ -14,20 +14,23 @@ interface CalendarYearViewProps {
 const MONTHS = 12;
 const DAYS_IN_WEEK = 7;
 
-const MONTH_NAMES = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December'
-];
-
-const MONTH_NAMES_AR = [
-  'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
-  'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'
-];
+// Jan 1, 2023 was a Sunday — used as a stable reference to derive each
+// weekday's locale-correct narrow label (e.g. 'S' vs 'ح') via toLocaleDateString,
+// instead of a hand-maintained (and previously incomplete/incorrect) letter map.
+const WEEKDAY_REFERENCE_SUNDAY = new Date(2023, 0, 1);
 
 export default memo(function CalendarYearView({ currentDate, events }: CalendarYearViewProps) {
   const { isRTL } = useTranslation();
+  const locale = isRTL ? 'ar-EG' : 'en-US';
 
   const year = useMemo(() => new Date(currentDate + 'T00:00:00').getFullYear(), [currentDate]);
+
+  const weekdayLabels = useMemo(() => (
+    Array.from({ length: DAYS_IN_WEEK }, (_, i) =>
+      new Date(WEEKDAY_REFERENCE_SUNDAY.getFullYear(), WEEKDAY_REFERENCE_SUNDAY.getMonth(), WEEKDAY_REFERENCE_SUNDAY.getDate() + i)
+        .toLocaleDateString(locale, { weekday: 'narrow' })
+    )
+  ), [locale]);
 
   const monthsData = useMemo(() => {
     const months = [];
@@ -36,7 +39,7 @@ export default memo(function CalendarYearView({ currentDate, events }: CalendarY
       const lastDay = new Date(year, m + 1, 0);
       const startingDayOfWeek = firstDay.getDay();
       const daysInMonth = lastDay.getDate();
-      
+
       const days: (Date | null)[] = [];
       for (let i = startingDayOfWeek - 1; i >= 0; i--) {
         days.push(new Date(year, m, -i));
@@ -48,11 +51,11 @@ export default memo(function CalendarYearView({ currentDate, events }: CalendarY
       for (let i = 1; i <= remaining; i++) {
         days.push(new Date(year, m + 1, i));
       }
-      
-      months.push({ month: m, name: isRTL ? MONTH_NAMES_AR[m] : MONTH_NAMES[m], days });
+
+      months.push({ month: m, name: firstDay.toLocaleDateString(locale, { month: 'long' }), days });
     }
     return months;
-  }, [year, isRTL]);
+  }, [year, locale]);
 
   const eventsByDate = useMemo(() => {
     const map: Record<string, CalendarEvent[]> = {};
@@ -94,9 +97,9 @@ export default memo(function CalendarYearView({ currentDate, events }: CalendarY
             </div>
             <div className="p-2">
               <div className="grid grid-cols-7 gap-0.5 mb-1">
-                {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => (
+                {weekdayLabels.map((day, i) => (
                   <div key={`weekday-${i}`} className="h-6 flex items-center justify-center text-[10px] text-ink-lighter font-medium">
-                    {isRTL && i === 0 ? 'ح' : isRTL && i === 6 ? 'ن' : day}
+                    {day}
                   </div>
                 ))}
               </div>

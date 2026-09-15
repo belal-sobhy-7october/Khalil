@@ -31,7 +31,6 @@ export default function WeeklyTodo() {
   const pendingMovements = useAppStore((s) => s.pendingMovements);
   const [text, setText] = useState('');
   const [priority, setPriority] = useState<Priority>('medium');
-  const error = useAppStore((s) => s.error);
   const clearError = useAppStore((s) => s.clearError);
 
   const completed = todos.filter((t) => t.completed).length;
@@ -119,12 +118,6 @@ export default function WeeklyTodo() {
               <Plus size={16} className="sm:size-[18px]" />
             </button>
           </div>
-          {error && (
-            <div className="mt-2 text-xs text-red-500 bg-red-50 dark:bg-red-950/30 px-3 py-1.5 rounded-lg flex items-center gap-2">
-              <span className="flex-1">{error}</span>
-              <button onClick={clearError} className="font-bold hover:opacity-70">&times;</button>
-            </div>
-          )}
         </div>
 
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
@@ -178,6 +171,7 @@ const WeeklyTodoItem = memo(function WeeklyTodoItem({
   onMoveToBacklog: (id: string, source: 'weekly') => void;
   isMoving: boolean;
 }) {
+  const { t } = useTranslation();
 
   const handleDelete = useCallback(() => {
     onRemove(todo.id);
@@ -236,7 +230,7 @@ const WeeklyTodoItem = memo(function WeeklyTodoItem({
           onClick={() => onMoveToDaily(todo.id)}
           disabled={isMoving}
           className="p-1.5 rounded-md text-clay-soft hover:text-clay-soft-dark hover:bg-ink/5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-          title="نقل لليوم"
+          title={t('backlog.moveToDaily')}
           aria-label="Move to daily"
         >
           <Sun size={14} />
@@ -245,7 +239,7 @@ const WeeklyTodoItem = memo(function WeeklyTodoItem({
           onClick={() => onMoveToBacklog(todo.id, 'weekly')}
           disabled={isMoving}
           className="p-1.5 rounded-md text-ink-lighter hover:text-ink hover:bg-ink/5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-          title="نقل للمؤجلة"
+          title={t('backlog.moveToBacklog')}
           aria-label="Move to backlog"
         >
           <Archive size={14} />
@@ -253,7 +247,7 @@ const WeeklyTodoItem = memo(function WeeklyTodoItem({
         <button
           onClick={handleDelete}
           className="p-1.5 rounded-md text-ink-lighter hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-all"
-          title="حذف"
+          title={t('common.delete')}
           aria-label="Delete task"
         >
           <Trash2 size={14} />

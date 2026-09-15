@@ -2,7 +2,7 @@ import { memo, useMemo, useCallback } from 'react';
 import { CheckCircle, Circle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useTranslation } from '../../i18n/useTranslation';
-import { addDaysToDateString } from '../../store/dateHelpers';
+import { addDaysToDateString, getToday } from '../../store/dateHelpers';
 import type { CalendarEvent } from '../../types';
 
 interface CalendarMultiDayViewProps {
@@ -20,7 +20,7 @@ const formatDayHeader = (date: Date, isRTL: boolean) => {
   return date.toLocaleDateString(isRTL ? 'ar-EG' : 'en-US', { weekday: 'short', day: 'numeric' });
 };
 
-const isToday = (dateStr: string) => dateStr === new Date().toISOString().split('T')[0];
+const isToday = (dateStr: string) => dateStr === getToday();
 
 const getEventTop = (startTime?: string) => {
   if (!startTime) return 0;

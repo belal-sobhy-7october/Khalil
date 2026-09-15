@@ -1,7 +1,7 @@
 import { memo, useMemo, useCallback } from 'react';
 import { CheckCircle, Circle } from 'lucide-react';
 import { useTranslation } from '../../i18n/useTranslation';
-import { addDaysToDateString, getWeekStart } from '../../store/dateHelpers';
+import { addDaysToDateString, getToday, getWeekStart } from '../../store/dateHelpers';
 import type { CalendarEvent } from '../../types';
 
 interface CalendarWeekViewProps {
@@ -19,7 +19,7 @@ const formatDayHeader = (date: Date, isRTL: boolean) => {
   return date.toLocaleDateString(isRTL ? 'ar-EG' : 'en-US', { weekday: 'short', day: 'numeric' });
 };
 
-const isToday = (dateStr: string) => dateStr === new Date().toISOString().split('T')[0];
+const isToday = (dateStr: string) => dateStr === getToday();
 
 const getEventTop = (startTime?: string) => {
   if (!startTime) return 0;
@@ -37,10 +37,10 @@ const getEventHeight = (startTime?: string, endTime?: string) => {
   return Math.max(30, (end - start) / 60 * 60);
 };
 
-export default memo(function CalendarWeekView({ events, onEditEvent, onCompleteEvent }: CalendarWeekViewProps) {
+export default memo(function CalendarWeekView({ currentDate, events, onEditEvent, onCompleteEvent }: CalendarWeekViewProps) {
   const { isRTL } = useTranslation();
 
-  const weekStart = useMemo(() => getWeekStart(), []);
+  const weekStart = useMemo(() => getWeekStart(currentDate), [currentDate]);
   const weekDates = useMemo(() => 
     Array.from({ length: DAYS }, (_, i) => addDaysToDateString(weekStart, i)),
   [weekStart]);

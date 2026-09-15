@@ -7,6 +7,8 @@ import { GripVertical, ChevronDown, ChevronUp } from 'lucide-react';
 import type { StickyNoteData, TodoNoteData } from '../../types';
 import StickyNote from '../Canvas/StickyNote';
 import TodoNote from '../Canvas/TodoNote';
+import { useMediaQuery } from '../../hooks/useMediaQuery';
+import { useTranslation } from '../../i18n/useTranslation';
 
 interface Props {
   stickyNotes: StickyNoteData[];
@@ -64,6 +66,10 @@ export default function NotesPanel({
   onUpdateTodo,
   onReorderTodo,
 }: Props) {
+  const { t } = useTranslation();
+  // Renders exactly one tree at a time (desktop panel or mobile accordion) so
+  // StickyNote/TodoNote never mount twice for the same note across a resize.
+  const isDesktop = useMediaQuery('(min-width: 1024px)');
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const sensors = useSensors(
@@ -110,81 +116,57 @@ export default function NotesPanel({
     }
   }, [stickyNotes, todoNotes, onReorderSticky, onReorderTodo]);
 
-  return (
-    <>
-      {/* Desktop: fixed right column */}
-      <div className="hidden lg:block fixed end-0 top-14 bottom-0 w-72 z-20 bg-surface border-s border-border-subtle overflow-y-auto p-4 space-y-3" style={{ scrollbarWidth: 'thin' }}>
-        <div className="flex items-center justify-between mb-2">
-          <h2 className="text-xs font-semibold text-ink-light uppercase tracking-wider">ملاحظات</h2>
+  const noteList = (
+    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+      <SortableContext items={itemIds} strategy={verticalListSortingStrategy}>
+        <div className="space-y-3">
+          {stickyNotes.map((note) => (
+            <SortableNoteItem key={`sticky-${note.id}`} id={`sticky-${note.id}`}>
+              <StickyNote
+                note={note}
+                onDelete={onDeleteSticky}
+                onUpdate={onUpdateSticky}
+              />
+            </SortableNoteItem>
+          ))}
+          {todoNotes.map((note) => (
+            <SortableNoteItem key={`todo-${note.id}`} id={`todo-${note.id}`}>
+              <TodoNote
+                note={note}
+                onDelete={onDeleteTodo}
+                onUpdate={onUpdateTodo}
+              />
+            </SortableNoteItem>
+          ))}
+          {stickyNotes.length === 0 && todoNotes.length === 0 && (
+            <p className="text-xs text-ink-light text-center py-8">{t('notes.empty')}</p>
+          )}
         </div>
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-          <SortableContext items={itemIds} strategy={verticalListSortingStrategy}>
-            <div className="space-y-3">
-              {stickyNotes.map((note) => (
-                <SortableNoteItem key={`sticky-${note.id}`} id={`sticky-${note.id}`}>
-                  <StickyNote
-                    note={note}
-                    onDelete={onDeleteSticky}
-                    onUpdate={onUpdateSticky}
-                  />
-                </SortableNoteItem>
-              ))}
-              {todoNotes.map((note) => (
-                <SortableNoteItem key={`todo-${note.id}`} id={`todo-${note.id}`}>
-                  <TodoNote
-                    note={note}
-                    onDelete={onDeleteTodo}
-                    onUpdate={onUpdateTodo}
-                  />
-                </SortableNoteItem>
-              ))}
-              {stickyNotes.length === 0 && todoNotes.length === 0 && (
-                <p className="text-xs text-ink-light text-center py-8">لا توجد ملاحظات</p>
-              )}
-            </div>
-          </SortableContext>
-        </DndContext>
-      </div>
+      </SortableContext>
+    </DndContext>
+  );
 
-      {/* Mobile: collapsible accordion at bottom */}
-      <div className="lg:hidden mt-8 border-t border-border-subtle pt-4">
-        <button
-          onClick={() => setMobileOpen((v) => !v)}
-          className="flex items-center gap-2 text-sm font-medium text-ink mb-2 w-full text-start"
-        >
-          {mobileOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-          ملاحظات ({stickyNotes.length + todoNotes.length})
-        </button>
-        {mobileOpen && (
-          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-            <SortableContext items={itemIds} strategy={verticalListSortingStrategy}>
-              <div className="space-y-3">
-                {stickyNotes.map((note) => (
-                  <SortableNoteItem key={`sticky-${note.id}`} id={`sticky-${note.id}`}>
-                    <StickyNote
-                      note={note}
-                      onDelete={onDeleteSticky}
-                      onUpdate={onUpdateSticky}
-                    />
-                  </SortableNoteItem>
-                ))}
-                {todoNotes.map((note) => (
-                  <SortableNoteItem key={`todo-${note.id}`} id={`todo-${note.id}`}>
-                    <TodoNote
-                      note={note}
-                      onDelete={onDeleteTodo}
-                      onUpdate={onUpdateTodo}
-                    />
-                  </SortableNoteItem>
-                ))}
-                {stickyNotes.length === 0 && todoNotes.length === 0 && (
-                  <p className="text-xs text-ink-light text-center py-4">لا توجد ملاحظات</p>
-                )}
-              </div>
-            </SortableContext>
-          </DndContext>
-        )}
+  if (isDesktop) {
+    return (
+      <div className="fixed end-0 top-14 bottom-0 w-72 z-20 bg-surface border-s border-border-subtle overflow-y-auto p-4 space-y-3" style={{ scrollbarWidth: 'thin' }}>
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="text-xs font-semibold text-ink-light uppercase tracking-wider">{t('notes.title')}</h2>
+        </div>
+        {noteList}
       </div>
-    </>
+    );
+  }
+
+  return (
+    <div className="mt-8 border-t border-border-subtle pt-4">
+      <button
+        onClick={() => setMobileOpen((v) => !v)}
+        className="flex items-center gap-2 text-sm font-medium text-ink mb-2 w-full text-start"
+      >
+        {mobileOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+        {t('notes.title')} ({stickyNotes.length + todoNotes.length})
+      </button>
+      {mobileOpen && noteList}
+    </div>
   );
 }

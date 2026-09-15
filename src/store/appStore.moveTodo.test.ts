@@ -232,7 +232,7 @@ describe('structured error handling', () => {
     
     await useAppStore.getState().moveToDaily('b1');
     
-    expect(useAppStore.getState().error).toBe('Failed to move task. Please try again.');
+    expect(useAppStore.getState().error).toBe('errors.moveTask');
   });
 
   it('handles RPC failure with code but no message', async () => {
@@ -241,6 +241,6 @@ describe('structured error handling', () => {
     
     await useAppStore.getState().moveToDaily('b1');
     
-    expect(useAppStore.getState().error).toBe('Failed to move task. Please try again.');
+    expect(useAppStore.getState().error).toBe('errors.moveTask');
   });
 });

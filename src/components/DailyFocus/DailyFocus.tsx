@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAppStore } from '../../store/appStore';
 import { useTranslation } from '../../i18n/useTranslation';
 import CalligraphyWatermark from '../Common/CalligraphyWatermark';
+import { getToday } from '../../store/dateHelpers';
 
 export default function DailyFocus() {
   const { t, isRTL } = useTranslation();
@@ -19,7 +20,7 @@ export default function DailyFocus() {
     }
   }, [editing]);
 
-  const today = new Date().toISOString().split('T')[0];
+  const today = getToday();
 
   const handleSave = () => {
     if (text.trim()) {

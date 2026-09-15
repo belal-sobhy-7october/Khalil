@@ -2,7 +2,7 @@ import { memo, useMemo, useCallback } from 'react';
 import { CheckCircle, Circle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useTranslation } from '../../i18n/useTranslation';
-import { addDaysToDateString, getWeekStart } from '../../store/dateHelpers';
+import { addDaysToDateString, getToday, getWeekStart } from '../../store/dateHelpers';
 import type { CalendarEvent } from '../../types';
 
 interface CalendarMultiWeekViewProps {
@@ -20,12 +20,12 @@ const formatDayHeader = (date: Date, isRTL: boolean) => {
   return date.toLocaleDateString(isRTL ? 'ar-EG' : 'en-US', { weekday: 'short', day: 'numeric' });
 };
 
-const isToday = (dateStr: string) => dateStr === new Date().toISOString().split('T')[0];
+const isToday = (dateStr: string) => dateStr === getToday();
 
-export default memo(function CalendarMultiWeekView({ events, onEditEvent, onCompleteEvent }: CalendarMultiWeekViewProps) {
+export default memo(function CalendarMultiWeekView({ currentDate, events, onEditEvent, onCompleteEvent }: CalendarMultiWeekViewProps) {
   const { isRTL } = useTranslation();
 
-  const firstWeekStart = useMemo(() => getWeekStart(), []);
+  const firstWeekStart = useMemo(() => getWeekStart(currentDate), [currentDate]);
   const multiWeekDates = useMemo(() => {
     const dates: string[] = [];
     for (let w = 0; w < WEEKS; w++) {

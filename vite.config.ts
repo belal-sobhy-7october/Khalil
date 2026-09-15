@@ -8,6 +8,9 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: './src/test/setup.ts',
+    // Runs the suite in a UTC+2/+3 timezone with DST so timezone-conversion bugs
+    // (e.g. toISOString() shifting local midnight to the previous UTC day) surface in CI.
+    env: { TZ: 'Africa/Cairo' },
   },
   build: {
     rollupOptions: {

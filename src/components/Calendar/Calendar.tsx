@@ -104,8 +104,7 @@ export default function Calendar() {
 
   const handleEventSave = useCallback(async (eventData: Omit<typeof calendarEvents[0], 'id' | 'userId' | 'createdAt' | 'updatedAt'>) => {
     if (editingEvent) {
-      await useAppStore.getState().updateCalendarEvent(editingEvent.id, eventData);
-      return { success: true };
+      return await useAppStore.getState().updateCalendarEvent(editingEvent.id, eventData);
     }
     return await addCalendarEvent(eventData);
   }, [editingEvent, addCalendarEvent]);
@@ -230,6 +229,7 @@ export default function Calendar() {
       <AnimatePresence>
         {isModalOpen && (
           <CalendarEventModal
+            key={editingEvent ? editingEvent.id : `new-${currentDate}`}
             event={editingEvent}
             initialDate={currentDate}
             onSave={handleEventSave}

@@ -20,7 +20,7 @@ export default function Header({
         <button
           onClick={onToggle}
           className="p-2 rounded-lg text-ink-light hover:text-ink hover:bg-ink/5 transition-colors"
-          aria-label="Toggle sidebar"
+          aria-label={t('nav.toggleSidebar')}
         >
           {isOpen ? <X size={20} /> : <Menu size={20} />}
         </button>

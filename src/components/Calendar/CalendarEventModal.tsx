@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { X, Clock, Calendar as CalendarIcon, Trash2, Check, AlertCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useTranslation } from '../../i18n/useTranslation';
@@ -28,38 +28,16 @@ interface CalendarEventModalProps {
 export default function CalendarEventModal({ event, initialDate, onSave, onDelete, onClose }: CalendarEventModalProps) {
   const { t, isRTL } = useTranslation();
 
-  const [title, setTitle] = useState('');
-  const [date, setDate] = useState(initialDate);
-  const [startTime, setStartTime] = useState('');
-  const [endTime, setEndTime] = useState('');
-  const [allDay, setAllDay] = useState(false);
-  const [color, setColor] = useState('terracotta');
-  const [completed, setCompleted] = useState(false);
+  const [title, setTitle] = useState(() => event?.title ?? '');
+  const [date, setDate] = useState(() => event?.date ?? initialDate);
+  const [startTime, setStartTime] = useState(() => event?.startTime || '');
+  const [endTime, setEndTime] = useState(() => event?.endTime || '');
+  const [allDay, setAllDay] = useState(() => event?.allDay ?? false);
+  const [color, setColor] = useState(() => event?.color || 'terracotta');
+  const [completed, setCompleted] = useState(() => event?.completed ?? false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (event) {
-      setTitle(event.title);
-      setDate(event.date);
-      setStartTime(event.startTime || '');
-      setEndTime(event.endTime || '');
-      setAllDay(event.allDay);
-      setColor(event.color || 'terracotta');
-      setCompleted(event.completed);
-    } else {
-      setTitle('');
-      setDate(initialDate);
-      setStartTime('');
-      setEndTime('');
-      setAllDay(false);
-      setColor('terracotta');
-      setCompleted(false);
-    }
-    setErrors({});
-    setSubmitError(null);
-  }, [event, initialDate]);
 
   const validateForm = useCallback(() => {
     const newErrors: Record<string, string> = {};
@@ -105,7 +83,7 @@ export default function CalendarEventModal({ event, initialDate, onSave, onDelet
       } else {
         setSubmitError(result.error || t('calendar.saveFailed'));
       }
-    } catch (_err) {
+    } catch {
       setSubmitError(t('calendar.saveFailed'));
     } finally {
       setIsSubmitting(false);

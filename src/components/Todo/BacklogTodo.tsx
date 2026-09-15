@@ -32,7 +32,6 @@ export default function BacklogTodo() {
   const pendingMovements = useAppStore((s) => s.pendingMovements);
   const [text, setText] = useState('');
   const [priority, setPriority] = useState<Priority>('medium');
-  const error = useAppStore((s) => s.error);
   const clearError = useAppStore((s) => s.clearError);
 
   const handleAdd = useCallback(async () => {
@@ -111,12 +110,6 @@ export default function BacklogTodo() {
               <Plus size={16} className="sm:size-[18px]" />
             </button>
           </div>
-          {error && (
-            <div className="mt-2 text-xs text-red-500 bg-red-50 dark:bg-red-950/30 px-3 py-1.5 rounded-lg flex items-center gap-2">
-              <span className="flex-1">{error}</span>
-              <button onClick={clearError} className="font-bold hover:opacity-70">&times;</button>
-            </div>
-          )}
         </div>
 
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>

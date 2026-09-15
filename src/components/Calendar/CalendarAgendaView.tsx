@@ -2,6 +2,7 @@ import { memo, useMemo, useCallback } from 'react';
 import { CheckCircle, Circle, Clock } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useTranslation } from '../../i18n/useTranslation';
+import { addDaysToDateString, getToday, getWeekStart } from '../../store/dateHelpers';
 import type { CalendarEvent } from '../../types';
 
 interface CalendarAgendaViewProps {
@@ -12,20 +13,27 @@ interface CalendarAgendaViewProps {
   onDeleteEvent: (id: string) => void;
 }
 
-export default memo(function CalendarAgendaView({ events, onEditEvent, onCompleteEvent, onDeleteEvent }: CalendarAgendaViewProps) {
+const DAYS_IN_WEEK = 7;
+
+export default memo(function CalendarAgendaView({ currentDate, events, onEditEvent, onCompleteEvent, onDeleteEvent }: CalendarAgendaViewProps) {
   const { t, isRTL } = useTranslation();
 
-  const sortedEvents = useMemo(() => 
-    [...events].sort((a, b) => {
-      if (a.date !== b.date) return a.date.localeCompare(b.date);
-      if (a.allDay && !b.allDay) return -1;
-      if (!a.allDay && b.allDay) return 1;
-      if (!a.startTime && !b.startTime) return 0;
-      if (!a.startTime) return -1;
-      if (!b.startTime) return 1;
-      return a.startTime.localeCompare(b.startTime);
-    }), 
-  [events]);
+  const weekStart = useMemo(() => getWeekStart(currentDate), [currentDate]);
+  const weekEnd = useMemo(() => addDaysToDateString(weekStart, DAYS_IN_WEEK - 1), [weekStart]);
+
+  const sortedEvents = useMemo(() =>
+    events
+      .filter(e => e.date >= weekStart && e.date <= weekEnd)
+      .sort((a, b) => {
+        if (a.date !== b.date) return a.date.localeCompare(b.date);
+        if (a.allDay && !b.allDay) return -1;
+        if (!a.allDay && b.allDay) return 1;
+        if (!a.startTime && !b.startTime) return 0;
+        if (!a.startTime) return -1;
+        if (!b.startTime) return 1;
+        return a.startTime.localeCompare(b.startTime);
+      }),
+  [events, weekStart, weekEnd]);
 
   const groupedEvents = useMemo(() => {
     const groups: Record<string, CalendarEvent[]> = {};
@@ -52,19 +60,16 @@ export default memo(function CalendarAgendaView({ events, onEditEvent, onComplet
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr + 'T00:00:00');
-    const today = new Date();
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    
-    const todayStr = today.toISOString().split('T')[0];
-    const tomorrowStr = tomorrow.toISOString().split('T')[0];
-    
+    const todayStr = getToday();
+    const tomorrowStr = addDaysToDateString(todayStr, 1);
+
     if (dateStr === todayStr) return t('calendar.today');
     if (dateStr === tomorrowStr) return t('calendar.tomorrow') || 'Tomorrow';
-    
-    return date.toLocaleDateString(isRTL ? 'ar-EG' : 'en-US', { 
-      weekday: 'long', 
-      month: 'long', 
+
+    const today = new Date(todayStr + 'T00:00:00');
+    return date.toLocaleDateString(isRTL ? 'ar-EG' : 'en-US', {
+      weekday: 'long',
+      month: 'long',
       day: 'numeric',
       year: date.getFullYear() !== today.getFullYear() ? 'numeric' : undefined
     });
@@ -97,7 +102,7 @@ export default memo(function CalendarAgendaView({ events, onEditEvent, onComplet
     <div className="h-[calc(100vh-300px)] min-h-[400px] overflow-y-auto scrollbar-thin space-y-6">
       {dates.map((dateStr, index) => {
         const dayEvents = groupedEvents[dateStr];
-        const isTodayDate = dateStr === new Date().toISOString().split('T')[0];
+        const isTodayDate = dateStr === getToday();
         
         return (
           <motion.div

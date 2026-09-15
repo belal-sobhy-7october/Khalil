@@ -79,14 +79,14 @@ describe('removeDailyTodo', () => {
     await useAppStore.getState().removeDailyTodo('d1');
     expect(useAppStore.getState().dailyTodos).toHaveLength(1);
     expect(useAppStore.getState().dailyTodos[0]).toEqual(dailyTodo);
-    expect(useAppStore.getState().error).toBe('Failed to delete task. Please try again.');
+    expect(useAppStore.getState().error).toBe('errors.deleteTodo');
   });
 
   it('clears previous error before setting new error', async () => {
     useAppStore.setState({ error: 'previous error' });
     mockSupabaseResponse.error = { message: 'delete failed' };
     await useAppStore.getState().removeDailyTodo('d1');
-    expect(useAppStore.getState().error).toBe('Failed to delete task. Please try again.');
+    expect(useAppStore.getState().error).toBe('errors.deleteTodo');
   });
 });
 
@@ -108,7 +108,7 @@ describe('removeWeeklyTodo', () => {
     await useAppStore.getState().removeWeeklyTodo('w1');
     expect(useAppStore.getState().weeklyTodos).toHaveLength(1);
     expect(useAppStore.getState().weeklyTodos[0]).toEqual(weeklyTodo);
-    expect(useAppStore.getState().error).toBe('Failed to delete task. Please try again.');
+    expect(useAppStore.getState().error).toBe('errors.deleteTodo');
   });
 });
 
@@ -130,7 +130,7 @@ describe('removeBacklogTodo', () => {
     await useAppStore.getState().removeBacklogTodo('b1');
     expect(useAppStore.getState().backlogTodos).toHaveLength(1);
     expect(useAppStore.getState().backlogTodos[0]).toEqual(backlogTodo);
-    expect(useAppStore.getState().error).toBe('Failed to delete task. Please try again.');
+    expect(useAppStore.getState().error).toBe('errors.deleteTodo');
   });
 });
 
@@ -141,7 +141,7 @@ describe('delete error handling', () => {
     
     await useAppStore.getState().removeDailyTodo('d1');
     
-    expect(useAppStore.getState().error).toBe('Failed to delete task. Please try again.');
+    expect(useAppStore.getState().error).toBe('errors.deleteTodo');
   });
 
   it('handles RLS permission error', async () => {
@@ -150,7 +150,7 @@ describe('delete error handling', () => {
     
     await useAppStore.getState().removeWeeklyTodo('w1');
     
-    expect(useAppStore.getState().error).toBe('Failed to delete task. Please try again.');
+    expect(useAppStore.getState().error).toBe('errors.deleteTodo');
   });
 
   it('handles record not found error', async () => {
@@ -159,6 +159,6 @@ describe('delete error handling', () => {
     
     await useAppStore.getState().removeBacklogTodo('b1');
     
-    expect(useAppStore.getState().error).toBe('Failed to delete task. Please try again.');
+    expect(useAppStore.getState().error).toBe('errors.deleteTodo');
   });
 });

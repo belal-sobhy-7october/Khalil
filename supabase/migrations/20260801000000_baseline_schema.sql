@@ -1,5 +1,25 @@
-decv-- Khalil Supabase Schema
--- Run this in the Supabase SQL Editor
+-- Baseline migration: pre-existing schema as of the start of the tracked
+-- migration history below.
+--
+-- Historically, this project's schema was first created by hand in the
+-- Supabase SQL Editor (see supabase/manual-sql-reference/supabase_schema.sql,
+-- kept for archival reference), not through `supabase/migrations/`. The very
+-- first tracked migration (20260801190529_add_indexes.sql) already assumes
+-- these tables exist. Without this baseline, `supabase db reset` fails on a
+-- fresh environment because it starts from an empty database and replays
+-- migrations from scratch.
+--
+-- This file reproduces that pre-existing schema exactly (including the
+-- `sort_order`/`title` columns that two untracked one-off ALTER TABLE scripts
+-- — supabase/manual-sql-reference/migration_add_missing_columns.sql and
+-- migration_add_sort_order_to_notes.sql — had already added on top of it, and
+-- which supabase_schema.sql already reflects) so the rest of the migration
+-- history below can replay cleanly. `calendar_events` is deliberately NOT
+-- included here: it's created by its own proper migration
+-- (20260904103000_add_calendar_events.sql) later in the sequence, and
+-- including it here would make that migration fail with "relation already
+-- exists" on a fresh reset.
+
 
 -- 1. daily_focus
 create table daily_focus (
@@ -321,37 +341,3 @@ create policy "Users can delete their own todo notes"
   on todo_notes for delete
   using (auth.uid() = user_id);
 
--- 12. calendar_events
-create table calendar_events (
-  id uuid default gen_random_uuid() primary key,
-  user_id uuid references auth.users(id) on delete cascade not null,
-  title text not null,
-  date date not null,
-  start_time time,
-  end_time time,
-  all_day boolean default false,
-  completed boolean default false,
-  color text default 'clay-soft',
-  created_at bigint default extract(epoch from now()) * 1000,
-  updated_at bigint default extract(epoch from now()) * 1000
-);
-
-alter table calendar_events enable row level security;
-
-create policy "Users can view their own calendar events"
-  on calendar_events for select
-  using (auth.uid() = user_id);
-
-create policy "Users can insert their own calendar events"
-  on calendar_events for insert
-  with check (auth.uid() = user_id);
-
-create policy "Users can update their own calendar events"
-  on calendar_events for update
-  using (auth.uid() = user_id);
-
-create policy "Users can delete their own calendar events"
-  on calendar_events for delete
-  using (auth.uid() = user_id);
-
-create index idx_calendar_events_user_date on calendar_events(user_id, date);

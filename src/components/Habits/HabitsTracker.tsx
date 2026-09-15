@@ -1,51 +1,82 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, memo } from 'react';
 import {
   Star,
+  Heart,
+  Brain,
+  BookOpen,
+  Code,
+  Dumbbell,
+  Moon,
+  Coffee,
+  Music,
+  Pen,
+  Globe,
+  Smile,
+  Sun,
+  Zap,
+  Book,
+  Utensils,
+  Home,
+  Plane,
+  Camera,
+  Headphones,
+  Leaf,
+  Trophy,
+  Clock,
+  Users,
   Plus,
   Trash2,
   ChevronLeft,
   ChevronRight,
   GripVertical,
+  type LucideIcon,
 } from 'lucide-react';
-import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, TouchSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useAppStore } from '../../store/appStore';
 import { useTranslation } from '../../i18n/useTranslation';
 import { getHabitWeekStart, addDaysToDateString, getToday } from '../../store/dateHelpers';
 
-const iconMap: Record<string, React.ReactNode> = {
-  'star': <Star size={18} />,
-  'heart': <Star size={18} />,
-  'brain': <Star size={18} />,
-  'book-open': <Star size={18} />,
-  'code': <Star size={18} />,
-  'dumbbell': <Star size={18} />,
-  'moon': <Star size={18} />,
-  'coffee': <Star size={18} />,
-  'music': <Star size={18} />,
-  'pen': <Star size={18} />,
-  'globe': <Star size={18} />,
-  'smile': <Star size={18} />,
-  'sun': <Star size={18} />,
-  'zap': <Star size={18} />,
-  'book': <Star size={18} />,
-  'utensils': <Star size={18} />,
-  'home': <Star size={18} />,
-  'plane': <Star size={18} />,
-  'camera': <Star size={18} />,
-  'headphones': <Star size={18} />,
-  'leaf': <Star size={18} />,
-  'trophy': <Star size={18} />,
-  'clock': <Star size={18} />,
-  'users': <Star size={18} />,
+const iconMap: Record<string, LucideIcon> = {
+  star: Star,
+  heart: Heart,
+  brain: Brain,
+  'book-open': BookOpen,
+  code: Code,
+  dumbbell: Dumbbell,
+  moon: Moon,
+  coffee: Coffee,
+  music: Music,
+  pen: Pen,
+  globe: Globe,
+  smile: Smile,
+  sun: Sun,
+  zap: Zap,
+  book: Book,
+  utensils: Utensils,
+  home: Home,
+  plane: Plane,
+  camera: Camera,
+  headphones: Headphones,
+  leaf: Leaf,
+  trophy: Trophy,
+  clock: Clock,
+  users: Users,
 };
 
-function SortableHabitRow({ habit, weekDates, onToggle }: {
+const ICON_OPTIONS = Object.keys(iconMap);
+
+// Handle column is 24px wide; row/header grids use gap-0.5 (2px) between tracks.
+const NAME_COLUMN_OFFSET = 'start-[26px]';
+
+const SortableHabitRow = memo(function SortableHabitRow({ habit, weekDates, entrySet, onToggle }: {
   habit: { id: string; name: string; icon: string; sortOrder: number };
   weekDates: string[];
+  entrySet: Set<string>;
   onToggle: (habitId: string, date: string) => void;
 }) {
+  const { t } = useTranslation();
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: habit.id,
   });
@@ -57,13 +88,14 @@ function SortableHabitRow({ habit, weekDates, onToggle }: {
     willChange: isDragging ? 'transform' : undefined,
   };
 
-  const habitEntries = useAppStore((s) => s.habitEntries);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const Icon = iconMap[habit.icon] || Star;
 
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className="group grid grid-cols-[24px_180px_repeat(45,1cm)_24px] gap-0.5 border-b border-r border-l border-border-subtle items-center"
+      className="group grid grid-cols-[24px_180px_repeat(45,1cm)_1cm] gap-0.5 border-b border-r border-l border-border-subtle items-center"
     >
       <div
         {...attributes}
@@ -72,21 +104,23 @@ function SortableHabitRow({ habit, weekDates, onToggle }: {
       >
         <GripVertical size={14} />
       </div>
-      <div className="flex items-center gap-2 px-2 py-1 border border-border-subtle sticky start-0 bg-card z-10 border-e border-border-subtle">
-        <span className="shrink-0 text-clay-soft">{iconMap[habit.icon] || iconMap.star}</span>
+      <div className={`flex items-center gap-2 px-2 py-1 border border-border-subtle sticky ${NAME_COLUMN_OFFSET} bg-card z-10 border-e border-border-subtle`}>
+        <span className="shrink-0 text-clay-soft">
+          <Icon size={18} />
+        </span>
         <span className="text-sm font-medium text-ink truncate">
           {habit.name}
         </span>
       </div>
 
       {weekDates.map((date) => {
-        const isCompleted = habitEntries.some(
-          (e) => e.habitId === habit.id && e.date === date
-        );
+        const isCompleted = entrySet.has(`${habit.id}|${date}`);
         return (
           <button
             key={date}
             onClick={() => onToggle(habit.id, date)}
+            aria-label={`${habit.name} — ${date}`}
+            aria-pressed={isCompleted}
             className={`w-[1cm] h-[1cm] flex items-center justify-center border border-border-subtle transition-all ${
               isCompleted
                 ? 'bg-clay-soft text-white'
@@ -98,18 +132,44 @@ function SortableHabitRow({ habit, weekDates, onToggle }: {
         );
       })}
 
-      <button
-        onClick={() => useAppStore.getState().removeHabit(habit.id)}
-        className="flex items-center justify-center w-[1cm] h-[1cm] opacity-0 group-hover:opacity-100 text-ink-lighter hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-all shrink-0"
-      >
-        <Trash2 size={11} />
-      </button>
+      <div className="relative w-[1cm] h-[1cm] shrink-0">
+        <button
+          onClick={() => setConfirmingDelete(true)}
+          aria-label={t('common.delete')}
+          className="flex items-center justify-center w-[1cm] h-[1cm] text-ink-lighter hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-all opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 [@media(hover:none)]:opacity-100"
+        >
+          <Trash2 size={11} />
+        </button>
+        {confirmingDelete && (
+          <div
+            role="dialog"
+            aria-label={t('habits.confirmDelete')}
+            className="absolute z-30 bottom-full end-0 mb-1 w-40 bg-card border border-border-subtle rounded-lg shadow-lg p-2 text-start"
+          >
+            <p className="text-xs text-ink mb-2">{t('habits.confirmDelete')}</p>
+            <div className="flex gap-1.5 justify-end">
+              <button
+                onClick={() => setConfirmingDelete(false)}
+                className="px-2 py-1 text-[11px] rounded text-ink-light hover:bg-ink/5"
+              >
+                {t('common.cancel')}
+              </button>
+              <button
+                onClick={() => useAppStore.getState().removeHabit(habit.id)}
+                className="px-2 py-1 text-[11px] rounded bg-red-500 hover:bg-red-600 text-white"
+              >
+                {t('common.delete')}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
-}
+});
 
 export default function HabitsTracker() {
-  const { t } = useTranslation();
+  const { t, isRTL } = useTranslation();
   const rawHabits = useAppStore((s) => s.habits);
   const habitEntries = useAppStore((s) => s.habitEntries);
   const toggleHabitEntry = useAppStore((s) => s.toggleHabitEntry);
@@ -121,12 +181,22 @@ export default function HabitsTracker() {
     [rawHabits]
   );
 
+  // One O(n) pass instead of every cell in every row running its own
+  // `.some()` scan over the full habitEntries array.
+  const entrySet = useMemo(() => {
+    const set = new Set<string>();
+    for (const e of habitEntries) set.add(`${e.habitId}|${e.date}`);
+    return set;
+  }, [habitEntries]);
+
   const [currentWeekStart, setCurrentWeekStart] = useState(() => getHabitWeekStart());
   const [showAddForm, setShowAddForm] = useState(false);
   const [newHabitName, setNewHabitName] = useState('');
+  const [newHabitIcon, setNewHabitIcon] = useState('star');
 
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
@@ -141,7 +211,11 @@ export default function HabitsTracker() {
   const currentMonth = today.slice(0, 7);
   const daysInMonth = new Date(parseInt(currentMonth.slice(0, 4)), parseInt(currentMonth.slice(5, 7)), 0).getDate();
 
-  const monthEntries = habitEntries.filter((e) => e.date.startsWith(currentMonth));
+  const activeHabitIds = useMemo(() => new Set(habits.map((h) => h.id)), [habits]);
+  // Only active habits count toward the monthly goal, so only their entries
+  // should count toward "completed" — otherwise a removed/inactive habit's
+  // history can push completion past the goal (over 100%).
+  const monthEntries = habitEntries.filter((e) => e.date.startsWith(currentMonth) && activeHabitIds.has(e.habitId));
   const completedCount = monthEntries.length;
   const goal = habits.length * daysInMonth;
   const left = goal - completedCount;
@@ -158,17 +232,19 @@ export default function HabitsTracker() {
   }, [habitEntries, habits.length, today]);
 
   const weeklyProgress = useMemo(() => {
+    // Last 6 real (Saturday -> Friday) weeks, independent of the 45-day grid view above.
     const data: { week: string; count: number; total: number }[] = [];
+    const thisWeekStart = getHabitWeekStart(new Date(`${today}T00:00:00`));
     for (let i = 5; i >= 0; i--) {
-      const weekStart = addDaysToDateString(currentWeekStart, -i * DAYS_PER_VIEW);
-      const weekEnd = addDaysToDateString(weekStart, DAYS_PER_VIEW - 1);
+      const weekStart = addDaysToDateString(thisWeekStart, -i * 7);
+      const weekEnd = addDaysToDateString(weekStart, 6);
       const count = habitEntries.filter(
         (e) => e.date >= weekStart && e.date <= weekEnd
       ).length;
-      data.push({ week: weekStart, count, total: habits.length * DAYS_PER_VIEW });
+      data.push({ week: weekStart, count, total: habits.length * 7 });
     }
     return data;
-  }, [habitEntries, habits.length, currentWeekStart, DAYS_PER_VIEW]);
+  }, [habitEntries, habits.length, today]);
 
   const habitAnalysis = useMemo(() => {
     return habits.map((habit) => {
@@ -190,9 +266,16 @@ export default function HabitsTracker() {
 
   const handleAddHabit = () => {
     if (!newHabitName.trim()) return;
-    addHabit(newHabitName.trim(), 'star');
+    addHabit(newHabitName.trim(), newHabitIcon);
     setNewHabitName('');
+    setNewHabitIcon('star');
     setShowAddForm(false);
+  };
+
+  const handleCancelAdd = () => {
+    setShowAddForm(false);
+    setNewHabitName('');
+    setNewHabitIcon('star');
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -303,25 +386,27 @@ export default function HabitsTracker() {
           <div className="flex items-center justify-between mb-4">
             <button
               onClick={goToPrevWeek}
+              aria-label="Previous period"
               className="p-1 rounded hover:bg-ink/5 text-ink-light transition-colors"
             >
-              <ChevronLeft size={18} />
+              {isRTL ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
             </button>
             <div className="text-sm font-medium text-ink">
               {dateRangeLabel}
             </div>
             <button
               onClick={goToNextWeek}
+              aria-label="Next period"
               className="p-1 rounded hover:bg-ink/5 text-ink-light transition-colors"
             >
-              <ChevronRight size={18} />
+              {isRTL ? <ChevronLeft size={18} /> : <ChevronRight size={18} />}
             </button>
           </div>
 
           <div className="overflow-x-auto overscroll-x-contain">
-            <div className="grid grid-cols-[24px_180px_repeat(45,1cm)_24px] gap-0.5 border border-border-subtle mb-0">
+            <div className="grid grid-cols-[24px_180px_repeat(45,1cm)_1cm] gap-0.5 border border-border-subtle mb-0">
               <div className="border border-border-subtle sticky start-0 bg-card z-10 border-e border-border-subtle" />
-              <div className="px-2 py-1 border border-border-subtle sticky start-0 bg-card z-10 border-e border-border-subtle" />
+              <div className={`px-2 py-1 border border-border-subtle sticky ${NAME_COLUMN_OFFSET} bg-card z-10 border-e border-border-subtle`} />
               {weekDates.map((date) => (
                 <div key={date} className="text-center py-1 w-[1cm] h-[1cm] border border-border-subtle flex items-center justify-center">
                   <div className="text-[10px] text-ink-lighter">
@@ -340,6 +425,7 @@ export default function HabitsTracker() {
                       key={habit.id}
                       habit={habit}
                       weekDates={weekDates}
+                      entrySet={entrySet}
                       onToggle={toggleHabitEntry}
                     />
                   ))}
@@ -357,28 +443,52 @@ export default function HabitsTracker() {
               {t('habits.addPlaceholder')}
             </button>
           ) : (
-            <div className="mt-4 flex gap-2">
-              <input
-                type="text"
-                value={newHabitName}
-                onChange={(e) => setNewHabitName(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleAddHabit()}
-                placeholder={t('habits.addPlaceholder')}
-                className="flex-1 border border-border-subtle rounded-lg px-3 py-2 text-sm bg-ink/3 text-ink placeholder-ink-lighter focus:outline-none focus:ring-1 focus:ring-clay-soft/30"
-              />
-              <button
-                onClick={handleAddHabit}
-                disabled={!newHabitName.trim()}
-                className="px-4 py-2 text-xs font-medium bg-clay-soft hover:bg-clay-soft-dark disabled:opacity-40 text-white rounded-lg transition-colors"
-              >
-                {t('common.add')}
-              </button>
-              <button
-                onClick={() => { setShowAddForm(false); setNewHabitName(''); }}
-                className="px-4 py-2 text-xs font-medium text-ink-light hover:text-ink"
-              >
-                {t('common.cancel')}
-              </button>
+            <div className="mt-4 space-y-2">
+              <div className="flex flex-wrap gap-1.5">
+                {ICON_OPTIONS.map((key) => {
+                  const OptionIcon = iconMap[key];
+                  const selected = newHabitIcon === key;
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => setNewHabitIcon(key)}
+                      aria-label={key}
+                      aria-pressed={selected}
+                      className={`p-1.5 rounded-lg border transition-colors ${
+                        selected
+                          ? 'bg-clay-soft text-white border-clay-soft'
+                          : 'border-border-subtle text-ink-light hover:bg-ink/5'
+                      }`}
+                    >
+                      <OptionIcon size={14} />
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={newHabitName}
+                  onChange={(e) => setNewHabitName(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleAddHabit()}
+                  placeholder={t('habits.addPlaceholder')}
+                  className="flex-1 border border-border-subtle rounded-lg px-3 py-2 text-sm bg-ink/3 text-ink placeholder-ink-lighter focus:outline-none focus:ring-1 focus:ring-clay-soft/30"
+                />
+                <button
+                  onClick={handleAddHabit}
+                  disabled={!newHabitName.trim()}
+                  className="px-4 py-2 text-xs font-medium bg-clay-soft hover:bg-clay-soft-dark disabled:opacity-40 text-white rounded-lg transition-colors"
+                >
+                  {t('common.add')}
+                </button>
+                <button
+                  onClick={handleCancelAdd}
+                  className="px-4 py-2 text-xs font-medium text-ink-light hover:text-ink"
+                >
+                  {t('common.cancel')}
+                </button>
+              </div>
             </div>
           )}
 

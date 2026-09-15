@@ -1,5 +1,10 @@
 -- Incremental migration: add columns present in supabase_schema.sql but missing from production DB
 -- After running, restart PostgREST so schema cache picks up the new columns.
+--
+-- STATUS: Already applied to production. Superseded by
+-- ../migrations/20260801000000_baseline_schema.sql, which now creates these
+-- columns directly as part of the tracked baseline. Kept here for historical
+-- reference only — do not re-run against a database that already has it.
 
 -- sticky_notes: missing title column
 ALTER TABLE sticky_notes ADD COLUMN IF NOT EXISTS title text NOT NULL DEFAULT '';

@@ -2,9 +2,11 @@ import { useState } from 'react';
 import { LogIn } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { supabase } from '../../lib/supabase';
+import { useTranslation } from '../../i18n/useTranslation';
 import CalligraphyWatermark from '../Common/CalligraphyWatermark';
 
 export default function LoginPage() {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
@@ -41,17 +43,17 @@ export default function LoginPage() {
               >
                 <span className="text-3xl font-amiri text-clay-soft">خ</span>
               </motion.div>
-              <h1 className="text-3xl font-bold font-amiri text-ink mb-1 leading-relaxed">خليل</h1>
-              <p className="text-ink-light text-sm">رفيقك الشخصي</p>
+              <h1 className="text-3xl font-bold font-amiri text-ink mb-1 leading-relaxed">{t('app.title')}</h1>
+              <p className="text-ink-light text-sm">{t('app.subtitle')}</p>
             </div>
           </div>
 
           <div className="px-8 md:px-10 pb-8 text-center">
             <p className="text-ink-light mb-6 text-sm leading-relaxed">
-              سجل الدخول بحساب Google للوصول إلى لوحة التحكم الخاصة بك
+              {t('auth.loginTitle')}
               <br />
               <span className="text-ink-lighter text-xs">
-                بياناتك محفوظة بشكل آمن في السحابة
+                {t('auth.loginSubtitle')}
               </span>
             </p>
 
@@ -65,13 +67,13 @@ export default function LoginPage() {
               ) : (
                 <LogIn size={20} className="text-clay-soft" />
               )}
-              <span>تسجيل الدخول بـ Google</span>
+              <span>{t('auth.login')}</span>
             </button>
           </div>
 
           <div className="px-8 pb-6 text-center">
             <p className="text-[10px] text-ink-lighter">
-              بتسجيل الدخول، أنت توافق على استخدامنا للبيانات وفقًا لسياسة الخصوصية
+              {t('auth.privacyNotice')}
             </p>
           </div>
         </div>

@@ -9,15 +9,6 @@ interface Props {
   onUpdate: (id: string, data: Partial<StickyNoteData>) => void;
 }
 
-export function createStickyNote(title = '', text = ''): StickyNoteData {
-  return {
-    id: crypto.randomUUID(),
-    title,
-    text,
-    sortOrder: 0,
-  };
-}
-
 export default function StickyNote({ note, onDelete, onUpdate }: Props) {
   const { t } = useTranslation();
   const [title, setTitle] = useState(note.title);
@@ -28,8 +19,31 @@ export default function StickyNote({ note, onDelete, onUpdate }: Props) {
   const textRef = useRef(note.text);
   const lastSentRef = useRef({ title: note.title, text: note.text });
 
+  const flushRef = useRef<() => void>(() => {});
   useEffect(() => {
-    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+    flushRef.current = () => {
+      if (!debounceRef.current) return;
+      clearTimeout(debounceRef.current);
+      debounceRef.current = null;
+      onUpdate(note.id, { title: titleRef.current, text: textRef.current });
+      lastSentRef.current = { title: titleRef.current, text: textRef.current };
+    };
+  });
+
+  useEffect(() => {
+    const flushIfHidden = () => {
+      if (document.visibilityState === 'hidden') flushRef.current();
+    };
+    const flush = () => flushRef.current();
+    document.addEventListener('visibilitychange', flushIfHidden);
+    window.addEventListener('pagehide', flush);
+    return () => {
+      document.removeEventListener('visibilitychange', flushIfHidden);
+      window.removeEventListener('pagehide', flush);
+      // Flush (not just clear) any pending debounce so the last edit isn't
+      // lost when this note unmounts or the tab closes mid-typing.
+      flushRef.current();
+    };
   }, []);
 
   useEffect(() => {

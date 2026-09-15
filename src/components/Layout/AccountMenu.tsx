@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef } from 'react';
 import { User, Settings, LogOut, ChevronDown } from 'lucide-react';
 import { useTranslation } from '../../i18n/useTranslation';
 import { useAppStore } from '../../store/appStore';
@@ -22,13 +22,21 @@ export default function AccountMenu() {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const listRef = useRef<Array<HTMLButtonElement | null>>([]);
 
+  const handleOpenChange = (open: boolean) => {
+    setIsOpen(open);
+    if (!open) {
+      setActiveIndex(null);
+    }
+  };
+
   const { refs, floatingStyles, context } = useFloating({
     placement: isRTL ? 'left-start' : 'right-start',
     middleware: [offset(8), flip({ padding: 8 }), shift({ padding: 8 })],
     whileElementsMounted: autoUpdate,
     open: isOpen,
-    onOpenChange: setIsOpen,
+    onOpenChange: handleOpenChange,
   });
+  const { setReference, setFloating } = refs;
 
   const click = useClick(context);
   const dismiss = useDismiss(context);
@@ -42,7 +50,7 @@ export default function AccountMenu() {
   // Handle keyboard navigation
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Escape') {
-      setIsOpen(false);
+      handleOpenChange(false);
       return;
     }
 
@@ -68,36 +76,29 @@ export default function AccountMenu() {
     }
   };
 
-  // Reset active index when menu closes
-  useEffect(() => {
-    if (!isOpen) {
-      setActiveIndex(null);
-    }
-  }, [isOpen]);
-
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    setIsOpen(false);
+    handleOpenChange(false);
   };
 
   // Get user display name and email from Supabase session
   const userEmail = session?.user?.email;
   const userMetadata = session?.user?.user_metadata;
-  const userName = userMetadata?.full_name || userMetadata?.name || userEmail?.split('@')[0] || 'مستخدم';
+  const userName = userMetadata?.full_name || userMetadata?.name || userEmail?.split('@')[0] || t('auth.defaultUserName');
 
   const menuItems = [
     {
       id: 'settings',
-      label: t('auth.accountSettings') || 'الحساب والإعدادات',
+      label: t('auth.accountSettings'),
       icon: Settings,
       onClick: () => {
         // TODO: Navigate to account settings page when implemented
-        setIsOpen(false);
+        handleOpenChange(false);
       },
     },
     {
       id: 'logout',
-      label: t('auth.logout') || 'تسجيل الخروج',
+      label: t('auth.logout'),
       icon: LogOut,
       onClick: handleLogout,
       destructive: true,
@@ -107,9 +108,10 @@ export default function AccountMenu() {
   return (
     <>
       <button
-        ref={refs.setReference}
+        ref={setReference}
+        // eslint-disable-next-line react-hooks/refs -- floating-ui's getReferenceProps only stores onKeyDown to invoke from real DOM events, it never calls it during render, so reading listRef.current inside it is safe
         {...getReferenceProps({
-          onClick: () => setIsOpen(!isOpen),
+          onClick: () => handleOpenChange(!isOpen),
           onKeyDown: handleKeyDown,
         })}
         className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-ink-light hover:text-ink border border-transparent hover:border-border-subtle transition-all focus:outline-none focus:ring-2 focus:ring-clay-soft/50"
@@ -126,8 +128,9 @@ export default function AccountMenu() {
 
       {isOpen && (
         <div
-          ref={refs.setFloating}
+          ref={setFloating}
           style={floatingStyles}
+          // eslint-disable-next-line react-hooks/refs -- floating-ui's getFloatingProps only stores onKeyDown to invoke from real DOM events, it never calls it during render, so reading listRef.current inside it is safe
           {...getFloatingProps({
             onKeyDown: handleKeyDown,
           })}
@@ -141,7 +144,7 @@ export default function AccountMenu() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-ink truncate">{userName}</p>
-                <p className="text-xs text-ink-light truncate">{userEmail || 'الحساب الحالي'}</p>
+                <p className="text-xs text-ink-light truncate">{userEmail || t('auth.currentAccount')}</p>
               </div>
             </div>
           </div>

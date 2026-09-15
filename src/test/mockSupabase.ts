@@ -25,6 +25,7 @@ const chainable = {
   gte: vi.fn().mockReturnThis(),
   order: vi.fn().mockReturnThis(),
   limit: vi.fn().mockReturnThis(),
+  range: vi.fn().mockReturnThis(),
   single: vi.fn().mockReturnThis(),
   auth: {
     getSession: vi.fn().mockResolvedValue({ data: { session: null }, error: null }),

@@ -20,8 +20,7 @@ import DailyTodo from './components/Todo/DailyTodo';
 import WeeklyTodo from './components/Todo/WeeklyTodo';
 import BacklogTodo from './components/Todo/BacklogTodo';
 
-import { createStickyNote } from './components/Canvas/StickyNote';
-import { createTodoNote } from './components/Canvas/TodoNote';
+import { createStickyNote, createTodoNote } from './components/Canvas/noteFactories';
 import type { StickyNoteData, TodoNoteData } from './types';
 
 const LifePillars = lazy(() => import('./components/LifePillars/LifePillars'));
@@ -67,6 +66,7 @@ function App() {
     open: menuOpen,
     onOpenChange: setMenuOpen,
   });
+  const { setReference, setFloating } = refs;
 
   const click = useClick(context);
   const dismiss = useDismiss(context);
@@ -155,7 +155,7 @@ function App() {
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [loadUserData, setSession]);
 
   const handleSectionChange = useCallback((section: string) => {
     setActiveSection(section);
@@ -169,7 +169,7 @@ function App() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <div className="w-8 h-8 border-2 border-clay-soft border-t-transparent rounded-full animate-spin" />
-          <span className="text-sm text-ink-light">Loading...</span>
+          <span className="text-sm text-ink-light">{t('common.loading')}</span>
         </div>
       </div>
     );
@@ -181,15 +181,29 @@ function App() {
 
   return (
     <>
-      <DashboardLayout 
-        activeSection={activeSection} 
+      <DashboardLayout
+        activeSection={activeSection}
         onSectionChange={handleSectionChange}
         allowFullWidth={activeSection === 'calendar' || activeSection === 'bookmarks'}
+        notesSlot={
+          <Suspense fallback={null}>
+            <NotesPanel
+              stickyNotes={stickyNotes}
+              todoNotes={todoNotes}
+              onDeleteSticky={deleteStickyNote}
+              onUpdateSticky={updateStickyNote}
+              onReorderSticky={handleReorderSticky}
+              onDeleteTodo={deleteTodoNote}
+              onUpdateTodo={updateTodoNote}
+              onReorderTodo={handleReorderTodo}
+            />
+          </Suspense>
+        }
       >
         {appError && (
           <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 max-w-md w-full mx-4">
             <div className="bg-red-500 text-white text-sm px-4 py-3 rounded-xl shadow-lg flex items-center gap-2">
-              <span className="flex-1">{appError}</span>
+              <span className="flex-1">{t(appError)}</span>
               <button onClick={clearAppError} className="font-bold hover:opacity-70 shrink-0">&times;</button>
             </div>
           </div>
@@ -265,22 +279,9 @@ function App() {
           </>
         )}
       </DashboardLayout>
-      
-      <Suspense fallback={null}>
-        <NotesPanel
-          stickyNotes={stickyNotes}
-          todoNotes={todoNotes}
-          onDeleteSticky={deleteStickyNote}
-          onUpdateSticky={updateStickyNote}
-          onReorderSticky={handleReorderSticky}
-          onDeleteTodo={deleteTodoNote}
-          onUpdateTodo={updateTodoNote}
-          onReorderTodo={handleReorderTodo}
-        />
-      </Suspense>
 
       <div
-        ref={refs.setFloating}
+        ref={setFloating}
         style={{
           ...floatingStyles,
           pointerEvents: menuOpen ? 'auto' : 'none',
@@ -299,24 +300,24 @@ function App() {
             className="flex items-center gap-2 px-4 py-2 rounded-xl bg-card border border-border-subtle text-sm text-ink hover:bg-ink/5 transition-all shadow-sm whitespace-nowrap"
           >
             <ListTodo size={15} />
-            <span>قائمة</span>
+            <span>{t('notes.newList')}</span>
           </button>
           <button
             onClick={addTextNote}
             className="flex items-center gap-2 px-4 py-2 rounded-xl bg-card border border-border-subtle text-sm text-ink hover:bg-ink/5 transition-all shadow-sm whitespace-nowrap"
           >
             <StickyNoteIcon size={15} />
-            <span>ملاحظة</span>
+            <span>{t('notes.newNote')}</span>
           </button>
         </div>
       </div>
 
       <button
-        ref={refs.setReference}
+        ref={setReference}
         className={`fixed bottom-6 end-6 z-30 w-12 h-12 rounded-full bg-clay-soft hover:bg-clay-soft-dark text-white shadow-lg hover:shadow-xl transition-all flex items-center justify-center ${
           menuOpen ? 'rotate-45' : ''
         }`}
-        aria-label="Add note"
+        aria-label={t('notes.addMenu')}
         {...getReferenceProps()}
       >
         <Plus size={22} />
