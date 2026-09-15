@@ -5,8 +5,7 @@ import {
   Trash2,
   ChevronLeft,
   ChevronRight,
-  Smile,
-  Zap,
+  GripVertical,
 } from 'lucide-react';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
@@ -47,12 +46,15 @@ function SortableHabitRow({ habit, weekDates, onToggle }: {
   weekDates: string[];
   onToggle: (habitId: string, date: string) => void;
 }) {
-  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: habit.id,
   });
   const style = {
     transform: CSS.Transform.toString(transform),
-    transition,
+    transition: isDragging ? 'none' : transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 10 : undefined,
+    willChange: isDragging ? 'transform' : undefined,
   };
 
   const habitEntries = useAppStore((s) => s.habitEntries);
@@ -61,41 +63,44 @@ function SortableHabitRow({ habit, weekDates, onToggle }: {
     <div
       ref={setNodeRef}
       style={style}
-      {...attributes}
-      {...listeners}
-      className="group flex items-center gap-2 bg-ink/3 rounded-lg px-4 py-3 border border-border-subtle"
+      className="group grid grid-cols-[24px_180px_repeat(45,1cm)_24px] gap-0.5 border-b border-r border-l border-border-subtle items-center"
     >
-      <div className="flex items-center gap-2 min-w-0 flex-[2]">
+      <div
+        {...attributes}
+        {...listeners}
+        className="shrink-0 opacity-20 group-hover:opacity-60 hover:!opacity-100 cursor-grab active:cursor-grabbing p-1 text-ink-lighter transition-opacity touch-none sticky start-0 bg-card z-10 border-e border-border-subtle"
+      >
+        <GripVertical size={14} />
+      </div>
+      <div className="flex items-center gap-2 px-2 py-1 border border-border-subtle sticky start-0 bg-card z-10 border-e border-border-subtle">
         <span className="shrink-0 text-clay-soft">{iconMap[habit.icon] || iconMap.star}</span>
         <span className="text-sm font-medium text-ink truncate">
           {habit.name}
         </span>
       </div>
 
-      <div className="flex items-center gap-1 flex-1">
-        {weekDates.map((date) => {
-          const isCompleted = habitEntries.some(
-            (e) => e.habitId === habit.id && e.date === date
-          );
-          return (
-            <button
-              key={date}
-              onClick={() => onToggle(habit.id, date)}
-              className={`w-8 h-8 rounded flex items-center justify-center transition-all ${
-                isCompleted
-                  ? 'bg-clay-soft text-white'
-                  : 'bg-ink/8 text-ink-lighter hover:bg-ink/10'
-              }`}
-            >
-              {isCompleted && <Star size={12} fill="currentColor" />}
-            </button>
-          );
-        })}
-      </div>
+      {weekDates.map((date) => {
+        const isCompleted = habitEntries.some(
+          (e) => e.habitId === habit.id && e.date === date
+        );
+        return (
+          <button
+            key={date}
+            onClick={() => onToggle(habit.id, date)}
+            className={`w-[1cm] h-[1cm] flex items-center justify-center border border-border-subtle transition-all ${
+              isCompleted
+                ? 'bg-clay-soft text-white'
+                : 'bg-ink/8 text-ink-lighter hover:bg-ink/10'
+            }`}
+          >
+            {isCompleted && <Star size={10} fill="currentColor" />}
+          </button>
+        );
+      })}
 
       <button
         onClick={() => useAppStore.getState().removeHabit(habit.id)}
-        className="flex items-center justify-center w-5 h-5 rounded opacity-0 group-hover:opacity-100 text-ink-lighter hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-all shrink-0"
+        className="flex items-center justify-center w-[1cm] h-[1cm] opacity-0 group-hover:opacity-100 text-ink-lighter hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-all shrink-0"
       >
         <Trash2 size={11} />
       </button>
@@ -107,9 +112,7 @@ export default function HabitsTracker() {
   const { t } = useTranslation();
   const rawHabits = useAppStore((s) => s.habits);
   const habitEntries = useAppStore((s) => s.habitEntries);
-  const dailyMoods = useAppStore((s) => s.dailyMoods);
   const toggleHabitEntry = useAppStore((s) => s.toggleHabitEntry);
-  const setDailyMood = useAppStore((s) => s.setDailyMood);
   const addHabit = useAppStore((s) => s.addHabit);
   const reorderHabits = useAppStore((s) => s.reorderHabits);
 
@@ -129,8 +132,9 @@ export default function HabitsTracker() {
     })
   );
 
+  const DAYS_PER_VIEW = 45;
   const weekDates = useMemo(() => {
-    return Array.from({ length: 7 }, (_, i) => addDaysToDateString(currentWeekStart, i));
+    return Array.from({ length: DAYS_PER_VIEW }, (_, i) => addDaysToDateString(currentWeekStart, i));
   }, [currentWeekStart]);
 
   const today = getToday();
@@ -156,15 +160,15 @@ export default function HabitsTracker() {
   const weeklyProgress = useMemo(() => {
     const data: { week: string; count: number; total: number }[] = [];
     for (let i = 5; i >= 0; i--) {
-      const weekStart = addDaysToDateString(currentWeekStart, -i * 7);
-      const weekEnd = addDaysToDateString(weekStart, 6);
+      const weekStart = addDaysToDateString(currentWeekStart, -i * DAYS_PER_VIEW);
+      const weekEnd = addDaysToDateString(weekStart, DAYS_PER_VIEW - 1);
       const count = habitEntries.filter(
         (e) => e.date >= weekStart && e.date <= weekEnd
       ).length;
-      data.push({ week: weekStart, count, total: habits.length * 7 });
+      data.push({ week: weekStart, count, total: habits.length * DAYS_PER_VIEW });
     }
     return data;
-  }, [habitEntries, habits.length, currentWeekStart]);
+  }, [habitEntries, habits.length, currentWeekStart, DAYS_PER_VIEW]);
 
   const habitAnalysis = useMemo(() => {
     return habits.map((habit) => {
@@ -204,14 +208,14 @@ export default function HabitsTracker() {
   };
 
   const goToPrevWeek = () => {
-    setCurrentWeekStart(addDaysToDateString(currentWeekStart, -7));
+    setCurrentWeekStart(addDaysToDateString(currentWeekStart, -DAYS_PER_VIEW));
   };
 
   const goToNextWeek = () => {
-    setCurrentWeekStart(addDaysToDateString(currentWeekStart, 7));
+    setCurrentWeekStart(addDaysToDateString(currentWeekStart, DAYS_PER_VIEW));
   };
 
-  const weekNumber = Math.ceil((parseInt(currentWeekStart.slice(8, 10)) + 1) / 7);
+  const dateRangeLabel = `${weekDates[0].slice(5)} → ${weekDates[weekDates.length - 1].slice(5)}`;
 
   return (
     <section id="section-habits">
@@ -294,9 +298,8 @@ export default function HabitsTracker() {
         </div>
       </div>
 
-      <div className="lg:grid lg:grid-cols-[1fr_320px] lg:gap-6">
-        {/* Week grid */}
-        <div className="bg-card border border-border-subtle rounded-xl p-4 mb-6 lg:mb-0">
+      {/* Week grid */}
+      <div className="bg-card border border-border-subtle rounded-xl p-4 mb-6">
           <div className="flex items-center justify-between mb-4">
             <button
               onClick={goToPrevWeek}
@@ -305,7 +308,7 @@ export default function HabitsTracker() {
               <ChevronLeft size={18} />
             </button>
             <div className="text-sm font-medium text-ink">
-              {t('habits.week')} {weekNumber}
+              {dateRangeLabel}
             </div>
             <button
               onClick={goToNextWeek}
@@ -315,30 +318,35 @@ export default function HabitsTracker() {
             </button>
           </div>
 
-          <div className="flex gap-1 mb-2 px-4">
-            {weekDates.map((date) => (
-              <div key={date} className="flex-1 text-center">
-                <div className="text-[10px] text-ink-lighter">
-                  {date.slice(5)}
+          <div className="overflow-x-auto overscroll-x-contain">
+            <div className="grid grid-cols-[24px_180px_repeat(45,1cm)_24px] gap-0.5 border border-border-subtle mb-0">
+              <div className="border border-border-subtle sticky start-0 bg-card z-10 border-e border-border-subtle" />
+              <div className="px-2 py-1 border border-border-subtle sticky start-0 bg-card z-10 border-e border-border-subtle" />
+              {weekDates.map((date) => (
+                <div key={date} className="text-center py-1 w-[1cm] h-[1cm] border border-border-subtle flex items-center justify-center">
+                  <div className="text-[10px] text-ink-lighter">
+                    {date.slice(5)}
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+              <div />
+            </div>
 
-          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-            <SortableContext items={habits.map((h) => h.id)} strategy={verticalListSortingStrategy}>
-              <div className="space-y-2">
-                {habits.map((habit) => (
-                  <SortableHabitRow
-                    key={habit.id}
-                    habit={habit}
-                    weekDates={weekDates}
-                    onToggle={toggleHabitEntry}
-                  />
-                ))}
-              </div>
-            </SortableContext>
-          </DndContext>
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+              <SortableContext items={habits.map((h) => h.id)} strategy={verticalListSortingStrategy}>
+                <div className="space-y-0.5">
+                  {habits.map((habit) => (
+                    <SortableHabitRow
+                      key={habit.id}
+                      habit={habit}
+                      weekDates={weekDates}
+                      onToggle={toggleHabitEntry}
+                    />
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
+          </div>
 
           {!showAddForm ? (
             <button
@@ -381,73 +389,8 @@ export default function HabitsTracker() {
           )}
         </div>
 
-        {/* Side panel */}
-        <div className="space-y-6">
-          {/* Mood/Motivation */}
-          <div className="bg-card border border-border-subtle rounded-xl p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <Smile size={16} className="text-clay-soft" />
-              <div className="text-sm font-medium text-ink">{t('habits.mood')}</div>
-            </div>
-            <div className="flex gap-1">
-              {weekDates.map((date) => {
-                const mood = dailyMoods.find((m) => m.date === date)?.mood;
-                return (
-                  <div key={date} className="flex-1">
-                    <input
-                      type="number"
-                      min="1"
-                      max="5"
-                      value={mood ?? ''}
-                      onChange={(e) => {
-                        const val = parseInt(e.target.value);
-                        if (val >= 1 && val <= 5) {
-                          setDailyMood(date, { mood: val });
-                        } else if (e.target.value === '') {
-                          setDailyMood(date, { mood: null });
-                        }
-                      }}
-                      className="w-full text-center text-xs border border-border-subtle rounded bg-ink/3 text-ink focus:outline-none focus:ring-1 focus:ring-clay-soft/30"
-                      placeholder="-"
-                    />
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="bg-card border border-border-subtle rounded-xl p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <Zap size={16} className="text-sage-soft" />
-              <div className="text-sm font-medium text-ink">{t('habits.motivation')}</div>
-            </div>
-            <div className="flex gap-1">
-              {weekDates.map((date) => {
-                const motivation = dailyMoods.find((m) => m.date === date)?.motivation;
-                return (
-                  <div key={date} className="flex-1">
-                    <input
-                      type="number"
-                      min="1"
-                      max="5"
-                      value={motivation ?? ''}
-                      onChange={(e) => {
-                        const val = parseInt(e.target.value);
-                        if (val >= 1 && val <= 5) {
-                          setDailyMood(date, { motivation: val });
-                        } else if (e.target.value === '') {
-                          setDailyMood(date, { motivation: null });
-                        }
-                      }}
-                      className="w-full text-center text-xs border border-border-subtle rounded bg-ink/3 text-ink focus:outline-none focus:ring-1 focus:ring-sage-soft/30"
-                      placeholder="-"
-                    />
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
+        {/* Analysis and Top Habits - full width below grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Analysis */}
           <div className="bg-card border border-border-subtle rounded-xl p-4">
             <div className="text-sm font-medium text-ink mb-3">{t('habits.analysis')}</div>
@@ -497,7 +440,6 @@ export default function HabitsTracker() {
             </div>
           </div>
         </div>
-      </div>
     </section>
   );
 }

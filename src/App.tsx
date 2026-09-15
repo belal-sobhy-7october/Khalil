@@ -45,7 +45,7 @@ function App() {
     }
     return 'todo';
   });
-  const [lifeView, setLifeView] = useState<'tracking' | 'habits'>('tracking');
+  const [lifeView, setLifeView] = useState<'tracking' | 'habits'>('habits');
   const stickyNotes = useAppStore((s) => s.stickyNotes);
   const todoNotes = useAppStore((s) => s.todoNotes);
   const addStickyNoteStore = useAppStore((s) => s.addStickyNote);
@@ -184,7 +184,7 @@ function App() {
       <DashboardLayout 
         activeSection={activeSection} 
         onSectionChange={handleSectionChange}
-        allowFullWidth={lifeView === 'habits' || activeSection === 'calendar'}
+        allowFullWidth={activeSection === 'calendar' || activeSection === 'bookmarks'}
       >
         {appError && (
           <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 max-w-md w-full mx-4">
@@ -205,9 +205,20 @@ function App() {
           }>
             <Calendar />
           </Suspense>
+        ) : activeSection === 'bookmarks' ? (
+          <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center">
+              <div className="flex flex-col items-center gap-3">
+                <div className="w-8 h-8 border-2 border-clay-soft border-t-transparent rounded-full animate-spin" />
+                <span className="text-sm text-ink-light">{t('common.loading')}</span>
+              </div>
+            </div>
+          }>
+            <BookmarksVault />
+          </Suspense>
         ) : (
           <>
-            <div className="space-y-8 max-w-4xl mx-auto canvas-area" style={{ position: 'relative' }}>
+            <div className={`space-y-8 canvas-area max-w-4xl mx-auto`} style={{ position: 'relative' }}>
               <div>
                 <DailyFocus />
               </div>
@@ -227,30 +238,28 @@ function App() {
 
               <Suspense fallback={<div className="h-32" />}>
                 <section id="section-life">
-                  <div className="flex items-center gap-2 mb-4">
-                    <button
-                      onClick={() => setLifeView('tracking')}
-                      className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                        lifeView === 'tracking' ? 'bg-clay-soft text-white' : 'bg-ink/5 text-ink-light hover:bg-ink/10'
-                      }`}
-                    >
-                      {t('habits.toggleTracking')}
-                    </button>
-                    <button
-                      onClick={() => setLifeView('habits')}
-                      className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                        lifeView === 'habits' ? 'bg-clay-soft text-white' : 'bg-ink/5 text-ink-light hover:bg-ink/10'
-                      }`}
-                    >
-                      {t('habits.toggleHabits')}
-                    </button>
+                  <div className={`space-y-8 ${lifeView === 'habits' ? '' : 'max-w-4xl mx-auto'}`}>
+                    <div className="flex items-center gap-2 mb-4">
+                      <button
+                        onClick={() => setLifeView('habits')}
+                        className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                          lifeView === 'habits' ? 'bg-clay-soft text-white' : 'bg-ink/5 text-ink-light hover:bg-ink/10'
+                        }`}
+                      >
+                        {t('habits.toggleHabits')}
+                      </button>
+                      <button
+                        onClick={() => setLifeView('tracking')}
+                        className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                          lifeView === 'tracking' ? 'bg-clay-soft text-white' : 'bg-ink/5 text-ink-light hover:bg-ink/10'
+                        }`}
+                      >
+                        {t('habits.toggleTracking')}
+                      </button>
+                    </div>
+                    {lifeView === 'tracking' ? <LifePillars /> : <HabitsTracker />}
                   </div>
-                  {lifeView === 'tracking' ? <LifePillars /> : <HabitsTracker />}
                 </section>
-              </Suspense>
-
-              <Suspense fallback={<div className="h-8" />}>
-                <BookmarksVault />
               </Suspense>
             </div>
           </>
