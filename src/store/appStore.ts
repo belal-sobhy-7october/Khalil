@@ -105,7 +105,8 @@ interface AppStore {
   habits: Habit[];
   habitEntries: HabitEntry[];
   dailyMoods: DailyMood[];
-  addHabit: (name: string, icon?: string) => Promise<{ success: boolean }>;
+  addHabit: (name: string, icon?: string, startDate?: string) => Promise<{ success: boolean }>;
+  updateHabit: (id: string, data: Partial<Pick<Habit, 'name' | 'icon' | 'startDate'>>) => Promise<{ success: boolean }>;
   removeHabit: (id: string) => Promise<void>;
   reorderHabits: (ids: string[]) => Promise<void>;
   toggleHabitEntry: (habitId: string, date: string) => Promise<void>;
@@ -1319,23 +1320,51 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     }
   },
 
-  addHabit: async (name, icon = 'star') => {
+  addHabit: async (name, icon = 'star', startDate) => {
     const userId = get().session?.user?.id;
     if (!userId) return { success: false };
     const id = generateId();
     const maxSortOrder = get().habits.reduce((max, h) => Math.max(max, h.sortOrder), -1);
     const sortOrder = maxSortOrder + 1;
-    const newHabit = { id, name, icon, sortOrder, active: true };
+    // Always resolve "today" on the client (local timezone) — never rely on the
+    // DB's `current_date` default, which is UTC and can disagree near midnight.
+    const effectiveStartDate = startDate || getToday();
+    const newHabit = { id, name, icon, sortOrder, active: true, startDate: effectiveStartDate };
     set((s) => ({ habits: [...s.habits, newHabit] }));
     const { success } = await supabaseCall(
       supabase.from('habits').insert({
-        id, user_id: userId, name, icon, sort_order: sortOrder, active: true,
+        id, user_id: userId, name, icon, sort_order: sortOrder, active: true, start_date: effectiveStartDate,
       }),
       'addHabit'
     );
     if (!success) {
       set((s) => ({ habits: s.habits.filter((h) => h.id !== id) }));
       set({ error: 'errors.addHabit' });
+      return { success: false };
+    }
+    return { success: true };
+  },
+  updateHabit: async (id, data) => {
+    const userId = get().session?.user?.id;
+    if (!userId) return { success: false };
+    const previousHabit = get().habits.find((h) => h.id === id);
+    if (!previousHabit) return { success: false };
+    const nextHabit: Habit = { ...previousHabit, ...data };
+
+    set((s) => ({ habits: s.habits.map((h) => (h.id === id ? nextHabit : h)) }));
+
+    const dbData: Record<string, unknown> = {};
+    if (data.name !== undefined) dbData.name = data.name;
+    if (data.icon !== undefined) dbData.icon = data.icon;
+    if (data.startDate !== undefined) dbData.start_date = data.startDate;
+
+    const { success } = await supabaseCall(
+      supabase.from('habits').update(dbData).eq('id', id).eq('user_id', userId),
+      'updateHabit'
+    );
+    if (!success) {
+      set((s) => ({ habits: s.habits.map((h) => (h.id === id ? previousHabit : h)) }));
+      set({ error: 'errors.updateHabit' });
       return { success: false };
     }
     return { success: true };
@@ -1634,7 +1663,7 @@ function mapBookmark(row: Record<string, unknown>): Bookmark {
 }
 
 function mapHabit(row: Record<string, unknown>): Habit {
-  return { id: row.id as string, name: row.name as string, icon: (row.icon as string) || 'star', sortOrder: (row.sort_order as number) ?? 0, active: (row.active as boolean) ?? true };
+  return { id: row.id as string, name: row.name as string, icon: (row.icon as string) || 'star', sortOrder: (row.sort_order as number) ?? 0, active: (row.active as boolean) ?? true, startDate: (row.start_date as string) || getToday() };
 }
 
 function mapHabitEntry(row: Record<string, unknown>): HabitEntry {

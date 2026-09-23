@@ -232,7 +232,7 @@ function App() {
           </Suspense>
         ) : (
           <>
-            <div className={`space-y-8 canvas-area max-w-4xl mx-auto`} style={{ position: 'relative' }}>
+            <div className={`space-y-8 canvas-area max-w-[1800px] mx-auto`} style={{ position: 'relative' }}>
               <div>
                 <DailyFocus />
               </div>
@@ -252,7 +252,7 @@ function App() {
 
               <Suspense fallback={<div className="h-32" />}>
                 <section id="section-life">
-                  <div className={`space-y-8 ${lifeView === 'habits' ? '' : 'max-w-4xl mx-auto'}`}>
+                  <div className="space-y-8">
                     <div className="flex items-center gap-2 mb-4">
                       <button
                         onClick={() => setLifeView('habits')}

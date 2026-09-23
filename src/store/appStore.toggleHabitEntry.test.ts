@@ -19,6 +19,7 @@ const habit: Habit = {
   icon: 'dumbbell',
   sortOrder: 0,
   active: true,
+  startDate: today,
 };
 
 const entry: HabitEntry = {

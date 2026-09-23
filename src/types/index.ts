@@ -108,6 +108,7 @@ export interface Habit {
   icon: string;
   sortOrder: number;
   active: boolean;
+  startDate: string; // YYYY-MM-DD
 }
 
 export interface HabitEntry {

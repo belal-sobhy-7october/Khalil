@@ -32,6 +32,15 @@ export function getHabitWeekStart(d: Date = new Date()): string {
   return `${y}-${m}-${dayStr}`;
 }
 
+// Whole days between two YYYY-MM-DD strings (b - a), local-date arithmetic.
+export function daysBetweenDateStrings(a: string, b: string): number {
+  const [ay, am, ad] = a.split('-').map(Number);
+  const [by, bm, bd] = b.split('-').map(Number);
+  const dateA = new Date(ay, am - 1, ad);
+  const dateB = new Date(by, bm - 1, bd);
+  return Math.round((dateB.getTime() - dateA.getTime()) / 86400000);
+}
+
 export function addDaysToDateString(dateStr: string, days: number): string {
   const [year, month, day] = dateStr.split('-').map(Number);
   const date = new Date(year, month - 1, day);
