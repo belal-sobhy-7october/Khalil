@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useLayoutEffect, memo } from 'react';
+import { useState, useMemo, useRef, memo } from 'react';
 import {
   Star,
   Heart,
@@ -35,9 +35,21 @@ import {
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, TouchSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import {
+  useFloating,
+  autoUpdate,
+  offset,
+  flip,
+  shift,
+  useDismiss,
+  useRole,
+  useInteractions,
+  FloatingPortal,
+  FloatingFocusManager,
+} from '@floating-ui/react';
 import { useAppStore } from '../../store/appStore';
 import { useTranslation } from '../../i18n/useTranslation';
-import { getHabitWeekStart, addDaysToDateString, daysBetweenDateStrings, getToday } from '../../store/dateHelpers';
+import { getHabitWeekStart, addDaysToDateString, getToday } from '../../store/dateHelpers';
 import { countEligibleDays, computeHabitStats } from '../../store/habitStats';
 import type { Habit } from '../../types';
 
@@ -70,16 +82,28 @@ const iconMap: Record<string, LucideIcon> = {
 
 const ICON_OPTIONS = Object.keys(iconMap);
 
-// Merged drag-handle + name column (206px = 24px handle + 2px internal gap +
-// 180px name), pinned at the logical start edge. A single sticky box (instead
-// of two adjacent ones, see `grid-cols-[206px_...]` below) means there's no
-// exposed grid gutter between them for scrolling day cells to bleed through.
+// Grid geometry. The label column (drag handle + icon + name + actions) is
+// sticky at the logical start edge; day cells scroll underneath it. Both
+// widths are CSS variables set on the grid (see `--label-w` / `--cell-w`
+// below) so the header and every row share one column template via subgrid.
 const DAYS_PER_VIEW = 60;
 const STEP_DAYS = 30;
 
-const SortableHabitRow = memo(function SortableHabitRow({ habit, weekDates, entrySet, entryDates, today, onToggle }: {
+// Sticky label cell chrome, shared by the header corner and each row. The
+// shadow is cast toward the inline end so scrolled cells visibly slide under.
+const STICKY_LABEL_CLASSES =
+  'sticky start-0 bg-card border-e border-border-subtle shadow-[2px_0_4px_-2px_rgba(0,0,0,0.15)] rtl:shadow-[-2px_0_4px_-2px_rgba(0,0,0,0.15)]';
+
+// Row actions are hidden until the row is hovered or focused on pointer
+// devices, and always visible on touch devices (no hover).
+const ROW_ACTION_VISIBILITY =
+  'opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:pointer-events-auto [@media(hover:none)]:opacity-100 [@media(hover:none)]:pointer-events-auto';
+
+type RowPopover = 'delete' | 'editStartDate' | null;
+
+const SortableHabitRow = memo(function SortableHabitRow({ habit, dates, entrySet, entryDates, today, onToggle }: {
   habit: Habit;
-  weekDates: string[];
+  dates: string[];
   entrySet: Set<string>;
   entryDates: string[];
   today: string;
@@ -93,18 +117,34 @@ const SortableHabitRow = memo(function SortableHabitRow({ habit, weekDates, entr
     transform: CSS.Transform.toString(transform),
     transition: isDragging ? 'none' : transition,
     opacity: isDragging ? 0.5 : 1,
-    zIndex: isDragging ? 10 : undefined,
+    // Above the other rows' sticky label cells (z-10) and the header corner (z-20).
+    zIndex: isDragging ? 30 : undefined,
     willChange: isDragging ? 'transform' : undefined,
   };
 
-  const [confirmingDelete, setConfirmingDelete] = useState(false);
-  const [editingStartDate, setEditingStartDate] = useState(false);
+  const [popover, setPopover] = useState<RowPopover>(null);
   const [draftStartDate, setDraftStartDate] = useState(habit.startDate);
   const Icon = iconMap[habit.icon] || Star;
 
+  // Popovers are portalled out of the horizontal scroller (which would clip
+  // them) and anchored to the sticky label cell.
+  const { refs, floatingStyles, context } = useFloating({
+    open: popover !== null,
+    onOpenChange: (open) => {
+      if (!open) setPopover(null);
+    },
+    placement: 'bottom-end',
+    middleware: [offset(4), flip({ padding: 8 }), shift({ padding: 8 })],
+    whileElementsMounted: autoUpdate,
+  });
+  const { setReference, setFloating } = refs;
+  const dismiss = useDismiss(context);
+  const role = useRole(context, { role: 'dialog' });
+  const { getFloatingProps } = useInteractions([dismiss, role]);
+
   const openEditStartDate = () => {
     setDraftStartDate(habit.startDate);
-    setEditingStartDate(true);
+    setPopover((p) => (p === 'editStartDate' ? null : 'editStartDate'));
   };
 
   const excludedCount = useMemo(
@@ -114,16 +154,21 @@ const SortableHabitRow = memo(function SortableHabitRow({ habit, weekDates, entr
 
   const handleSaveStartDate = () => {
     useAppStore.getState().updateHabit(habit.id, { startDate: draftStartDate });
-    setEditingStartDate(false);
+    setPopover(null);
   };
+
+  const confirmDeleteText = t('habits.confirmDelete').replace('{name}', habit.name);
 
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className="group grid grid-cols-[206px_repeat(60,1cm)_1cm] border-b border-r border-l border-border-subtle items-center"
+      className="group grid grid-cols-subgrid col-span-full items-center"
     >
-      <div className="flex items-center gap-2 px-2 py-1 sticky start-0 bg-card z-10 border-e border-border-subtle shadow-[2px_0_4px_-2px_rgba(0,0,0,0.15)]">
+      <div
+        ref={setReference}
+        className={`${STICKY_LABEL_CLASSES} z-10 relative flex items-center gap-1.5 self-stretch ps-2 pe-2 [@media(hover:none)]:pe-12`}
+      >
         <span
           {...attributes}
           {...listeners}
@@ -131,15 +176,104 @@ const SortableHabitRow = memo(function SortableHabitRow({ habit, weekDates, entr
         >
           <GripVertical size={14} />
         </span>
-        <span className="shrink-0 text-clay-soft">
+        <span className="hidden sm:block shrink-0 text-clay-soft">
           <Icon size={18} />
         </span>
-        <span className="text-sm font-medium text-ink truncate">
+        <span className="min-w-0 flex-1 text-sm font-medium text-ink truncate" title={habit.name}>
           {habit.name}
         </span>
+
+        <div
+          className={`absolute inset-y-0 end-0 flex items-stretch bg-card transition-opacity ${
+            popover ? 'opacity-100 pointer-events-auto' : ROW_ACTION_VISIBILITY
+          }`}
+        >
+          <button
+            onClick={openEditStartDate}
+            aria-label={t('habits.editStartDateFor').replace('{name}', habit.name)}
+            aria-expanded={popover === 'editStartDate'}
+            className="flex items-center justify-center w-6 text-ink-lighter hover:text-clay-soft hover:bg-clay-soft/10 transition-colors"
+          >
+            <Pencil size={12} />
+          </button>
+          <button
+            onClick={() => setPopover((p) => (p === 'delete' ? null : 'delete'))}
+            aria-label={t('habits.deleteHabit').replace('{name}', habit.name)}
+            aria-expanded={popover === 'delete'}
+            className="flex items-center justify-center w-6 text-ink-lighter hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
+          >
+            <Trash2 size={12} />
+          </button>
+        </div>
       </div>
 
-      {weekDates.map((date) => {
+      {popover && (
+        <FloatingPortal>
+          <FloatingFocusManager context={context}>
+            <div
+              ref={setFloating}
+              style={floatingStyles}
+              {...getFloatingProps()}
+              aria-label={popover === 'delete' ? confirmDeleteText : t('habits.editStartDateFor').replace('{name}', habit.name)}
+              className={`z-50 bg-card border border-border-subtle rounded-lg shadow-lg p-2 text-start ${
+                popover === 'delete' ? 'w-56' : 'w-52'
+              }`}
+            >
+              {popover === 'delete' ? (
+                <>
+                  <p className="text-xs text-ink mb-2 break-words">{confirmDeleteText}</p>
+                  <div className="flex gap-1.5 justify-end">
+                    <button
+                      onClick={() => setPopover(null)}
+                      className="px-2 py-1 text-[11px] rounded text-ink-light hover:bg-ink/5"
+                    >
+                      {t('common.cancel')}
+                    </button>
+                    <button
+                      onClick={() => useAppStore.getState().removeHabit(habit.id)}
+                      className="px-2 py-1 text-[11px] rounded bg-red-500 hover:bg-red-600 text-white"
+                    >
+                      {t('common.delete')}
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <p className="text-xs text-ink mb-2">{t('habits.editStartDate')}</p>
+                  <input
+                    type="date"
+                    value={draftStartDate}
+                    max={today}
+                    onChange={(e) => setDraftStartDate(e.target.value)}
+                    className="w-full border border-border-subtle rounded-lg px-2 py-1.5 text-xs bg-ink/3 text-ink focus:outline-none focus:ring-1 focus:ring-clay-soft/30 mb-2"
+                  />
+                  {excludedCount > 0 && (
+                    <p className="text-[11px] text-amber-600 dark:text-amber-400 mb-2">
+                      {t('habits.startDateWarning').replace('{count}', String(excludedCount))}
+                    </p>
+                  )}
+                  <div className="flex gap-1.5 justify-end">
+                    <button
+                      onClick={() => setPopover(null)}
+                      className="px-2 py-1 text-[11px] rounded text-ink-light hover:bg-ink/5"
+                    >
+                      {t('common.cancel')}
+                    </button>
+                    <button
+                      onClick={handleSaveStartDate}
+                      className="px-2 py-1 text-[11px] rounded bg-clay-soft hover:bg-clay-soft-dark text-white"
+                    >
+                      {t('common.save')}
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </FloatingFocusManager>
+        </FloatingPortal>
+      )}
+
+      {dates.map((date) => {
         const isCompleted = entrySet.has(`${habit.id}|${date}`);
         const isToday = date === today;
         const disabled = date < habit.startDate || date > today;
@@ -150,7 +284,7 @@ const SortableHabitRow = memo(function SortableHabitRow({ habit, weekDates, entr
               key={date}
               aria-disabled="true"
               aria-label={`${habit.name} — ${date}`}
-              className={`w-[1cm] h-[1cm] flex items-center justify-center border border-border-subtle bg-ink/3 cursor-not-allowed ${
+              className={`w-(--cell-w) h-(--cell-w) flex items-center justify-center border border-border-subtle bg-ink/3 cursor-not-allowed ${
                 isToday ? 'ring-1 ring-inset ring-clay-soft/40' : ''
               }`}
             />
@@ -163,7 +297,7 @@ const SortableHabitRow = memo(function SortableHabitRow({ habit, weekDates, entr
             onClick={() => onToggle(habit.id, date)}
             aria-label={`${habit.name} — ${date}`}
             aria-pressed={isCompleted}
-            className={`w-[1cm] h-[1cm] flex items-center justify-center border border-border-subtle transition-all ${
+            className={`w-(--cell-w) h-(--cell-w) flex items-center justify-center border border-border-subtle transition-all ${
               isCompleted
                 ? 'bg-clay-soft text-white'
                 : 'bg-ink/8 text-ink-lighter hover:bg-ink/10'
@@ -173,81 +307,6 @@ const SortableHabitRow = memo(function SortableHabitRow({ habit, weekDates, entr
           </button>
         );
       })}
-
-      <div className="relative w-[1cm] h-[1cm] shrink-0 flex items-center justify-center gap-0.5">
-        <button
-          onClick={openEditStartDate}
-          aria-label={t('habits.editStartDate')}
-          className="flex items-center justify-center w-[0.5cm] h-[1cm] text-ink-lighter hover:text-clay-soft hover:bg-clay-soft/10 transition-all opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 [@media(hover:none)]:opacity-100"
-        >
-          <Pencil size={11} />
-        </button>
-        <button
-          onClick={() => setConfirmingDelete(true)}
-          aria-label={t('common.delete')}
-          className="flex items-center justify-center w-[0.5cm] h-[1cm] text-ink-lighter hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-all opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 [@media(hover:none)]:opacity-100"
-        >
-          <Trash2 size={11} />
-        </button>
-        {confirmingDelete && (
-          <div
-            role="dialog"
-            aria-label={t('habits.confirmDelete')}
-            className="absolute z-30 bottom-full end-0 mb-1 w-40 bg-card border border-border-subtle rounded-lg shadow-lg p-2 text-start"
-          >
-            <p className="text-xs text-ink mb-2">{t('habits.confirmDelete')}</p>
-            <div className="flex gap-1.5 justify-end">
-              <button
-                onClick={() => setConfirmingDelete(false)}
-                className="px-2 py-1 text-[11px] rounded text-ink-light hover:bg-ink/5"
-              >
-                {t('common.cancel')}
-              </button>
-              <button
-                onClick={() => useAppStore.getState().removeHabit(habit.id)}
-                className="px-2 py-1 text-[11px] rounded bg-red-500 hover:bg-red-600 text-white"
-              >
-                {t('common.delete')}
-              </button>
-            </div>
-          </div>
-        )}
-        {editingStartDate && (
-          <div
-            role="dialog"
-            aria-label={t('habits.editStartDate')}
-            className="absolute z-30 bottom-full end-0 mb-1 w-52 bg-card border border-border-subtle rounded-lg shadow-lg p-2 text-start"
-          >
-            <p className="text-xs text-ink mb-2">{t('habits.editStartDate')}</p>
-            <input
-              type="date"
-              value={draftStartDate}
-              max={today}
-              onChange={(e) => setDraftStartDate(e.target.value)}
-              className="w-full border border-border-subtle rounded-lg px-2 py-1.5 text-xs bg-ink/3 text-ink focus:outline-none focus:ring-1 focus:ring-clay-soft/30 mb-2"
-            />
-            {excludedCount > 0 && (
-              <p className="text-[11px] text-amber-600 dark:text-amber-400 mb-2">
-                {t('habits.startDateWarning').replace('{count}', String(excludedCount))}
-              </p>
-            )}
-            <div className="flex gap-1.5 justify-end">
-              <button
-                onClick={() => setEditingStartDate(false)}
-                className="px-2 py-1 text-[11px] rounded text-ink-light hover:bg-ink/5"
-              >
-                {t('common.cancel')}
-              </button>
-              <button
-                onClick={handleSaveStartDate}
-                className="px-2 py-1 text-[11px] rounded bg-clay-soft hover:bg-clay-soft-dark text-white"
-              >
-                {t('common.save')}
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
     </div>
   );
 });
@@ -301,9 +360,15 @@ export default function HabitsTracker() {
     })
   );
 
+  // Chronological (oldest -> windowEnd); used for the range label.
   const weekDates = useMemo(() => {
     return Array.from({ length: DAYS_PER_VIEW }, (_, i) => addDaysToDateString(windowEnd, i - (DAYS_PER_VIEW - 1)));
   }, [windowEnd]);
+
+  // Column order in the grid: newest first, so the most recent day sits right
+  // next to the sticky label column and older days extend toward inline-end.
+  // Rendering order only — stats/charts below use their own date ranges.
+  const gridDates = useMemo(() => [...weekDates].reverse(), [weekDates]);
 
   const currentMonth = today.slice(0, 7);
   const daysInMonth = new Date(parseInt(currentMonth.slice(0, 4)), parseInt(currentMonth.slice(5, 7)), 0).getDate();
@@ -405,50 +470,30 @@ export default function HabitsTracker() {
     }
   };
 
+  // The newest date of the window is the first column, so the scroll start
+  // already shows it. scrollLeft 0 is the inline start in both LTR and RTL, so
+  // no direction-specific math is needed.
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const scrollGridToStart = () => {
+    scrollContainerRef.current?.scrollTo({ left: 0 });
+  };
+
   const goToPrevWeek = () => {
     setWindowEnd((w) => addDaysToDateString(w, -STEP_DAYS));
+    scrollGridToStart();
   };
 
   const goToNextWeek = () => {
     setWindowEnd((w) => addDaysToDateString(w, STEP_DAYS));
+    scrollGridToStart();
   };
 
   const goToToday = () => {
     setWindowEnd(today);
+    scrollGridToStart();
   };
 
   const dateRangeLabel = `${weekDates[0].slice(5)} → ${weekDates[weekDates.length - 1].slice(5)}`;
-
-  // --- Open-on-today scroll behavior ---
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const stickyCornerRef = useRef<HTMLDivElement>(null);
-  const headerCellRefs = useRef<Map<string, HTMLDivElement>>(new Map());
-
-  // The date within the current window closest to today (usually today itself,
-  // when the window hasn't been paged away from the default).
-  const anchorDate = useMemo(() => {
-    return weekDates.reduce(
-      (best, d) => (Math.abs(daysBetweenDateStrings(d, today)) < Math.abs(daysBetweenDateStrings(best, today)) ? d : best),
-      weekDates[0]
-    );
-  }, [weekDates, today]);
-
-  useLayoutEffect(() => {
-    const container = scrollContainerRef.current;
-    const sticky = stickyCornerRef.current;
-    if (!container) return;
-    const frame = requestAnimationFrame(() => {
-      // Reserve space for the sticky column so scrollIntoView doesn't tuck the
-      // target underneath it — measured, not hardcoded, so it stays correct if
-      // the sticky column's width ever changes.
-      if (sticky) {
-        container.style.scrollPaddingInlineStart = `${sticky.offsetWidth}px`;
-      }
-      const target = headerCellRefs.current.get(anchorDate);
-      target?.scrollIntoView({ inline: 'start', block: 'nearest' });
-    });
-    return () => cancelAnimationFrame(frame);
-  }, [anchorDate, isRTL]);
 
   return (
     <section id="section-habits">
@@ -562,44 +607,43 @@ export default function HabitsTracker() {
           </div>
 
           <div ref={scrollContainerRef} className="overflow-x-auto overscroll-x-contain">
-            <div className="grid grid-cols-[206px_repeat(60,1cm)_1cm] border border-border-subtle mb-0">
-              <div ref={stickyCornerRef} className="border border-border-subtle sticky start-0 bg-card z-10 border-e border-border-subtle shadow-[2px_0_4px_-2px_rgba(0,0,0,0.15)]" />
-              {weekDates.map((date) => (
-                <div
-                  key={date}
-                  ref={(el) => {
-                    if (el) headerCellRefs.current.set(date, el);
-                    else headerCellRefs.current.delete(date);
-                  }}
-                  className={`text-center py-1 w-[1cm] h-[1cm] border border-border-subtle flex items-center justify-center ${
-                    date === today ? 'bg-clay-soft/10 ring-1 ring-inset ring-clay-soft/40' : ''
-                  }`}
-                >
-                  <div className="text-[10px] text-ink-lighter">
-                    {date.slice(5)}
+            {/* One grid for header + rows (rows are subgrids) so columns always align. */}
+            <div
+              className="grid w-max gap-y-0.5 border border-border-subtle [--label-w:152px] sm:[--label-w:200px] [--cell-w:1cm]"
+              style={{ gridTemplateColumns: `var(--label-w) repeat(${DAYS_PER_VIEW}, var(--cell-w))` }}
+            >
+              <div className="grid grid-cols-subgrid col-span-full">
+                <div className={`${STICKY_LABEL_CLASSES} z-20`} />
+                {gridDates.map((date) => (
+                  <div
+                    key={date}
+                    className={`text-center py-1 w-(--cell-w) h-(--cell-w) border border-border-subtle flex items-center justify-center ${
+                      date === today ? 'bg-clay-soft/10 ring-1 ring-inset ring-clay-soft/40' : ''
+                    }`}
+                  >
+                    <div className="text-[10px] text-ink-lighter">
+                      {date.slice(5)}
+                    </div>
                   </div>
-                </div>
-              ))}
-              <div />
-            </div>
+                ))}
+              </div>
 
-            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-              <SortableContext items={habits.map((h) => h.id)} strategy={verticalListSortingStrategy}>
-                <div className="space-y-0.5">
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                <SortableContext items={habits.map((h) => h.id)} strategy={verticalListSortingStrategy}>
                   {habits.map((habit) => (
                     <SortableHabitRow
                       key={habit.id}
                       habit={habit}
-                      weekDates={weekDates}
+                      dates={gridDates}
                       entrySet={entrySet}
                       entryDates={entryDatesByHabit.get(habit.id) ?? []}
                       today={today}
                       onToggle={toggleHabitEntry}
                     />
                   ))}
-                </div>
-              </SortableContext>
-            </DndContext>
+                </SortableContext>
+              </DndContext>
+            </div>
           </div>
 
           {!showAddForm ? (

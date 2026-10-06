@@ -21,6 +21,9 @@ import type {
   DailyMood,
   CalendarEvent,
   CalendarViewMode,
+  VocabularyCategory,
+  VocabularyItem,
+  VocabularyReview,
 } from '../types';
 
 interface AppStore {
@@ -126,6 +129,18 @@ interface AppStore {
   navigateNext: () => void;
   navigateToday: () => void;
   dismissCalendarOnboarding: () => void;
+
+  vocabularyCategories: VocabularyCategory[];
+  vocabularyItems: VocabularyItem[];
+  vocabularyReviews: VocabularyReview[];
+  addVocabularyCategory: (category: Omit<VocabularyCategory, 'id' | 'userId' | 'createdAt' | 'updatedAt'>) => Promise<void>;
+  updateVocabularyCategory: (id: string, data: Partial<VocabularyCategory>) => Promise<void>;
+  deleteVocabularyCategory: (id: string) => Promise<void>;
+  addVocabularyItem: (item: Omit<VocabularyItem, 'id' | 'userId' | 'createdAt' | 'updatedAt' | 'reviewCount' | 'lastReviewedAt'>) => Promise<void>;
+  updateVocabularyItem: (id: string, data: Partial<VocabularyItem>) => Promise<void>;
+  deleteVocabularyItem: (id: string) => Promise<void>;
+  submitVocabularyReview: (itemId: string, result: VocabularyReview['result'], timeTaken?: number) => Promise<void>;
+  getVocabularyStats: () => { total: number; mastered: number; needReview: number };
 }
 
 function generateId(): string {
@@ -292,7 +307,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       // Load core tables — these must exist. Tables that can grow past a single
       // PostgREST page (max_rows in supabase/config.toml) are paged via fetchAll
       // so rows past the first 1000 aren't silently dropped.
-      const [dailyFocusRes, todosRes, lifeCategoryRes, subTrackRes, subTrackEntryRes, bookmarkCategoryRes, bookmarkRes, habitsRes, habitEntriesRes, dailyMoodsRes, calendarEventsRes] = await Promise.all([
+      const [dailyFocusRes, todosRes, lifeCategoryRes, subTrackRes, subTrackEntryRes, bookmarkCategoryRes, bookmarkRes, habitsRes, habitEntriesRes, dailyMoodsRes, calendarEventsRes, vocabularyCategoriesRes, vocabularyItemsRes] = await Promise.all([
         supabase.from('daily_focus').select('*').eq('user_id', userId).limit(1),
         fetchAll('todos', userId, ['sort_order', 'id']),
         supabase.from('life_categories').select('*').eq('user_id', userId).order('sort_order'),
@@ -304,6 +319,8 @@ export const useAppStore = create<AppStore>()((set, get) => ({
         fetchAll('habit_entries', userId, ['date', 'id']),
         fetchAll('daily_mood', userId, ['date', 'id']),
         fetchAll('calendar_events', userId, ['date', 'id']),
+        supabase.from('vocabulary_categories').select('*').eq('user_id', userId).order('name'),
+        fetchAll('vocabulary_items', userId, ['created_at', 'id']),
       ]);
 
       const coreTableErrors = [
@@ -318,6 +335,8 @@ export const useAppStore = create<AppStore>()((set, get) => ({
         { table: 'habit_entries', error: habitEntriesRes.error },
         { table: 'daily_mood', error: dailyMoodsRes.error },
         { table: 'calendar_events', error: calendarEventsRes.error },
+        { table: 'vocabulary_categories', error: vocabularyCategoriesRes.error },
+        { table: 'vocabulary_items', error: vocabularyItemsRes.error },
       ].filter((check) => check.error != null);
       coreTableErrors.forEach(({ table, error }) => console.error(`[loadUserData] ${table} error:`, error));
 
@@ -332,6 +351,8 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       const habitEntriesRows = habitEntriesRes.data;
       const dailyMoodsRows = dailyMoodsRes.data;
       const calendarEventsRows = calendarEventsRes.data;
+      const vocabularyCategoriesRows = vocabularyCategoriesRes.data;
+      const vocabularyItemsRows = vocabularyItemsRes.data;
 
       // Split todos by gate
       type TodoRow = { gate: string; date?: string; week_start?: string };
@@ -354,6 +375,8 @@ export const useAppStore = create<AppStore>()((set, get) => ({
           habits: habitsRows?.length ?? 0,
           habitEntries: habitEntriesRows?.length ?? 0,
           dailyMoods: dailyMoodsRows?.length ?? 0,
+          vocabularyCategories: vocabularyCategoriesRows?.length ?? 0,
+          vocabularyItems: vocabularyItemsRows?.length ?? 0,
         });
       }
 
@@ -402,6 +425,9 @@ export const useAppStore = create<AppStore>()((set, get) => ({
         habitEntries: (habitEntriesRows || []).map(mapHabitEntry),
         dailyMoods: (dailyMoodsRows || []).map(mapDailyMood),
         calendarEvents: (calendarEventsRows || []).map(mapCalendarEvent),
+        vocabularyCategories: (vocabularyCategoriesRows || []).map(mapVocabularyCategory),
+        vocabularyItems: (vocabularyItemsRows || []).map(mapVocabularyItem),
+        vocabularyReviews: [],
         currentDate: getToday(),
         viewMode: 'week',
         showCalendarOnboarding: !localStorage.getItem('khalil-calendar-onboarding-dismissed'),
@@ -1132,6 +1158,9 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   habits: [],
   habitEntries: [],
   dailyMoods: [],
+  vocabularyCategories: [],
+  vocabularyItems: [],
+  vocabularyReviews: [],
   addBookmarkCategory: async (category) => {
     const userId = get().session?.user?.id;
     if (!userId) return;
@@ -1597,6 +1626,134 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     set({ showCalendarOnboarding: false });
   },
 
+  addVocabularyCategory: async (category) => {
+    const userId = get().session?.user?.id;
+    if (!userId) return;
+    const id = generateId();
+    const now = new Date().toISOString();
+    const { success } = await supabaseCall(
+      supabase.from('vocabulary_categories').insert({
+        id, user_id: userId, name: category.name,
+        color: category.color, icon: category.icon,
+        created_at: now, updated_at: now,
+      }),
+      'addVocabularyCategory'
+    );
+    if (!success) {
+      set({ error: 'errors.addVocabularyCategory' });
+      return;
+    }
+    set((s) => ({ vocabularyCategories: [...s.vocabularyCategories, { ...category, id, userId, createdAt: now, updatedAt: now }] }));
+  },
+  updateVocabularyCategory: async (id, data) => {
+    const previousCategory = get().vocabularyCategories.find((c) => c.id === id);
+    if (!previousCategory) return;
+    const now = new Date().toISOString();
+    set((s) => ({
+      vocabularyCategories: s.vocabularyCategories.map((c) => (c.id === id ? { ...c, ...data, updatedAt: now } : c)),
+    }));
+    const dbData: Record<string, unknown> = { updated_at: now };
+    if (data.name !== undefined) dbData.name = data.name;
+    if (data.color !== undefined) dbData.color = data.color;
+    if (data.icon !== undefined) dbData.icon = data.icon;
+    const { success } = await supabaseCall(supabase.from('vocabulary_categories').update(dbData).eq('id', id), 'updateVocabularyCategory');
+    if (!success) {
+      set((s) => ({ vocabularyCategories: s.vocabularyCategories.map((c) => (c.id === id ? previousCategory : c)), error: 'errors.updateVocabularyCategory' }));
+    }
+  },
+  deleteVocabularyCategory: async (id) => {
+    const { success } = await supabaseCall(supabase.from('vocabulary_categories').delete().eq('id', id), 'deleteVocabularyCategory');
+    if (!success) {
+      set({ error: 'errors.deleteVocabularyCategory' });
+      return;
+    }
+    set((s) => ({
+      vocabularyCategories: s.vocabularyCategories.filter((c) => c.id !== id),
+      vocabularyItems: s.vocabularyItems.map((item) => item.categoryId === id ? { ...item, categoryId: undefined } : item),
+    }));
+  },
+  addVocabularyItem: async (item) => {
+    const userId = get().session?.user?.id;
+    if (!userId) return;
+    const id = generateId();
+    const now = new Date().toISOString();
+    const { success } = await supabaseCall(
+      supabase.from('vocabulary_items').insert({
+        id, user_id: userId, category_id: item.categoryId,
+        word: item.word, type: item.type, definition: item.definition,
+        example_sentence: item.exampleSentence, pronunciation: item.pronunciation,
+        mastery_level: item.masteryLevel, review_count: 0,
+        created_at: now, updated_at: now,
+      }),
+      'addVocabularyItem'
+    );
+    if (!success) {
+      set({ error: 'errors.addVocabularyItem' });
+      return;
+    }
+    set((s) => ({ vocabularyItems: [...s.vocabularyItems, { ...item, id, userId, createdAt: now, updatedAt: now, reviewCount: 0 }] }));
+  },
+  updateVocabularyItem: async (id, data) => {
+    const previousItem = get().vocabularyItems.find((i) => i.id === id);
+    if (!previousItem) return;
+    const now = new Date().toISOString();
+    set((s) => ({
+      vocabularyItems: s.vocabularyItems.map((i) => (i.id === id ? { ...i, ...data, updatedAt: now } : i)),
+    }));
+    const dbData: Record<string, unknown> = { updated_at: now };
+    if (data.categoryId !== undefined) dbData.category_id = data.categoryId;
+    if (data.word !== undefined) dbData.word = data.word;
+    if (data.type !== undefined) dbData.type = data.type;
+    if (data.definition !== undefined) dbData.definition = data.definition;
+    if (data.exampleSentence !== undefined) dbData.example_sentence = data.exampleSentence;
+    if (data.pronunciation !== undefined) dbData.pronunciation = data.pronunciation;
+    if (data.masteryLevel !== undefined) dbData.mastery_level = data.masteryLevel;
+    const { success } = await supabaseCall(supabase.from('vocabulary_items').update(dbData).eq('id', id), 'updateVocabularyItem');
+    if (!success) {
+      set((s) => ({ vocabularyItems: s.vocabularyItems.map((i) => (i.id === id ? previousItem : i)), error: 'errors.updateVocabularyItem' }));
+    }
+  },
+  deleteVocabularyItem: async (id) => {
+    const { success } = await supabaseCall(supabase.from('vocabulary_items').delete().eq('id', id), 'deleteVocabularyItem');
+    if (!success) {
+      set({ error: 'errors.deleteVocabularyItem' });
+      return;
+    }
+    set((s) => ({ vocabularyItems: s.vocabularyItems.filter((i) => i.id !== id) }));
+  },
+  submitVocabularyReview: async (itemId, result, timeTaken) => {
+    const userId = get().session?.user?.id;
+    if (!userId) return;
+    const id = generateId();
+    const now = new Date().toISOString();
+    const item = get().vocabularyItems.find((i) => i.id === itemId);
+    if (!item) return;
+    const { success } = await supabaseCall(
+      supabase.from('vocabulary_reviews').insert({
+        id, vocabulary_item_id: itemId, user_id: userId,
+        result, time_taken: timeTaken, reviewed_at: now,
+      }),
+      'submitVocabularyReview'
+    );
+    if (!success) {
+      set({ error: 'errors.submitVocabularyReview' });
+      return;
+    }
+    const newMasteryLevel = result === 'correct' ? Math.min(item.masteryLevel + 1, 5) : Math.max(item.masteryLevel - 1, 0);
+    set((s) => ({
+      vocabularyReviews: [...s.vocabularyReviews, { id, vocabularyItemId: itemId, userId, result, timeTaken, reviewedAt: now }],
+      vocabularyItems: s.vocabularyItems.map((i) => (i.id === itemId ? { ...i, masteryLevel: newMasteryLevel, reviewCount: i.reviewCount + 1, lastReviewedAt: now } : i)),
+    }));
+    await supabaseCall(supabase.from('vocabulary_items').update({ mastery_level: newMasteryLevel, review_count: item.reviewCount + 1, last_reviewed_at: now }).eq('id', itemId), 'updateVocabularyItemAfterReview');
+  },
+  getVocabularyStats: () => {
+    const items = get().vocabularyItems;
+    const total = items.length;
+    const mastered = items.filter((i) => i.masteryLevel >= 4).length;
+    const needReview = items.filter((i) => i.masteryLevel <= 2).length;
+    return { total, mastered, needReview };
+  },
+
 }));
 
 function mapDailyTodo(row: Record<string, unknown>): DailyTodo {
@@ -1687,5 +1844,35 @@ function mapCalendarEvent(row: Record<string, unknown>): CalendarEvent {
     color: (row.color as string) || 'clay-soft',
     createdAt: typeof row.created_at === "number" ? row.created_at : new Date(row.created_at as string).getTime() || Date.now(),
     updatedAt: typeof row.updated_at === "number" ? row.updated_at : new Date(row.updated_at as string).getTime() || Date.now(),
+  };
+}
+
+function mapVocabularyCategory(row: Record<string, unknown>): VocabularyCategory {
+  return {
+    id: row.id as string,
+    userId: row.user_id as string,
+    name: row.name as string,
+    color: (row.color as string) || undefined,
+    icon: (row.icon as string) || undefined,
+    createdAt: row.created_at as string,
+    updatedAt: row.updated_at as string,
+  };
+}
+
+function mapVocabularyItem(row: Record<string, unknown>): VocabularyItem {
+  return {
+    id: row.id as string,
+    userId: row.user_id as string,
+    categoryId: (row.category_id as string) || undefined,
+    word: row.word as string,
+    type: row.type as VocabularyItem['type'],
+    definition: row.definition as string,
+    exampleSentence: (row.example_sentence as string) || undefined,
+    pronunciation: (row.pronunciation as string) || undefined,
+    masteryLevel: (row.mastery_level as number) ?? 0,
+    reviewCount: (row.review_count as number) ?? 0,
+    lastReviewedAt: (row.last_reviewed_at as string) || undefined,
+    createdAt: row.created_at as string,
+    updatedAt: row.updated_at as string,
   };
 }

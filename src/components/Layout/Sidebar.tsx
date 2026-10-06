@@ -4,6 +4,7 @@ import {
   Heart,
   LogOut,
   Calendar,
+  BookOpen,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from '../../i18n/useTranslation';
@@ -37,6 +38,7 @@ export default function Sidebar({
     { id: 'calendar', label: t('nav.calendar'), icon: <Calendar size={18} /> },
     { id: 'life', label: t('nav.life'), icon: <Heart size={18} /> },
     { id: 'bookmarks', label: t('nav.bookmarks'), icon: <Bookmark size={18} /> },
+    { id: 'vocabulary', label: t('nav.vocabulary'), icon: <BookOpen size={18} /> },
   ];
 
   return (

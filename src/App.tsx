@@ -28,6 +28,7 @@ const HabitsTracker = lazy(() => import('./components/Habits/HabitsTracker'));
 const BookmarksVault = lazy(() => import('./components/Bookmarks/BookmarksVault'));
 const NotesPanel = lazy(() => import('./components/Layout/NotesPanel'));
 const Calendar = lazy(() => import('./components/Calendar/Calendar'));
+const VocabularySection = lazy(() => import('./components/Vocabulary/VocabularySection'));
 
 function App() {
   const language = useAppStore((s) => s.language);
@@ -184,7 +185,7 @@ function App() {
       <DashboardLayout
         activeSection={activeSection}
         onSectionChange={handleSectionChange}
-        allowFullWidth={activeSection === 'calendar' || activeSection === 'bookmarks'}
+        allowFullWidth={activeSection === 'calendar' || activeSection === 'bookmarks' || activeSection === 'vocabulary'}
         notesSlot={
           <Suspense fallback={null}>
             <NotesPanel
@@ -229,6 +230,17 @@ function App() {
             </div>
           }>
             <BookmarksVault />
+          </Suspense>
+        ) : activeSection === 'vocabulary' ? (
+          <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center">
+              <div className="flex flex-col items-center gap-3">
+                <div className="w-8 h-8 border-2 border-clay-soft border-t-transparent rounded-full animate-spin" />
+                <span className="text-sm text-ink-light">{t('common.loading')}</span>
+              </div>
+            </div>
+          }>
+            <VocabularySection />
           </Suspense>
         ) : (
           <>

@@ -144,3 +144,43 @@ export interface CalendarState {
   viewMode: CalendarViewMode;
   showOnboarding: boolean;
 }
+
+// Vocabulary Types
+export type VocabularyItemType = 'word' | 'verb' | 'idiom' | 'phrase';
+
+export interface VocabularyCategory {
+  id: string;
+  userId: string;
+  name: string;
+  color?: string;
+  icon?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface VocabularyItem {
+  id: string;
+  userId: string;
+  categoryId?: string;
+  word: string;
+  type: VocabularyItemType;
+  definition: string;
+  exampleSentence?: string;
+  pronunciation?: string;
+  masteryLevel: number; // 0-5
+  reviewCount: number;
+  lastReviewedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type VocabularyReviewResult = 'correct' | 'incorrect' | 'skipped';
+
+export interface VocabularyReview {
+  id: string;
+  vocabularyItemId: string;
+  userId: string;
+  result: VocabularyReviewResult;
+  timeTaken?: number;
+  reviewedAt: string;
+}
