@@ -52,7 +52,7 @@ import {
 import { useAppStore } from '../../store/appStore';
 import { useTranslation } from '../../i18n/useTranslation';
 import { getHabitWeekStart, addDaysToDateString, getToday } from '../../store/dateHelpers';
-import { countEligibleDays, computeHabitStats, computeStreaks, isScheduledOn, type HabitStreaks } from '../../store/habitStats';
+import { countEligibleDays, computeHabitStats, computeStreaks, isScheduledOn, weekdayOf, type HabitStreaks } from '../../store/habitStats';
 import type { Habit } from '../../types';
 
 const iconMap: Record<string, LucideIcon> = {
@@ -92,7 +92,9 @@ const RANGE_OPTIONS = [7, 30, 60] as const;
 type RangeOption = (typeof RANGE_OPTIONS)[number];
 const RANGE_STORAGE_KEY = 'khalil-habits-range';
 // Cells get smaller as the range grows so a week fits without scrolling.
-const CELL_WIDTH: Record<RangeOption, string> = { 7: '3.25rem', 30: '2.25rem', 60: '1cm' };
+// Wider ranges get narrower cells so more days fit on screen (60 days used to
+// have *bigger* cells than 30, which made the two views look swapped).
+const CELL_WIDTH: Record<RangeOption, string> = { 7: '3.25rem', 30: '2rem', 60: '1.375rem' };
 
 function readStoredRange(): RangeOption {
   try {
@@ -840,9 +842,13 @@ export default function HabitsTracker() {
                     }`}
                   >
                     <div className="flex flex-col items-center leading-tight text-ink-lighter">
-                      {range !== 60 && <span className="text-[9px]">{dayNameOf(date, locale)}</span>}
+                      {range !== 60 && (
+                        <span className="text-[9px]">
+                          {range === 7 ? dayNameOf(date, locale) : weekdayName(weekdayOf(date), locale, 'narrow')}
+                        </span>
+                      )}
                       <span className={`text-[10px] ${date === today ? 'text-clay-soft font-semibold' : ''}`}>
-                        {range === 7 ? date.slice(8) : date.slice(5)}
+                        {Number(date.slice(8))}
                       </span>
                     </div>
                   </div>
