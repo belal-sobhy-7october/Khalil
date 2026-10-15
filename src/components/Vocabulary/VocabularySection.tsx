@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Plus, Search, Filter, Flame, Upload, Library, Sparkles, PlayCircle } from 'lucide-react';
+import { Plus, Search, Filter, Flame, Upload, Library, Sparkles, PlayCircle, Languages } from 'lucide-react';
 import { useAppStore } from '../../store/appStore';
 import { useTranslation } from '../../i18n/useTranslation';
 import { speakWord, getPronunciationPrefs } from '../../lib/pronunciation';
@@ -11,6 +11,8 @@ import FlashcardReview from './FlashcardReview';
 import ImportWordsModal from './ImportWordsModal';
 import TopicLibraryModal from './TopicLibraryModal';
 import QuickAddModal from './QuickAddModal';
+import ConvertToEnglishModal from './ConvertToEnglishModal';
+import { hasArabicDefinition } from '../../lib/arabicText';
 import type { VocabularyItemType } from '../../types';
 
 export default function VocabularySection() {
@@ -28,6 +30,7 @@ export default function VocabularySection() {
   const [showImport, setShowImport] = useState(false);
   const [showLibrary, setShowLibrary] = useState(false);
   const [showQuickAdd, setShowQuickAdd] = useState(false);
+  const [showConvert, setShowConvert] = useState(false);
   const [reviewItemIds, setReviewItemIds] = useState<string[] | undefined>(undefined);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<VocabularyItemType | 'all'>('all');
@@ -68,6 +71,8 @@ export default function VocabularySection() {
     }
     return map;
   }, [vocabularyItems]);
+
+  const arabicCount = useMemo(() => vocabularyItems.filter(hasArabicDefinition).length, [vocabularyItems]);
 
   const selectedCategory = vocabularyCategories.find((c) => c.id === filterCategory);
 
@@ -110,6 +115,21 @@ export default function VocabularySection() {
           <div className="text-sm text-ink-light">{t('vocabulary.hardWords')}</div>
         </div>
       </div>
+
+      {arabicCount > 0 && (
+        <div className="mb-6 flex flex-wrap items-center gap-3 p-3 rounded-xl border border-clay-soft/40 bg-clay-soft/5">
+          <Languages size={18} className="text-clay-soft shrink-0" />
+          <p className="flex-1 text-sm text-ink min-w-[12rem]">
+            {t('vocabulary.convert.banner').replace('{count}', String(arabicCount))}
+          </p>
+          <button
+            onClick={() => setShowConvert(true)}
+            className="px-3 py-1.5 bg-clay-soft text-white text-sm rounded-lg hover:bg-clay-soft-dark transition-colors"
+          >
+            {t('vocabulary.convert.open')}
+          </button>
+        </div>
+      )}
 
       {/* Actions */}
       <div className="flex flex-wrap gap-3 mb-6">
@@ -336,6 +356,8 @@ export default function VocabularySection() {
           defaultCategory={selectedCategory?.name}
         />
       )}
+
+      {showConvert && <ConvertToEnglishModal onClose={() => setShowConvert(false)} />}
 
       {showImport && (
         <ImportWordsModal

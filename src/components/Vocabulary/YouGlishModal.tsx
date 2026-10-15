@@ -43,7 +43,6 @@ interface YouGlishModalProps {
 }
 
 const SCRIPT_SRC = 'https://youglish.com/public/emb/widget.js';
-const CONTAINER_ID = 'youglish-widget';
 const LOAD_TIMEOUT_MS = 15000;
 
 // The widget script is loaded once per page and kept: re-adding it on every
@@ -73,6 +72,11 @@ export default function YouGlishModal({ word, onClose }: YouGlishModalProps) {
   const [accent, setAccent] = useState<YouGlishAccent>('us');
   const [widgetState, setWidgetState] = useState<WidgetState>('loading');
   const widgetRef = useRef<YGWidget | null>(null);
+  // React owns this host but never its children: the YouGlish widget replaces
+  // the element it's given with its own iframe. Handing it a React-rendered
+  // node made React's unmount try to remove a node that was gone, which
+  // crashed the whole app (blank page) when the modal was closed.
+  const hostRef = useRef<HTMLDivElement>(null);
 
   // Create the widget once the API is ready, then re-fetch on every accent
   // change. The container is always mounted (the spinner overlays it), so the
@@ -85,9 +89,12 @@ export default function YouGlishModal({ word, onClose }: YouGlishModalProps) {
 
     loadYouGlishApi()
       .then(() => {
-        if (cancelled || !window.YG) return;
+        if (cancelled || !window.YG || !hostRef.current) return;
         if (!widgetRef.current) {
-          widgetRef.current = new window.YG.Widget(CONTAINER_ID, {
+          const mount = document.createElement('div');
+          mount.id = `youglish-widget-${Math.random().toString(36).slice(2)}`;
+          hostRef.current.replaceChildren(mount);
+          widgetRef.current = new window.YG.Widget(mount.id, {
             width: 640,
             components: 9,
             events: {
@@ -110,9 +117,18 @@ export default function YouGlishModal({ word, onClose }: YouGlishModalProps) {
     };
   }, [word, accent]);
 
-  useEffect(() => () => {
-    widgetRef.current?.close?.();
-    widgetRef.current = null;
+  useEffect(() => {
+    const host = hostRef.current;
+    return () => {
+      try {
+        widgetRef.current?.close?.();
+      } catch {
+        // the widget may already be torn down
+      }
+      widgetRef.current = null;
+      // Drop the iframe ourselves so the video stops immediately.
+      host?.replaceChildren();
+    };
   }, []);
 
   const handleBackdropClick = useCallback(
@@ -187,7 +203,7 @@ export default function YouGlishModal({ word, onClose }: YouGlishModalProps) {
         {/* Content */}
         <div className="relative flex-1 overflow-auto p-6 min-h-[360px]">
           <div
-            id={CONTAINER_ID}
+            ref={hostRef}
             className={`w-full ${widgetState === 'loaded' ? '' : 'invisible h-0 overflow-hidden'}`}
           />
 

@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import { getToday, getWeekStart, stepCalendarDate } from './dateHelpers';
-import { isHardWord, applyReviewResult } from './vocabularyHard';
+import { isHardWord, applyReviewResult, isDueForReview } from './vocabularyHard';
 import type {
   Language,
   Priority,
@@ -1814,7 +1814,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     const items = get().vocabularyItems;
     const total = items.length;
     const mastered = items.filter((i) => i.masteryLevel >= 4).length;
-    const needReview = items.filter((i) => i.masteryLevel <= 2).length;
+    const needReview = items.filter((i) => isDueForReview(i)).length;
     const hard = items.filter(isHardWord).length;
     return { total, mastered, needReview, hard };
   },

@@ -241,15 +241,15 @@ describe('FlashcardReview', () => {
     expect(screen.getByText('A trial')).toBeInTheDocument();
   });
 
-  it('shows empty state when there are no words to review', () => {
+  it('shows empty state when there are no words are due for review', () => {
     useAppStore.setState({
-      vocabularyItems: vocabularyItems.map((item) => ({ ...item, masteryLevel: 5, lapseCount: 0, correctStreak: 0, isHard: false })),
+      vocabularyItems: vocabularyItems.map((item) => ({ ...item, masteryLevel: 5, lapseCount: 0, correctStreak: 0, isHard: false, lastReviewedAt: new Date().toISOString() })),
     });
 
     render(<FlashcardReview onClose={onClose} />);
 
     expect(screen.getByText(/No words to review/i)).toBeInTheDocument();
-    expect(screen.getByText(/All words are mastered/i)).toBeInTheDocument();
+    expect(screen.getByText(/All caught up/i)).toBeInTheDocument();
   });
 
   it('keyboard shortcuts work for correct/incorrect/next/close', async () => {

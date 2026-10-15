@@ -4,7 +4,7 @@ import { X, Volume2, Check, X as XIcon, PlayCircle, Flame } from 'lucide-react';
 import { useTranslation } from '../../i18n/useTranslation';
 import { useAppStore } from '../../store/appStore';
 import { speakWord, getPronunciationPrefs } from '../../lib/pronunciation';
-import { isHardWord, buildReviewQueue } from '../../store/vocabularyHard';
+import { isHardWord, buildDueQueue } from '../../store/vocabularyHard';
 import YouGlishModal from './YouGlishModal';
 
 type Phase = 'question' | 'answer' | 'finished';
@@ -26,12 +26,8 @@ export default function FlashcardReview({ onClose, initialItemIds, onReviewMisse
     if (initialItemIds && initialItemIds.length > 0) {
       return initialItemIds;
     }
-    // Filter to items that need review (masteryLevel <= 2) or are hard words
-    const needsReview = vocabularyItems.filter(
-      (item) => item.masteryLevel <= 2 || isHardWord(item)
-    );
-    const queue = buildReviewQueue(needsReview);
-    return queue.map((item) => item.id);
+    // Words that are due (spaced repetition), hard and weak ones first.
+    return buildDueQueue(vocabularyItems).map((item) => item.id);
   });
 
   const cardStartTimeRef = useRef<number>(0);
