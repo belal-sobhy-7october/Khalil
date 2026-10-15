@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Plus, Search, Filter, Flame, Upload, Library, Sparkles, PlayCircle, Languages, Compass } from 'lucide-react';
+import { Plus, Search, Filter, Flame, Upload, Library, Sparkles, PlayCircle, Languages, Compass, Trophy } from 'lucide-react';
 import { useAppStore } from '../../store/appStore';
 import { useTranslation } from '../../i18n/useTranslation';
 import { speakWord, getPronunciationPrefs } from '../../lib/pronunciation';
@@ -15,6 +15,7 @@ import ConvertToEnglishModal from './ConvertToEnglishModal';
 import ReviewModePicker, { type ReviewMode } from './ReviewModePicker';
 import TypingPractice from './TypingPractice';
 import ResourcesModal from './ResourcesModal';
+import TopicChallenge from './TopicChallenge';
 import { hasArabicDefinition } from '../../lib/arabicText';
 import type { VocabularyItemType } from '../../types';
 
@@ -35,6 +36,7 @@ export default function VocabularySection() {
   const [showQuickAdd, setShowQuickAdd] = useState(false);
   const [showConvert, setShowConvert] = useState(false);
   const [showResources, setShowResources] = useState(false);
+  const [showChallenge, setShowChallenge] = useState(false);
   const [reviewItemIds, setReviewItemIds] = useState<string[] | undefined>(undefined);
   // Every review entry point goes through the mode picker first.
   const [pickerIds, setPickerIds] = useState<string[] | null>(null);
@@ -262,6 +264,13 @@ export default function VocabularySection() {
                 {t('vocabulary.reviewTopic').replace('{name}', selectedCategory.name)}
               </button>
               <button
+                onClick={() => setShowChallenge(true)}
+                className="flex items-center gap-2 px-3 py-1.5 bg-clay-soft text-white text-sm rounded-lg hover:bg-clay-soft-dark transition-colors"
+              >
+                <Trophy size={16} />
+                {t('vocabulary.challenge.open')}
+              </button>
+              <button
                 onClick={() => setShowQuickAdd(true)}
                 className="flex items-center gap-2 px-3 py-1.5 bg-ink/5 text-ink text-sm rounded-lg hover:bg-ink/10 transition-colors"
               >
@@ -393,6 +402,10 @@ export default function VocabularySection() {
           onClose={() => setShowQuickAdd(false)}
           defaultCategory={selectedCategory?.name}
         />
+      )}
+
+      {showChallenge && selectedCategory && (
+        <TopicChallenge category={selectedCategory} onClose={() => setShowChallenge(false)} />
       )}
 
       {showResources && <ResourcesModal onClose={() => setShowResources(false)} />}
