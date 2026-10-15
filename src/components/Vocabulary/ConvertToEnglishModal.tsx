@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
-import { X, Loader2, Languages, Check, AlertCircle } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { X, Loader2, Languages, Check, AlertCircle, RotateCw } from 'lucide-react';
 import { useTranslation } from '../../i18n/useTranslation';
 import { useAppStore } from '../../store/appStore';
 import { lookupMany } from '../../lib/dictionary';
@@ -42,16 +42,13 @@ export default function ConvertToEnglishModal({ onClose }: { onClose: () => void
   const [saving, setSaving] = useState(false);
   const [savedCount, setSavedCount] = useState<number | null>(null);
 
-  // Rows not covered by a pack are looked up in the dictionary once, on open.
-  useEffect(() => {
-    const pending = rows.filter((r) => r.status === 'pending');
-    if (pending.length === 0) return;
-    let cancelled = false;
+  const runLookup = (targetRows: Row[]) => {
+    if (targetRows.length === 0) return;
     void lookupMany(
-      pending.map((r) => r.item.word),
+      targetRows.map((r) => r.item.word),
       (index, entry) => {
-        if (cancelled) return;
-        const id = pending[index].item.id;
+        if (!mountedRef.current) return;
+        const id = targetRows[index].item.id;
         setRows((prev) =>
           prev.map((r) => {
             if (r.item.id !== id) return r;
@@ -67,8 +64,21 @@ export default function ConvertToEnglishModal({ onClose }: { onClose: () => void
         );
       }
     );
+  };
+
+  const retryMissing = (targetRows: Row[]) => {
+    const ids = new Set(targetRows.map((r) => r.item.id));
+    setRows((prev) => prev.map((r) => (ids.has(r.item.id) ? { ...r, status: 'pending' } : r)));
+    runLookup(targetRows);
+  };
+
+  // Rows not covered by a pack are looked up in the dictionary once, on open.
+  const mountedRef = useRef(true);
+  useEffect(() => {
+    mountedRef.current = true;
+    runLookup(rows.filter((r) => r.status === 'pending'));
     return () => {
-      cancelled = true;
+      mountedRef.current = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- run once for the rows present on open
   }, []);
@@ -78,6 +88,9 @@ export default function ConvertToEnglishModal({ onClose }: { onClose: () => void
 
   const ready = rows.filter((r) => r.selected && r.definition.trim() && !ARABIC.test(r.definition));
   const pendingCount = rows.filter((r) => r.status === 'pending').length;
+  const missingRows = rows.filter((r) => r.status === 'missing' && !r.definition.trim());
+  const allSelected = rows.length > 0 && rows.every((r) => r.selected);
+  const toggleAll = () => setRows((prev) => prev.map((r) => ({ ...r, selected: !allSelected })));
 
   const handleSave = async () => {
     setSaving(true);
@@ -123,6 +136,21 @@ export default function ConvertToEnglishModal({ onClose }: { onClose: () => void
           ) : (
             <>
               <p className="text-sm text-ink-light mb-2">{t('vocabulary.convert.hint')}</p>
+              <div className="flex flex-wrap items-center gap-3 pb-2 border-b border-border-subtle">
+                <label className="flex items-center gap-2 text-sm text-ink cursor-pointer">
+                  <input type="checkbox" checked={allSelected} onChange={toggleAll} className="accent-clay-soft" />
+                  {t('vocabulary.convert.selectAll')} ({rows.filter((r) => r.selected).length}/{rows.length})
+                </label>
+                {missingRows.length > 0 && pendingCount === 0 && (
+                  <button
+                    onClick={() => retryMissing(missingRows)}
+                    className="flex items-center gap-1.5 px-2.5 py-1 text-xs rounded-lg bg-ink/5 text-ink hover:bg-ink/10 transition-colors"
+                  >
+                    <RotateCw size={12} />
+                    {t('vocabulary.convert.retry').replace('{count}', String(missingRows.length))}
+                  </button>
+                )}
+              </div>
               {pendingCount > 0 && (
                 <p className="text-xs text-ink-light flex items-center gap-2">
                   <Loader2 size={14} className="animate-spin" />
@@ -179,6 +207,10 @@ export default function ConvertToEnglishModal({ onClose }: { onClose: () => void
               {t('vocabulary.library.done')}
             </button>
           ) : (
+            <>
+            {ready.length === 0 && rows.some((r) => r.selected) && (
+              <p className="flex-1 self-center text-xs text-ink-light">{t('vocabulary.convert.needDefinition')}</p>
+            )}
             <button
               onClick={handleSave}
               disabled={saving || ready.length === 0}
@@ -187,6 +219,7 @@ export default function ConvertToEnglishModal({ onClose }: { onClose: () => void
               {saving && <Loader2 size={16} className="animate-spin" />}
               {t('vocabulary.convert.save').replace('{count}', String(ready.length))}
             </button>
+            </>
           )}
         </div>
       </div>

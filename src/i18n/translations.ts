@@ -370,6 +370,9 @@ export const translations = {
         hint: 'English definitions are filled from the topic packs or the dictionary. Edit anything you like, untick a word to keep it as it is, then save.',
         save: 'Update {count} words',
         saved: '{count} words updated to English definitions.',
+        selectAll: 'Select all',
+        retry: 'Try again for {count} not found',
+        needDefinition: 'Selected words need an English definition before they can be saved.',
       },
       quickAdd: {
         open: 'Quick add',
@@ -810,6 +813,9 @@ habits: {
         hint: 'التعريفات الإنجليزية بتتجاب من باقات المواضيع أو القاموس. عدّل أي حاجة، وشيل العلامة من أي كلمة عايز تسيبها زي ما هي، وبعدين احفظ.',
         save: 'تحديث {count} كلمة',
         saved: 'تم تحديث {count} كلمة لتعريفات إنجليزية.',
+        selectAll: 'تحديد الكل',
+        retry: 'إعادة البحث عن {count} غير موجودة',
+        needDefinition: 'الكلمات المحددة محتاجة تعريف إنجليزي قبل الحفظ.',
       },
       quickAdd: {
         open: 'إضافة سريعة',

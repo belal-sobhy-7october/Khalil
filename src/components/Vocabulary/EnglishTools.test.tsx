@@ -117,6 +117,19 @@ describe('ConvertToEnglishModal', () => {
   });
 });
 
+describe('ConvertToEnglishModal select all', () => {
+  it('selects and unselects every row', () => {
+    lookupMany.mockImplementation(async () => {});
+    useAppStore.setState({ vocabularyItems: [arabicItem('a', 'Bargain'), arabicItem('b', 'Zzqx')] });
+    render(<ConvertToEnglishModal onClose={() => {}} />);
+    const all = screen.getByRole('checkbox', { name: /Select all/ });
+    fireEvent.click(all);
+    expect(screen.getByRole('checkbox', { name: 'Zzqx' })).toBeChecked();
+    fireEvent.click(all);
+    expect(screen.getByRole('checkbox', { name: 'Bargain' })).not.toBeChecked();
+  });
+});
+
 describe('YouGlishModal', () => {
   it('closing the modal keeps the page alive even if the widget misbehaves', async () => {
     // The real widget swaps the element it is given for an iframe, and its
