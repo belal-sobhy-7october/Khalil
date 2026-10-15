@@ -111,8 +111,8 @@ interface AppStore {
   habits: Habit[];
   habitEntries: HabitEntry[];
   dailyMoods: DailyMood[];
-  addHabit: (name: string, icon?: string, startDate?: string) => Promise<{ success: boolean }>;
-  updateHabit: (id: string, data: Partial<Pick<Habit, 'name' | 'icon' | 'startDate'>>) => Promise<{ success: boolean }>;
+  addHabit: (name: string, icon?: string, startDate?: string, scheduleDays?: number[] | null) => Promise<{ success: boolean }>;
+  updateHabit: (id: string, data: Partial<Pick<Habit, 'name' | 'icon' | 'startDate' | 'scheduleDays'>>) => Promise<{ success: boolean }>;
   removeHabit: (id: string) => Promise<void>;
   reorderHabits: (ids: string[]) => Promise<void>;
   toggleHabitEntry: (habitId: string, date: string) => Promise<void>;
@@ -1361,7 +1361,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     }
   },
 
-  addHabit: async (name, icon = 'star', startDate) => {
+  addHabit: async (name, icon = 'star', startDate, scheduleDays = null) => {
     const userId = get().session?.user?.id;
     if (!userId) return { success: false };
     const id = generateId();
@@ -1370,11 +1370,15 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     // Always resolve "today" on the client (local timezone) — never rely on the
     // DB's `current_date` default, which is UTC and can disagree near midnight.
     const effectiveStartDate = startDate || getToday();
-    const newHabit = { id, name, icon, sortOrder, active: true, startDate: effectiveStartDate };
+    const normalizedSchedule = scheduleDays && scheduleDays.length > 0 && scheduleDays.length < 7 ? [...scheduleDays].sort() : null;
+    const newHabit = { id, name, icon, sortOrder, active: true, startDate: effectiveStartDate, scheduleDays: normalizedSchedule };
     set((s) => ({ habits: [...s.habits, newHabit] }));
+    // schedule_days is only sent when set, so daily habits keep working on a
+    // database that hasn't run the schedule_days migration yet.
     const { success } = await supabaseCall(
       supabase.from('habits').insert({
         id, user_id: userId, name, icon, sort_order: sortOrder, active: true, start_date: effectiveStartDate,
+        ...(normalizedSchedule ? { schedule_days: normalizedSchedule } : {}),
       }),
       'addHabit'
     );
@@ -1398,6 +1402,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     if (data.name !== undefined) dbData.name = data.name;
     if (data.icon !== undefined) dbData.icon = data.icon;
     if (data.startDate !== undefined) dbData.start_date = data.startDate;
+    if (data.scheduleDays !== undefined) dbData.schedule_days = data.scheduleDays;
 
     const { success } = await supabaseCall(
       supabase.from('habits').update(dbData).eq('id', id).eq('user_id', userId),
@@ -2111,7 +2116,7 @@ function mapBookmark(row: Record<string, unknown>): Bookmark {
 }
 
 function mapHabit(row: Record<string, unknown>): Habit {
-  return { id: row.id as string, name: row.name as string, icon: (row.icon as string) || 'star', sortOrder: (row.sort_order as number) ?? 0, active: (row.active as boolean) ?? true, startDate: (row.start_date as string) || getToday() };
+  return { id: row.id as string, name: row.name as string, icon: (row.icon as string) || 'star', sortOrder: (row.sort_order as number) ?? 0, active: (row.active as boolean) ?? true, startDate: (row.start_date as string) || getToday(), scheduleDays: Array.isArray(row.schedule_days) && row.schedule_days.length > 0 ? (row.schedule_days as number[]) : null };
 }
 
 function mapHabitEntry(row: Record<string, unknown>): HabitEntry {

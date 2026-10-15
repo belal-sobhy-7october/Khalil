@@ -5,6 +5,8 @@
  * https://youglish.com/terms
  */
 
+import { lookupWord } from './dictionary';
+
 export type BrowserAccent = 'us' | 'uk';
 export type YouGlishAccent = 'us' | 'uk' | 'aus';
 export type Accent = BrowserAccent;
@@ -93,4 +95,25 @@ export function speakBrowser(text: string, accent: BrowserAccent = 'us'): void {
 export function buildYouGlishUrl(word: string, accent: YouGlishAccent = 'us'): string {
   const encodedWord = encodeURIComponent(word);
   return `https://youglish.com/pronounce/${encodedWord}/english/${accent}`;
+}
+
+/**
+ * Pronounce a word: a real native-speaker recording when one exists for the
+ * accent (single words only), otherwise the browser's speech synthesis.
+ */
+export async function speakWord(text: string, accent: BrowserAccent = 'us'): Promise<void> {
+  const trimmed = text.trim();
+  if (/^[a-zA-Z'-]+$/.test(trimmed)) {
+    const entry = await lookupWord(trimmed, 2500);
+    const url = entry?.audio[accent];
+    if (url) {
+      try {
+        await new Audio(url).play();
+        return;
+      } catch {
+        // fall through to speech synthesis
+      }
+    }
+  }
+  speakBrowser(trimmed, accent);
 }

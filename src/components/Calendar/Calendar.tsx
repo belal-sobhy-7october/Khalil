@@ -36,13 +36,13 @@ interface ViewButton {
 }
 
 const VIEW_BUTTONS: ViewButton[] = [
-  { mode: 'year', icon: <Minimize2 size={16} />, tooltip: 'calendar.yearTooltip' },
-  { mode: 'month', icon: <CalendarDays size={16} />, tooltip: 'calendar.monthTooltip' },
-  { mode: 'week', icon: <LayoutGrid size={16} />, tooltip: 'calendar.weekTooltip' },
-  { mode: 'day', icon: <Sunrise size={16} />, tooltip: 'calendar.dayTooltip' },
-  { mode: 'agenda', icon: <LayoutList size={16} />, tooltip: 'calendar.agendaTooltip' },
-  { mode: 'multi-day', icon: <CalendarRange size={16} />, tooltip: 'calendar.multiDayTooltip' },
-  { mode: 'multi-week', icon: <Maximize2 size={16} />, tooltip: 'calendar.multiWeekTooltip' },
+  { mode: 'year', icon: <Minimize2 size={20} />, tooltip: 'calendar.yearTooltip' },
+  { mode: 'month', icon: <CalendarDays size={20} />, tooltip: 'calendar.monthTooltip' },
+  { mode: 'week', icon: <LayoutGrid size={20} />, tooltip: 'calendar.weekTooltip' },
+  { mode: 'day', icon: <Sunrise size={20} />, tooltip: 'calendar.dayTooltip' },
+  { mode: 'agenda', icon: <LayoutList size={20} />, tooltip: 'calendar.agendaTooltip' },
+  { mode: 'multi-day', icon: <CalendarRange size={20} />, tooltip: 'calendar.multiDayTooltip' },
+  { mode: 'multi-week', icon: <Maximize2 size={20} />, tooltip: 'calendar.multiWeekTooltip' },
 ];
 
 export default function Calendar() {
@@ -175,20 +175,20 @@ export default function Calendar() {
       </div>
 
       <div className="bg-card border border-border-subtle rounded-xl p-3 md:p-4">
-        <div className="flex items-center justify-center gap-1 md:gap-2 overflow-x-auto pb-2 -mx-3 md:mx-0 px-3 md:px-0" role="tablist" aria-label={t('calendar.title')}>
+        <div className="flex flex-wrap items-center justify-center gap-1 md:gap-2" role="tablist" aria-label={t('calendar.title')}>
           {VIEW_BUTTONS.map(({ mode, icon, tooltip }) => (
             <Tooltip key={mode} text={t(tooltip)}>
               <button
                 role="tab"
                 aria-selected={viewMode === mode}
                 onClick={() => setViewMode(mode)}
-                className={`flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-all min-w-[70px] ${
+                className={`flex flex-col items-center gap-1.5 px-3 py-2 rounded-lg transition-all min-w-[72px] ${
                   viewMode === mode
                     ? 'bg-clay-soft text-white'
                     : 'text-ink-light hover:text-ink hover:bg-ink/5'
                 }`}
               >
-                <span className="flex items-center">{icon}</span>
+                <span className="flex items-center justify-center h-5">{icon}</span>
                 <span className="text-xs font-medium">{t(`calendar.${mode === 'multi-day' ? 'multiDay' : mode === 'multi-week' ? 'multiWeek' : mode}`)}</span>
               </button>
             </Tooltip>

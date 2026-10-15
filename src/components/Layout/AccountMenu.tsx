@@ -13,6 +13,7 @@ import {
   useDismiss,
   useRole,
   useInteractions,
+  FloatingPortal,
 } from '@floating-ui/react';
 
 export default function AccountMenu() {
@@ -30,7 +31,7 @@ export default function AccountMenu() {
   };
 
   const { refs, floatingStyles, context } = useFloating({
-    placement: isRTL ? 'left-start' : 'right-start',
+    placement: isRTL ? 'bottom-start' : 'bottom-end',
     middleware: [offset(8), flip({ padding: 8 }), shift({ padding: 8 })],
     whileElementsMounted: autoUpdate,
     open: isOpen,
@@ -127,6 +128,7 @@ export default function AccountMenu() {
       </button>
 
       {isOpen && (
+        <FloatingPortal>
         <div
           ref={setFloating}
           style={floatingStyles}
@@ -134,7 +136,7 @@ export default function AccountMenu() {
           {...getFloatingProps({
             onKeyDown: handleKeyDown,
           })}
-          className="z-50 min-w-[240px] bg-card border border-border-subtle rounded-xl shadow-lg overflow-hidden"
+          className="z-[100] min-w-[240px] bg-card border border-border-subtle rounded-xl shadow-2xl ring-1 ring-ink/10 overflow-hidden"
         >
           {/* User Info Section */}
           <div className="px-4 py-3 border-b border-border-subtle">
@@ -177,6 +179,7 @@ export default function AccountMenu() {
             })}
           </div>
         </div>
+        </FloatingPortal>
       )}
     </>
   );

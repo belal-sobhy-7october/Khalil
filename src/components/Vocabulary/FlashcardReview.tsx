@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Volume2, Check, X as XIcon, PlayCircle, Flame } from 'lucide-react';
 import { useTranslation } from '../../i18n/useTranslation';
 import { useAppStore } from '../../store/appStore';
-import { speakBrowser, getPronunciationPrefs } from '../../lib/pronunciation';
+import { speakWord, getPronunciationPrefs } from '../../lib/pronunciation';
 import { isHardWord, buildReviewQueue } from '../../store/vocabularyHard';
 import YouGlishModal from './YouGlishModal';
 
@@ -65,7 +65,7 @@ export default function FlashcardReview({ onClose, initialItemIds, onReviewMisse
   const prefs = getPronunciationPrefs();
 
   const handleSpeak = useCallback((text: string) => {
-    speakBrowser(text, prefs.accent);
+    void speakWord(text, prefs.accent);
   }, [prefs.accent]);
 
   const handleCorrect = useCallback(() => {

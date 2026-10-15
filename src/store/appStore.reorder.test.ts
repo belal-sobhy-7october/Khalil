@@ -28,8 +28,8 @@ const backlogTodos: BacklogTodo[] = [
 ];
 
 const habits: Habit[] = [
-  { id: 'h1', name: 'one', icon: 'star', sortOrder: 0, active: true, startDate: '2026-01-01' },
-  { id: 'h2', name: 'two', icon: 'star', sortOrder: 1, active: true, startDate: '2026-01-01' },
+  { id: 'h1', name: 'one', icon: 'star', sortOrder: 0, active: true, startDate: '2026-01-01', scheduleDays: null },
+  { id: 'h2', name: 'two', icon: 'star', sortOrder: 1, active: true, startDate: '2026-01-01', scheduleDays: null },
 ];
 
 const stickyNotes: StickyNoteData[] = [
