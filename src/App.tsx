@@ -19,6 +19,9 @@ import DailyFocus from './components/DailyFocus/DailyFocus';
 import DailyTodo from './components/Todo/DailyTodo';
 import WeeklyTodo from './components/Todo/WeeklyTodo';
 import BacklogTodo from './components/Todo/BacklogTodo';
+import PomodoroEngine from './components/Focus/PomodoroEngine';
+import FocusChip from './components/Focus/FocusChip';
+import { applyAppearance, useAppearance } from './lib/appearance';
 
 import { createStickyNote, createTodoNote } from './components/Canvas/noteFactories';
 import type { StickyNoteData, TodoNoteData } from './types';
@@ -29,6 +32,10 @@ const BookmarksVault = lazy(() => import('./components/Bookmarks/BookmarksVault'
 const NotesPanel = lazy(() => import('./components/Layout/NotesPanel'));
 const Calendar = lazy(() => import('./components/Calendar/Calendar'));
 const EnglishHub = lazy(() => import('./components/English/EnglishHub'));
+const FocusSection = lazy(() => import('./components/Focus/FocusSection'));
+const WirdSection = lazy(() => import('./components/Wird/WirdSection'));
+const AnalyticsSection = lazy(() => import('./components/Analytics/AnalyticsSection'));
+const SettingsSection = lazy(() => import('./components/Settings/SettingsSection'));
 
 function App() {
   const language = useAppStore((s) => s.language);
@@ -125,9 +132,17 @@ function App() {
     document.documentElement.lang = language;
   }, [language, isRTL]);
 
+  const appearanceId = useAppearance((a) => a.id);
+  const loadAppearance = useAppearance((a) => a.load);
   useEffect(() => {
     document.documentElement.classList.toggle('dark', theme === 'dark');
-  }, [theme]);
+    applyAppearance(appearanceId, theme);
+  }, [theme, appearanceId]);
+
+  const sessionUserId = session?.user?.id;
+  useEffect(() => {
+    if (sessionUserId) void loadAppearance(sessionUserId);
+  }, [sessionUserId, loadAppearance]);
 
   useEffect(() => {
     let dataLoaded = false;
@@ -165,6 +180,13 @@ function App() {
     }
   }, []);
 
+  // Other components (e.g. the account menu) can ask to open a section.
+  useEffect(() => {
+    const onNavigate = (e: Event) => handleSectionChange((e as CustomEvent<string>).detail);
+    window.addEventListener('khalil:navigate', onNavigate);
+    return () => window.removeEventListener('khalil:navigate', onNavigate);
+  }, [handleSectionChange]);
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -185,7 +207,7 @@ function App() {
       <DashboardLayout
         activeSection={activeSection}
         onSectionChange={handleSectionChange}
-        allowFullWidth={activeSection === 'calendar' || activeSection === 'bookmarks' || activeSection === 'vocabulary'}
+        allowFullWidth={['calendar', 'bookmarks', 'vocabulary', 'focus', 'wird', 'analytics', 'settings'].includes(activeSection)}
         notesSlot={
           <Suspense fallback={null}>
             <NotesPanel
@@ -230,6 +252,17 @@ function App() {
             </div>
           }>
             <BookmarksVault />
+          </Suspense>
+        ) : ['focus', 'wird', 'analytics', 'settings'].includes(activeSection) ? (
+          <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center">
+              <div className="w-8 h-8 border-2 border-clay-soft border-t-transparent rounded-full animate-spin" />
+            </div>
+          }>
+            {activeSection === 'focus' && <FocusSection />}
+            {activeSection === 'wird' && <WirdSection />}
+            {activeSection === 'analytics' && <AnalyticsSection onNavigate={handleSectionChange} />}
+            {activeSection === 'settings' && <SettingsSection />}
           </Suspense>
         ) : activeSection === 'vocabulary' ? (
           <Suspense fallback={
@@ -291,6 +324,9 @@ function App() {
           </>
         )}
       </DashboardLayout>
+
+      <PomodoroEngine />
+      {activeSection !== 'focus' && <FocusChip onOpen={() => handleSectionChange('focus')} />}
 
       <div
         ref={setFloating}

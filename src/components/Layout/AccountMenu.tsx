@@ -93,7 +93,7 @@ export default function AccountMenu() {
       label: t('auth.accountSettings'),
       icon: Settings,
       onClick: () => {
-        // TODO: Navigate to account settings page when implemented
+        window.dispatchEvent(new CustomEvent('khalil:navigate', { detail: 'settings' }));
         handleOpenChange(false);
       },
     },

@@ -223,6 +223,9 @@ html, body, #root {
 
 body {
   background-color: var(--bg-primary);
+  /* Themes (Settings → Themes) can add a pattern or gradient behind the cards. */
+  background-image: var(--app-bg-image, none);
+  background-attachment: fixed;
   color: var(--color-ink);
   font-family: var(--font-sans);
 }
@@ -277,4 +280,10 @@ body {
 select option {
   background-color: var(--color-card);
   color: var(--color-ink);
+}
+/* Themes with their own heading typeface (Andalusian, Downtown Cairo). */
+:root[data-appearance='andalusian'] :is(h1, h2),
+:root[data-appearance='downtown'] :is(h1, h2) {
+  font-family: var(--app-heading-font);
+  letter-spacing: 0.01em;
 }
