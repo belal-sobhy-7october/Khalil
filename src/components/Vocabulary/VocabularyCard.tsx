@@ -85,6 +85,9 @@ export default function VocabularyCard({ item, category, onEdit, onDelete, onSpe
                 <StarIcon size={16} className={item.isHard ? 'fill-yellow-400 text-yellow-400' : 'text-ink-light'} />
               </button>
             </div>
+            {item.pronunciation && (
+              <div className="text-xs text-ink-lighter mb-1" dir="ltr">{item.pronunciation}</div>
+            )}
             <div className="flex items-center gap-2 text-xs text-ink-light flex-wrap">
               <span className="px-2 py-0.5 bg-ink/5 rounded">{getTypeLabel()}</span>
               {category && <span className="px-2 py-0.5 bg-clay-soft/10 text-clay-soft rounded">{category.name}</span>}
@@ -150,11 +153,11 @@ export default function VocabularyCard({ item, category, onEdit, onDelete, onSpe
           </div>
         ) : (
           <>
-            <p className="text-sm text-ink mb-3">{item.definition}</p>
+            <p className="text-sm text-ink mb-3" dir="auto">{item.definition}</p>
             
             {item.exampleSentence && (
               <div className="mb-3">
-                <p className="text-xs text-ink-light italic">{item.exampleSentence}</p>
+                <p className="text-xs text-ink-light italic" dir="auto">{item.exampleSentence}</p>
               </div>
             )}
 

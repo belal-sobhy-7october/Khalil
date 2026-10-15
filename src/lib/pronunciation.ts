@@ -5,6 +5,8 @@
  * https://youglish.com/terms
  */
 
+import { lookupWord } from './dictionary';
+
 export type BrowserAccent = 'us' | 'uk';
 export type YouGlishAccent = 'us' | 'uk' | 'aus';
 export type Accent = BrowserAccent;
@@ -95,37 +97,6 @@ export function buildYouGlishUrl(word: string, accent: YouGlishAccent = 'us'): s
   return `https://youglish.com/pronounce/${encodedWord}/english/${accent}`;
 }
 
-// Native-speaker recordings from the free dictionary API, cached per word so a
-// second click plays instantly. null = looked up, no recording for that accent.
-const audioUrlCache = new Map<string, string | null>();
-
-async function lookupAudioUrl(word: string, accent: BrowserAccent): Promise<string | null> {
-  const key = `${accent}:${word.toLowerCase()}`;
-  if (audioUrlCache.has(key)) return audioUrlCache.get(key) ?? null;
-
-  const controller = new AbortController();
-  const timeout = window.setTimeout(() => controller.abort(), 2500);
-  try {
-    const res = await fetch(
-      `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word.toLowerCase())}`,
-      { signal: controller.signal }
-    );
-    if (!res.ok) {
-      audioUrlCache.set(key, null);
-      return null;
-    }
-    const entries = (await res.json()) as Array<{ phonetics?: Array<{ audio?: string }> }>;
-    const urls = entries.flatMap((e) => e.phonetics ?? []).map((p) => p.audio).filter((a): a is string => !!a);
-    const url = urls.find((u) => u.includes(`-${accent}.mp3`)) ?? null;
-    audioUrlCache.set(key, url);
-    return url;
-  } catch {
-    return null;
-  } finally {
-    window.clearTimeout(timeout);
-  }
-}
-
 /**
  * Pronounce a word: a real native-speaker recording when one exists for the
  * accent (single words only), otherwise the browser's speech synthesis.
@@ -133,7 +104,8 @@ async function lookupAudioUrl(word: string, accent: BrowserAccent): Promise<stri
 export async function speakWord(text: string, accent: BrowserAccent = 'us'): Promise<void> {
   const trimmed = text.trim();
   if (/^[a-zA-Z'-]+$/.test(trimmed)) {
-    const url = await lookupAudioUrl(trimmed, accent);
+    const entry = await lookupWord(trimmed, 2500);
+    const url = entry?.audio[accent];
     if (url) {
       try {
         await new Audio(url).play();
