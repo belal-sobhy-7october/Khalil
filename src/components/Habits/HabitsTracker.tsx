@@ -112,6 +112,12 @@ function weekdayName(day: number, locale: string, style: 'narrow' | 'short'): st
   return new Date(Date.UTC(2026, 0, 4 + day)).toLocaleDateString(locale, { weekday: style, timeZone: 'UTC' });
 }
 
+// "3 Oct" / "٣ أكتوبر" — a raw "10-03" reads as 03-10 inside Arabic text.
+function shortDate(date: string, locale: string): string {
+  const [y, m, d] = date.split('-').map(Number);
+  return new Date(Date.UTC(y, m - 1, d)).toLocaleDateString(locale, { day: 'numeric', month: 'short', timeZone: 'UTC' });
+}
+
 function dayNameOf(date: string, locale: string): string {
   const [y, m, d] = date.split('-').map(Number);
   return new Date(Date.UTC(y, m - 1, d)).toLocaleDateString(locale, { weekday: 'short', timeZone: 'UTC' });
@@ -256,7 +262,7 @@ const SortableHabitRow = memo(function SortableHabitRow({ habit, dates, entrySet
           <span className="text-[10px] text-ink-lighter truncate">
             {habit.scheduleDays
               ? habit.scheduleDays.map((d) => weekdayName(d, locale, 'short')).join(' · ')
-              : t('habits.since').replace('{date}', habit.startDate.slice(5))}
+              : t('habits.since').replace('{date}', shortDate(habit.startDate, locale))}
           </span>
         </span>
         {streaks.current > 0 && (
@@ -383,17 +389,17 @@ const SortableHabitRow = memo(function SortableHabitRow({ habit, dates, entrySet
         }
 
         let look: string;
-        let title = `${habit.name} — ${date}`;
+        let note = '';
         if (isCompleted) {
           look = scheduled ? 'bg-clay-soft text-white' : 'bg-clay-soft/60 text-white';
         } else if (beforeStart) {
           // Hatched: not part of the habit yet, but still clickable — checking
           // it moves the start date back (the history was just never logged).
           look = 'text-transparent bg-[repeating-linear-gradient(45deg,transparent_0_4px,var(--color-border-subtle)_4px_5px)] hover:bg-ink/10';
-          title = `${title} · ${t('habits.beforeStart')}`;
+          note = ` · ${t('habits.beforeStart')}`;
         } else if (!scheduled) {
           look = 'bg-transparent text-ink-lighter hover:bg-ink/8';
-          title = `${title} · ${t('habits.notDue')}`;
+          note = ` · ${t('habits.notDue')}`;
         } else if (missed) {
           look = 'bg-red-500/8 hover:bg-ink/10';
         } else {
@@ -404,8 +410,8 @@ const SortableHabitRow = memo(function SortableHabitRow({ habit, dates, entrySet
           <button
             key={date}
             onClick={() => onToggle(habit, date)}
-            aria-label={title}
-            title={title}
+            aria-label={`${habit.name} — ${date}${note}`}
+            title={`${habit.name} — ${dayNameOf(date, locale)} ${shortDate(date, locale)}${note}`}
             aria-pressed={isCompleted}
             className={`w-(--cell-w) h-(--cell-w) flex items-center justify-center border border-border-subtle transition-all ${look} ${todayRing}`}
           >
