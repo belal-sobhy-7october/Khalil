@@ -230,8 +230,13 @@ export const usePomodoroStore = create<PomodoroState>((set, get) => {
     finishPhase: async (userId) => {
       const s = get();
       const finished = s.phase;
+      const endedAtMs = s.endsAt ?? Date.now();
+      // Came back long after the phase ended (laptop asleep, tab closed):
+      // record it at its real end time and don't auto-start the next phase
+      // as if the user had been there.
+      const away = Date.now() - endedAtMs > 60_000;
       const next = nextPhaseAfter(s.phase, s.cycle, s.settings.longEvery);
-      const autoStart = next.phase === 'focus' ? s.settings.autoStartFocus : s.settings.autoStartBreaks;
+      const autoStart = !away && (next.phase === 'focus' ? s.settings.autoStartFocus : s.settings.autoStartBreaks);
       commit({
         phase: next.phase,
         cycle: next.cycle,
@@ -240,11 +245,11 @@ export const usePomodoroStore = create<PomodoroState>((set, get) => {
         remainingMs: 0,
         phaseStartedAt: autoStart ? Date.now() : null,
       });
-      set({ lastFinished: { phase: finished, at: Date.now() } });
+      set({ lastFinished: { phase: finished, at: endedAtMs } });
       if (finished === 'focus') {
-        const endedAt = new Date().toISOString();
-        const startedAt = new Date(s.phaseStartedAt ?? Date.now() - s.settings.focus * 60_000).toISOString();
-        await get().addSession({ startedAt, endedAt, minutes: s.settings.focus, label: s.label.trim() || null }, userId);
+        const minutes = s.settings.focus;
+        const startedAt = new Date(s.phaseStartedAt ?? endedAtMs - minutes * 60_000).toISOString();
+        await get().addSession({ startedAt, endedAt: new Date(endedAtMs).toISOString(), minutes, label: s.label.trim() || null }, userId);
       }
       return finished;
     },

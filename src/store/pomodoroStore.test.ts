@@ -78,4 +78,15 @@ describe('pomodoro timer', () => {
     expect(st.cycle).toBe(0);
     expect(st.status).toBe('idle');
   });
+
+  it('a phase that ended while away is recorded at its real end and does not auto-start the next', async () => {
+    usePomodoroStore.getState().start();
+    const realEnd = Date.now() + 25 * 60_000;
+    vi.advanceTimersByTime(25 * 60_000 + 3 * 3600_000); // laptop asleep for 3 hours
+    await usePomodoroStore.getState().finishPhase();
+    const st = usePomodoroStore.getState();
+    expect(new Date(st.sessions[0].endedAt).getTime()).toBe(realEnd);
+    expect(st.phase).toBe('short');
+    expect(st.status).toBe('idle');
+  });
 });
