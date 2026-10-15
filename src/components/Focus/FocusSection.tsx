@@ -312,7 +312,7 @@ export default function FocusSection() {
               {week.map((w) => (
                 <div key={w.day} className="flex-1 flex flex-col items-center gap-1 h-full justify-end" title={`${w.minutes} ${t('focus.stats.min')}`}>
                   <span className="text-[10px] text-ink-light tabular-nums">{w.minutes || ''}</span>
-                  <div className={`w-full rounded-t ${w.day === today ? 'bg-clay-soft' : 'bg-clay-soft/50'}`} style={{ height: `${(w.minutes / weekMax) * 100}%`, minHeight: w.minutes ? 3 : 0 }} />
+                  <div className={`w-full rounded-t ${w.day === today ? 'bg-clay-soft' : 'bg-clay-soft/65'}`} style={{ height: `${(w.minutes / weekMax) * 100}%`, minHeight: w.minutes ? 3 : 0 }} />
                   <span className="text-[10px] text-ink-lighter">
                     {new Date(`${w.day}T00:00:00`).toLocaleDateString(locale, { weekday: 'narrow' })}
                   </span>
@@ -329,7 +329,7 @@ export default function FocusSection() {
               <ul className="space-y-1">
                 {recent.map((r) => (
                   <li key={r.id} className="group flex items-center gap-2 text-xs text-ink">
-                    <span className="text-ink-lighter tabular-nums w-24 shrink-0">
+                    <span className="text-ink-lighter tabular-nums shrink-0 whitespace-nowrap">
                       {localDay(r.endedAt) === today ? '' : `${new Date(r.endedAt).toLocaleDateString(locale, { day: 'numeric', month: 'short' })} `}
                       {new Date(r.startedAt).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })}
                     </span>

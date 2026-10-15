@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight, Minus, Plus, Sun, Moon, Users, User, BookOpen } from 'lucide-react';
 import { useTranslation } from '../../i18n/useTranslation';
 import { useAppStore } from '../../store/appStore';
@@ -55,6 +55,17 @@ export default function WirdSection() {
   useEffect(() => {
     if (userId) void loadRange(userId, addDaysToDateString(weekStart, -31), addDaysToDateString(weekStart, 6));
   }, [userId, weekStart, loadRange]);
+
+  // On narrow screens the week scrolls sideways: open it at the end where
+  // today usually is (left in RTL, right in LTR).
+  const gridScrollRef = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const el = gridScrollRef.current;
+    if (!el || el.scrollWidth <= el.clientWidth) return;
+    const todayIndex = weekDays.indexOf(today);
+    const toEnd = todayIndex === -1 || todayIndex >= 3;
+    el.scrollLeft = toEnd ? (isRTL ? -el.scrollWidth : el.scrollWidth) : 0;
+  }, [weekDays, today, isRTL]);
 
   const day = (d: string): WirdDay => ({ ...EMPTY_DAY, ...days[d] });
   const sel = day(selected);
@@ -146,7 +157,7 @@ export default function WirdSection() {
           </button>
         </div>
 
-        <div className="overflow-x-auto">
+        <div ref={gridScrollRef} className="overflow-x-auto">
           <div className="grid min-w-[640px]" style={{ gridTemplateColumns: '9rem repeat(7, minmax(0, 1fr))' }}>
             <div />
             {weekDays.map((d) => (

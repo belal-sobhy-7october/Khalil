@@ -9,6 +9,7 @@ import FocusSection from './Focus/FocusSection';
 import WirdSection from './Wird/WirdSection';
 import AnalyticsSection from './Analytics/AnalyticsSection';
 import SettingsSection from './Settings/SettingsSection';
+import FocusChip from './Focus/FocusChip';
 
 vi.mock('../lib/supabase', async () => {
   const mod = await import('../test/mockSupabase');
@@ -131,5 +132,19 @@ describe('AnalyticsSection', () => {
     const focusCard = screen.getByText('Focus minutes').closest('div.rounded-2xl') as HTMLElement;
     fireEvent.click(within(focusCard).getByRole('button', { name: /Table/ }));
     expect(within(focusCard).getByRole('table')).toBeInTheDocument();
+  });
+});
+
+describe('FocusChip', () => {
+  it('is hidden when idle and shows the running timer elsewhere', () => {
+    const onOpen = vi.fn();
+    const { rerender } = render(<FocusChip onOpen={onOpen} />);
+    expect(screen.queryByText(/\d\d:\d\d/)).toBeNull();
+    usePomodoroStore.setState({ status: 'paused', remainingMs: 12 * 60_000 + 5_000 });
+    rerender(<FocusChip onOpen={onOpen} />);
+    fireEvent.click(screen.getByText('12:05'));
+    expect(onOpen).toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Resume' }));
+    expect(usePomodoroStore.getState().status).toBe('running');
   });
 });

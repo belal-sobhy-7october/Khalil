@@ -25,3 +25,4 @@ dist-ssr
 .env
 .aider*
 backup_before_migrations_*.sql
+e2e-shots/

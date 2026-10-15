@@ -78,6 +78,15 @@ function Tooltip({ x, date, value, unit, align }: { x: number; date: string; val
   );
 }
 
+function EmptyChart({ height }: { height: number }) {
+  const { t } = useTranslation();
+  return (
+    <div className="flex items-center justify-center rounded-xl border border-dashed border-border-subtle text-xs text-ink-lighter" style={{ height: height + 24 }}>
+      {t('analytics.noDataYet')}
+    </div>
+  );
+}
+
 const alignFor = (i: number, n: number) => (i < n * 0.15 ? 'start' : i > n * 0.85 ? 'end' : 'center');
 
 /** Axis labels: first, middle and last date. */
@@ -101,9 +110,11 @@ function XAxis({ data }: { data: DayPoint[] }) {
 }
 
 function YGrid({ max, unit }: { max: number; unit: string }) {
+  // Skip the middle tick when it wouldn't be a whole number (e.g. max = 1).
+  const fractions = Number.isInteger(max / 2) ? [1, 0.5, 0] : [1, 0];
   return (
     <>
-      {[1, 0.5, 0].map((f) => (
+      {fractions.map((f) => (
         <div key={f} className="absolute inset-x-0 border-t border-border-subtle" style={{ bottom: `${f * 100}%` }}>
           <span className="absolute -top-2 end-0 translate-x-full ps-1 text-[10px] text-ink-lighter tabular-nums">
             {Math.round(max * f)}
@@ -119,10 +130,14 @@ export function ColumnChart({ title, subtitle, data, unit = '', height = 140 }: 
   const [hover, setHover] = useState<number | null>(null);
   const max = niceMax(Math.max(0, ...data.map((p) => p.value ?? 0)));
   const peak = data.reduce((best, p, i) => ((p.value ?? 0) > (data[best]?.value ?? 0) ? i : best), 0);
+  const empty = data.every((p) => !p.value);
   return (
     <ChartCard title={title} subtitle={subtitle} table={<DataTable data={data} unit={unit} />}>
+      {empty ? (
+        <EmptyChart height={height} />
+      ) : (
       <div className="pe-8">
-        <div className="relative" style={{ height }} dir="ltr">
+        <div className="relative mt-5" style={{ height }} dir="ltr">
           <YGrid max={max} unit={unit} />
           <div className="absolute inset-0 flex items-end" onPointerLeave={() => setHover(null)}>
             {data.map((p, i) => {
@@ -156,6 +171,7 @@ export function ColumnChart({ title, subtitle, data, unit = '', height = 140 }: 
         </div>
         <XAxis data={data} />
       </div>
+      )}
     </ChartCard>
   );
 }
@@ -181,6 +197,7 @@ export function LineChart({ title, subtitle, data, unit = '%', max: fixedMax = 1
   if (current) segments.push(current);
   const valid = data.map((p, i) => ({ p, i })).filter(({ p }) => p.value !== null);
   const last = valid[valid.length - 1];
+  const empty = valid.every(({ p }) => !p.value);
 
   const onMove = (e: React.PointerEvent) => {
     const rect = areaRef.current?.getBoundingClientRect();
@@ -191,10 +208,13 @@ export function LineChart({ title, subtitle, data, unit = '%', max: fixedMax = 1
 
   return (
     <ChartCard title={title} subtitle={subtitle} table={<DataTable data={data} unit={unit} />}>
+      {empty ? (
+        <EmptyChart height={height} />
+      ) : (
       <div className="pe-8">
         <div
           ref={areaRef}
-          className="relative outline-none"
+          className="relative outline-none mt-5"
           style={{ height }}
           dir="ltr"
           tabIndex={0}
@@ -248,6 +268,7 @@ export function LineChart({ title, subtitle, data, unit = '%', max: fixedMax = 1
         </div>
         <XAxis data={data} />
       </div>
+      )}
     </ChartCard>
   );
 }
@@ -317,7 +338,9 @@ export function StatTile({ label, value, unit = '', delta, icon }: { label: stri
         <span className="text-clay-soft">{icon}</span>
         {label}
       </div>
-      <div className="text-2xl font-semibold text-ink mt-1">{value === null ? '—' : `${value.toLocaleString()}${unit}`}</div>
+      <div className="text-2xl font-semibold text-ink mt-1">
+        {value === null ? '—' : <bdi>{value.toLocaleString('en-US')}{unit}</bdi>}
+      </div>
       <div className="text-[11px] mt-0.5 h-4">
         {delta !== null && (
           <span className={`inline-flex items-center gap-0.5 ${delta >= 0 ? 'text-sage-soft-dark' : 'text-clay-soft-dark'}`}>

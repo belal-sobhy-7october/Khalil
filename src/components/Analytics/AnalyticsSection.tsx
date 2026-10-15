@@ -99,7 +99,13 @@ export default function AnalyticsSection({ onNavigate }: { onNavigate?: (section
     const totalTasks = sum(cur.tasks.total);
     if (totalTasks >= 5) list.push({ icon: '✅', text: t('analytics.insight.taskRate').replace('{p}', String(Math.round((sum(cur.tasks.done) / totalTasks) * 100))).replace('{n}', String(totalTasks)), section: 'todo' });
     const englishDays = cur.english.minutes.filter((p) => (p.value ?? 0) > 0).length;
-    list.push({ icon: '🗣️', text: t('analytics.insight.englishDays').replace('{n}', String(englishDays)).replace('{total}', String(cur.dates.length)), section: 'vocabulary' });
+    list.push({
+      icon: '🗣️',
+      text: englishDays
+        ? t('analytics.insight.englishDays').replace('{n}', String(englishDays)).replace('{total}', String(cur.dates.length))
+        : t('analytics.insight.englishNone'),
+      section: 'vocabulary',
+    });
     const scored = data.score.filter((p) => p.value !== null);
     if (scored.length >= 3) {
       const best = scored.reduce((a, b) => ((b.value ?? 0) > (a.value ?? 0) ? b : a));
@@ -136,7 +142,7 @@ export default function AnalyticsSection({ onNavigate }: { onNavigate?: (section
       <div className="grid grid-cols-1 lg:grid-cols-[16rem_1fr] gap-4">
         <div className="rounded-2xl border border-border-subtle bg-card p-5 flex flex-col justify-center">
           <div className="text-xs text-ink-light flex items-center gap-1.5"><Sparkles size={14} className="text-clay-soft" /> {t('analytics.overall')}</div>
-          <div className="text-6xl font-semibold text-ink mt-2">{overall === null ? '—' : `${overall}%`}</div>
+          <div className="text-6xl font-semibold text-ink mt-2">{overall === null ? '—' : <bdi>{overall}%</bdi>}</div>
           <p className="text-xs text-ink-light mt-2">{t('analytics.overallHint')}</p>
         </div>
         <div className="rounded-2xl border border-border-subtle bg-card p-5">
