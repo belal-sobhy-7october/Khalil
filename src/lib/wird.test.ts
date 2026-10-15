@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { EMPTY_DAY, flushWirdSaves, jamaahCount, rawatibCount, useWirdStore, wirdScore } from './wird';
-import { mockSupabase } from '../test/mockSupabase';
+import { mockSupabase, mockSupabaseResponse } from '../test/mockSupabase';
 
 vi.mock('./supabase', async () => {
   const mod = await import('../test/mockSupabase');
@@ -48,5 +48,24 @@ describe('wird saving', () => {
     vi.advanceTimersByTime(1000);
     expect(mockSupabase.from).toHaveBeenCalledTimes(1);
     expect(useWirdStore.getState().days['2026-10-15'].qiyam).toBe(4);
+  });
+
+  it('keeps an edit whose save was cut off by a reload, and sends it again', async () => {
+    vi.resetModules();
+    localStorage.setItem('khalil-wird-days', JSON.stringify({ '2026-10-15': { ...EMPTY_DAY, adhkarPM: true } }));
+    localStorage.setItem('khalil-wird-unsynced', JSON.stringify(['2026-10-15']));
+    const fresh = await import('./wird');
+    // resetModules keeps mocked modules, so the store still talks to the top-level mock.
+    const m = mockSupabase;
+    m.upsert.mockClear();
+    // The server still has the old version of the day.
+    mockSupabaseResponse.data = [{ date: '2026-10-15', data: { ...EMPTY_DAY } }];
+    await fresh.useWirdStore.getState().loadRange('u1', '2026-10-01', '2026-10-31');
+    mockSupabaseResponse.data = null;
+    expect(fresh.useWirdStore.getState().days['2026-10-15'].adhkarPM).toBe(true);
+    expect(m.upsert).toHaveBeenCalledWith(expect.objectContaining({ date: '2026-10-15', data: expect.objectContaining({ adhkarPM: true }) }), expect.anything());
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(JSON.parse(localStorage.getItem('khalil-wird-unsynced') ?? '[]')).toEqual([]);
   });
 });

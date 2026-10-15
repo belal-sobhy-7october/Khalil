@@ -110,7 +110,7 @@ describe('ConvertToEnglishModal', () => {
     // An English example the user already wrote is kept.
     expect(screen.getByDisplayValue('This phone was a real bargain')).toBeInTheDocument();
     expectNoRawKeys();
-    fireEvent.click(screen.getByRole('button', { name: 'Update 1 words' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Update 1 word' }));
     await waitFor(() => expect(updateVocabularyItem).toHaveBeenCalledWith('a', expect.objectContaining({
       definition: expect.stringMatching(/much less than its usual price/),
     })));

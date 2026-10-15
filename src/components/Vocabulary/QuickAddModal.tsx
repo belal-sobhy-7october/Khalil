@@ -5,6 +5,7 @@ import { useAppStore } from '../../store/appStore';
 import { lookupMany } from '../../lib/dictionary';
 import { parseQuickLine } from '../../lib/quickAddParse';
 import type { VocabularyItemType } from '../../types';
+import { useDialog } from '../../lib/useDialog';
 
 type LookupStatus = 'pending' | 'found' | 'missing' | 'manual';
 
@@ -25,7 +26,7 @@ function guessType(word: string): VocabularyItemType {
 }
 
 export default function QuickAddModal({ onClose, defaultCategory }: { onClose: () => void; defaultCategory?: string }) {
-  const { t } = useTranslation();
+  const { t, tn } = useTranslation();
   const vocabularyItems = useAppStore((s) => s.vocabularyItems);
   const vocabularyCategories = useAppStore((s) => s.vocabularyCategories);
   const importVocabularyItems = useAppStore((s) => s.importVocabularyItems);
@@ -119,14 +120,16 @@ export default function QuickAddModal({ onClose, defaultCategory }: { onClose: (
   const inputClass =
     'w-full px-2 py-1 bg-ink/5 border border-border-subtle rounded text-ink text-sm focus:outline-none focus:border-clay-soft';
 
+  const dialog = useDialog(() => !saving && onClose());
+
   return (
     <div
       className="fixed inset-0 bg-ink/50 flex items-center justify-center z-50 p-4"
       onClick={(e) => e.target === e.currentTarget && !saving && onClose()}
     >
-      <div className="bg-card border border-border-subtle rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+      <div {...dialog.props} className="bg-card border border-border-subtle rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
         <div className="px-6 py-4 border-b border-border-subtle flex items-center justify-between">
-          <h2 className="text-xl font-bold text-ink flex items-center gap-2">
+          <h2 id={dialog.titleId} className="text-xl font-bold text-ink flex items-center gap-2">
             <Sparkles size={20} className="text-clay-soft" />
             {t('vocabulary.quickAdd.title')}
           </h2>
@@ -191,7 +194,7 @@ export default function QuickAddModal({ onClose, defaultCategory }: { onClose: (
               {pendingCount > 0 && (
                 <p className="text-xs text-ink-light flex items-center gap-2">
                   <Loader2 size={14} className="animate-spin" />
-                  {t('vocabulary.quickAdd.lookingUp').replace('{count}', String(pendingCount))}
+                  {tn('vocabulary.quickAdd.lookingUp', pendingCount)}
                 </p>
               )}
               {rows.map((r) => {
@@ -285,7 +288,7 @@ export default function QuickAddModal({ onClose, defaultCategory }: { onClose: (
                 className="flex items-center gap-2 px-4 py-2 bg-clay-soft text-white rounded-lg hover:bg-clay-soft-dark disabled:opacity-40 transition-colors"
               >
                 {saving && <Loader2 size={16} className="animate-spin" />}
-                {t('vocabulary.quickAdd.save').replace('{count}', String(readyRows.length))}
+                {tn('vocabulary.quickAdd.save', readyRows.length)}
               </button>
             </>
           )}

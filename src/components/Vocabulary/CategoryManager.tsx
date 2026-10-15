@@ -3,6 +3,7 @@ import { X, Plus, Edit2, Trash2, Folder } from 'lucide-react';
 import { useTranslation } from '../../i18n/useTranslation';
 import { useAppStore } from '../../store/appStore';
 import type { VocabularyCategory } from '../../types';
+import { useDialog } from '../../lib/useDialog';
 
 export default function CategoryManager({ categories, onClose }: { categories: VocabularyCategory[]; onClose: () => void }) {
   const { t } = useTranslation();
@@ -59,11 +60,13 @@ export default function CategoryManager({ categories, onClose }: { categories: V
     '#a5c4e8', '#74a0d4', '#6ba8c9', '#557c8b',
   ];
 
+  const dialog = useDialog(onClose);
+
   return (
     <div className="fixed inset-0 bg-ink/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-card border border-border-subtle rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+      <div {...dialog.props} className="bg-card border border-border-subtle rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
         <div className="px-6 py-4 border-b border-border-subtle flex items-center justify-between">
-          <h2 className="text-xl font-bold text-ink">{t('vocabulary.manageCategories')}</h2>
+          <h2 id={dialog.titleId} className="text-xl font-bold text-ink">{t('vocabulary.manageCategories')}</h2>
           <button
             onClick={onClose}
             className="p-2 hover:bg-ink/5 rounded-lg transition-colors"

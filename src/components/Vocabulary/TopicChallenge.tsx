@@ -14,6 +14,7 @@ import {
 } from '../../lib/topicChallenge';
 import type { VocabularyCategory } from '../../types';
 import YouGlishModal from './YouGlishModal';
+import { useDialog } from '../../lib/useDialog';
 
 const STEPS: Array<{ key: StepKey; icon: typeof Mic }> = [
   { key: 'words', icon: Mic },
@@ -205,12 +206,14 @@ export default function TopicChallenge({ category, onClose }: { category: Vocabu
 
   const stepTitle = (k: StepKey) => t(`vocabulary.challenge.step.${k}`);
 
+  const dialog = useDialog(() => handleClose());
+
   return (
     <div className="fixed inset-0 bg-ink/50 flex items-center justify-center z-50 p-4" onClick={(e) => e.target === e.currentTarget && handleClose()}>
-      <div className="bg-card border border-border-subtle rounded-2xl w-full max-w-3xl max-h-[92vh] overflow-hidden flex flex-col">
+      <div {...dialog.props} className="bg-card border border-border-subtle rounded-2xl w-full max-w-3xl max-h-[92vh] overflow-hidden flex flex-col">
         <div className="px-6 py-4 border-b border-border-subtle flex items-center justify-between gap-3">
           <div className="min-w-0">
-            <h2 className="text-lg font-bold text-ink flex items-center gap-2">
+            <h2 id={dialog.titleId} className="text-lg font-bold text-ink flex items-center gap-2">
               <Trophy size={18} className="text-clay-soft shrink-0" />
               <span className="truncate">{t('vocabulary.challenge.title').replace('{name}', category.name)}</span>
             </h2>

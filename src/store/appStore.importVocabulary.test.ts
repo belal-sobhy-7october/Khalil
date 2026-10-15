@@ -102,6 +102,22 @@ describe('importVocabularyItems', () => {
     expect(mockSupabase.from).toHaveBeenCalledWith('vocabulary_items');
   });
 
+  it('adds each new word to the list exactly once', async () => {
+    const { importVocabularyItems } = useAppStore.getState();
+    await act(async () => {
+      await importVocabularyItems(
+        [
+          { word: 'hello', type: 'word' as const, definition: 'A greeting' },
+          { word: 'world', type: 'word' as const, definition: 'The earth' },
+        ],
+        { duplicateMode: 'skip' }
+      );
+    });
+    const items = useAppStore.getState().vocabularyItems;
+    expect(items.map((i) => i.word)).toEqual(['test', 'hello', 'world']);
+    expect(new Set(items.map((i) => i.id)).size).toBe(items.length);
+  });
+
   it('creates missing categories in one insert', async () => {
     const { importVocabularyItems } = useAppStore.getState();
     
@@ -171,6 +187,9 @@ describe('importVocabularyItems', () => {
     expect(result.updated).toBe(1);
     expect(result.inserted).toBe(0);
     expect(result.skipped).toBe(0);
+    const after = useAppStore.getState().vocabularyItems;
+    expect(after).toHaveLength(1);
+    expect(after[0]).toMatchObject({ id: 'existing-1', definition: 'New definition' });
   });
 
   it('uses categoryForAll and typeForAll overrides', async () => {

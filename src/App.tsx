@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback, lazy, Suspense } from 'react';
+import type { Session } from '@supabase/supabase-js';
 import { Plus, StickyNote as StickyNoteIcon, ListTodo } from 'lucide-react';
 import {
   useFloating,
@@ -11,6 +12,7 @@ import {
   useInteractions,
 } from '@floating-ui/react';
 import { supabase } from './lib/supabase';
+import { claimLocalData } from './lib/localOwner';
 import { useAppStore } from './store/appStore';
 import { useTranslation } from './i18n/useTranslation';
 import LoginPage from './components/Auth/LoginPage';
@@ -148,8 +150,16 @@ function App() {
     let dataLoaded = false;
     let sessionResolved = false;
 
+    // Another account's local copy must not show or upload: clear it and start fresh.
+    const switchedAccount = (session: Session | null) => {
+      if (!session?.user?.id || !claimLocalData(session.user.id)) return false;
+      window.location.reload();
+      return true;
+    };
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       sessionResolved = true;
+      if (switchedAccount(session)) return;
       setSession(session);
       if (session) {
         dataLoaded = true;
@@ -161,6 +171,7 @@ function App() {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!sessionResolved) return;
+      if (switchedAccount(session)) return;
       setSession(session);
       if (session && !dataLoaded) {
         dataLoaded = true;

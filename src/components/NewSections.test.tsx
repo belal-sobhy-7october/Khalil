@@ -75,6 +75,17 @@ describe('FocusSection', () => {
     expect(usePomodoroStore.getState().phase).toBe('short');
   });
 
+  it('R and S still work after clicking a timer button', () => {
+    render(<FocusSection />);
+    const start = screen.getByRole('button', { name: /^Start$/ });
+    fireEvent.click(start);
+    fireEvent.keyDown(start, { key: 'r' });
+    expect(usePomodoroStore.getState().status).toBe('idle');
+    // Space on a focused button is left to the button itself.
+    fireEvent.keyDown(screen.getByRole('button', { name: /^Start$/ }), { code: 'Space', key: ' ' });
+    expect(usePomodoroStore.getState().status).toBe('idle');
+  });
+
   it('switching phase resets to that phase length', () => {
     render(<FocusSection />);
     fireEvent.click(screen.getByRole('tab', { name: 'Long break' }));
@@ -87,6 +98,25 @@ describe('FocusSection', () => {
     fireEvent.change(screen.getByLabelText('Focus (minutes)'), { target: { value: '50' } });
     expect(usePomodoroStore.getState().settings.focus).toBe(50);
     expect(screen.getByText('50:00')).toBeInTheDocument();
+  });
+
+  it('lets a minutes field be cleared and retyped', () => {
+    render(<FocusSection />);
+    fireEvent.click(screen.getByRole('button', { name: /Timer settings/ }));
+    const input = screen.getByLabelText('Focus (minutes)') as HTMLInputElement;
+    fireEvent.change(input, { target: { value: '' } });
+    expect(input.value).toBe('');
+    expect(usePomodoroStore.getState().settings.focus).toBe(25);
+    fireEvent.change(input, { target: { value: '4' } });
+    fireEvent.change(input, { target: { value: '45' } });
+    expect(usePomodoroStore.getState().settings.focus).toBe(45);
+    fireEvent.change(input, { target: { value: '' } });
+    fireEvent.blur(input);
+    expect(input.value).toBe('45');
+    fireEvent.change(input, { target: { value: '999' } });
+    fireEvent.blur(input);
+    expect(usePomodoroStore.getState().settings.focus).toBeLessThan(999);
+    expect(input.value).toBe(String(usePomodoroStore.getState().settings.focus));
   });
 });
 

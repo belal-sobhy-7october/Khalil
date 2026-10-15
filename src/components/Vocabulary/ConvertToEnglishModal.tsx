@@ -6,6 +6,7 @@ import { lookupMany } from '../../lib/dictionary';
 import { TOPIC_PACKS } from '../../data/topicPacks';
 import type { VocabularyItem } from '../../types';
 import { ARABIC, hasArabicDefinition } from '../../lib/arabicText';
+import { useDialog } from '../../lib/useDialog';
 
 interface Row {
   item: VocabularyItem;
@@ -21,7 +22,7 @@ const packIndex = new Map(
 );
 
 export default function ConvertToEnglishModal({ onClose }: { onClose: () => void }) {
-  const { t } = useTranslation();
+  const { t, tn } = useTranslation();
   const vocabularyItems = useAppStore((s) => s.vocabularyItems);
   const updateVocabularyItem = useAppStore((s) => s.updateVocabularyItem);
 
@@ -111,14 +112,16 @@ export default function ConvertToEnglishModal({ onClose }: { onClose: () => void
   const inputClass =
     'w-full px-2 py-1 bg-ink/5 border border-border-subtle rounded text-ink text-sm focus:outline-none focus:border-clay-soft resize-none';
 
+  const dialog = useDialog(() => !saving && onClose());
+
   return (
     <div
       className="fixed inset-0 bg-ink/50 flex items-center justify-center z-50 p-4"
       onClick={(e) => e.target === e.currentTarget && !saving && onClose()}
     >
-      <div className="bg-card border border-border-subtle rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+      <div {...dialog.props} className="bg-card border border-border-subtle rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
         <div className="px-6 py-4 border-b border-border-subtle flex items-center justify-between">
-          <h2 className="text-xl font-bold text-ink flex items-center gap-2">
+          <h2 id={dialog.titleId} className="text-xl font-bold text-ink flex items-center gap-2">
             <Languages size={20} className="text-clay-soft" />
             {t('vocabulary.convert.title')}
           </h2>
@@ -131,7 +134,7 @@ export default function ConvertToEnglishModal({ onClose }: { onClose: () => void
           {savedCount !== null ? (
             <div className="flex flex-col items-center text-center py-10 gap-2">
               <Check size={40} className="text-green-500" />
-              <p className="text-ink">{t('vocabulary.convert.saved').replace('{count}', String(savedCount))}</p>
+              <p className="text-ink">{tn('vocabulary.convert.saved', savedCount)}</p>
             </div>
           ) : (
             <>
@@ -154,7 +157,7 @@ export default function ConvertToEnglishModal({ onClose }: { onClose: () => void
               {pendingCount > 0 && (
                 <p className="text-xs text-ink-light flex items-center gap-2">
                   <Loader2 size={14} className="animate-spin" />
-                  {t('vocabulary.quickAdd.lookingUp').replace('{count}', String(pendingCount))}
+                  {tn('vocabulary.quickAdd.lookingUp', pendingCount)}
                 </p>
               )}
               {rows.map((r) => (
@@ -217,7 +220,7 @@ export default function ConvertToEnglishModal({ onClose }: { onClose: () => void
               className="flex items-center gap-2 px-4 py-2 bg-clay-soft text-white rounded-lg hover:bg-clay-soft-dark disabled:opacity-40 transition-colors"
             >
               {saving && <Loader2 size={16} className="animate-spin" />}
-              {t('vocabulary.convert.save').replace('{count}', String(ready.length))}
+              {tn('vocabulary.convert.save', ready.length)}
             </button>
             </>
           )}

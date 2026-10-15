@@ -84,7 +84,8 @@ describe('translation keys used in the app', () => {
     const arKeys = new Set(collectLeafKeyPaths(translations.ar));
 
     const missingInAr = [...enKeys].filter((k) => !arKeys.has(k)).sort();
-    const missingInEn = [...arKeys].filter((k) => !enKeys.has(k)).sort();
+    // `_two` (the Arabic dual) has no English counterpart; tn() falls back to the plain key.
+    const missingInEn = [...arKeys].filter((k) => !enKeys.has(k) && !k.endsWith('_two')).sort();
 
     expect({ missingInAr, missingInEn }).toEqual({ missingInAr: [], missingInEn: [] });
   });

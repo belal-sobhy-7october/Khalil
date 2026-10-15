@@ -20,7 +20,7 @@ import { hasArabicDefinition } from '../../lib/arabicText';
 import type { VocabularyItemType } from '../../types';
 
 export default function VocabularySection() {
-  const { t } = useTranslation();
+  const { t, tn } = useTranslation();
   const vocabularyItems = useAppStore((s) => s.vocabularyItems);
   const vocabularyCategories = useAppStore((s) => s.vocabularyCategories);
   const addVocabularyItem = useAppStore((s) => s.addVocabularyItem);
@@ -147,7 +147,7 @@ export default function VocabularySection() {
         <div className="mb-6 flex flex-wrap items-center gap-3 p-3 rounded-xl border border-clay-soft/40 bg-clay-soft/5">
           <Languages size={18} className="text-clay-soft shrink-0" />
           <p className="flex-1 text-sm text-ink min-w-[12rem]">
-            {t('vocabulary.convert.banner').replace('{count}', String(arabicCount))}
+            {tn('vocabulary.convert.banner', arabicCount)}
           </p>
           <button
             onClick={() => setShowConvert(true)}

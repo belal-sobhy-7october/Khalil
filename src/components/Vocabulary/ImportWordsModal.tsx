@@ -4,6 +4,7 @@ import { useTranslation } from '../../i18n/useTranslation';
 import { useAppStore } from '../../store/appStore';
 import { parseVocabularyText, detectDuplicates, type ParsedRow } from '../../lib/vocabularyImport';
 import type { VocabularyItemType } from '../../types';
+import { useDialog } from '../../lib/useDialog';
 
 type Step = 'input' | 'preview' | 'importing' | 'done';
 
@@ -160,11 +161,13 @@ export default function ImportWordsModal({ onClose }: { onClose: () => void }) {
   const duplicateCount = rows.filter(r => r.status === 'duplicate' && r.selected).length;
   const warningCount = rows.filter(r => r.status === 'warning' && r.selected).length;
   
+  const dialog = useDialog(onClose);
+
   return (
     <div className="fixed inset-0 bg-ink/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-card border border-border-subtle rounded-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
+      <div {...dialog.props} className="bg-card border border-border-subtle rounded-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
         <div className="sticky top-0 bg-card border-b border-border-subtle px-6 py-4 flex items-center justify-between">
-          <h2 className="text-xl font-bold text-ink">{t('vocabulary.importWords')}</h2>
+          <h2 id={dialog.titleId} className="text-xl font-bold text-ink">{t('vocabulary.importWords')}</h2>
           <button
             onClick={handleClose}
             className="p-2 hover:bg-ink/5 rounded-lg transition-colors"

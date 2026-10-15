@@ -81,6 +81,29 @@ interface WirdState {
   updateDay: (userId: string | undefined, date: string, patch: Partial<WirdDay> | ((d: WirdDay) => Partial<WirdDay>)) => void;
 }
 
+// Days edited locally that the server hasn't confirmed yet. Kept in
+// localStorage so an edit survives a reload/close that cancels the request:
+// the local copy wins on the next load and is sent again.
+const UNSYNCED_KEY = 'khalil-wird-unsynced';
+
+function readUnsynced(): Set<string> {
+  try {
+    return new Set(JSON.parse(localStorage.getItem(UNSYNCED_KEY) ?? '[]') as string[]);
+  } catch {
+    return new Set();
+  }
+}
+
+const unsynced = readUnsynced();
+
+function writeUnsynced() {
+  try {
+    localStorage.setItem(UNSYNCED_KEY, JSON.stringify([...unsynced]));
+  } catch {
+    // ignore
+  }
+}
+
 const saveTimers = new Map<string, number>();
 let pendingUserId: string | undefined;
 
@@ -88,7 +111,15 @@ async function persistDay(userId: string, date: string, data: WirdDay) {
   const { error } = await supabase
     .from('wird_days')
     .upsert({ user_id: userId, date, data, updated_at: new Date().toISOString() }, { onConflict: 'user_id,date' });
-  if (error) console.error('save wird day', error);
+  if (error) {
+    console.error('save wird day', error);
+    return;
+  }
+  // Confirmed — unless the day changed again while this was in flight.
+  if (useWirdStore.getState().days[date] === data && !saveTimers.has(date)) {
+    unsynced.delete(date);
+    writeUnsynced();
+  }
 }
 
 export const useWirdStore = create<WirdState>((set, get) => ({
@@ -99,12 +130,15 @@ export const useWirdStore = create<WirdState>((set, get) => ({
     if (error || !data) return;
     const days = { ...get().days };
     for (const row of data as Array<{ date: string; data: Partial<WirdDay> }>) {
-      // Don't let a load that lands mid-edit overwrite a change still waiting to save.
-      if (saveTimers.has(row.date)) continue;
+      // A local edit the server hasn't confirmed is newer than this row.
+      if (saveTimers.has(row.date) || unsynced.has(row.date)) continue;
       days[row.date] = { ...EMPTY_DAY, ...row.data };
     }
     set({ days });
     writeLocal(days);
+    for (const date of unsynced) {
+      if (date >= from && date <= to && !saveTimers.has(date) && days[date]) void persistDay(userId, date, days[date]);
+    }
   },
 
   updateDay: (userId, date, patch) => {
@@ -115,6 +149,8 @@ export const useWirdStore = create<WirdState>((set, get) => ({
     writeLocal(days);
     if (!userId) return;
     pendingUserId = userId;
+    unsynced.add(date);
+    writeUnsynced();
     // Debounce per day so rapid taps make one request.
     window.clearTimeout(saveTimers.get(date));
     saveTimers.set(
