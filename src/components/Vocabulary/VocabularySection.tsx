@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react';
-import { Plus, Search, Filter } from 'lucide-react';
+import { Plus, Search, Filter, Flame, Upload } from 'lucide-react';
 import { useAppStore } from '../../store/appStore';
 import { useTranslation } from '../../i18n/useTranslation';
+import { speakBrowser, getPronunciationPrefs } from '../../lib/pronunciation';
+import { isHardWord, buildReviewQueue } from '../../store/vocabularyHard';
 import VocabularyForm from './VocabularyForm';
 import VocabularyCard from './VocabularyCard';
 import CategoryManager from './CategoryManager';
 import FlashcardReview from './FlashcardReview';
+import ImportWordsModal from './ImportWordsModal';
 import type { VocabularyItemType } from '../../types';
 
 export default function VocabularySection() {
@@ -20,9 +23,12 @@ export default function VocabularySection() {
   const [showForm, setShowForm] = useState(false);
   const [showCategories, setShowCategories] = useState(false);
   const [showReview, setShowReview] = useState(false);
+  const [showImport, setShowImport] = useState(false);
+  const [reviewItemIds, setReviewItemIds] = useState<string[] | undefined>(undefined);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<VocabularyItemType | 'all'>('all');
   const [filterCategory, setFilterCategory] = useState<string | 'all'>('all');
+  const [filterHardOnly, setFilterHardOnly] = useState(false);
 
   // Load voices when component mounts
   useEffect(() => {
@@ -44,33 +50,14 @@ export default function VocabularySection() {
       item.definition.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesType = filterType === 'all' || item.type === filterType;
     const matchesCategory = filterCategory === 'all' || item.categoryId === filterCategory;
-    return matchesSearch && matchesType && matchesCategory;
+    const matchesHard = !filterHardOnly || isHardWord(item);
+    return matchesSearch && matchesType && matchesCategory && matchesHard;
   });
 
+  const prefs = getPronunciationPrefs();
+
   const handleSpeak = (text: string) => {
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-      
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = 'en-US';
-      utterance.rate = 0.9;
-      utterance.pitch = 1;
-      
-      // Try to get English US voice
-      const voices = window.speechSynthesis.getVoices();
-      const englishVoice = voices.find(voice => voice.lang.includes('en-US'));
-      if (englishVoice) {
-        utterance.voice = englishVoice;
-      }
-      
-      utterance.onstart = () => console.log('Speech started');
-      utterance.onend = () => console.log('Speech ended');
-      utterance.onerror = (e) => console.error('Speech error:', e);
-      
-      window.speechSynthesis.speak(utterance);
-    } else {
-      console.error('Speech synthesis not supported in this browser');
-    }
+    speakBrowser(text, prefs.accent);
   };
 
   return (
@@ -81,7 +68,7 @@ export default function VocabularySection() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         <div className="bg-card border border-border-subtle rounded-xl p-4">
           <div className="text-2xl font-bold text-ink">{stats.total}</div>
           <div className="text-sm text-ink-light">{t('vocabulary.totalWords')}</div>
@@ -93,6 +80,10 @@ export default function VocabularySection() {
         <div className="bg-card border border-border-subtle rounded-xl p-4">
           <div className="text-2xl font-bold text-orange-500">{stats.needReview}</div>
           <div className="text-sm text-ink-light">{t('vocabulary.needReview')}</div>
+        </div>
+        <div className="bg-card border border-border-subtle rounded-xl p-4">
+          <div className="text-2xl font-bold text-red-500">{stats.hard}</div>
+          <div className="text-sm text-ink-light">{t('vocabulary.hardWords')}</div>
         </div>
       </div>
 
@@ -113,10 +104,33 @@ export default function VocabularySection() {
           <span>{t('vocabulary.manageCategories')}</span>
         </button>
         <button
-          onClick={() => setShowReview(true)}
+          onClick={() => {
+            setReviewItemIds(undefined);
+            setShowReview(true);
+          }}
           className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
         >
           <span>{t('vocabulary.startReview')}</span>
+        </button>
+        {stats.hard > 0 && (
+          <button
+            onClick={() => {
+              const hardItems = buildReviewQueue(vocabularyItems, { onlyHard: true });
+              setReviewItemIds(hardItems.map((i) => i.id));
+              setShowReview(true);
+            }}
+            className="flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+          >
+            <Flame size={18} />
+            <span>{t('vocabulary.reviewHardWords')}</span>
+          </button>
+        )}
+        <button
+          onClick={() => setShowImport(true)}
+          className="flex items-center gap-2 px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors"
+        >
+          <Upload size={18} />
+          <span>{t('vocabulary.importWords')}</span>
         </button>
       </div>
 
@@ -153,6 +167,17 @@ export default function VocabularySection() {
             <option key={cat.id} value={cat.id}>{cat.name}</option>
           ))}
         </select>
+        <button
+          onClick={() => setFilterHardOnly((prev) => !prev)}
+          className={`px-4 py-2 rounded-lg text-ink transition-colors ${
+            filterHardOnly
+              ? 'bg-red-500 text-white'
+              : 'bg-card border border-border-subtle hover:bg-ink/5'
+          }`}
+        >
+          <Flame size={16} className="mr-1" />
+          {t('vocabulary.hardOnly')}
+        </button>
       </div>
 
       {/* Vocabulary List */}
@@ -195,7 +220,23 @@ export default function VocabularySection() {
       )}
 
       {showReview && (
-        <FlashcardReview onClose={() => setShowReview(false)} />
+        <FlashcardReview
+          onClose={() => {
+            setShowReview(false);
+            setReviewItemIds(undefined);
+          }}
+          initialItemIds={reviewItemIds}
+          onReviewMissed={(ids) => {
+            setReviewItemIds(ids);
+            setShowReview(true);
+          }}
+        />
+      )}
+
+      {showImport && (
+        <ImportWordsModal
+          onClose={() => setShowImport(false)}
+        />
       )}
     </div>
   );

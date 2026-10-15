@@ -169,6 +169,10 @@ export interface VocabularyItem {
   pronunciation?: string;
   masteryLevel: number; // 0-5
   reviewCount: number;
+  lapseCount: number; // total wrong answers
+  correctStreak: number; // consecutive correct answers
+  lastResult?: VocabularyReviewResult; // 'correct' | 'incorrect' | 'skipped'
+  isHard: boolean; // manually marked as hard
   lastReviewedAt?: string;
   createdAt: string;
   updatedAt: string;

@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import { getToday, getWeekStart, stepCalendarDate } from './dateHelpers';
+import { isHardWord, applyReviewResult } from './vocabularyHard';
 import type {
   Language,
   Priority,
@@ -23,7 +24,9 @@ import type {
   CalendarViewMode,
   VocabularyCategory,
   VocabularyItem,
+  VocabularyItemType,
   VocabularyReview,
+  VocabularyReviewResult,
 } from '../types';
 
 interface AppStore {
@@ -136,11 +139,20 @@ interface AppStore {
   addVocabularyCategory: (category: Omit<VocabularyCategory, 'id' | 'userId' | 'createdAt' | 'updatedAt'>) => Promise<void>;
   updateVocabularyCategory: (id: string, data: Partial<VocabularyCategory>) => Promise<void>;
   deleteVocabularyCategory: (id: string) => Promise<void>;
-  addVocabularyItem: (item: Omit<VocabularyItem, 'id' | 'userId' | 'createdAt' | 'updatedAt' | 'reviewCount' | 'lastReviewedAt'>) => Promise<void>;
+  addVocabularyItem: (item: Omit<VocabularyItem, 'id' | 'userId' | 'createdAt' | 'updatedAt' | 'reviewCount' | 'lastReviewedAt' | 'lapseCount' | 'correctStreak' | 'isHard'>) => Promise<void>;
   updateVocabularyItem: (id: string, data: Partial<VocabularyItem>) => Promise<void>;
   deleteVocabularyItem: (id: string) => Promise<void>;
   submitVocabularyReview: (itemId: string, result: VocabularyReview['result'], timeTaken?: number) => Promise<void>;
-  getVocabularyStats: () => { total: number; mastered: number; needReview: number };
+  getVocabularyStats: () => { total: number; mastered: number; needReview: number; hard: number };
+  importVocabularyItems: (items: Array<{
+    word: string;
+    type: VocabularyItemType;
+    definition: string;
+    exampleSentence?: string;
+    pronunciation?: string;
+    categoryName?: string;
+    masteryLevel?: number;
+  }>, options: { duplicateMode: 'skip' | 'update'; categoryForAll?: string; typeForAll?: VocabularyItemType }) => Promise<{ inserted: number; updated: number; skipped: number; failed: number }>;
 }
 
 function generateId(): string {
@@ -1683,6 +1695,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
         word: item.word, type: item.type, definition: item.definition,
         example_sentence: item.exampleSentence, pronunciation: item.pronunciation,
         mastery_level: item.masteryLevel, review_count: 0,
+        lapse_count: 0, correct_streak: 0, is_hard: false,
         created_at: now, updated_at: now,
       }),
       'addVocabularyItem'
@@ -1691,7 +1704,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       set({ error: 'errors.addVocabularyItem' });
       return;
     }
-    set((s) => ({ vocabularyItems: [...s.vocabularyItems, { ...item, id, userId, createdAt: now, updatedAt: now, reviewCount: 0 }] }));
+    set((s) => ({ vocabularyItems: [...s.vocabularyItems, { ...item, id, userId, createdAt: now, updatedAt: now, reviewCount: 0, lapseCount: 0, correctStreak: 0, isHard: false }] }));
   },
   updateVocabularyItem: async (id, data) => {
     const previousItem = get().vocabularyItems.find((i) => i.id === id);
@@ -1708,6 +1721,10 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     if (data.exampleSentence !== undefined) dbData.example_sentence = data.exampleSentence;
     if (data.pronunciation !== undefined) dbData.pronunciation = data.pronunciation;
     if (data.masteryLevel !== undefined) dbData.mastery_level = data.masteryLevel;
+    if (data.lapseCount !== undefined) dbData.lapse_count = data.lapseCount;
+    if (data.correctStreak !== undefined) dbData.correct_streak = data.correctStreak;
+    if (data.lastResult !== undefined) dbData.last_result = data.lastResult;
+    if (data.isHard !== undefined) dbData.is_hard = data.isHard;
     const { success } = await supabaseCall(supabase.from('vocabulary_items').update(dbData).eq('id', id), 'updateVocabularyItem');
     if (!success) {
       set((s) => ({ vocabularyItems: s.vocabularyItems.map((i) => (i.id === id ? previousItem : i)), error: 'errors.updateVocabularyItem' }));
@@ -1728,6 +1745,26 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     const now = new Date().toISOString();
     const item = get().vocabularyItems.find((i) => i.id === itemId);
     if (!item) return;
+
+    // Store previous state for potential rollback
+    const previousItem = { ...item };
+
+    // Apply review result using pure function
+    const updatedItem = applyReviewResult(item, result, item.isHard);
+    // For 'skipped', masteryLevel doesn't change
+    const newMasteryLevel = result === 'correct' 
+      ? Math.min(item.masteryLevel + 1, 5) 
+      : result === 'incorrect' 
+        ? Math.max(item.masteryLevel - 1, 0)
+        : item.masteryLevel;
+
+    // Optimistic update
+    set((s) => ({
+      vocabularyReviews: [...s.vocabularyReviews, { id, vocabularyItemId: itemId, userId, result, timeTaken, reviewedAt: now }],
+      vocabularyItems: s.vocabularyItems.map((i) => (i.id === itemId ? { ...i, ...updatedItem, masteryLevel: newMasteryLevel, reviewCount: i.reviewCount + 1, lastReviewedAt: now } : i)),
+    }));
+
+    // Persist to DB
     const { success } = await supabaseCall(
       supabase.from('vocabulary_reviews').insert({
         id, vocabulary_item_id: itemId, user_id: userId,
@@ -1735,23 +1772,277 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       }),
       'submitVocabularyReview'
     );
+
     if (!success) {
-      set({ error: 'errors.submitVocabularyReview' });
+      // Rollback on review insert failure
+      set((s) => ({
+        vocabularyReviews: s.vocabularyReviews.filter((r) => r.id !== id),
+        vocabularyItems: s.vocabularyItems.map((i) => (i.id === itemId ? previousItem : i)),
+        error: 'errors.submitVocabularyReview',
+      }));
       return;
     }
-    const newMasteryLevel = result === 'correct' ? Math.min(item.masteryLevel + 1, 5) : Math.max(item.masteryLevel - 1, 0);
-    set((s) => ({
-      vocabularyReviews: [...s.vocabularyReviews, { id, vocabularyItemId: itemId, userId, result, timeTaken, reviewedAt: now }],
-      vocabularyItems: s.vocabularyItems.map((i) => (i.id === itemId ? { ...i, masteryLevel: newMasteryLevel, reviewCount: i.reviewCount + 1, lastReviewedAt: now } : i)),
-    }));
-    await supabaseCall(supabase.from('vocabulary_items').update({ mastery_level: newMasteryLevel, review_count: item.reviewCount + 1, last_reviewed_at: now }).eq('id', itemId), 'updateVocabularyItemAfterReview');
+
+    const { success: updateSuccess } = await supabaseCall(
+      supabase.from('vocabulary_items').update({
+        mastery_level: newMasteryLevel,
+        review_count: item.reviewCount + 1,
+        last_reviewed_at: now,
+        lapse_count: updatedItem.lapseCount,
+        correct_streak: updatedItem.correctStreak,
+        last_result: updatedItem.lastResult,
+        is_hard: updatedItem.isHard,
+      }).eq('id', itemId),
+      'updateVocabularyItemAfterReview'
+    );
+
+    if (!updateSuccess) {
+      // Rollback on item update failure
+      set((s) => ({
+        vocabularyReviews: s.vocabularyReviews.filter((r) => r.id !== id),
+        vocabularyItems: s.vocabularyItems.map((i) => (i.id === itemId ? previousItem : i)),
+        error: 'errors.updateVocabularyItem',
+      }));
+    }
   },
   getVocabularyStats: () => {
     const items = get().vocabularyItems;
     const total = items.length;
     const mastered = items.filter((i) => i.masteryLevel >= 4).length;
     const needReview = items.filter((i) => i.masteryLevel <= 2).length;
-    return { total, mastered, needReview };
+    const hard = items.filter(isHardWord).length;
+    return { total, mastered, needReview, hard };
+  },
+  importVocabularyItems: async (items, options) => {
+    const userId = get().session?.user?.id;
+    if (!userId) return { inserted: 0, updated: 0, skipped: 0, failed: items.length };
+    
+    const { duplicateMode, categoryForAll, typeForAll } = options;
+    const now = new Date().toISOString();
+    
+    // Collect unique category names from items
+    const categoryNames = new Set<string>();
+    for (const item of items) {
+      const cat = item.categoryName || categoryForAll;
+      if (cat) categoryNames.add(cat.trim());
+    }
+    
+    // Find existing categories and create missing ones
+    const existingCategories = get().vocabularyCategories;
+    const categoryMap = new Map<string, string>(); // name -> id
+    
+    for (const cat of existingCategories) {
+      categoryMap.set(cat.name.toLowerCase(), cat.id);
+    }
+    
+    const newCategories: Array<{ name: string; id: string }> = [];
+    for (const name of categoryNames) {
+      const lower = name.toLowerCase();
+      if (!categoryMap.has(lower)) {
+        const id = generateId();
+        newCategories.push({ name, id });
+        categoryMap.set(lower, id);
+      }
+    }
+    
+    // Insert new categories in one batch
+    if (newCategories.length > 0) {
+      const { success: catSuccess } = await supabaseCall(
+        supabase.from('vocabulary_categories').insert(
+          newCategories.map(c => ({
+            id: c.id,
+            user_id: userId,
+            name: c.name,
+            color: '#e8d5c4',
+            icon: 'folder',
+            created_at: now,
+            updated_at: now,
+          }))
+        ),
+        'importVocabularyCategories'
+      );
+      if (!catSuccess) {
+        set({ error: 'errors.importVocabulary' });
+        return { inserted: 0, updated: 0, skipped: 0, failed: items.length };
+      }
+      // Add to local state
+      set((s) => ({
+        vocabularyCategories: [...s.vocabularyCategories, ...newCategories.map(c => ({ ...c, userId, color: '#e8d5c4', icon: 'folder', createdAt: now, updatedAt: now }))]
+      }));
+    }
+    
+    // Build items for insert
+    const itemsToInsert: Array<{
+      id: string;
+      user_id: string;
+      category_id: string | undefined;
+      word: string;
+      type: string;
+      definition: string;
+      example_sentence: string | null;
+      pronunciation: string | null;
+      mastery_level: number;
+      review_count: number;
+      lapse_count: number;
+      correct_streak: number;
+      is_hard: boolean;
+      created_at: string;
+      updated_at: string;
+    }> = [];
+    
+    const itemsToUpdate: Array<{
+      id: string;
+      word: string;
+      type: string;
+      definition: string;
+      example_sentence: string | null;
+      pronunciation: string | null;
+      category_id: string | undefined;
+      updated_at: string;
+    }> = [];
+    
+    const existingWords = new Map<string, VocabularyItem>();
+    for (const item of get().vocabularyItems) {
+      existingWords.set(item.word.toLowerCase(), item);
+    }
+    
+    let insertedCount = 0;
+    let updatedCount = 0;
+    let skippedCount = 0;
+    
+    for (const item of items) {
+      const word = item.word.trim();
+      const lowerWord = word.toLowerCase();
+      const existing = existingWords.get(lowerWord);
+      const categoryName = item.categoryName || categoryForAll;
+      const categoryId = categoryName ? categoryMap.get(categoryName.toLowerCase()) : undefined;
+      const type = typeForAll || item.type;
+      
+      if (existing) {
+        if (duplicateMode === 'update') {
+          itemsToUpdate.push({
+            id: existing.id,
+            word,
+            type,
+            definition: item.definition.trim(),
+            example_sentence: item.exampleSentence?.trim() || null,
+            pronunciation: item.pronunciation?.trim() || null,
+            category_id: categoryId,
+            updated_at: now,
+          });
+          existingWords.set(lowerWord, { ...existing, word, type, definition: item.definition.trim(), exampleSentence: item.exampleSentence?.trim(), pronunciation: item.pronunciation?.trim(), categoryId, updatedAt: now });
+          updatedCount++;
+        } else {
+          skippedCount++;
+        }
+      } else {
+        const id = generateId();
+        itemsToInsert.push({
+          id,
+          user_id: userId,
+          category_id: categoryId,
+          word,
+          type,
+          definition: item.definition.trim(),
+          example_sentence: item.exampleSentence?.trim() || null,
+          pronunciation: item.pronunciation?.trim() || null,
+          mastery_level: item.masteryLevel || 0,
+          review_count: 0,
+          lapse_count: 0,
+          correct_streak: 0,
+          is_hard: false,
+          created_at: now,
+          updated_at: now,
+        });
+        existingWords.set(lowerWord, {
+          id,
+          userId,
+          word,
+          type,
+          definition: item.definition.trim(),
+          exampleSentence: item.exampleSentence?.trim(),
+          pronunciation: item.pronunciation?.trim(),
+          categoryId,
+          masteryLevel: item.masteryLevel || 0,
+          reviewCount: 0,
+          lapseCount: 0,
+          correctStreak: 0,
+          isHard: false,
+          createdAt: now,
+          updatedAt: now,
+        } as VocabularyItem);
+        insertedCount++;
+      }
+    }
+    
+    let failedCount = 0;
+    
+    // Insert in chunks of 200
+    const CHUNK_SIZE = 200;
+    for (let i = 0; i < itemsToInsert.length; i += CHUNK_SIZE) {
+      const chunk = itemsToInsert.slice(i, i + CHUNK_SIZE);
+      const { success } = await supabaseCall(
+        supabase.from('vocabulary_items').insert(chunk),
+        'importVocabularyItems'
+      );
+      if (!success) {
+        failedCount += chunk.length;
+        insertedCount -= chunk.length;
+      }
+    }
+    
+    // Update existing items
+    for (const item of itemsToUpdate) {
+      const { success } = await supabaseCall(
+        supabase.from('vocabulary_items').update({
+          word: item.word,
+          type: item.type,
+          definition: item.definition,
+          example_sentence: item.example_sentence,
+          pronunciation: item.pronunciation,
+          category_id: item.category_id,
+          updated_at: item.updated_at,
+        }).eq('id', item.id),
+        'importVocabularyUpdate'
+      );
+      if (!success) {
+        failedCount++;
+        updatedCount--;
+      }
+    }
+    
+    // Update local state only on success
+    if (failedCount === 0 && (insertedCount > 0 || updatedCount > 0)) {
+      const newItems = itemsToInsert.map(i => ({
+        id: i.id,
+        userId: i.user_id,
+        categoryId: i.category_id ?? undefined,
+        word: i.word,
+        type: i.type as VocabularyItemType,
+        definition: i.definition,
+        exampleSentence: i.example_sentence ?? undefined,
+        pronunciation: i.pronunciation ?? undefined,
+        masteryLevel: i.mastery_level,
+        reviewCount: i.review_count,
+        lapseCount: i.lapse_count,
+        correctStreak: i.correct_streak,
+        isHard: i.is_hard,
+        createdAt: i.created_at,
+        updatedAt: i.updated_at,
+      } as VocabularyItem));
+      
+      set((s) => ({
+        vocabularyItems: [
+          ...s.vocabularyItems.filter(existing => !existingWords.has(existing.word.toLowerCase())),
+          ...newItems,
+          ...Array.from(existingWords.values()),
+        ],
+      }));
+    } else if (failedCount > 0) {
+      set({ error: 'errors.importVocabulary' });
+    }
+    
+    return { inserted: insertedCount, updated: updatedCount, skipped: skippedCount, failed: failedCount };
   },
 
 }));
@@ -1871,6 +2162,10 @@ function mapVocabularyItem(row: Record<string, unknown>): VocabularyItem {
     pronunciation: (row.pronunciation as string) || undefined,
     masteryLevel: (row.mastery_level as number) ?? 0,
     reviewCount: (row.review_count as number) ?? 0,
+    lapseCount: (row.lapse_count as number) ?? 0,
+    correctStreak: (row.correct_streak as number) ?? 0,
+    lastResult: (row.last_result as VocabularyReviewResult) || undefined,
+    isHard: (row.is_hard as boolean) ?? false,
     lastReviewedAt: (row.last_reviewed_at as string) || undefined,
     createdAt: row.created_at as string,
     updatedAt: row.updated_at as string,
