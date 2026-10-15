@@ -104,7 +104,12 @@ export function buildYouGlishUrl(word: string, accent: YouGlishAccent = 'us'): s
 export async function speakWord(text: string, accent: BrowserAccent = 'us'): Promise<void> {
   const trimmed = text.trim();
   if (/^[a-zA-Z'-]+$/.test(trimmed)) {
-    const entry = await lookupWord(trimmed, 2500);
+    // Don't keep the user waiting on a slow lookup: after 1.5s speak with
+    // the browser voice instead (the lookup still lands in the cache).
+    const entry = await Promise.race([
+      lookupWord(trimmed),
+      new Promise<null>((resolve) => setTimeout(() => resolve(null), 1500)),
+    ]);
     const url = entry?.audio[accent];
     if (url) {
       try {
