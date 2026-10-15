@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Plus, Search, Filter, Flame, Upload } from 'lucide-react';
 import { useAppStore } from '../../store/appStore';
 import { useTranslation } from '../../i18n/useTranslation';
-import { speakBrowser, getPronunciationPrefs } from '../../lib/pronunciation';
+import { speakWord, getPronunciationPrefs } from '../../lib/pronunciation';
 import { isHardWord, buildReviewQueue } from '../../store/vocabularyHard';
 import VocabularyForm from './VocabularyForm';
 import VocabularyCard from './VocabularyCard';
@@ -57,7 +57,7 @@ export default function VocabularySection() {
   const prefs = getPronunciationPrefs();
 
   const handleSpeak = (text: string) => {
-    speakBrowser(text, prefs.accent);
+    void speakWord(text, prefs.accent);
   };
 
   return (

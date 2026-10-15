@@ -16,6 +16,7 @@ declare global {
     YG?: {
       Widget: new (containerId: string, options: YGWidgetOptions) => YGWidget;
     };
+    onYouglishAPIReady?: () => void;
   }
 }
 
@@ -23,97 +24,96 @@ interface YGWidgetOptions {
   width: number;
   components: number;
   events: {
-    onFetchDone?: (data: unknown) => void;
-    onVideoChange?: (data: unknown) => void;
+    onFetchDone?: (event: { totalResult?: number }) => void;
+    onVideoChange?: (event: unknown) => void;
     onError?: (error: unknown) => void;
   };
 }
 
 interface YGWidget {
-  fetch: (query: string, language: string, accent: string) => void;
+  fetch: (query: string, language: string, accent?: string) => void;
+  close?: () => void;
 }
 
-type WidgetState = 'idle' | 'loading' | 'loaded' | 'error' | 'no-results';
+type WidgetState = 'loading' | 'loaded' | 'error' | 'no-results';
 
 interface YouGlishModalProps {
   word: string;
   onClose: () => void;
 }
 
+const SCRIPT_SRC = 'https://youglish.com/public/emb/widget.js';
+const CONTAINER_ID = 'youglish-widget';
+const LOAD_TIMEOUT_MS = 15000;
+
+// The widget script is loaded once per page and kept: re-adding it on every
+// modal open is slow and YouGlish only fires onYouglishAPIReady the first time.
+let apiPromise: Promise<void> | null = null;
+
+function loadYouGlishApi(): Promise<void> {
+  if (window.YG) return Promise.resolve();
+  if (apiPromise) return apiPromise;
+  apiPromise = new Promise<void>((resolve, reject) => {
+    window.onYouglishAPIReady = () => resolve();
+    const script = document.createElement('script');
+    script.src = SCRIPT_SRC;
+    script.async = true;
+    script.onerror = () => {
+      apiPromise = null;
+      script.remove();
+      reject(new Error('Failed to load YouGlish'));
+    };
+    document.head.appendChild(script);
+  });
+  return apiPromise;
+}
+
 export default function YouGlishModal({ word, onClose }: YouGlishModalProps) {
   const { t } = useTranslation();
   const [accent, setAccent] = useState<YouGlishAccent>('us');
   const [widgetState, setWidgetState] = useState<WidgetState>('loading');
-  const [scriptLoaded, setScriptLoaded] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
   const widgetRef = useRef<YGWidget | null>(null);
 
-  // Load YouGlish widget script lazily
+  // Create the widget once the API is ready, then re-fetch on every accent
+  // change. The container is always mounted (the spinner overlays it), so the
+  // widget has somewhere to render before its first fetch completes.
   useEffect(() => {
-    if (scriptLoaded) return;
+    let cancelled = false;
+    const timeout = window.setTimeout(() => {
+      if (!cancelled) setWidgetState((s) => (s === 'loading' ? 'error' : s));
+    }, LOAD_TIMEOUT_MS);
 
-    const script = document.createElement('script');
-    script.src = 'https://youglish.com/public/emb/widget.js';
-    script.async = true;
-    script.onload = () => {
-      setScriptLoaded(true);
-    };
-    script.onerror = () => {
-      setWidgetState('error');
-    };
-
-    document.head.appendChild(script);
-
-    return () => {
-      // Clean up script on unmount
-      if (script.parentNode) {
-        script.parentNode.removeChild(script);
-      }
-    };
-  }, [scriptLoaded]);
-
-  // Initialize widget when script is loaded and container is ready
-  useEffect(() => {
-    if (!scriptLoaded || !containerRef.current || widgetRef.current) return;
-
-    if (!window.YG) {
-      // Use setTimeout to avoid synchronous state update in effect
-      setTimeout(() => setWidgetState('error'), 0);
-      return;
-    }
-
-    try {
-      const widget = new window.YG.Widget(containerRef.current.id, {
-        width: 640,
-        components: 9,
-        events: {
-          onFetchDone: () => {
-            setWidgetState('loaded');
-          },
-          onVideoChange: () => {
-            // Video changed, widget is working
-          },
-          onError: () => {
-            setWidgetState('error');
-          },
-        },
+    loadYouGlishApi()
+      .then(() => {
+        if (cancelled || !window.YG) return;
+        if (!widgetRef.current) {
+          widgetRef.current = new window.YG.Widget(CONTAINER_ID, {
+            width: 640,
+            components: 9,
+            events: {
+              onFetchDone: (event) => {
+                setWidgetState(event?.totalResult === 0 ? 'no-results' : 'loaded');
+              },
+              onError: () => setWidgetState('error'),
+            },
+          });
+        }
+        widgetRef.current.fetch(word, 'english', accent);
+      })
+      .catch(() => {
+        if (!cancelled) setWidgetState('error');
       });
 
-      widgetRef.current = widget;
-      widget.fetch(word, 'english', accent);
-    } catch (error) {
-      console.error('Failed to initialize YouGlish widget:', error);
-      setTimeout(() => setWidgetState('error'), 0);
-    }
-  }, [scriptLoaded, word, accent]);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timeout);
+    };
+  }, [word, accent]);
 
-  // Re-fetch when accent changes
-  useEffect(() => {
-    if (widgetRef.current && widgetState === 'loaded') {
-      setWidgetState('loading');
-      widgetRef.current.fetch(word, 'english', accent);
-    }
-  }, [accent, word, widgetState]);
+  useEffect(() => () => {
+    widgetRef.current?.close?.();
+    widgetRef.current = null;
+  }, []);
 
   const handleBackdropClick = useCallback(
     (e: React.MouseEvent) => {
@@ -125,6 +125,7 @@ export default function YouGlishModal({ word, onClose }: YouGlishModalProps) {
   );
 
   const handleAccentChange = useCallback((newAccent: YouGlishAccent) => {
+    setWidgetState('loading');
     setAccent(newAccent);
   }, []);
 
@@ -150,7 +151,7 @@ export default function YouGlishModal({ word, onClose }: YouGlishModalProps) {
 
         {/* Accent Toggle */}
         <div className="px-6 py-3 border-b border-border-subtle flex items-center gap-2 flex-wrap">
-          <span className="text-sm text-ink-light">{t('vocabulary.accentUS')}:</span>
+          <span className="text-sm text-ink-light">{t('vocabulary.accent')}:</span>
           <button
             onClick={() => handleAccentChange('us')}
             className={`px-3 py-1 rounded-lg text-sm transition-colors ${
@@ -184,7 +185,12 @@ export default function YouGlishModal({ word, onClose }: YouGlishModalProps) {
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-auto p-6">
+        <div className="relative flex-1 overflow-auto p-6 min-h-[360px]">
+          <div
+            id={CONTAINER_ID}
+            className={`w-full ${widgetState === 'loaded' ? '' : 'invisible h-0 overflow-hidden'}`}
+          />
+
           {widgetState === 'loading' && (
             <div className="flex flex-col items-center justify-center py-12">
               <Loader2 size={40} className="text-clay-soft animate-spin mb-4" />
@@ -192,9 +198,11 @@ export default function YouGlishModal({ word, onClose }: YouGlishModalProps) {
             </div>
           )}
 
-          {widgetState === 'error' && (
+          {(widgetState === 'error' || widgetState === 'no-results') && (
             <div className="flex flex-col items-center justify-center py-12 text-center">
-              <p className="text-ink mb-4">{t('vocabulary.youglishError')}</p>
+              <p className="text-ink mb-4">
+                {t(widgetState === 'error' ? 'vocabulary.youglishError' : 'vocabulary.youglishNoResults')}
+              </p>
               <a
                 href={fallbackUrl}
                 target="_blank"
@@ -205,25 +213,6 @@ export default function YouGlishModal({ word, onClose }: YouGlishModalProps) {
                 <span>{t('vocabulary.openOnYouGlish')}</span>
               </a>
             </div>
-          )}
-
-          {widgetState === 'no-results' && (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <p className="text-ink mb-4">{t('vocabulary.youglishNoResults')}</p>
-              <a
-                href={fallbackUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-4 py-2 bg-clay-soft text-white rounded-lg hover:bg-clay-soft-dark transition-colors"
-              >
-                <ExternalLink size={16} />
-                <span>{t('vocabulary.openOnYouGlish')}</span>
-              </a>
-            </div>
-          )}
-
-          {widgetState === 'loaded' && (
-            <div id="youglish-widget" ref={containerRef} className="w-full" />
           )}
         </div>
       </div>
