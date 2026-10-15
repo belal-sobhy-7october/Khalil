@@ -27,11 +27,11 @@ beforeEach(() => {
 });
 
 describe('HabitsTracker grid', () => {
-  it('renders day columns newest-first so today is next to the label column', () => {
+  it('renders day columns in calendar order, oldest first and today last', () => {
     render(<HabitsTracker />);
     const cells = screen.getAllByRole('button', { name: new RegExp(`^Study — `) });
-    expect(cells[0]).toHaveAccessibleName(`Study — ${today}`);
-    expect(cells[1]).toHaveAccessibleName(`Study — ${addDaysToDateString(today, -1)}`);
+    expect(cells[cells.length - 1]).toHaveAccessibleName(`Study — ${today}`);
+    expect(cells[cells.length - 2]).toHaveAccessibleName(`Study — ${addDaysToDateString(today, -1)}`);
   });
 
   it('gives edit/delete buttons accessible names that include the habit name', () => {
