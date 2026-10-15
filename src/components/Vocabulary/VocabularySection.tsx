@@ -3,7 +3,7 @@ import { Plus, Search, Filter, Flame, Upload, Library, Sparkles, PlayCircle, Lan
 import { useAppStore } from '../../store/appStore';
 import { useTranslation } from '../../i18n/useTranslation';
 import { speakWord, getPronunciationPrefs } from '../../lib/pronunciation';
-import { isHardWord, buildReviewQueue } from '../../store/vocabularyHard';
+import { isHardWord, buildReviewQueue, buildDueQueue } from '../../store/vocabularyHard';
 import VocabularyForm from './VocabularyForm';
 import VocabularyCard from './VocabularyCard';
 import CategoryManager from './CategoryManager';
@@ -12,6 +12,8 @@ import ImportWordsModal from './ImportWordsModal';
 import TopicLibraryModal from './TopicLibraryModal';
 import QuickAddModal from './QuickAddModal';
 import ConvertToEnglishModal from './ConvertToEnglishModal';
+import ReviewModePicker, { type ReviewMode } from './ReviewModePicker';
+import TypingPractice from './TypingPractice';
 import { hasArabicDefinition } from '../../lib/arabicText';
 import type { VocabularyItemType } from '../../types';
 
@@ -32,6 +34,19 @@ export default function VocabularySection() {
   const [showQuickAdd, setShowQuickAdd] = useState(false);
   const [showConvert, setShowConvert] = useState(false);
   const [reviewItemIds, setReviewItemIds] = useState<string[] | undefined>(undefined);
+  // Every review entry point goes through the mode picker first.
+  const [pickerIds, setPickerIds] = useState<string[] | null>(null);
+  const [typingMode, setTypingMode] = useState<'listen' | 'gap' | null>(null);
+
+  const openReview = (ids?: string[]) => setPickerIds(ids ?? buildDueQueue(vocabularyItems).map((i) => i.id));
+
+  const startMode = (mode: ReviewMode) => {
+    const ids = pickerIds ?? undefined;
+    setPickerIds(null);
+    setReviewItemIds(ids);
+    if (mode === 'cards') setShowReview(true);
+    else setTypingMode(mode);
+  };
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<VocabularyItemType | 'all'>('all');
   const [filterCategory, setFilterCategory] = useState<string | 'all'>('all');
@@ -79,8 +94,7 @@ export default function VocabularySection() {
   const startTopicReview = () => {
     const ids = vocabularyItems.filter((i) => i.categoryId === filterCategory).map((i) => i.id);
     if (ids.length === 0) return;
-    setReviewItemIds(ids);
-    setShowReview(true);
+    openReview(ids);
   };
 
   const prefs = getPronunciationPrefs();
@@ -163,8 +177,7 @@ export default function VocabularySection() {
         </button>
         <button
           onClick={() => {
-            setReviewItemIds(undefined);
-            setShowReview(true);
+            openReview();
           }}
           className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
         >
@@ -174,8 +187,7 @@ export default function VocabularySection() {
           <button
             onClick={() => {
               const hardItems = buildReviewQueue(vocabularyItems, { onlyHard: true });
-              setReviewItemIds(hardItems.map((i) => i.id));
-              setShowReview(true);
+              openReview(hardItems.map((i) => i.id));
             }}
             className="flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
           >
@@ -322,6 +334,21 @@ export default function VocabularySection() {
         <CategoryManager
           categories={vocabularyCategories}
           onClose={() => setShowCategories(false)}
+        />
+      )}
+
+      {pickerIds && (
+        <ReviewModePicker count={pickerIds.length} onPick={startMode} onClose={() => setPickerIds(null)} />
+      )}
+
+      {typingMode && (
+        <TypingPractice
+          mode={typingMode}
+          initialItemIds={reviewItemIds}
+          onClose={() => {
+            setTypingMode(null);
+            setReviewItemIds(undefined);
+          }}
         />
       )}
 

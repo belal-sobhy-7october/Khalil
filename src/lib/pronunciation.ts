@@ -62,7 +62,7 @@ function loadVoices(): SpeechSynthesisVoice[] {
  * @param text - The text to speak
  * @param accent - 'us' for en-US, 'uk' for en-GB
  */
-export function speakBrowser(text: string, accent: BrowserAccent = 'us'): void {
+export function speakBrowser(text: string, accent: BrowserAccent = 'us', rate = 0.9): void {
   if (!('speechSynthesis' in window)) {
     console.error('Speech synthesis not supported in this browser');
     return;
@@ -71,7 +71,7 @@ export function speakBrowser(text: string, accent: BrowserAccent = 'us'): void {
   window.speechSynthesis.cancel();
 
   const utterance = new SpeechSynthesisUtterance(text);
-  utterance.rate = 0.9;
+  utterance.rate = rate;
   utterance.pitch = 1;
 
   const voices = loadVoices();
