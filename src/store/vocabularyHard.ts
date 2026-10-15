@@ -104,3 +104,24 @@ export function applyReviewResult(
 
   return updated;
 }
+
+// Spaced repetition: days until a word is due again, by mastery level 0–5.
+// A word you know well comes back rarely; a new or shaky one comes back soon.
+export const REVIEW_INTERVAL_DAYS = [0, 1, 3, 7, 14, 30];
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+export function isDueForReview(item: VocabularyItem, now: Date = new Date()): boolean {
+  if (!item.lastReviewedAt) return true;
+  const last = new Date(item.lastReviewedAt).getTime();
+  // Hard words come back every day.
+  const days = isHardWord(item) ? 1 : REVIEW_INTERVAL_DAYS[Math.min(Math.max(item.masteryLevel, 0), 5)];
+  return now.getTime() - last >= days * DAY_MS - 60 * 60 * 1000; // 1h slack so "tomorrow" isn't to-the-minute
+}
+
+// Default session: due words, hard/weak first, capped so a big pack doesn't
+// turn into a 400-card session.
+export const SESSION_SIZE = 30;
+
+export function buildDueQueue(items: VocabularyItem[], now: Date = new Date()): VocabularyItem[] {
+  return buildReviewQueue(items.filter((i) => isDueForReview(i, now))).slice(0, SESSION_SIZE);
+}
