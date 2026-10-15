@@ -18,6 +18,7 @@ const habit: Habit = {
   sortOrder: 0,
   active: true,
   startDate: '2026-02-01',
+  scheduleDays: null,
 };
 
 beforeEach(() => {

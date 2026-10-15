@@ -13,8 +13,8 @@ vi.mock('../../lib/supabase', async () => {
 const today = getToday();
 
 const habits: Habit[] = [
-  { id: 'h1', name: 'Study', icon: 'book', sortOrder: 0, active: true, startDate: addDaysToDateString(today, -90) },
-  { id: 'h2', name: 'Exercise', icon: 'dumbbell', sortOrder: 1, active: true, startDate: addDaysToDateString(today, -90) },
+  { id: 'h1', name: 'Study', icon: 'book', sortOrder: 0, active: true, startDate: addDaysToDateString(today, -90), scheduleDays: null },
+  { id: 'h2', name: 'Exercise', icon: 'dumbbell', sortOrder: 1, active: true, startDate: addDaysToDateString(today, -90), scheduleDays: null },
 ];
 
 const removeHabit = vi.fn();
@@ -37,7 +37,7 @@ describe('HabitsTracker grid', () => {
   it('gives edit/delete buttons accessible names that include the habit name', () => {
     render(<HabitsTracker />);
     expect(screen.getByRole('button', { name: 'Delete habit "Exercise"' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Edit start date for "Exercise"' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Edit "Exercise"' })).toBeInTheDocument();
   });
 
   it('asks for a confirmation naming the habit before deleting', () => {
@@ -69,5 +69,25 @@ describe('HabitsTracker grid', () => {
     render(<HabitsTracker />);
     fireEvent.click(screen.getByRole('button', { name: `Exercise — ${today}` }));
     expect(toggleHabitEntry).toHaveBeenCalledWith('h2', today);
+  });
+
+  it('checking a day before the start date moves the start date back', () => {
+    const updateHabit = vi.fn();
+    const start = addDaysToDateString(today, -2);
+    useAppStore.setState({
+      habits: [{ ...habits[0], startDate: start }],
+      updateHabit,
+    });
+    render(<HabitsTracker />);
+    const earlier = addDaysToDateString(today, -4);
+    fireEvent.click(screen.getByRole('button', { name: new RegExp(`^Study — ${earlier}`) }));
+    expect(updateHabit).toHaveBeenCalledWith('h1', { startDate: earlier });
+    expect(toggleHabitEntry).toHaveBeenCalledWith('h1', earlier);
+  });
+
+  it('shows habits due today in the Today card', () => {
+    render(<HabitsTracker />);
+    expect(screen.getByText("Today's habits")).toBeInTheDocument();
+    expect(screen.getByText('0 of 2 done')).toBeInTheDocument();
   });
 });

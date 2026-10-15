@@ -20,6 +20,7 @@ const habit: Habit = {
   sortOrder: 0,
   active: true,
   startDate: today,
+  scheduleDays: null,
 };
 
 const entry: HabitEntry = {

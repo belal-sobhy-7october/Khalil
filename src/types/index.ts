@@ -109,6 +109,8 @@ export interface Habit {
   sortOrder: number;
   active: boolean;
   startDate: string; // YYYY-MM-DD
+  // Weekdays the habit is due (0 = Sunday … 6 = Saturday); null = every day.
+  scheduleDays: number[] | null;
 }
 
 export interface HabitEntry {
