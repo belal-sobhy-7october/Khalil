@@ -116,7 +116,7 @@ export default function AccountMenu() {
           onKeyDown: handleKeyDown,
         })}
         className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-ink-light hover:text-ink border border-transparent hover:border-border-subtle transition-all focus:outline-none focus:ring-2 focus:ring-clay-soft/50"
-        aria-label="Account menu"
+        aria-label={t('a11y.accountMenu')}
         aria-expanded={isOpen}
         aria-haspopup="true"
       >

@@ -1,5 +1,20 @@
 export const translations = {
   en: {
+    a11y: {
+      markComplete: 'Mark as complete',
+      markIncomplete: 'Mark as incomplete',
+      moveToDaily: 'Move to today',
+      moveToWeekly: 'Move to this week',
+      moveToBacklog: 'Move to backlog',
+      deleteTask: 'Delete task',
+      previousPeriod: 'Previous period',
+      nextPeriod: 'Next period',
+      dismiss: 'Dismiss',
+      eventColor: 'Event color',
+      editEvent: 'Edit event',
+      deleteEvent: 'Delete event',
+      accountMenu: 'Account menu',
+    },
     app: {
       title: 'Khalil',
       subtitle: 'Your Personal Companion',
@@ -769,6 +784,21 @@ export const translations = {
     },
   },
   ar: {
+    a11y: {
+      markComplete: 'تحديد كمكتملة',
+      markIncomplete: 'إلغاء الإكمال',
+      moveToDaily: 'نقل لليوم',
+      moveToWeekly: 'نقل لهذا الأسبوع',
+      moveToBacklog: 'نقل للمؤجلة',
+      deleteTask: 'حذف المهمة',
+      previousPeriod: 'الفترة السابقة',
+      nextPeriod: 'الفترة التالية',
+      dismiss: 'إخفاء',
+      eventColor: 'لون الحدث',
+      editEvent: 'تعديل الحدث',
+      deleteEvent: 'حذف الحدث',
+      accountMenu: 'قائمة الحساب',
+    },
     app: {
       title: 'خليل',
       subtitle: 'رفيقك الشخصي',

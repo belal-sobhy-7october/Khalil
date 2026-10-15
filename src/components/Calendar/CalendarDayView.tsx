@@ -103,7 +103,7 @@ export default memo(function CalendarDayView({ currentDate, events, onEditEvent,
                     <button
                       onClick={(e) => handleComplete(event.id, e)}
                       className="shrink-0"
-                      aria-label={event.completed ? 'Mark incomplete' : 'Mark complete'}
+                      aria-label={t(event.completed ? 'a11y.markIncomplete' : 'a11y.markComplete')}
                     >
                       {event.completed ? (
                         <CheckCircle size={12} className="text-sage-soft" />
@@ -138,7 +138,7 @@ export default memo(function CalendarDayView({ currentDate, events, onEditEvent,
                     <button
                       onClick={(e) => handleComplete(event.id, e)}
                       className="shrink-0"
-                      aria-label={event.completed ? 'Mark incomplete' : 'Mark complete'}
+                      aria-label={t(event.completed ? 'a11y.markIncomplete' : 'a11y.markComplete')}
                     >
                       {event.completed ? (
                         <CheckCircle size={14} className="text-sage-soft" />

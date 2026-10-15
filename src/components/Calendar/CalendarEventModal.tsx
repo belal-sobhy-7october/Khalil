@@ -129,7 +129,7 @@ export default function CalendarEventModal({ event, initialDate, onSave, onDelet
           <button
             onClick={onClose}
             className="p-1 rounded-lg text-ink-light hover:text-ink hover:bg-ink/5 transition-colors"
-            aria-label="Close"
+            aria-label={t('common.close')}
           >
             <X size={20} />
           </button>
@@ -174,7 +174,7 @@ export default function CalendarEventModal({ event, initialDate, onSave, onDelet
             <label className="block text-sm font-medium text-ink mb-1">
               {t('calendar.color')}
             </label>
-            <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Event color">
+            <div className="flex flex-wrap gap-2" role="radiogroup" aria-label={t('a11y.eventColor')}>
               {COLORS.map(c => (
                 <Tooltip key={c.id} text={c.label}>
                   <button

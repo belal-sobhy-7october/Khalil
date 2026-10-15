@@ -23,7 +23,7 @@ const formatDayHeader = (date: Date, isRTL: boolean) => {
 const isToday = (dateStr: string) => dateStr === getToday();
 
 export default memo(function CalendarMultiWeekView({ currentDate, events, onEditEvent, onCompleteEvent }: CalendarMultiWeekViewProps) {
-  const { isRTL } = useTranslation();
+  const { t, isRTL } = useTranslation();
 
   const firstWeekStart = useMemo(() => getWeekStart(currentDate), [currentDate]);
   const multiWeekDates = useMemo(() => {
@@ -105,7 +105,7 @@ export default memo(function CalendarMultiWeekView({ currentDate, events, onEdit
                     <button
                       onClick={(e) => handleComplete(event.id, e)}
                       className="shrink-0"
-                      aria-label={event.completed ? 'Mark incomplete' : 'Mark complete'}
+                      aria-label={t(event.completed ? 'a11y.markIncomplete' : 'a11y.markComplete')}
                     >
                       {event.completed ? <CheckCircle size={12} className="text-sage-soft" /> : <Circle size={12} className="text-ink-light" />}
                     </button>

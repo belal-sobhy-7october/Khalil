@@ -2,6 +2,7 @@ import { memo, useMemo, useCallback } from 'react';
 import { CheckCircle, Circle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import type { CalendarEvent } from '../../types';
+import { useTranslation } from '../../i18n/useTranslation';
 
 interface CalendarMonthViewProps {
   currentDate: string;
@@ -14,6 +15,7 @@ interface CalendarMonthViewProps {
 const DAYS_IN_WEEK = 7;
 
 export default memo(function CalendarMonthView({ currentDate, events, onEditEvent, onCompleteEvent }: CalendarMonthViewProps) {
+  const { t } = useTranslation();
   const monthDate = useMemo(() => new Date(currentDate + 'T00:00:00'), [currentDate]);
   const year = monthDate.getFullYear();
   const month = monthDate.getMonth();
@@ -116,7 +118,7 @@ export default memo(function CalendarMonthView({ currentDate, events, onEditEven
                     <button
                       onClick={(e) => handleComplete(event.id, e)}
                       className="shrink-0"
-                      aria-label={event.completed ? 'Mark incomplete' : 'Mark complete'}
+                      aria-label={t(event.completed ? 'a11y.markIncomplete' : 'a11y.markComplete')}
                     >
                       {event.completed ? <CheckCircle size={12} className="text-sage-soft" /> : <Circle size={12} className="text-ink-light" />}
                     </button>
