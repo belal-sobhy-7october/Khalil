@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, memo, useCallback } from 'react';
+import { useState, useMemo, useRef, memo, useCallback, useLayoutEffect } from 'react';
 import {
   Star,
   Heart,
@@ -515,10 +515,10 @@ export default function HabitsTracker() {
     return Array.from({ length: range }, (_, i) => addDaysToDateString(windowEnd, i - (range - 1)));
   }, [windowEnd, range]);
 
-  // Column order in the grid: newest first, so the most recent day sits right
-  // next to the sticky label column and older days extend toward inline-end.
-  // Rendering order only — stats/charts below use their own date ranges.
-  const gridDates = useMemo(() => [...weekDates].reverse(), [weekDates]);
+  // Columns run in reading order (oldest → newest: right-to-left in Arabic,
+  // left-to-right in English), like any calendar. Longer ranges scroll, and
+  // the grid opens scrolled to the newest end — see the layout effect below.
+  const gridDates = weekDates;
 
   const currentMonth = today.slice(0, 7);
   const daysInMonth = new Date(parseInt(currentMonth.slice(0, 4)), parseInt(currentMonth.slice(5, 7)), 0).getDate();
@@ -622,30 +622,28 @@ export default function HabitsTracker() {
     }
   };
 
-  // The newest date of the window is the first column, so the scroll start
-  // already shows it. scrollLeft 0 is the inline start in both LTR and RTL, so
-  // no direction-specific math is needed.
+  // The newest day is the last column, so show the inline end. In RTL,
+  // browsers use negative scrollLeft toward the end; assigning ±scrollWidth
+  // clamps to the end in either direction.
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const scrollGridToStart = () => {
-    scrollContainerRef.current?.scrollTo({ left: 0 });
-  };
+  useLayoutEffect(() => {
+    const el = scrollContainerRef.current;
+    if (el) el.scrollLeft = isRTL ? -el.scrollWidth : el.scrollWidth;
+  }, [range, windowEnd, isRTL, habits.length]);
 
   const goToPrevWeek = () => {
     setWindowEnd((w) => addDaysToDateString(w, -range));
-    scrollGridToStart();
   };
 
   const goToNextWeek = () => {
     setWindowEnd((w) => (addDaysToDateString(w, range) > today ? today : addDaysToDateString(w, range)));
-    scrollGridToStart();
   };
 
   const goToToday = () => {
     setWindowEnd(today);
-    scrollGridToStart();
   };
 
-  const dateRangeLabel = `${weekDates[0].slice(5)} → ${weekDates[weekDates.length - 1].slice(5)}`;
+  const dateRangeLabel = `${shortDate(weekDates[0], locale)} – ${shortDate(weekDates[weekDates.length - 1], locale)}`;
 
   return (
     <section id="section-habits">
