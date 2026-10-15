@@ -28,7 +28,7 @@ const HabitsTracker = lazy(() => import('./components/Habits/HabitsTracker'));
 const BookmarksVault = lazy(() => import('./components/Bookmarks/BookmarksVault'));
 const NotesPanel = lazy(() => import('./components/Layout/NotesPanel'));
 const Calendar = lazy(() => import('./components/Calendar/Calendar'));
-const VocabularySection = lazy(() => import('./components/Vocabulary/VocabularySection'));
+const EnglishHub = lazy(() => import('./components/English/EnglishHub'));
 
 function App() {
   const language = useAppStore((s) => s.language);
@@ -240,7 +240,7 @@ function App() {
               </div>
             </div>
           }>
-            <VocabularySection />
+            <EnglishHub />
           </Suspense>
         ) : (
           <>

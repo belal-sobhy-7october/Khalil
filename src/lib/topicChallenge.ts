@@ -82,23 +82,7 @@ export function buildAiPrompt(topicName: string, items: VocabularyItem[]): strin
   ].join('\n');
 }
 
-/** YouTube video id from watch / youtu.be / shorts / embed links, else null. */
-export function youtubeId(url: string | undefined): string | null {
-  if (!url) return null;
-  try {
-    const u = new URL(url.trim());
-    const host = u.hostname.replace(/^www\.|^m\./, '');
-    if (host === 'youtu.be') return u.pathname.slice(1).split('/')[0] || null;
-    if (host === 'youtube.com' || host === 'youtube-nocookie.com') {
-      if (u.searchParams.get('v')) return u.searchParams.get('v');
-      const m = u.pathname.match(/^\/(?:shorts|embed|live)\/([\w-]{6,})/);
-      return m ? m[1] : null;
-    }
-  } catch {
-    // not a URL
-  }
-  return null;
-}
+export { youtubeId } from './youtube';
 
 // ---- persistence ----------------------------------------------------------
 
