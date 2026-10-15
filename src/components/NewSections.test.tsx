@@ -36,7 +36,7 @@ beforeEach(() => {
     vocabularyItems: [],
   });
   usePomodoroStore.setState({
-    phase: 'focus', status: 'idle', endsAt: null, remainingMs: 0, cycle: 0, label: '', phaseStartedAt: null,
+    phase: 'focus', status: 'idle', endsAt: null, remainingMs: 0, cycle: 0, label: '', phaseStartedAt: null, phaseMinutes: null,
     settings: { ...DEFAULT_SETTINGS }, sessions: [],
   });
   useWirdStore.setState({ days: {}, loadRange: vi.fn(async () => {}) });
@@ -62,6 +62,17 @@ describe('FocusSection', () => {
     expect(usePomodoroStore.getState().status).toBe('running');
     fireEvent.keyDown(window, { code: 'Space', key: ' ' });
     expect(usePomodoroStore.getState().status).toBe('paused');
+  });
+
+  it('ignores browser shortcuts like Ctrl+R and Ctrl+S', () => {
+    render(<FocusSection />);
+    fireEvent.click(screen.getByRole('button', { name: /^Start$/ }));
+    fireEvent.keyDown(window, { key: 'r', ctrlKey: true });
+    fireEvent.keyDown(window, { key: 's', metaKey: true });
+    expect(usePomodoroStore.getState().status).toBe('running');
+    expect(usePomodoroStore.getState().phase).toBe('focus');
+    fireEvent.keyDown(window, { key: 's' });
+    expect(usePomodoroStore.getState().phase).toBe('short');
   });
 
   it('switching phase resets to that phase length', () => {

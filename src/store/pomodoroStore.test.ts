@@ -11,7 +11,7 @@ beforeEach(() => {
   vi.setSystemTime(new Date('2026-10-16T09:00:00'));
   localStorage.clear();
   usePomodoroStore.setState({
-    phase: 'focus', status: 'idle', endsAt: null, remainingMs: 0, cycle: 0, label: '', phaseStartedAt: null,
+    phase: 'focus', status: 'idle', endsAt: null, remainingMs: 0, cycle: 0, label: '', phaseStartedAt: null, phaseMinutes: null,
     settings: { ...DEFAULT_SETTINGS, autoStartBreaks: true, autoStartFocus: false }, sessions: [],
   });
 });
@@ -88,5 +88,14 @@ describe('pomodoro timer', () => {
     expect(new Date(st.sessions[0].endedAt).getTime()).toBe(realEnd);
     expect(st.phase).toBe('short');
     expect(st.status).toBe('idle');
+  });
+
+  it('records the planned length even if settings change mid-session', async () => {
+    usePomodoroStore.getState().start();
+    usePomodoroStore.getState().updateSettings({ focus: 50 });
+    expect(usePomodoroStore.getState().durationMs()).toBe(25 * 60_000);
+    vi.advanceTimersByTime(25 * 60_000);
+    await usePomodoroStore.getState().finishPhase();
+    expect(usePomodoroStore.getState().sessions[0].minutes).toBe(25);
   });
 });

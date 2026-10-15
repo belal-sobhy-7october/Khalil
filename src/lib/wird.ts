@@ -82,6 +82,14 @@ interface WirdState {
 }
 
 const saveTimers = new Map<string, number>();
+let pendingUserId: string | undefined;
+
+async function persistDay(userId: string, date: string, data: WirdDay) {
+  const { error } = await supabase
+    .from('wird_days')
+    .upsert({ user_id: userId, date, data, updated_at: new Date().toISOString() }, { onConflict: 'user_id,date' });
+  if (error) console.error('save wird day', error);
+}
 
 export const useWirdStore = create<WirdState>((set, get) => ({
   days: readLocal(),
@@ -91,6 +99,8 @@ export const useWirdStore = create<WirdState>((set, get) => ({
     if (error || !data) return;
     const days = { ...get().days };
     for (const row of data as Array<{ date: string; data: Partial<WirdDay> }>) {
+      // Don't let a load that lands mid-edit overwrite a change still waiting to save.
+      if (saveTimers.has(row.date)) continue;
       days[row.date] = { ...EMPTY_DAY, ...row.data };
     }
     set({ days });
@@ -104,17 +114,32 @@ export const useWirdStore = create<WirdState>((set, get) => ({
     set({ days });
     writeLocal(days);
     if (!userId) return;
+    pendingUserId = userId;
     // Debounce per day so rapid taps make one request.
     window.clearTimeout(saveTimers.get(date));
     saveTimers.set(
       date,
-      window.setTimeout(async () => {
+      window.setTimeout(() => {
         saveTimers.delete(date);
-        const { error } = await supabase
-          .from('wird_days')
-          .upsert({ user_id: userId, date, data: get().days[date], updated_at: new Date().toISOString() }, { onConflict: 'user_id,date' });
-        if (error) console.error('save wird day', error);
+        void persistDay(userId, date, get().days[date]);
       }, 600)
     );
   },
 }));
+
+/** Save every pending day right now (the page is being hidden or closed). */
+export function flushWirdSaves() {
+  if (!pendingUserId) return;
+  for (const [date, timer] of saveTimers) {
+    window.clearTimeout(timer);
+    saveTimers.delete(date);
+    void persistDay(pendingUserId, date, useWirdStore.getState().days[date]);
+  }
+}
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('pagehide', flushWirdSaves);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') flushWirdSaves();
+  });
+}

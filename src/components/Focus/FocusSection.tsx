@@ -70,6 +70,8 @@ export default function FocusSection() {
   // Keyboard: Space start/pause, R reset, S skip (ignored while typing).
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      // Browser shortcuts (Ctrl+R reload, Ctrl+S save…) must not reset/skip.
+      if (e.ctrlKey || e.metaKey || e.altKey || e.repeat) return;
       const el = e.target instanceof Element ? e.target : null;
       if (el?.closest('input, textarea, select, button, [contenteditable="true"]')) return;
       const st = usePomodoroStore.getState();

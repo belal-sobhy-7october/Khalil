@@ -61,12 +61,11 @@ export function recognizeOnce(lang = 'en-US', timeoutMs = 6000): Promise<Recogni
   });
 }
 
-/** Did any recognised alternative contain the target word/phrase? */
+/** Did any recognised alternative contain the target (or one of its "/" alternatives)? */
 export function matchesSpoken(target: string, transcripts: string[]): boolean {
-  const want = normalizeAnswer(target.replace(/\s*\/.*$/, ''));
-  if (!want) return false;
+  const wants = target.split('/').map(normalizeAnswer).filter(Boolean);
   return transcripts.some((t) => {
     const heard = ` ${normalizeAnswer(t)} `;
-    return heard.includes(` ${want} `);
+    return wants.some((want) => heard.includes(` ${want} `));
   });
 }
