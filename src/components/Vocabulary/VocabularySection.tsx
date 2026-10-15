@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Plus, Search, Filter, Flame, Upload, Library, Sparkles, PlayCircle, Languages } from 'lucide-react';
+import { Plus, Search, Filter, Flame, Upload, Library, Sparkles, PlayCircle, Languages, Compass } from 'lucide-react';
 import { useAppStore } from '../../store/appStore';
 import { useTranslation } from '../../i18n/useTranslation';
 import { speakWord, getPronunciationPrefs } from '../../lib/pronunciation';
@@ -14,6 +14,7 @@ import QuickAddModal from './QuickAddModal';
 import ConvertToEnglishModal from './ConvertToEnglishModal';
 import ReviewModePicker, { type ReviewMode } from './ReviewModePicker';
 import TypingPractice from './TypingPractice';
+import ResourcesModal from './ResourcesModal';
 import { hasArabicDefinition } from '../../lib/arabicText';
 import type { VocabularyItemType } from '../../types';
 
@@ -33,6 +34,7 @@ export default function VocabularySection() {
   const [showLibrary, setShowLibrary] = useState(false);
   const [showQuickAdd, setShowQuickAdd] = useState(false);
   const [showConvert, setShowConvert] = useState(false);
+  const [showResources, setShowResources] = useState(false);
   const [reviewItemIds, setReviewItemIds] = useState<string[] | undefined>(undefined);
   // Every review entry point goes through the mode picker first.
   const [pickerIds, setPickerIds] = useState<string[] | null>(null);
@@ -105,9 +107,18 @@ export default function VocabularySection() {
 
   return (
     <div className="max-w-6xl mx-auto p-6">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-ink mb-2">{t('nav.vocabulary')}</h1>
-        <p className="text-ink-light">{t('vocabulary.description')}</p>
+      <div className="mb-8 flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-3xl font-bold text-ink mb-2">{t('nav.vocabulary')}</h1>
+          <p className="text-ink-light">{t('vocabulary.description')}</p>
+        </div>
+        <button
+          onClick={() => setShowResources(true)}
+          className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg border border-border-subtle text-ink-light hover:text-ink hover:bg-ink/5 transition-colors"
+        >
+          <Compass size={16} />
+          {t('vocabulary.resources.open')}
+        </button>
       </div>
 
       {/* Stats */}
@@ -383,6 +394,8 @@ export default function VocabularySection() {
           defaultCategory={selectedCategory?.name}
         />
       )}
+
+      {showResources && <ResourcesModal onClose={() => setShowResources(false)} />}
 
       {showConvert && <ConvertToEnglishModal onClose={() => setShowConvert(false)} />}
 
