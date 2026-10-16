@@ -292,6 +292,25 @@ await flow('vocab-typing-practice', { section: 'vocabulary', englishTab: 'vocabu
   check(await input.isVisible(), 'practice ended after one answer');
 });
 
+await flow('vocab-upgrade-topics', { section: 'vocabulary', englishTab: 'vocabulary' }, async ({ page, backend, check, reload }) => {
+  // The seed's "Call Center Interview" topic holds words from the old pack.
+  check(await visible(page.getByText(/new lesson method/)), 'upgrade banner not shown');
+  await page.getByRole('button', { name: 'Review the update' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Update your topics to the new lessons' });
+  if (!check(await visible(dialog), 'upgrade window not open')) return;
+  const before = backend.tables.vocabulary_items.length;
+  await dialog.getByRole('button', { name: /^Apply \d+ changes?$/ }).click();
+  check(await visible(dialog.getByText(/Done — \d+ changes? applied/), 10000), 'upgrade did not finish');
+  const words = backend.tables.vocabulary_items.map((w) => w.word.toLowerCase());
+  check(words.includes('customer satisfaction'), 'lesson words not added');
+  check(!words.includes('escalation'), 'old filler "escalation" not removed');
+  check(words.includes('compromise'), "the user's own word was removed");
+  check(backend.tables.vocabulary_items.length > before, 'no words added');
+  await page.keyboard.press('Escape');
+  await reload();
+  check(!(await page.getByText(/new lesson method/).count()), 'banner still offered after the update');
+});
+
 await flow('vocab-resources', { section: 'vocabulary', englishTab: 'vocabulary' }, async ({ page, backend, check }) => {
   await page.getByRole('button', { name: 'Helpful resources' }).click();
   check(await visible(page.getByRole('heading', { name: 'Helpful resources' })), 'resources modal not open');

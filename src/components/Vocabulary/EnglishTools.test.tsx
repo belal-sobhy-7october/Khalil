@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useState } from 'react';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { useAppStore } from '../../store/appStore';
 import TopicLibraryModal from './TopicLibraryModal';
 import QuickAddModal from './QuickAddModal';
@@ -8,6 +8,7 @@ import VocabularySection from './VocabularySection';
 import ConvertToEnglishModal from './ConvertToEnglishModal';
 import YouGlishModal from './YouGlishModal';
 import CheckMeaningsModal from './CheckMeaningsModal';
+import UpgradeTopicsModal from './UpgradeTopicsModal';
 import type { VocabularyItem } from '../../types';
 import { TOPIC_PACKS } from '../../data/topicPacks';
 
@@ -165,6 +166,59 @@ describe('CheckMeaningsModal', () => {
     useAppStore.setState({ vocabularyItems: [] });
     render(<CheckMeaningsModal category={{ id: 'm', userId: 'u', name: 'Marriage', createdAt: '', updatedAt: '' }} onClose={() => {}} />);
     expect(screen.getByText('Every word already has a meaning that fits this topic.')).toBeInTheDocument();
+  });
+});
+
+describe('UpgradeTopicsModal', () => {
+  const vi_item = (id: string, categoryId: string, word: string): VocabularyItem => ({
+    id, userId: 'u', categoryId, word, type: 'word', definition: 'old definition', exampleSentence: 'old example',
+    masteryLevel: 2, reviewCount: 3, lapseCount: 0, correctStreak: 1, isHard: false, createdAt: '', updatedAt: '',
+  });
+
+  it('applies only the ticked parts', async () => {
+    const updateVocabularyItem = vi.fn(async () => {});
+    const deleteVocabularyItem = vi.fn(async () => {});
+    const updateVocabularyCategory = vi.fn(async () => {});
+    useAppStore.setState({
+      updateVocabularyItem, deleteVocabularyItem, updateVocabularyCategory,
+      vocabularyCategories: [
+        { id: 'j', userId: 'u', name: 'Job Interview', createdAt: '', updatedAt: '' },
+        { id: 'm', userId: 'u', name: 'Marriage', createdAt: '', updatedAt: '' },
+      ],
+      vocabularyItems: [vi_item('1', 'j', 'Strength'), vi_item('2', 'j', 'a quick learner'), vi_item('3', 'j', 'my own phrase'), vi_item('4', 'm', 'Split up')],
+    });
+    render(<UpgradeTopicsModal onClose={() => {}} />);
+    expectNoRawKeys();
+    expect(screen.getByText('Topics from the old packs')).toBeInTheDocument();
+    expect(screen.getByText("Use the lesson's meaning and example for 1 word")).toBeInTheDocument();
+    // Keep the old word this time.
+    fireEvent.click(screen.getByRole('checkbox', { name: /Remove 1 old word/ }));
+    // Don't add the Marriage lesson words either.
+    fireEvent.click(screen.getByRole('checkbox', { name: /from the lesson "Relationships & Marriage"/ }));
+    fireEvent.click(screen.getByRole('button', { name: /^Apply \d+ changes?$/ }));
+    await screen.findByText(/^Done — /);
+    expect(updateVocabularyItem).toHaveBeenCalledWith('1', expect.objectContaining({ definition: expect.stringMatching(/good quality or ability/) }));
+    expect(deleteVocabularyItem).not.toHaveBeenCalled();
+    expect(updateVocabularyCategory).not.toHaveBeenCalled();
+    const [items, options] = importVocabularyItems.mock.calls[0] as unknown as [Array<{ word: string }>, { categoryForAll: string }];
+    expect(options.categoryForAll).toBe('Job Interview');
+    expect(items.map((i) => i.word)).not.toContain('strength');
+    expect(importVocabularyItems).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('VocabularySection topic picker', () => {
+  it('lists every topic and filters by the one picked', () => {
+    const cats = Array.from({ length: 12 }, (_, i) => ({ id: `c${i}`, userId: 'u', name: `Topic ${String(i).padStart(2, '0')}`, createdAt: '', updatedAt: '' }));
+    useAppStore.setState({ vocabularyCategories: cats });
+    render(<VocabularySection />);
+    fireEvent.click(screen.getByRole('button', { name: /All topics \(12\)/ }));
+    const list = screen.getByRole('listbox');
+    expect(within(list).getAllByRole('option')).toHaveLength(12);
+    fireEvent.change(screen.getByRole('searchbox', { name: 'Find a topic…' }), { target: { value: '11' } });
+    fireEvent.click(within(list).getByRole('option', { name: /Topic 11/ }));
+    expect(screen.queryByRole('listbox')).toBeNull();
+    expect(screen.getByRole('button', { name: /Review "Topic 11"/ })).toBeInTheDocument();
   });
 });
 
