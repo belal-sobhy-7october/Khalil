@@ -183,6 +183,7 @@ export const translations = {
       dark: 'Dark',
     },
     habits: {
+      period: { 7: 'Week', 30: 'Month', 60: '2 months' },
       title: 'Habits',
       toggleTracking: 'Tracking',
       toggleHabits: 'Habits',
@@ -967,7 +968,8 @@ export const translations = {
       light: 'فاتح',
       dark: 'داكن',
     },
-habits: {
+    habits: {
+      period: { 7: 'أسبوع', 30: 'شهر', 60: 'شهرين' },
       title: 'العادات',
       toggleTracking: 'المتابعة',
       toggleHabits: 'العادات',

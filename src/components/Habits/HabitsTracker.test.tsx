@@ -4,6 +4,7 @@ import type { Habit } from '../../types';
 import { useAppStore } from '../../store/appStore';
 import { addDaysToDateString, getToday } from '../../store/dateHelpers';
 import HabitsTracker from './HabitsTracker';
+import { habitPeriodDates } from '../../store/habitPeriod';
 
 vi.mock('../../lib/supabase', async () => {
   const mod = await import('../../test/mockSupabase');
@@ -32,6 +33,21 @@ describe('HabitsTracker grid', () => {
     const cells = screen.getAllByRole('button', { name: new RegExp(`^Study — `) });
     expect(cells[cells.length - 1]).toHaveAccessibleName(`Study — ${today}`);
     expect(cells[cells.length - 2]).toHaveAccessibleName(`Study — ${addDaysToDateString(today, -1)}`);
+  });
+
+  it('shows the whole current period, upcoming days included but not clickable', () => {
+    render(<HabitsTracker />);
+    fireEvent.click(screen.getByRole('button', { name: 'Month' }));
+    const days = habitPeriodDates(30, today);
+    const upcoming = days.filter((d) => d > today).length;
+    const header = document.querySelector('[data-today="true"]');
+    expect(header).not.toBeNull();
+    expect(screen.getAllByRole('button', { name: /^Study — / })).toHaveLength(days.length - upcoming);
+    expect(document.querySelectorAll('[aria-disabled="true"]')).toHaveLength(upcoming * habits.length);
+    expect(screen.getByRole('button', { name: 'Next period' })).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: 'Previous period' }));
+    expect(screen.getByRole('button', { name: 'Next period' })).toBeEnabled();
+    expect(document.querySelector('[data-today="true"]')).toBeNull();
   });
 
   it('gives edit/delete buttons accessible names that include the habit name', () => {
