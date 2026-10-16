@@ -190,7 +190,7 @@ const WeeklyTodoItem = memo(function WeeklyTodoItem({
       <button
         onClick={() => onToggle(todo.id)}
         className="shrink-0 text-ink-lighter hover:text-gold-soft transition-colors"
-        aria-label={todo.completed ? 'Mark as incomplete' : 'Mark as complete'}
+        aria-label={t(todo.completed ? 'a11y.markIncomplete' : 'a11y.markComplete')}
       >
         {todo.completed ? (
           <CheckCircle size={20} className="text-sage-soft" />
@@ -231,7 +231,7 @@ const WeeklyTodoItem = memo(function WeeklyTodoItem({
           disabled={isMoving}
           className="p-1.5 rounded-md text-clay-soft hover:text-clay-soft-dark hover:bg-ink/5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           title={t('backlog.moveToDaily')}
-          aria-label="Move to daily"
+          aria-label={t('a11y.moveToDaily')}
         >
           <Sun size={14} />
         </button>
@@ -240,7 +240,7 @@ const WeeklyTodoItem = memo(function WeeklyTodoItem({
           disabled={isMoving}
           className="p-1.5 rounded-md text-ink-lighter hover:text-ink hover:bg-ink/5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           title={t('backlog.moveToBacklog')}
-          aria-label="Move to backlog"
+          aria-label={t('a11y.moveToBacklog')}
         >
           <Archive size={14} />
         </button>
@@ -248,7 +248,7 @@ const WeeklyTodoItem = memo(function WeeklyTodoItem({
           onClick={handleDelete}
           className="p-1.5 rounded-md text-ink-lighter hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-all"
           title={t('common.delete')}
-          aria-label="Delete task"
+          aria-label={t('a11y.deleteTask')}
         >
           <Trash2 size={14} />
         </button>

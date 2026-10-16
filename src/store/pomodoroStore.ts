@@ -52,6 +52,8 @@ interface RunState {
   cycle: number; // focus sessions finished in the current set
   label: string;
   phaseStartedAt: number | null;
+  /** Length of the running phase, fixed when it starts (settings may change mid-phase). */
+  phaseMinutes: number | null;
 }
 
 interface PomodoroState extends RunState {
@@ -79,7 +81,7 @@ const RUN_KEY = 'khalil-pomodoro-run';
 const SETTINGS_KEY = 'pomodoro-settings';
 const LOCAL_SESSIONS_KEY = 'khalil-pomodoro-sessions';
 
-const IDLE_RUN: RunState = { phase: 'focus', status: 'idle', endsAt: null, remainingMs: 0, cycle: 0, label: '', phaseStartedAt: null };
+const IDLE_RUN: RunState = { phase: 'focus', status: 'idle', endsAt: null, remainingMs: 0, cycle: 0, label: '', phaseStartedAt: null, phaseMinutes: null };
 
 function readRun(): RunState {
   try {
@@ -92,8 +94,8 @@ function readRun(): RunState {
 
 function persistRun(s: RunState) {
   try {
-    const { phase, status, endsAt, remainingMs, cycle, label, phaseStartedAt } = s;
-    localStorage.setItem(RUN_KEY, JSON.stringify({ phase, status, endsAt, remainingMs, cycle, label, phaseStartedAt }));
+    const { phase, status, endsAt, remainingMs, cycle, label, phaseStartedAt, phaseMinutes } = s;
+    localStorage.setItem(RUN_KEY, JSON.stringify({ phase, status, endsAt, remainingMs, cycle, label, phaseStartedAt, phaseMinutes }));
   } catch {
     // ignore
   }
@@ -135,7 +137,11 @@ export const usePomodoroStore = create<PomodoroState>((set, get) => {
     sessions: readLocalSessions(),
     lastFinished: null,
 
-    durationMs: (phase) => get().settings[phase ?? get().phase] * 60_000,
+    durationMs: (phase) => {
+      const s = get();
+      if (!phase && s.status !== 'idle' && s.phaseMinutes) return s.phaseMinutes * 60_000;
+      return s.settings[phase ?? s.phase] * 60_000;
+    },
 
     remaining: (now = Date.now()) => {
       const s = get();
@@ -147,11 +153,13 @@ export const usePomodoroStore = create<PomodoroState>((set, get) => {
     start: () => {
       const s = get();
       if (s.status === 'running') return;
-      const remaining = s.status === 'paused' ? s.remainingMs : s.durationMs();
+      const resuming = s.status === 'paused';
+      const remaining = resuming ? s.remainingMs : s.durationMs();
       commit({
         status: 'running',
         endsAt: Date.now() + remaining,
-        phaseStartedAt: s.status === 'paused' && s.phaseStartedAt ? s.phaseStartedAt : Date.now(),
+        phaseStartedAt: resuming && s.phaseStartedAt ? s.phaseStartedAt : Date.now(),
+        phaseMinutes: resuming && s.phaseMinutes ? s.phaseMinutes : s.settings[s.phase],
       });
     },
     pause: () => {
@@ -160,14 +168,14 @@ export const usePomodoroStore = create<PomodoroState>((set, get) => {
       commit({ status: 'paused', remainingMs: Math.max(0, s.endsAt - Date.now()), endsAt: null });
     },
     toggle: () => (get().status === 'running' ? get().pause() : get().start()),
-    reset: () => commit({ status: 'idle', endsAt: null, remainingMs: 0, phaseStartedAt: null }),
+    reset: () => commit({ status: 'idle', endsAt: null, remainingMs: 0, phaseStartedAt: null, phaseMinutes: null }),
     skip: () => {
       const s = get();
       // Skipping a focus session doesn't count it toward the set.
       const next = s.phase === 'focus' ? { phase: 'short' as Phase, cycle: s.cycle } : nextPhaseAfter(s.phase, s.cycle, s.settings.longEvery);
-      commit({ phase: next.phase, cycle: next.cycle, status: 'idle', endsAt: null, remainingMs: 0, phaseStartedAt: null });
+      commit({ phase: next.phase, cycle: next.cycle, status: 'idle', endsAt: null, remainingMs: 0, phaseStartedAt: null, phaseMinutes: null });
     },
-    setPhase: (phase) => commit({ phase, status: 'idle', endsAt: null, remainingMs: 0, phaseStartedAt: null }),
+    setPhase: (phase) => commit({ phase, status: 'idle', endsAt: null, remainingMs: 0, phaseStartedAt: null, phaseMinutes: null }),
     setLabel: (label) => commit({ label }),
 
     updateSettings: (patch, userId) => {
@@ -196,7 +204,7 @@ export const usePomodoroStore = create<PomodoroState>((set, get) => {
       }));
       // Keep sessions saved locally while the table was unavailable, and upload them.
       const ids = new Set(remote.map((r) => r.id));
-      const localOnly = readLocalSessions().filter((s) => !ids.has(s.id));
+      const localOnly = readLocalSessions().filter((s) => !ids.has(s.id) && s.startedAt >= since);
       const merged = [...remote, ...localOnly].sort((a, b) => a.startedAt.localeCompare(b.startedAt));
       writeLocalSessions(merged);
       set({ sessions: merged });
@@ -244,10 +252,11 @@ export const usePomodoroStore = create<PomodoroState>((set, get) => {
         endsAt: autoStart ? Date.now() + s.settings[next.phase] * 60_000 : null,
         remainingMs: 0,
         phaseStartedAt: autoStart ? Date.now() : null,
+        phaseMinutes: autoStart ? s.settings[next.phase] : null,
       });
       set({ lastFinished: { phase: finished, at: endedAtMs } });
       if (finished === 'focus') {
-        const minutes = s.settings.focus;
+        const minutes = s.phaseMinutes ?? s.settings.focus;
         const startedAt = new Date(s.phaseStartedAt ?? endedAtMs - minutes * 60_000).toISOString();
         await get().addSession({ startedAt, endedAt: new Date(endedAtMs).toISOString(), minutes, label: s.label.trim() || null }, userId);
       }

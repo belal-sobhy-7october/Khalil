@@ -19,7 +19,7 @@ beforeEach(() => {
   notify.playChime.mockClear();
   useAppStore.setState({ language: 'en', session: null });
   usePomodoroStore.setState({
-    phase: 'focus', status: 'idle', endsAt: null, remainingMs: 0, cycle: 0, label: '', phaseStartedAt: null,
+    phase: 'focus', status: 'idle', endsAt: null, remainingMs: 0, cycle: 0, label: '', phaseStartedAt: null, phaseMinutes: null,
     settings: { ...DEFAULT_SETTINGS, focus: 1 }, sessions: [],
   });
 });

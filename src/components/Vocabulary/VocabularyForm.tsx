@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { X } from 'lucide-react';
 import { useTranslation } from '../../i18n/useTranslation';
 import type { VocabularyCategory, VocabularyItemType } from '../../types';
+import { useDialog } from '../../lib/useDialog';
 
 interface VocabularyFormProps {
   categories: VocabularyCategory[];
@@ -41,11 +42,13 @@ export default function VocabularyForm({ categories, onClose, onSubmit }: Vocabu
     });
   };
 
+  const dialog = useDialog(onClose);
+
   return (
     <div className="fixed inset-0 bg-ink/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-card border border-border-subtle rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+      <div {...dialog.props} className="bg-card border border-border-subtle rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
         <div className="sticky top-0 bg-card border-b border-border-subtle px-6 py-4 flex items-center justify-between">
-          <h2 className="text-xl font-bold text-ink">{t('vocabulary.addWord')}</h2>
+          <h2 id={dialog.titleId} className="text-xl font-bold text-ink">{t('vocabulary.addWord')}</h2>
           <button
             onClick={onClose}
             className="p-2 hover:bg-ink/5 rounded-lg transition-colors"

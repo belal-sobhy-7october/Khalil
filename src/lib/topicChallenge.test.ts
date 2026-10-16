@@ -57,6 +57,7 @@ describe('matchesSpoken', () => {
   it('accepts the word inside any alternative, ignoring case', () => {
     expect(matchesSpoken('Bargain', ['it was a bargain', 'a bar game'])).toBe(true);
     expect(matchesSpoken('pull up', ['pulled up'])).toBe(false);
-    expect(matchesSpoken('résumé / CV', ['resume'])).toBe(false);
+    expect(matchesSpoken('résumé / CV', ['my resume is here'])).toBe(true);
+    expect(matchesSpoken('résumé / CV', ['send your CV'])).toBe(true);
   });
 });

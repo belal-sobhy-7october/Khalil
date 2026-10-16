@@ -192,7 +192,7 @@ const TodoItem = memo(function TodoItem({
       <button
         onClick={() => onToggle(todo.id)}
         className="shrink-0 text-ink-lighter hover:text-clay-soft transition-colors"
-        aria-label={todo.completed ? 'Mark as incomplete' : 'Mark as complete'}
+        aria-label={t(todo.completed ? 'a11y.markIncomplete' : 'a11y.markComplete')}
       >
         {todo.completed ? (
           <CheckCircle size={20} className="text-sage-soft" />
@@ -233,7 +233,7 @@ const TodoItem = memo(function TodoItem({
           disabled={isMoving}
           className="p-1.5 rounded-md text-gold-soft hover:text-gold-soft-dark hover:bg-ink/5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           title={t('backlog.moveToWeekly')}
-          aria-label="Move to weekly"
+          aria-label={t('a11y.moveToWeekly')}
         >
           <Calendar size={14} />
         </button>
@@ -242,7 +242,7 @@ const TodoItem = memo(function TodoItem({
           disabled={isMoving}
           className="p-1.5 rounded-md text-ink-lighter hover:text-ink hover:bg-ink/5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           title={t('backlog.moveToBacklog')}
-          aria-label="Move to backlog"
+          aria-label={t('a11y.moveToBacklog')}
         >
           <Archive size={14} />
         </button>
@@ -250,7 +250,7 @@ const TodoItem = memo(function TodoItem({
           onClick={handleDelete}
           className="p-1.5 rounded-md text-ink-lighter hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-all"
           title={t('common.delete')}
-          aria-label="Delete task"
+          aria-label={t('a11y.deleteTask')}
         >
           <Trash2 size={14} />
         </button>

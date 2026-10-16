@@ -785,7 +785,7 @@ export default function HabitsTracker() {
           <div className="flex items-center justify-between mb-4">
             <button
               onClick={goToPrevWeek}
-              aria-label="Previous period"
+              aria-label={t('a11y.previousPeriod')}
               className="p-1 rounded hover:bg-ink/5 text-ink-light transition-colors"
             >
               {isRTL ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
@@ -817,7 +817,7 @@ export default function HabitsTracker() {
             </div>
             <button
               onClick={goToNextWeek}
-              aria-label="Next period"
+              aria-label={t('a11y.nextPeriod')}
               className="p-1 rounded hover:bg-ink/5 text-ink-light transition-colors"
             >
               {isRTL ? <ChevronLeft size={18} /> : <ChevronRight size={18} />}

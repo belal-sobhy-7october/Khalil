@@ -102,7 +102,8 @@ export default function FlashcardReview({ onClose, initialItemIds, onReviewMisse
     }
 
     setIncorrectCount((prev) => prev + 1);
-    setMissedIds((prev) => [...prev, currentItem.id]);
+    // A word missed again on its re-ask is still one missed word.
+    setMissedIds((prev) => (prev.includes(currentItem.id) ? prev : [...prev, currentItem.id]));
 
     // Spaced re-ask: re-insert this item ~3-4 cards later in the same session (once)
     if (!reaskedIds.has(currentItem.id)) {

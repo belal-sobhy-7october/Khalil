@@ -130,7 +130,7 @@ export default function Calendar() {
             <button
               onClick={navigatePrevious}
               className="p-2 rounded-lg text-ink-light hover:text-ink hover:bg-ink/5 transition-colors"
-              aria-label="Previous period"
+              aria-label={t('a11y.previousPeriod')}
             >
               <ChevronLeft size={20} />
             </button>
@@ -138,7 +138,7 @@ export default function Calendar() {
             <button
               onClick={navigateNext}
               className="p-2 rounded-lg text-ink-light hover:text-ink hover:bg-ink/5 transition-colors"
-              aria-label="Next period"
+              aria-label={t('a11y.nextPeriod')}
             >
               <ChevronRight size={20} />
             </button>
@@ -218,7 +218,7 @@ export default function Calendar() {
             <button
               onClick={handleOnboardingDismiss}
               className="p-1 text-ink-lighter hover:text-ink transition-colors shrink-0"
-              aria-label="Dismiss"
+              aria-label={t('a11y.dismiss')}
             >
               <X size={20} />
             </button>

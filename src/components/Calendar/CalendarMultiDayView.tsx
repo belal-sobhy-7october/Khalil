@@ -39,7 +39,7 @@ const getEventHeight = (startTime?: string, endTime?: string) => {
 };
 
 export default memo(function CalendarMultiDayView({ currentDate, events, onEditEvent, onCompleteEvent }: CalendarMultiDayViewProps) {
-  const { isRTL } = useTranslation();
+  const { t, isRTL } = useTranslation();
 
   const multiDayStart = useMemo(() => currentDate, [currentDate]);
   const multiDayDates = useMemo(() => 
@@ -124,7 +124,7 @@ export default memo(function CalendarMultiDayView({ currentDate, events, onEditE
                         <button
                           onClick={(e) => handleComplete(event.id, e)}
                           className="shrink-0"
-                          aria-label={event.completed ? 'Mark incomplete' : 'Mark complete'}
+                          aria-label={t(event.completed ? 'a11y.markIncomplete' : 'a11y.markComplete')}
                         >
                           {event.completed ? <CheckCircle size={12} className="text-sage-soft" /> : <Circle size={12} className="text-ink-light" />}
                         </button>
@@ -160,7 +160,7 @@ export default memo(function CalendarMultiDayView({ currentDate, events, onEditE
                           <button
                             onClick={(e) => handleComplete(event.id, e)}
                             className="shrink-0"
-                            aria-label={event.completed ? 'Mark incomplete' : 'Mark complete'}
+                            aria-label={t(event.completed ? 'a11y.markIncomplete' : 'a11y.markComplete')}
                           >
                             {event.completed ? <CheckCircle size={10} className="text-sage-soft" /> : <Circle size={10} className="text-ink-light" />}
                           </button>

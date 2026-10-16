@@ -70,10 +70,14 @@ export default function FocusSection() {
   // Keyboard: Space start/pause, R reset, S skip (ignored while typing).
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      // Browser shortcuts (Ctrl+R reload, Ctrl+S save…) must not reset/skip.
+      if (e.ctrlKey || e.metaKey || e.altKey || e.repeat) return;
       const el = e.target instanceof Element ? e.target : null;
-      if (el?.closest('input, textarea, select, button, [contenteditable="true"]')) return;
+      if (el?.closest('input, textarea, select, [contenteditable="true"]')) return;
       const st = usePomodoroStore.getState();
       if (e.code === 'Space') {
+        // A focused button already activates itself on Space.
+        if (el?.closest('button, a, [role="button"]')) return;
         e.preventDefault();
         primeAudio();
         st.toggle();
@@ -104,20 +108,7 @@ export default function FocusSection() {
   const setting = <K extends keyof typeof s.settings>(key: K, value: (typeof s.settings)[K]) => s.updateSettings({ [key]: value }, userId);
 
   const numberInput = (key: 'focus' | 'short' | 'long' | 'longEvery' | 'dailyGoal', min: number, max: number) => (
-    <label className="flex items-center justify-between gap-2 text-sm text-ink">
-      {t(`focus.settings.${key}`)}
-      <input
-        type="number"
-        min={min}
-        max={max}
-        value={s.settings[key]}
-        onChange={(e) => {
-          const v = Math.max(min, Math.min(max, Number(e.target.value) || min));
-          setting(key, v);
-        }}
-        className="w-20 px-2 py-1 bg-ink/5 border border-border-subtle rounded-lg text-center"
-      />
-    </label>
+    <NumberSetting label={t(`focus.settings.${key}`)} value={s.settings[key]} min={min} max={max} onChange={(v) => setting(key, v)} />
   );
   const toggleInput = (key: 'autoStartBreaks' | 'autoStartFocus' | 'sound' | 'notify' | 'titleCountdown') => (
     <label className="flex items-center justify-between gap-2 text-sm text-ink cursor-pointer">
@@ -350,5 +341,38 @@ export default function FocusSection() {
         </div>
       </div>
     </div>
+  );
+}
+
+/**
+ * Number field that lets the user clear it and type a new value: valid
+ * numbers apply as they are typed, anything else is clamped on blur/Enter.
+ */
+function NumberSetting({ label, value, min, max, onChange }: { label: string; value: number; min: number; max: number; onChange: (v: number) => void }) {
+  const [draft, setDraft] = useState<string | null>(null);
+  const commit = () => {
+    if (draft === null) return;
+    const n = Math.round(Number(draft));
+    if (draft.trim() !== '' && Number.isFinite(n)) onChange(Math.max(min, Math.min(max, n)));
+    setDraft(null);
+  };
+  return (
+    <label className="flex items-center justify-between gap-2 text-sm text-ink">
+      {label}
+      <input
+        type="number"
+        min={min}
+        max={max}
+        value={draft ?? value}
+        onChange={(e) => {
+          setDraft(e.target.value);
+          const n = Number(e.target.value);
+          if (e.target.value !== '' && Number.isInteger(n) && n >= min && n <= max) onChange(n);
+        }}
+        onBlur={commit}
+        onKeyDown={(e) => e.key === 'Enter' && commit()}
+        className="w-20 px-2 py-1 bg-ink/5 border border-border-subtle rounded-lg text-center"
+      />
+    </label>
   );
 }

@@ -145,7 +145,7 @@ export default memo(function CalendarAgendaView({ currentDate, events, onEditEve
                       <button
                         onClick={(e) => handleComplete(event.id, e)}
                         className="shrink-0 mt-0.5"
-                        aria-label={event.completed ? 'Mark incomplete' : 'Mark complete'}
+                        aria-label={t(event.completed ? 'a11y.markIncomplete' : 'a11y.markComplete')}
                       >
                         {event.completed ? (
                           <CheckCircle size={20} className="text-sage-soft" />
@@ -179,7 +179,7 @@ export default memo(function CalendarAgendaView({ currentDate, events, onEditEve
                         <button
                           onClick={(e) => { e.stopPropagation(); onEditEvent(event); }}
                           className="p-1.5 rounded text-ink-lighter hover:text-clay-soft hover:bg-ink/5 transition-colors"
-                          aria-label="Edit event"
+                          aria-label={t('a11y.editEvent')}
                         >
                           <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
@@ -189,7 +189,7 @@ export default memo(function CalendarAgendaView({ currentDate, events, onEditEve
                         <button
                           onClick={(e) => { e.stopPropagation(); handleDelete(event.id, e); }}
                           className="p-1.5 rounded text-ink-lighter hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
-                          aria-label="Delete event"
+                          aria-label={t('a11y.deleteEvent')}
                         >
                           <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                             <polyline points="3 6 5 6 21 6" />

@@ -241,6 +241,29 @@ describe('FlashcardReview', () => {
     expect(screen.getByText('A trial')).toBeInTheDocument();
   });
 
+  it('lists a word missed twice only once', async () => {
+    render(<FlashcardReview onClose={onClose} />);
+    const button = (text: string) => {
+      const b = screen.getAllByRole('button').find((btn) => btn.textContent?.includes(text) && !/[←→]/.test(btn.textContent ?? ''));
+      if (!b) throw new Error(`${text} button not found`);
+      return b;
+    };
+    fireEvent.click(button('I know it')); // hello
+    await waitFor(() => expect(screen.getByText('test')).toBeInTheDocument());
+    fireEvent.click(button("I don't know it")); // test
+    await waitFor(() => expect(screen.getByText('A trial')).toBeInTheDocument());
+    fireEvent.click(button('Next'));
+    await waitFor(() => expect(screen.getByText('world')).toBeInTheDocument());
+    fireEvent.click(button('I know it')); // world
+    await waitFor(() => expect(screen.getByText('test')).toBeInTheDocument());
+    fireEvent.click(button("I don't know it")); // test again
+    await waitFor(() => expect(screen.getByText('A trial')).toBeInTheDocument());
+    fireEvent.click(button('Next'));
+    await waitFor(() => expect(screen.getByText(/Review Complete/i)).toBeInTheDocument());
+    expect(screen.getByText(/Incorrect: 2/i)).toBeInTheDocument();
+    expect(screen.getAllByText('test')).toHaveLength(1);
+  });
+
   it('shows empty state when there are no words are due for review', () => {
     useAppStore.setState({
       vocabularyItems: vocabularyItems.map((item) => ({ ...item, masteryLevel: 5, lapseCount: 0, correctStreak: 0, isHard: false, lastReviewedAt: new Date().toISOString() })),

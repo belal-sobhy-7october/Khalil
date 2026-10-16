@@ -5,6 +5,7 @@ import { useAppStore } from '../../store/appStore';
 import { speakWord, getPronunciationPrefs } from '../../lib/pronunciation';
 import { TOPIC_PACKS, type TopicPack } from '../../data/topicPacks';
 import type { VocabularyItemType } from '../../types';
+import { useDialog } from '../../lib/useDialog';
 
 const NEW_GROUP = '__pack__';
 
@@ -16,7 +17,7 @@ interface TopicLibraryModalProps {
 }
 
 export default function TopicLibraryModal({ onClose, onAdded }: TopicLibraryModalProps) {
-  const { t, isRTL } = useTranslation();
+  const { t, isRTL, tn } = useTranslation();
   const vocabularyItems = useAppStore((s) => s.vocabularyItems);
   const vocabularyCategories = useAppStore((s) => s.vocabularyCategories);
   const importVocabularyItems = useAppStore((s) => s.importVocabularyItems);
@@ -65,12 +66,14 @@ export default function TopicLibraryModal({ onClose, onAdded }: TopicLibraryModa
   const BackIcon = isRTL ? ArrowRight : ArrowLeft;
   const accent = getPronunciationPrefs().accent;
 
+  const dialog = useDialog(() => !adding && onClose());
+
   return (
     <div
       className="fixed inset-0 bg-ink/50 flex items-center justify-center z-50 p-4"
       onClick={(e) => e.target === e.currentTarget && !adding && onClose()}
     >
-      <div className="bg-card border border-border-subtle rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+      <div {...dialog.props} className="bg-card border border-border-subtle rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
         <div className="px-6 py-4 border-b border-border-subtle flex items-center gap-3">
           {selected && (
             <button
@@ -81,7 +84,7 @@ export default function TopicLibraryModal({ onClose, onAdded }: TopicLibraryModa
               <BackIcon size={18} className="text-ink-light" />
             </button>
           )}
-          <h2 className="flex-1 text-xl font-bold text-ink flex items-center gap-2">
+          <h2 id={dialog.titleId} className="flex-1 text-xl font-bold text-ink flex items-center gap-2">
             {selected ? (
               <>
                 <span>{selected.emoji}</span>
@@ -216,7 +219,7 @@ export default function TopicLibraryModal({ onClose, onAdded }: TopicLibraryModa
                   {adding && <Loader2 size={16} className="animate-spin" />}
                   {newCountOf(selected) === 0
                     ? t('vocabulary.library.allInList')
-                    : t('vocabulary.library.addN').replace('{count}', String(newCountOf(selected)))}
+                    : tn('vocabulary.library.addN', newCountOf(selected))}
                 </button>
               </>
             )}

@@ -62,7 +62,7 @@ const categoryColors: Record<string, string> = {
 const colorOptions = ['terracotta', 'gold', 'sage', 'slate', 'rose', 'indigo', 'emerald', 'amber', 'purple'] as const;
 
 export default function BookmarksVault() {
-  const { t, isRTL } = useTranslation();
+  const { t, isRTL, tn } = useTranslation();
   const categories = useAppStore((s) => s.bookmarkCategories);
   const bookmarks = useAppStore((s) => s.bookmarks);
   const addCategory = useAppStore((s) => s.addBookmarkCategory);
@@ -122,7 +122,12 @@ export default function BookmarksVault() {
             <span className="hidden sm:inline">{t('bookmarks.addCategory')}</span>
           </button>
           <button
-            onClick={() => setShowBookmarkForm(true)}
+            onClick={() => {
+              // Start in the category being viewed (or the only one there is).
+              const preset = activeCategory ?? (categories.length === 1 ? categories[0].id : '');
+              if (!newBookmark.categoryId && preset) setNewBookmark({ ...newBookmark, categoryId: preset });
+              setShowBookmarkForm(true);
+            }}
             className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-clay-soft hover:bg-clay-soft-dark text-white rounded-lg transition-colors"
           >
             <Plus size={14} />
@@ -134,6 +139,7 @@ export default function BookmarksVault() {
       <div className="flex flex-wrap gap-2 mb-5">
         <button
           onClick={() => setActiveCategory(null)}
+          aria-pressed={!activeCategory}
           className={`px-3 py-1.5 text-sm rounded-full transition-all ${
             !activeCategory
               ? 'bg-clay-soft text-white'
@@ -145,26 +151,27 @@ export default function BookmarksVault() {
         {categories.map((cat) => (
           <div
             key={cat.id}
-            onClick={() => setActiveCategory(cat.id)}
-            className={`flex items-center gap-2.5 px-4 py-1.5 text-sm rounded-full transition-all cursor-pointer ${
+            className={`flex items-center gap-2.5 ps-4 py-1.5 text-sm rounded-full transition-all ${
               activeCategory === cat.id
                 ? 'bg-clay-soft text-white'
                 : 'bg-ink/5 text-ink-light hover:bg-ink/10 hover:text-ink'
             }`}
           >
-            <span className="w-2 h-2 rounded-full" style={{ backgroundColor: categoryColors[cat.color] || cat.color }} />
-            {categoryIcons[cat.icon] || defaultCategoryIcon}
-            <span>{cat.name}</span>
+            <button onClick={() => setActiveCategory(cat.id)} aria-pressed={activeCategory === cat.id} className="flex items-center gap-2.5">
+              <span className="w-2 h-2 rounded-full" style={{ backgroundColor: categoryColors[cat.color] || cat.color }} />
+              {categoryIcons[cat.icon] || defaultCategoryIcon}
+              <span>{cat.name}</span>
+            </button>
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 const count = bookmarks.filter((b) => b.categoryId === cat.id).length;
-                const msg = t(count > 0 ? 'bookmarks.confirmDeleteCategoryWithCount' : 'bookmarks.confirmDeleteCategory')
-                  .replace('{name}', cat.name)
-                  .replace('{count}', String(count));
+                const msg = (count > 0 ? tn('bookmarks.confirmDeleteCategoryWithCount', count) : t('bookmarks.confirmDeleteCategory'))
+                  .replace('{name}', cat.name);
                 if (window.confirm(msg)) removeCategory(cat.id);
               }}
-              className="mr-2 hover:text-red-300 dark:hover:text-red-400"
+              aria-label={`${t('common.delete')}: ${cat.name}`}
+              className="p-1 me-2 rounded-full hover:text-red-300 dark:hover:text-red-400"
             >
               <Trash2 size={10} />
             </button>
@@ -188,6 +195,7 @@ export default function BookmarksVault() {
                   onChange={(e) =>
                     setNewCategory({ ...newCategory, name: e.target.value })
                   }
+                  onKeyDown={(e) => e.key === 'Enter' && handleAddCategory()}
                   placeholder={t('bookmarks.categoryNamePlaceholder')}
                   className="flex-1 border border-border-subtle rounded-lg px-3 py-2 text-sm bg-ink/3 text-ink placeholder-ink-lighter focus:outline-none focus:ring-2 focus:ring-clay-soft/20"
                 />

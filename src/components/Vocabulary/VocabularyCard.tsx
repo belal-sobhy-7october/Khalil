@@ -15,7 +15,7 @@ interface VocabularyCardProps {
 }
 
 export default function VocabularyCard({ item, category, onEdit, onDelete, onSpeak }: VocabularyCardProps) {
-  const { t } = useTranslation();
+  const { t, tn } = useTranslation();
   const updateVocabularyItem = useAppStore((s) => s.updateVocabularyItem);
   const [isEditing, setIsEditing] = useState(false);
   const [showYouGlish, setShowYouGlish] = useState(false);
@@ -93,7 +93,7 @@ export default function VocabularyCard({ item, category, onEdit, onDelete, onSpe
               {category && <span className="px-2 py-0.5 bg-clay-soft/10 text-clay-soft rounded">{category.name}</span>}
               {item.lapseCount > 0 && (
                 <span className="px-2 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 rounded">
-                  {t('vocabulary.wrongCount').replace('{count}', String(item.lapseCount))}
+                  {tn('vocabulary.wrongCount', item.lapseCount)}
                 </span>
               )}
             </div>

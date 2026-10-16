@@ -1981,6 +1981,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     }
     
     let failedCount = 0;
+    const savedIds = new Set<string>();
     
     // Insert in chunks of 200
     const CHUNK_SIZE = 200;
@@ -1990,13 +1991,16 @@ export const useAppStore = create<AppStore>()((set, get) => ({
         supabase.from('vocabulary_items').insert(chunk),
         'importVocabularyItems'
       );
-      if (!success) {
+      if (success) {
+        for (const row of chunk) savedIds.add(row.id);
+      } else {
         failedCount += chunk.length;
         insertedCount -= chunk.length;
       }
     }
     
     // Update existing items
+    const updatedIds = new Set<string>();
     for (const item of itemsToUpdate) {
       const { success } = await supabaseCall(
         supabase.from('vocabulary_items').update({
@@ -2010,40 +2014,26 @@ export const useAppStore = create<AppStore>()((set, get) => ({
         }).eq('id', item.id),
         'importVocabularyUpdate'
       );
-      if (!success) {
+      if (success) {
+        updatedIds.add(item.id);
+      } else {
         failedCount++;
         updatedCount--;
       }
     }
     
-    // Update local state only on success
-    if (failedCount === 0 && (insertedCount > 0 || updatedCount > 0)) {
-      const newItems = itemsToInsert.map(i => ({
-        id: i.id,
-        userId: i.user_id,
-        categoryId: i.category_id ?? undefined,
-        word: i.word,
-        type: i.type as VocabularyItemType,
-        definition: i.definition,
-        exampleSentence: i.example_sentence ?? undefined,
-        pronunciation: i.pronunciation ?? undefined,
-        masteryLevel: i.mastery_level,
-        reviewCount: i.review_count,
-        lapseCount: i.lapse_count,
-        correctStreak: i.correct_streak,
-        isHard: i.is_hard,
-        createdAt: i.created_at,
-        updatedAt: i.updated_at,
-      } as VocabularyItem));
-      
+    // Reflect exactly what was saved: each word once, in its latest form.
+    if (savedIds.size > 0 || updatedIds.size > 0) {
+      const latest = new Map<string, VocabularyItem>();
+      for (const item of existingWords.values()) latest.set(item.id, item);
       set((s) => ({
         vocabularyItems: [
-          ...s.vocabularyItems.filter(existing => !existingWords.has(existing.word.toLowerCase())),
-          ...newItems,
-          ...Array.from(existingWords.values()),
+          ...s.vocabularyItems.map((existing) => (updatedIds.has(existing.id) ? latest.get(existing.id) ?? existing : existing)),
+          ...[...savedIds].map((id) => latest.get(id)).filter((item): item is VocabularyItem => !!item),
         ],
       }));
-    } else if (failedCount > 0) {
+    }
+    if (failedCount > 0) {
       set({ error: 'errors.importVocabulary' });
     }
     

@@ -13,6 +13,7 @@ import {
   type RatingSummary,
   type ResourceSuggestion,
 } from '../../lib/resourcesApi';
+import { useDialog } from '../../lib/useDialog';
 
 function StarRow({ value, onRate, label }: { value: number; onRate?: (n: number) => void; label: string }) {
   const [hover, setHover] = useState(0);
@@ -118,12 +119,14 @@ export default function ResourcesModal({ onClose }: { onClose: () => void }) {
   const inputClass =
     'w-full px-3 py-2 bg-ink/5 border border-border-subtle rounded-lg text-ink text-sm placeholder:text-ink-lighter focus:outline-none focus:border-clay-soft';
 
+  const dialog = useDialog(onClose);
+
   return (
     <div className="fixed inset-0 bg-ink/50 flex items-center justify-center z-50 p-4" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="bg-card border border-border-subtle rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+      <div {...dialog.props} className="bg-card border border-border-subtle rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
         <div className="px-6 py-4 border-b border-border-subtle flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-bold text-ink flex items-center gap-2">
+            <h2 id={dialog.titleId} className="text-xl font-bold text-ink flex items-center gap-2">
               <Compass size={20} className="text-clay-soft" />
               {t('vocabulary.resources.title')}
             </h2>

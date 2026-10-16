@@ -1,5 +1,6 @@
 import { X, Layers, Headphones, TextCursorInput } from 'lucide-react';
 import { useTranslation } from '../../i18n/useTranslation';
+import { useDialog } from '../../lib/useDialog';
 
 export type ReviewMode = 'cards' | 'listen' | 'gap';
 
@@ -14,14 +15,16 @@ export default function ReviewModePicker({ count, onPick, onClose }: {
   onPick: (mode: ReviewMode) => void;
   onClose: () => void;
 }) {
-  const { t } = useTranslation();
+  const { t, tn } = useTranslation();
+  const dialog = useDialog(onClose);
+
   return (
     <div className="fixed inset-0 bg-ink/50 flex items-center justify-center z-50 p-4" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="bg-card border border-border-subtle rounded-2xl w-full max-w-md overflow-hidden">
+      <div {...dialog.props} className="bg-card border border-border-subtle rounded-2xl w-full max-w-md overflow-hidden">
         <div className="px-6 py-4 border-b border-border-subtle flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-bold text-ink">{t('vocabulary.practice.pickTitle')}</h2>
-            <p className="text-xs text-ink-light">{t('vocabulary.practice.pickCount').replace('{count}', String(count))}</p>
+            <h2 id={dialog.titleId} className="text-lg font-bold text-ink">{t('vocabulary.practice.pickTitle')}</h2>
+            <p className="text-xs text-ink-light">{tn('vocabulary.practice.pickCount', count)}</p>
           </div>
           <button onClick={onClose} className="p-2 hover:bg-ink/5 rounded-lg transition-colors" aria-label={t('common.close')}>
             <X size={20} className="text-ink-light" />

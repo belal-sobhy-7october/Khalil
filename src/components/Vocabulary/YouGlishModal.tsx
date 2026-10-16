@@ -9,6 +9,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { X, Loader2, ExternalLink } from 'lucide-react';
 import { useTranslation } from '../../i18n/useTranslation';
 import { buildYouGlishUrl, type YouGlishAccent } from '../../lib/pronunciation';
+import { useDialog } from '../../lib/useDialog';
 
 // Minimal TypeScript types for YouGlish widget
 declare global {
@@ -147,15 +148,17 @@ export default function YouGlishModal({ word, onClose }: YouGlishModalProps) {
 
   const fallbackUrl = buildYouGlishUrl(word, accent);
 
+  const dialog = useDialog(onClose);
+
   return (
     <div
       className="fixed inset-0 bg-ink/50 flex items-center justify-center z-50 p-4"
       onClick={handleBackdropClick}
     >
-      <div className="bg-card border border-border-subtle rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
+      <div {...dialog.props} className="bg-card border border-border-subtle rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
         <div className="px-6 py-4 border-b border-border-subtle flex items-center justify-between">
-          <h2 className="text-xl font-bold text-ink">{t('vocabulary.youglishTitle')}</h2>
+          <h2 id={dialog.titleId} className="text-xl font-bold text-ink">{t('vocabulary.youglishTitle')}</h2>
           <button
             onClick={onClose}
             className="p-2 hover:bg-ink/5 rounded-lg transition-colors"
