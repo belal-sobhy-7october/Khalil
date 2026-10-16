@@ -117,6 +117,10 @@ function weekdayName(day: number, locale: string, style: 'narrow' | 'short'): st
 }
 
 // "3 Oct" / "٣ أكتوبر" — a raw "10-03" reads as 03-10 inside Arabic text.
+function monthShort(date: string, locale: string): string {
+  return new Date(`${date}T00:00:00`).toLocaleDateString(locale, { month: 'short' });
+}
+
 function shortDate(date: string, locale: string): string {
   const [y, m, d] = date.split('-').map(Number);
   return new Date(Date.UTC(y, m - 1, d)).toLocaleDateString(locale, { day: 'numeric', month: 'short', timeZone: 'UTC' });
@@ -763,40 +767,18 @@ export default function HabitsTracker() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
         <div className="bg-card border border-border-subtle rounded-xl p-4">
           <div className="text-sm font-medium text-ink mb-3">{t('habits.dailyProgress')}</div>
-          <div className="flex items-end gap-1 h-20">
-            {dailyProgress.map((dp) => {
-              const percent = dp.total > 0 ? (dp.count / dp.total) * 100 : 0;
-              return (
-                <div key={dp.date} className="flex-1 flex flex-col items-center gap-1">
-                  <div
-                    className="w-full bg-clay-soft rounded-t transition-all"
-                    style={{ height: `${Math.max(percent, 4)}%` }}
-                  />
-                  <div className="text-[10px] text-ink-lighter">
-                    {dp.date.slice(5)}
-                  </div>
-                </div>
-              );
-            })}
+          <div className="flex items-stretch gap-1 h-24">
+            {dailyProgress.map((dp) => (
+              <ProgressBar key={dp.date} label={String(Number(dp.date.slice(8)))} title={shortDate(dp.date, locale)} count={dp.count} total={dp.total} color="bg-clay-soft" />
+            ))}
           </div>
         </div>
         <div className="bg-card border border-border-subtle rounded-xl p-4">
           <div className="text-sm font-medium text-ink mb-3">{t('habits.weeklyProgress')}</div>
-          <div className="flex items-end gap-1 h-20">
-            {weeklyProgress.map((wp) => {
-              const percent = wp.total > 0 ? (wp.count / wp.total) * 100 : 0;
-              return (
-                <div key={wp.week} className="flex-1 flex flex-col items-center gap-1">
-                  <div
-                    className="w-full bg-sage-soft rounded-t transition-all"
-                    style={{ height: `${Math.max(percent, 4)}%` }}
-                  />
-                  <div className="text-[10px] text-ink-lighter">
-                    {wp.week.slice(5)}
-                  </div>
-                </div>
-              );
-            })}
+          <div className="flex items-stretch gap-1 h-24">
+            {weeklyProgress.map((wp) => (
+              <ProgressBar key={wp.week} label={shortDate(wp.week, locale)} title={shortDate(wp.week, locale)} count={wp.count} total={wp.total} color="bg-sage-soft" />
+            ))}
           </div>
         </div>
       </div>
@@ -864,10 +846,15 @@ export default function HabitsTracker() {
                     }`}
                   >
                     <div className="flex flex-col items-center leading-tight text-ink-lighter">
-                      {gridDates.length <= 31 && (
-                        <span className="text-[9px]">
-                          {gridDates.length <= 7 ? dayNameOf(date, locale) : weekdayName(weekdayOf(date), locale, 'narrow')}
-                        </span>
+                      {/* The 1st of a month (after the first column) names the month, so the jump from 31 to 1 reads clearly. */}
+                      {date.endsWith('-01') && date !== gridDates[0] && gridDates.length > 7 ? (
+                        <span className="text-[9px] font-semibold text-clay-soft">{monthShort(date, locale)}</span>
+                      ) : (
+                        gridDates.length <= 31 && (
+                          <span className="text-[9px]">
+                            {gridDates.length <= 7 ? dayNameOf(date, locale) : weekdayName(weekdayOf(date), locale, 'narrow')}
+                          </span>
+                        )
                       )}
                       <span className={`text-[10px] ${date === today ? 'text-clay-soft font-semibold' : ''}`}>
                         {Number(date.slice(8))}
@@ -1036,3 +1023,27 @@ export default function HabitsTracker() {
     </section>
   );
 }
+
+/**
+ * One column of the progress charts. The bar sits in a box with a real height
+ * (a % height inside an auto-height column renders as nothing). Days with
+ * nothing due show no bar at all, so "no data" doesn't look like "0%".
+ */
+function ProgressBar({ label, title, count, total, color }: { label: string; title: string; count: number; total: number; color: string }) {
+  const percent = total > 0 ? Math.round((count / total) * 100) : null;
+  return (
+    <div className="flex-1 min-w-0 flex flex-col items-center gap-1" title={percent === null ? title : `${title}: ${count}/${total} (${percent}%)`}>
+      <div className="w-full flex-1 flex items-end">
+        {percent !== null && (
+          <div
+            data-testid="progress-bar"
+            className={`w-full rounded-t transition-all ${percent > 0 ? color : 'bg-ink/10'}`}
+            style={{ height: `${Math.max(percent, 4)}%` }}
+          />
+        )}
+      </div>
+      <div className="text-[10px] text-ink-lighter tabular-nums whitespace-nowrap">{label}</div>
+    </div>
+  );
+}
+

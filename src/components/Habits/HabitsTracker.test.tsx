@@ -50,15 +50,28 @@ describe('HabitsTracker grid', () => {
     expect(document.querySelector('[data-today="true"]')).toBeNull();
   });
 
-  it('begins at the first habit start rather than with empty days', () => {
+  it('begins at the first habit start and keeps each range its own length', () => {
     const start = addDaysToDateString(today, -3);
     useAppStore.setState({ habits: habits.map((h) => ({ ...h, startDate: start })) });
     render(<HabitsTracker />);
+    const headerDays = () => document.querySelector('[data-grid-label]')!.parentElement!.children.length - 1;
     fireEvent.click(screen.getByRole('button', { name: '2 months' }));
-    const expected = habitPeriodDates(60, today).filter((d) => d >= start);
-    const cells = screen.getAllByRole('button', { name: /^Study — / });
-    expect(cells[0]).toHaveAccessibleName(`Study — ${expected[0]}`);
+    const twoMonths = headerDays();
+    expect(screen.getAllByRole('button', { name: /^Study — / })[0]).toHaveAccessibleName(`Study — ${start}`);
     expect(screen.getByRole('button', { name: 'Previous period' })).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: 'Month' }));
+    const month = headerDays();
+    fireEvent.click(screen.getByRole('button', { name: 'Week' }));
+    expect(headerDays()).toBe(7);
+    expect(month).toBeGreaterThanOrEqual(28);
+    expect(twoMonths).toBeGreaterThan(month);
+  });
+
+  it('draws progress bars for days with habits due', () => {
+    useAppStore.setState({ habitEntries: [{ id: 'e1', habitId: 'h1', date: today }] });
+    render(<HabitsTracker />);
+    const bars = screen.getAllByTestId('progress-bar');
+    expect(bars.some((b) => b.style.height === '50%')).toBe(true);
   });
 
   it('gives edit/delete buttons accessible names that include the habit name', () => {

@@ -31,10 +31,18 @@ describe('habit grid periods', () => {
     expect(habitPeriodDates(60, stepHabitPeriod(60, '2026-10-16', 1))[0]).toBe('2026-11-01');
   });
 
-  it('starts at the first habit instead of showing empty days before it', () => {
-    const dates = visibleHabitDates(60, '2026-10-16', '2026-10-11');
-    expect(dates[0]).toBe('2026-10-11');
-    expect(dates[dates.length - 1]).toBe('2026-10-31');
+  it('starts at the first habit and keeps the period length, so ranges stay different', () => {
+    const month = visibleHabitDates(30, '2026-10-16', '2026-10-14');
+    const twoMonths = visibleHabitDates(60, '2026-10-16', '2026-10-14');
+    expect(month[0]).toBe('2026-10-14');
+    expect(month).toHaveLength(31);
+    expect(month[month.length - 1]).toBe('2026-11-13');
+    expect(twoMonths[0]).toBe('2026-10-14');
+    expect(twoMonths).toHaveLength(61);
+    expect(visibleHabitDates(7, '2026-10-16', '2026-10-14')).toEqual([
+      '2026-10-14', '2026-10-15', '2026-10-16', '2026-10-17', '2026-10-18', '2026-10-19', '2026-10-20',
+    ]);
+    // Older habits: the plain calendar period.
     expect(visibleHabitDates(30, '2026-10-16', '2026-08-01')[0]).toBe('2026-10-01');
     expect(visibleHabitDates(30, '2026-10-16', null)).toHaveLength(31);
     expect(canStepBack(60, '2026-10-16', '2026-10-11')).toBe(false);
