@@ -9,11 +9,12 @@ import { speakBrowser, speakWord, getPronunciationPrefs } from '../../lib/pronun
 import { matchesSpoken, recognizeOnce, speechRecognitionSupported } from '../../lib/speech';
 import { useRecorder } from '../../lib/useRecorder';
 import {
-  EMPTY_CHALLENGE, TALK_GOAL_SECONDS, buildAiPrompt, buildPracticeTexts, loadChallenge, saveChallenge,
+  EMPTY_CHALLENGE, TALK_GOAL_SECONDS, buildAiPrompt, buildPracticeTexts, findPackForTopic, loadChallenge, saveChallenge,
   stepStatus, youtubeId, type ChallengeData, type StepKey,
 } from '../../lib/topicChallenge';
 import type { VocabularyCategory } from '../../types';
 import YouGlishModal from './YouGlishModal';
+import { GrammarCard, QuestionList, SpeakingTask } from './TopicLesson';
 import { useDialog } from '../../lib/useDialog';
 
 const STEPS: Array<{ key: StepKey; icon: typeof Mic }> = [
@@ -197,6 +198,7 @@ export default function TopicChallenge({ category, onClose }: { category: Vocabu
     update({ talkSeconds: secondsRef.current });
   };
   const aiPrompt = useMemo(() => buildAiPrompt(category.name, items), [category.name, items]);
+  const pack = useMemo(() => findPackForTopic(category.name), [category.name]);
   const [promptCopied, setPromptCopied] = useState(false);
 
   const handleClose = () => {
@@ -422,6 +424,19 @@ export default function TopicChallenge({ category, onClose }: { category: Vocabu
           ) : (
             <>
               <p className="text-sm text-ink-light">{t('vocabulary.challenge.talkHint')}</p>
+              {pack && (
+                <div className="space-y-3" dir="ltr">
+                  <details className="rounded-xl border border-border-subtle p-3" open>
+                    <summary className="text-sm font-semibold text-ink cursor-pointer" dir="auto">{t('vocabulary.library.lesson.discussion')}</summary>
+                    <div className="mt-2"><QuestionList questions={[...pack.warmUp, ...pack.discussion]} /></div>
+                  </details>
+                  <details className="rounded-xl border border-border-subtle p-3">
+                    <summary className="text-sm font-semibold text-ink cursor-pointer" dir="auto">{t('vocabulary.library.lesson.grammar')}</summary>
+                    <div className="mt-2"><GrammarCard pack={pack} /></div>
+                  </details>
+                  <SpeakingTask pack={pack} />
+                </div>
+              )}
               <div className="relative">
                 <textarea readOnly value={aiPrompt} rows={6} dir="ltr" className="w-full px-3 py-2 bg-ink/5 border border-border-subtle rounded-lg text-ink text-xs" />
                 <button

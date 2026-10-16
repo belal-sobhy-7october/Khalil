@@ -7,7 +7,6 @@
  */
 import { supabase } from './supabase';
 import { TOPIC_PACKS } from '../data/topicPacks';
-import { TOPIC_PARAGRAPHS } from '../data/topicParagraphs';
 import type { VocabularyItem } from '../types';
 
 export const TALK_GOAL_SECONDS = 10 * 60;
@@ -52,7 +51,7 @@ export function findPackForTopic(topicName: string) {
 export function buildPracticeTexts(topicName: string, items: VocabularyItem[]): string[] {
   const texts: string[] = [];
   const pack = findPackForTopic(topicName);
-  if (pack && TOPIC_PARAGRAPHS[pack.id]) texts.push(TOPIC_PARAGRAPHS[pack.id]);
+  if (pack?.paragraph) texts.push(pack.paragraph);
 
   const sentences = items
     .map((i) => i.exampleSentence?.trim())
@@ -65,21 +64,31 @@ export function buildPracticeTexts(topicName: string, items: VocabularyItem[]): 
   return texts;
 }
 
-/** A ready-to-paste role-play prompt for Talkpal or any voice AI. */
+/**
+ * A ready-to-paste prompt for Talkpal or any voice AI. Topics from the
+ * library bring their lesson: the discussion questions, the grammar to
+ * practise and the speaking task.
+ */
 export function buildAiPrompt(topicName: string, items: VocabularyItem[]): string {
-  const words = items.slice(0, 25).map((i) => i.word).join(', ');
+  const pack = findPackForTopic(topicName);
+  const words = (items.length ? items.map((i) => i.word) : pack?.items.map((i) => i.word) ?? []).slice(0, 25).join(', ');
   // Interview first: "Call Center Interview" is an interview, not a call.
   const role = /interview/i.test(topicName)
     ? 'Act as an interviewer for a customer service job. Ask me one question at a time and follow up on my answers.'
     : /call center|customer/i.test(topicName)
       ? 'Play a customer calling a support line. I am the call center agent. Start with a realistic problem and react naturally — sometimes be a little difficult.'
       : `Have a natural conversation with me about "${topicName}". Ask me open questions and share your own opinions too.`;
-  return [
-    `I'm an English learner at B2 level. Let's practise speaking for 10 minutes.`,
-    role,
+  const lines = [`I'm an English learner at B2 level. Let's practise speaking for 10 minutes.`, role];
+  if (pack) {
+    lines.push(`Use these questions, one at a time: ${[...pack.warmUp, ...pack.discussion].join(' / ')}`);
+    lines.push(`Grammar I'm practising: ${pack.grammar.title} (${pack.grammar.points.map((p) => p.form).join('; ')}). Notice when I use it wrongly.`);
+    lines.push(`At the end, ask me to do this task: ${pack.task.prompt} (${pack.task.points.join('; ')}).`);
+  }
+  lines.push(
     `Try to get me to use these words and phrases: ${words}.`,
-    `Keep your replies short so I speak more than you. At the end, list my main mistakes with corrections and 3 tips to sound more natural.`,
-  ].join('\n');
+    `Keep your replies short so I speak more than you. At the end, list my main mistakes with corrections and 3 tips to sound more natural.`
+  );
+  return lines.join('\n');
 }
 
 export { youtubeId } from './youtube';
