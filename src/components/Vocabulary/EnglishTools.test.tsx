@@ -7,6 +7,7 @@ import QuickAddModal from './QuickAddModal';
 import VocabularySection from './VocabularySection';
 import ConvertToEnglishModal from './ConvertToEnglishModal';
 import YouGlishModal from './YouGlishModal';
+import CheckMeaningsModal from './CheckMeaningsModal';
 import type { VocabularyItem } from '../../types';
 import { TOPIC_PACKS } from '../../data/topicPacks';
 
@@ -16,7 +17,8 @@ vi.mock('../../lib/supabase', async () => {
 });
 
 const lookupMany = vi.fn();
-vi.mock('../../lib/dictionary', () => ({
+vi.mock('../../lib/dictionary', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../lib/dictionary')>()),
   lookupWord: vi.fn(async () => null),
   lookupMany: (...args: unknown[]) => lookupMany(...args),
 }));
@@ -98,6 +100,57 @@ describe('QuickAddModal', () => {
     const [items] = importVocabularyItems.mock.calls[0] as unknown as [Array<{ word: string; type: string }>];
     expect(items.map((i) => i.word)).toEqual(['negotiate', 'bargain']);
     expect(items[0].type).toBe('verb');
+  });
+
+  it('picks the meaning that fits the topic and lets the user switch it', async () => {
+    lookupMany.mockImplementation(async (_words: string[], onResult: (i: number, e: unknown) => void) => {
+      onResult(0, { definition: SPLIT_UP[0].definition, type: 'verb', audio: {}, senses: SPLIT_UP });
+    });
+    render(<QuickAddModal onClose={() => {}} defaultCategory="Marriage" />);
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'split up' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Continue (1)' }));
+    await screen.findByDisplayValue('To end a relationship or marriage.');
+    expect(screen.getByDisplayValue('They split up after ten years.')).toBeInTheDocument();
+    const picker = screen.getByRole('combobox', { name: /2 meanings/ });
+    fireEvent.change(picker, { target: { value: '0' } });
+    expect(screen.getByDisplayValue(SPLIT_UP[0].definition)).toBeInTheDocument();
+  });
+});
+
+const SPLIT_UP = [
+  { definition: 'To divide into smaller groups or separate individuals.', pos: 'verb' },
+  { definition: 'To end a relationship or marriage.', example: 'They split up after ten years.', pos: 'verb' },
+];
+
+describe('CheckMeaningsModal', () => {
+  it("suggests the topic's sense and keeps the user's example", async () => {
+    const updateVocabularyItem = vi.fn(async () => {});
+    const item = (id: string, word: string, definition: string, exampleSentence?: string): VocabularyItem => ({
+      id, userId: 'u', categoryId: 'm', word, type: 'verb', definition, exampleSentence,
+      masteryLevel: 0, reviewCount: 0, lapseCount: 0, correctStreak: 0, isHard: false, createdAt: '', updatedAt: '',
+    });
+    useAppStore.setState({
+      updateVocabularyItem,
+      vocabularyItems: [
+        item('1', 'Split up', SPLIT_UP[0].definition, 'They decided to split up'),
+        item('2', 'Divorce', 'The legal ending of a marriage.'),
+      ],
+    });
+    lookupMany.mockImplementation(async (words: string[], onResult: (i: number, e: unknown) => void) => {
+      words.forEach((w, i) => onResult(i, w === 'Split up' ? { definition: SPLIT_UP[0].definition, type: 'verb', audio: {}, senses: SPLIT_UP } : null));
+    });
+    render(<CheckMeaningsModal category={{ id: 'm', userId: 'u', name: 'Marriage', createdAt: '', updatedAt: '' }} onClose={() => {}} />);
+    expect(await screen.findByText('Fits this topic better')).toBeInTheDocument();
+    expectNoRawKeys();
+    fireEvent.click(screen.getByRole('button', { name: 'Save 1 change' }));
+    await waitFor(() => expect(updateVocabularyItem).toHaveBeenCalledWith('1', { definition: 'To end a relationship or marriage.' }));
+    expect(await screen.findByText('1 meaning updated.')).toBeInTheDocument();
+  });
+
+  it('says so when every meaning already fits', async () => {
+    useAppStore.setState({ vocabularyItems: [] });
+    render(<CheckMeaningsModal category={{ id: 'm', userId: 'u', name: 'Marriage', createdAt: '', updatedAt: '' }} onClose={() => {}} />);
+    expect(screen.getByText('Every word already has a meaning that fits this topic.')).toBeInTheDocument();
   });
 });
 

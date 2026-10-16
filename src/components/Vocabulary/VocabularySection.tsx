@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Plus, Search, Filter, Flame, Upload, Library, Sparkles, PlayCircle, Languages, Compass, Trophy } from 'lucide-react';
+import { Plus, Search, Filter, Flame, Upload, Library, Sparkles, PlayCircle, Languages, Compass, Trophy, SearchCheck } from 'lucide-react';
 import { useAppStore } from '../../store/appStore';
 import { useTranslation } from '../../i18n/useTranslation';
 import { speakWord, getPronunciationPrefs } from '../../lib/pronunciation';
@@ -16,6 +16,7 @@ import ReviewModePicker, { type ReviewMode } from './ReviewModePicker';
 import TypingPractice from './TypingPractice';
 import ResourcesModal from './ResourcesModal';
 import TopicChallenge from './TopicChallenge';
+import CheckMeaningsModal from './CheckMeaningsModal';
 import { hasArabicDefinition } from '../../lib/arabicText';
 import type { VocabularyItemType } from '../../types';
 
@@ -37,6 +38,7 @@ export default function VocabularySection() {
   const [showConvert, setShowConvert] = useState(false);
   const [showResources, setShowResources] = useState(false);
   const [showChallenge, setShowChallenge] = useState(false);
+  const [showMeanings, setShowMeanings] = useState(false);
   const [reviewItemIds, setReviewItemIds] = useState<string[] | undefined>(undefined);
   // Every review entry point goes through the mode picker first.
   const [pickerIds, setPickerIds] = useState<string[] | null>(null);
@@ -264,6 +266,13 @@ export default function VocabularySection() {
                 {t('vocabulary.reviewTopic').replace('{name}', selectedCategory.name)}
               </button>
               <button
+                onClick={() => setShowMeanings(true)}
+                className="flex items-center gap-2 px-3 py-1.5 bg-ink/5 text-ink text-sm rounded-lg hover:bg-ink/10 transition-colors"
+              >
+                <SearchCheck size={16} />
+                {t('vocabulary.meaning.open')}
+              </button>
+              <button
                 onClick={() => setShowChallenge(true)}
                 className="flex items-center gap-2 px-3 py-1.5 bg-clay-soft text-white text-sm rounded-lg hover:bg-clay-soft-dark transition-colors"
               >
@@ -404,6 +413,7 @@ export default function VocabularySection() {
         />
       )}
 
+      {showMeanings && selectedCategory && <CheckMeaningsModal category={selectedCategory} onClose={() => setShowMeanings(false)} />}
       {showChallenge && selectedCategory && (
         <TopicChallenge category={selectedCategory} onClose={() => setShowChallenge(false)} />
       )}
