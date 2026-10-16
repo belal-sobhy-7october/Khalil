@@ -1,5 +1,11 @@
+/// <reference types="node" />
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { TOPIC_PACKS } from '.';
+
+const DIR = path.dirname(fileURLToPath(import.meta.url));
 
 describe('TOPIC_PACKS', () => {
   it('has unique pack ids and titles', () => {
@@ -10,6 +16,14 @@ describe('TOPIC_PACKS', () => {
   it('never repeats a word across packs', () => {
     const words = TOPIC_PACKS.flatMap((p) => p.items.map((i) => i.word.toLowerCase()));
     expect(words.filter((w, i) => words.indexOf(w) !== i)).toEqual([]);
+  });
+
+  it('reads every word line (a mistyped line would be skipped silently)', () => {
+    const files = fs.readdirSync(DIR).filter((f) => f.endsWith('.ts') && !f.endsWith('.test.ts'));
+    const lines = files.flatMap((f) => fs.readFileSync(path.join(DIR, f), 'utf8').split('\n')).filter((l) => /^\w+ \|/.test(l));
+    const bad = lines.filter((l) => l.split('|').length !== 4 || !/^(n|v|adj|adv|pv|i|p) \|/.test(l));
+    expect(bad).toEqual([]);
+    expect(TOPIC_PACKS.reduce((n, p) => n + p.items.length, 0)).toBe(lines.length);
   });
 
   it('includes the eight lessons from the course', () => {

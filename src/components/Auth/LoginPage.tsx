@@ -1,13 +1,16 @@
 import { useState } from 'react';
-import { LogIn } from 'lucide-react';
+import { LogIn, WifiOff } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { supabase } from '../../lib/supabase';
 import { useTranslation } from '../../i18n/useTranslation';
 import CalligraphyWatermark from '../Common/CalligraphyWatermark';
+import { StudyTopicsButton } from '../Common/OfflineBanner';
+import { useOnline } from '../../lib/offline';
 
 export default function LoginPage() {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
+  const online = useOnline();
 
   const handleLogin = async () => {
     setLoading(true);
@@ -69,6 +72,17 @@ export default function LoginPage() {
               )}
               <span>{t('auth.login')}</span>
             </button>
+
+            {/* Signing in needs internet; the topic lessons don't. */}
+            <div className={`mt-3 rounded-xl ${online ? '' : 'p-3 border border-clay-soft/40 bg-clay-soft/5'}`}>
+              {!online && (
+                <p className="flex items-center justify-center gap-1.5 text-xs text-ink mb-2">
+                  <WifiOff size={14} className="text-clay-soft shrink-0" />
+                  {t('offline.loginOffline')}
+                </p>
+              )}
+              <StudyTopicsButton className="w-full py-2" subtle={online} />
+            </div>
           </div>
 
           <div className="px-8 pb-6 text-center">

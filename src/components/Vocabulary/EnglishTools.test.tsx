@@ -11,6 +11,7 @@ import CheckMeaningsModal from './CheckMeaningsModal';
 import UpgradeTopicsModal from './UpgradeTopicsModal';
 import type { VocabularyItem } from '../../types';
 import { TOPIC_PACKS } from '../../data/topicPacks';
+import { setTopicStudied } from '../../lib/studiedTopics';
 
 vi.mock('../../lib/supabase', async () => {
   const mod = await import('../../test/mockSupabase');
@@ -29,7 +30,15 @@ const importVocabularyItems = vi.fn(async () => ({ inserted: 3, updated: 0, skip
 beforeEach(() => {
   importVocabularyItems.mockClear();
   lookupMany.mockReset();
-  useAppStore.setState({ language: 'en', vocabularyItems: [], vocabularyCategories: [], importVocabularyItems });
+  useAppStore.setState({
+    language: 'en',
+    vocabularyItems: [],
+    vocabularyCategories: [],
+    importVocabularyItems,
+    session: { user: { id: 'u1' } } as unknown as ReturnType<typeof useAppStore.getState>['session'],
+  });
+  for (const pack of TOPIC_PACKS) setTopicStudied(pack.id, false);
+  Object.defineProperty(navigator, 'onLine', { configurable: true, get: () => true });
 });
 
 // A missing translation renders as its raw key, e.g. "vocabulary.library.title".
@@ -55,6 +64,30 @@ describe('TopicLibraryModal', () => {
     expect(items).toHaveLength(pack.items.length);
     expect(options.categoryForAll).toBe('Call Center Interview');
     await waitFor(() => expect(onAdded).toHaveBeenCalledWith('Call Center Interview'));
+  });
+
+  it('studies a lesson offline: no add controls, YouGlish off, marks it studied', () => {
+    Object.defineProperty(navigator, 'onLine', { configurable: true, get: () => false });
+    render(<TopicLibraryModal onClose={() => {}} />);
+    fireEvent.click(screen.getByText('Call Center Interview'));
+    expect(screen.queryByRole('button', { name: /^Add \d+ items$/ })).not.toBeInTheDocument();
+    expect(screen.getByText(/Adding words to your list needs internet/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'YouGlish: patience' })).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: 'Mark as studied' }));
+    expect(JSON.parse(localStorage.getItem('khalil-studied-topics') ?? '{}')).toHaveProperty('call-center-interview');
+    // Back in the list, the card shows it and the "Studied" filter keeps only it.
+    fireEvent.click(screen.getByRole('button', { name: 'Back' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Studied' }));
+    expect(screen.getByText('Call Center Interview')).toBeInTheDocument();
+    expect(screen.queryByText('Job Interview')).not.toBeInTheDocument();
+  });
+
+  it('hides the add controls when nobody is signed in (studying from the login page)', () => {
+    useAppStore.setState({ session: null });
+    render(<TopicLibraryModal onClose={() => {}} />);
+    fireEvent.click(screen.getByText('Call Center Interview'));
+    expect(screen.queryByRole('button', { name: /^Add \d+ items$/ })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Mark as studied' })).toBeInTheDocument();
   });
 
   it('filters topics by group and by a word they contain', () => {

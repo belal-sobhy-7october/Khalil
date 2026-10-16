@@ -7,6 +7,7 @@ import ErrorBoundary from './components/Common/ErrorBoundary'
 import { applyAppearance } from './lib/appearance'
 import { readLocalKv } from './lib/userKv'
 import { reloadForNewVersion } from './lib/staleChunk'
+import { registerOfflineSupport } from './lib/offline'
 
 // Apply the saved palette/theme before the first paint (no colour flash).
 try {
@@ -19,6 +20,9 @@ try {
 window.addEventListener('vite:preloadError', (event) => {
   if (reloadForNewVersion()) event.preventDefault()
 })
+
+// Save the app on this device so it opens with no internet.
+if (import.meta.env.PROD) registerOfflineSupport()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

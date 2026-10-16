@@ -231,4 +231,356 @@ pv | split up | To end a marriage or romantic relationship. | They split up afte
 i | tie the knot | To get married. | They're finally tying the knot next summer.
 `
   ),
+  pack(
+    {
+      id: 'friendship',
+      group: 'talk',
+      title: 'Friendship',
+      description: 'Making friends, staying close and dealing with friends who let you down.',
+      level: 'B2',
+      emoji: '🫂',
+      warmUp: [
+        'How did you meet your best friend?',
+        'Is it easy to make new friends as an adult? Why or why not?',
+      ],
+      grammar: {
+        title: 'each other, one another and reflexive pronouns',
+        points: [
+          { form: 'each other / one another', use: 'Two or more people do the action to the other person.', example: 'We have known each other since primary school.' },
+          { form: 'myself / yourself / themselves …', use: 'The subject does the action to itself.', example: 'She blamed herself for the argument.' },
+          { form: 'by myself / on my own', use: 'Alone, without help or company.', example: 'I moved to Cairo by myself and had no friends at first.' },
+        ],
+        tip: '“They looked at themselves” (each one in the mirror) is not the same as “They looked at each other”.',
+      },
+      discussion: [
+        'What makes someone a loyal friend?',
+        'Have you ever drifted apart from a close friend? What happened?',
+        'Who do you confide in when you have a problem?',
+        'Can you forgive a betrayal by a friend?',
+        'Is it possible to stay friends with someone you fell out with?',
+        'Can online friends be as close as friends in real life?',
+      ],
+      task: {
+        prompt: 'Talk about your best friend.',
+        points: [
+          'How you met and how long you have known each other',
+          'Why they are trustworthy',
+          'A time you helped each other',
+          'Whether you have ever fallen out',
+          'Use at least 4 new words',
+        ],
+      },
+      paragraph:
+        "My best friend and I have known each other since we were seven. We grew up on the same street, and that created a strong bond between us. He's the most loyal and trustworthy person I know, so I confide in him about everything. Of course, we've fallen out a few times, usually over silly things, but we always make up. When I lost my job, many fair-weather friends disappeared, but he called me every day. A friend in need is a friend indeed. Even when we drift apart for a while, we always reconnect.",
+    },
+    `
+n | close friend | A friend you know very well and like a lot. | I only have three close friends, but I trust them completely.
+n | companionship | The pleasure of being with someone so that you are not alone. | Older people often need companionship more than money.
+adj | loyal | Always supporting your friends, even in difficult times. | A loyal friend defends you when you aren't there.
+adj | trustworthy | Able to be trusted to be honest and to keep secrets. | I only tell my secrets to people who are trustworthy.
+n | betrayal | Hurting someone who trusts you, for example by telling their secrets. | Sharing my private message with others felt like a betrayal.
+n | bond | A strong feeling of friendship or love that connects people. | Living together at university created a strong bond between us.
+v | confide in | To tell someone your secrets or private feelings because you trust them. | I confide in my sister more than anyone else.
+p | fair-weather friend | A friend who is only there when things are going well. | When I lost my job, I found out who my fair-weather friends were.
+n | peer pressure | The influence that people of your age have on what you do. | Many teenagers start smoking because of peer pressure.
+v | reconnect | To meet or talk to someone again after a long time. | Facebook helped me reconnect with old school friends.
+pv | drift apart | To slowly become less close to someone. | We drifted apart after she moved abroad.
+pv | fall out with | To have an argument with someone and stop being friendly. | I fell out with my best friend over something silly.
+i | a friend in need is a friend indeed | A real friend is someone who helps you when you need help. | He lent me money without asking a single question: a friend in need is a friend indeed.
+`
+  ),
+  pack(
+    {
+      id: 'childhood-and-memories',
+      group: 'talk',
+      title: 'Childhood & Memories',
+      description: 'Where you grew up, the games you played, your school days and how you have changed.',
+      level: 'B2',
+      emoji: '🧸',
+      warmUp: [
+        'What is your earliest memory?',
+        'Were you a quiet child or a naughty one?',
+      ],
+      grammar: {
+        title: 'Past habits: would and used to',
+        points: [
+          { form: 'used to + base verb', use: 'Past habits and past states that are not true now.', example: 'I used to live in Alexandria.' },
+          { form: 'would + base verb', use: 'Repeated actions in the past, often in stories (not for states).', example: 'Every summer, we would go to the beach with our cousins.' },
+          { form: 'didn’t use to / never used to', use: 'Negative past habits.', example: 'I didn’t use to like vegetables.' },
+        ],
+        tip: 'Use “used to”, not “would”, for states: “I used to have long hair”, not “I would have long hair”.',
+      },
+      discussion: [
+        'Where did you grow up, and how has it changed since then?',
+        'Were your parents strict? What did they use to tell you off for?',
+        'What games would you play with your friends after school?',
+        'Do you think children today have a carefree childhood?',
+        'Did your grandparents spoil you? How?',
+        'Were the good old days really better? Why or why not?',
+      ],
+      task: {
+        prompt: 'Describe your childhood.',
+        points: [
+          'Where you grew up and what it was like',
+          'Two things you used to do',
+          'A typical day, using “would”',
+          'One vivid childhood memory',
+          'How you have changed since then',
+          'Use at least 4 new words',
+        ],
+      },
+      paragraph:
+        "I grew up in a small town in the Delta, and my childhood was carefree. My parents were strict about school, but my grandmother used to spoil us with sweets. After school, my friends and I would play football in the street until it got dark. I was a mischievous kid, so my mother often told me off. I have a vivid memory of the day we got our first computer. Last week my cousins visited, and we spent hours reminiscing about the good old days.",
+    },
+    `
+n | upbringing | The way a child is raised and taught by their parents. | My grandparents had a big influence on my upbringing.
+adj | carefree | Without worries or responsibilities. | My childhood summers were carefree and full of games.
+adj | mischievous | Enjoying causing small trouble in a playful way. | I was a mischievous child who hid my brother's shoes.
+adj | strict | Making people follow rules and behave in a certain way. | My father was strict about homework, but kind about everything else.
+v | spoil | To give a child everything they want, so that they behave badly. | My grandmother spoiled us with sweets every Friday.
+n | childhood memory | Something you remember from when you were a child. | My favourite childhood memory is flying kites on the roof.
+adj | vivid | (Of a memory) very clear and detailed in your mind. | I have a vivid memory of my first day at school.
+v | reminisce | To talk or think with pleasure about things that happened in the past. | When my cousins visit, we reminisce about our holidays in the village.
+n | innocence | The state of not knowing about the bad things in life. | Children lose their innocence too early these days.
+n | phase | A short period in someone's life when they behave in a particular way. | I went through a phase of wanting to be a footballer.
+pv | grow up | To change from a child into an adult; to spend your childhood somewhere. | I grew up in a small town near Tanta.
+pv | tell off | To speak angrily to someone because they did something wrong. | My teacher told me off for talking in class.
+i | the good old days | A time in the past that seems better than now. | My dad always talks about the good old days, when life was simpler.
+`
+  ),
+  pack(
+    {
+      id: 'films-series-and-books',
+      group: 'talk',
+      title: 'Films, Series & Books',
+      description: 'Recommend a film or a book, tell the plot without spoilers and say what you thought.',
+      level: 'B2',
+      emoji: '🎬',
+      warmUp: [
+        'What was the last film or series you really enjoyed?',
+        'Do you prefer reading the book or watching the film?',
+      ],
+      grammar: {
+        title: 'Telling a plot: present tenses and participle clauses',
+        points: [
+          { form: 'present simple / present continuous', use: 'Plots are usually told in the present.', example: 'A young doctor moves to a small village, where strange things are happening.' },
+          { form: 'V-ing clause (Walking home, …)', use: 'Two actions by the same person at the same time.', example: 'Walking home one night, she finds a mysterious letter.' },
+          { form: 'Having + V3 clause', use: 'One action finished before the next one.', example: 'Having lost everything, he decides to start again.' },
+        ],
+        tip: 'The clause and the main sentence need the same subject: “Walking home, she saw a dog”, not “Walking home, a dog appeared”.',
+      },
+      discussion: [
+        'What genre do you never watch or read? Why?',
+        'Do you get angry when someone tells you a spoiler?',
+        'Is binge-watching a good way to relax or a waste of time?',
+        'Name a film you think is overrated, and explain why.',
+        'Are sequels usually better or worse than the original? Give an example.',
+        'Which book or series would you recommend to an English learner, and why?',
+      ],
+      task: {
+        prompt: 'Recommend a film, a series or a book — without spoilers!',
+        points: [
+          'The genre and the main character',
+          'The plot, in the present tense',
+          'One participle clause (Having … / -ing …)',
+          'What you liked, and what was overrated',
+          'Who you would recommend it to',
+          'Use at least 4 new words',
+        ],
+      },
+      paragraph:
+        "Last weekend I binge-watched a thriller series, and I can't stop thinking about it. The main character is a quiet bank worker. Having lost his job, he decides to plan the perfect robbery. The plot is clever, the cast is excellent, and every episode keeps you on the edge of your seat. Halfway through, there's a huge twist: his best friend turns out to be working for the police. I won't give you any more spoilers! Some critics say it's overrated, but I loved it, and I can't wait for the sequel.",
+    },
+    `
+n | plot | The series of events that make up a story. | The plot was so complicated that I got lost halfway through.
+n | main character | The most important person in a story. | The main character is a teacher who becomes a criminal.
+n | spoiler | Information that tells you what happens in a story before you see or read it. | Don't tell me the ending: no spoilers!
+n | twist | An unexpected change in a story. | I didn't see the twist at the end coming at all.
+n | cast | All the actors in a film, a play or a series. | The cast is amazing; every actor is perfect for their role.
+n | genre | A type of film, book or music, such as comedy or horror. | Thrillers are my favourite genre.
+v | binge-watch | To watch many episodes of a series one after another. | I binge-watched the whole season in one weekend.
+adj | gripping | So exciting that it holds your attention completely. | It's a gripping novel; I read it in two days.
+adj | overrated | Thought to be better or more important than it really is. | Everyone loved that film, but I found it overrated.
+v | recommend | To tell someone that they would enjoy something or find it useful. | Can you recommend a good series to improve my English?
+n | sequel | A film or book that continues the story of an earlier one. | The sequel was even better than the first film.
+pv | turn out | To be discovered to be something, often in a surprising way. | The quiet neighbour turns out to be a spy.
+i | on the edge of your seat | Very excited and nervous because you want to know what happens next. | The last episode kept me on the edge of my seat.
+`
+  ),
+  pack(
+    {
+      id: 'making-plans',
+      group: 'talk',
+      title: 'Making Plans & Invitations',
+      description: 'Invite people, suggest plans, accept or say no politely and change arrangements.',
+      level: 'B1',
+      emoji: '📅',
+      warmUp: [
+        'What do you usually do with your friends at the weekend?',
+        'Is it hard for you to say no to an invitation?',
+      ],
+      grammar: {
+        title: 'Making suggestions and answering them',
+        points: [
+          { form: 'Let’s + base verb', use: 'A direct suggestion that includes you.', example: 'Let’s go to the cinema on Friday.' },
+          { form: 'Why don’t we / Shall we + base verb?', use: 'A friendly suggestion as a question.', example: 'Why don’t we meet at the café instead?' },
+          { form: 'How about / What about + V-ing?', use: 'Suggesting an idea or another option.', example: 'How about having dinner at my place?' },
+          { form: 'I’d love to, but …', use: 'Saying no politely to an invitation.', example: 'I’d love to, but I’m working late that day.' },
+        ],
+        tip: 'After “How about”, use V-ing: “How about going out?”, not “How about go out?”.',
+      },
+      discussion: [
+        'How do you usually invite friends: by message, by phone or in person?',
+        'What is a polite way to decline an invitation in your culture?',
+        'Do you like last-minute plans, or do you prefer to plan everything?',
+        'How do you feel when a friend calls off plans at the last minute?',
+        'What is your favourite kind of get-together?',
+        'When is it better to play it by ear?',
+      ],
+      task: {
+        prompt: 'Leave a voice message inviting a friend to an event.',
+        points: [
+          'What the event is, when and where',
+          'One suggestion with “Why don’t you” or “How about”',
+          'What happens if the plan changes',
+          'Ask them to reply',
+          'Use at least 4 new words',
+        ],
+      },
+      paragraph:
+        "Hi Omar! We're having a small get-together on the roof on Thursday evening, and I'd love you to come. Are you free? Why don't you come over around eight? We're going to have a barbecue and watch the match. If you're working late, how about joining us for dessert instead? Sorry it's a last-minute invitation. If it rains, we'll probably call it off, so let's play it by ear. And if you can't make it, no problem: you can take a rain check.",
+    },
+    `
+n | invitation | A request to come to a party, a meal or an event. | Thanks for the invitation; I'd love to come.
+v | invite | To ask someone to come to an event or to your home. | We invited all our neighbours to the iftar.
+v | suggest | To give someone an idea or a plan to think about. | She suggested meeting earlier to avoid the traffic.
+v | accept | To say yes to an offer or an invitation. | I accepted the invitation even though I was tired.
+v | decline | To say no politely to an invitation or an offer. | I had to decline because I had an exam the next day.
+adj | free | Not busy; having no plans. | Are you free on Saturday evening?
+n | arrangement | A plan for a particular time, made with other people. | We have an arrangement to meet at the station at six.
+adj | last-minute | Done or decided just before something happens. | It was a last-minute plan, but it was the best night of the summer.
+n | get-together | An informal meeting or party with friends or family. | We're having a small get-together for my mum's birthday.
+pv | call off | To cancel an event or a plan. | They called off the trip because of the storm.
+pv | come over | To visit someone at their home. | Why don't you come over and watch the match with us?
+i | take a rain check | To say no to an invitation now but suggest doing it another time. | Can I take a rain check on dinner? I'm really tired tonight.
+i | play it by ear | To decide what to do as things happen, without a fixed plan. | We don't know when the match ends, so let's play it by ear.
+`
+  ),
+  pack(
+    {
+      id: 'describing-people',
+      group: 'talk',
+      title: 'Describing People',
+      description: 'Say what people look like and what they are like — politely.',
+      level: 'B1',
+      emoji: '🧑‍🤝‍🧑',
+      warmUp: [
+        'Who do you look like in your family?',
+        'How would your best friend describe you?',
+      ],
+      grammar: {
+        title: 'look, look like and be like',
+        points: [
+          { form: 'look + adjective', use: 'How someone seems from their appearance.', example: 'You look tired. Did you sleep well?' },
+          { form: 'look like + noun', use: 'Physical similarity to someone or something.', example: 'He looks like his father.' },
+          { form: 'What is he / she like?', use: 'Asking about someone’s personality (and sometimes appearance).', example: 'What’s your new manager like? — She’s friendly but strict.' },
+          { form: 'opinion → size → age → colour', use: 'The usual order when you use several adjectives.', example: 'She has beautiful long black hair.' },
+        ],
+        tip: '“What does he like?” asks about his hobbies; “What is he like?” asks about his personality.',
+      },
+      discussion: [
+        'Who do you resemble most in your family?',
+        'Is it rude to comment on someone’s weight in your culture?',
+        'How would you describe yourself to someone who has never met you?',
+        'Do you think good-looking people have an easier life?',
+        'Describe someone famous without saying their name. Can your partner guess who it is?',
+        'Do you dress up for work, or do you prefer casual clothes?',
+      ],
+      task: {
+        prompt: 'Describe someone you admire: what they look like and what they are like.',
+        points: [
+          'Their age and appearance',
+          'Who they look like',
+          'What they are like (personality)',
+          'Why you admire them',
+          'Use at least 4 new words',
+        ],
+      },
+      paragraph:
+        "My aunt Mona is in her early fifties, but she looks much younger. She's slim and of medium height, with curly grey hair that she never dyes. She's always elegant, even when she isn't dressed up. People say I'm the spitting image of her, and I can see the resemblance in old photos. But what is she like? She's warm, funny and very honest. She never judges people by their appearance, and that's why everyone in the family loves her.",
+    },
+    `
+n | appearance | The way someone looks. | Don't judge people by their appearance.
+adj | good-looking | Attractive (used for both men and women). | Her brother is tall and good-looking.
+adj | slim | Thin in an attractive way. | She's slim because she walks everywhere.
+adj | overweight | Heavier than is healthy. | My doctor told me I'm a little overweight.
+p | of medium height | Neither tall nor short. | He's of medium height, with short dark hair.
+adj | curly | (Of hair) having lots of curls. | My daughter has curly hair like her mother.
+adj | well-built | Having a large, strong body with a lot of muscle. | The new security guard is very well-built.
+n | beard | Hair that grows on a man's chin and cheeks. | He grew a beard during the winter.
+p | in your early twenties | Aged between about 20 and 23. | My new colleague is in her early twenties, but she's already a team leader.
+adj | elegant | Stylish and attractive in the way you dress or move. | My grandmother was always elegant, even at home.
+n | resemblance | The fact of looking similar to someone. | There's a strong resemblance between you and your sister.
+pv | dress up | To put on formal or special clothes. | Everyone dressed up for the wedding.
+i | the spitting image of | Looking exactly like someone else. | Ahmed is the spitting image of his grandfather.
+`
+  ),
+  pack(
+    {
+      id: 'cultural-differences',
+      group: 'talk',
+      title: 'Cultural Differences & Etiquette',
+      description: 'Customs, manners and culture shock: what is polite here and rude somewhere else.',
+      level: 'B2',
+      emoji: '🌐',
+      warmUp: [
+        'What is polite in Egypt but might be rude in another country?',
+        'Have you ever been confused by a custom in another culture?',
+      ],
+      grammar: {
+        title: 'Talking about customs: V-ing subjects and “It is … to …”',
+        points: [
+          { form: 'V-ing as the subject + is …', use: 'Talk about an action as a general idea.', example: 'Arriving late to dinner is normal in some countries.' },
+          { form: 'It is + adjective + to + verb', use: 'The same idea, often more natural in speech.', example: 'It is considered rude to refuse food in someone’s home.' },
+          { form: 'be expected to / be allowed to + verb', use: 'What society wants or permits.', example: 'Guests are expected to bring a small gift.' },
+        ],
+        tip: 'A V-ing subject takes a singular verb: “Shaking hands is …”, not “Shaking hands are …”.',
+      },
+      discussion: [
+        'Which customs would surprise a foreign visitor to Egypt?',
+        'Have you ever experienced culture shock? Where?',
+        'What stereotypes do people have about your country? Are they fair?',
+        'Should you always do what the locals do, or are there limits?',
+        'Which topics are taboo in your culture?',
+        'How can someone fit in quickly in a new country?',
+      ],
+      task: {
+        prompt: 'Explain Egyptian etiquette to a foreign colleague who is visiting Cairo.',
+        points: [
+          'How people greet each other',
+          'Two things guests are expected to do',
+          'One thing that is considered rude',
+          'Advice to help them fit in',
+          'Use at least 4 new words',
+        ],
+      },
+      paragraph:
+        "When my German colleague visited Cairo, he had a little culture shock. In his country, arriving even five minutes late is rude, but here it's normal for dinner guests to come half an hour late. He was also surprised by our hospitality: everywhere he went, people offered him tea. I explained a few customs. It's considered polite to refuse food once before you accept, and guests are expected to bring something sweet. He was very open-minded and tried everything. By the end of the week, he fitted in perfectly. As he said, when in Rome, do as the Romans do.",
+    },
+    `
+n | custom | Something that people in a society usually do in a particular situation. | It's a custom to visit relatives on the first day of Eid.
+n | etiquette | The rules of polite behaviour in a society or a group. | Business etiquette in Japan is very formal.
+n | manners | Polite ways of behaving with other people. | My mother taught us good table manners.
+n | culture shock | A feeling of confusion when you visit or live in a very different culture. | I had culture shock during my first month in London.
+n | stereotype | A fixed, often unfair idea of what a type of person is like. | It's a stereotype that all Egyptians live near the pyramids.
+adj | offensive | Rude in a way that upsets people. | Some hand gestures are offensive in other countries.
+adj | open-minded | Willing to accept different ideas and ways of living. | Travelling made me more open-minded.
+n | gesture | A movement of your hand or head that shows a meaning. | A thumbs-up is a friendly gesture in most places.
+v | greet | To say hello to someone or welcome them. | In Egypt, people often greet each other with a kiss on the cheek.
+n | hospitality | Being friendly and generous to guests. | Egyptian hospitality is famous: guests are always offered tea.
+adj | taboo | Not talked about or not allowed because it is offensive or embarrassing. | Talking about your salary is taboo in many offices.
+pv | fit in | To feel happy and accepted in a group or a place. | It took me a year to fit in at my new school.
+i | when in Rome, do as the Romans do | When you are in a new place, follow the customs of the people there. | I don't usually eat with my hands, but when in Rome, do as the Romans do.
+`
+  ),
 ];

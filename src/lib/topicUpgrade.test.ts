@@ -18,6 +18,11 @@ describe('lessonForTopicName', () => {
     expect(lessonForTopicName('Education')?.id).toBe('smart-learning');
     expect(lessonForTopicName('Personality')?.id).toBe('feelings-and-personality');
     expect(lessonForTopicName('Grammar')).toBeUndefined();
+    expect(lessonForTopicName('Friends')?.id).toBe('friendship');
+    expect(lessonForTopicName('Environment')?.id).toBe('climate-and-environment');
+    expect(lessonForTopicName('رمضان')?.id).toBe('ramadan-and-celebrations');
+    expect(lessonForTopicName('Movies')?.id).toBe('films-series-and-books');
+    expect(lessonForTopicName('My ideal job')?.id).toBe('work-and-office');
   });
 });
 

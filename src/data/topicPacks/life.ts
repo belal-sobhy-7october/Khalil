@@ -231,4 +231,356 @@ pv | log off | To stop using a computer system, website or app. | I log off soci
 i | glued to the screen | Watching or using a screen with all your attention for a long time. | The kids were glued to the screen all afternoon.
 `
   ),
+  pack(
+    {
+      id: 'city-vs-countryside',
+      group: 'life',
+      title: 'City Life vs Countryside',
+      description: 'Compare a big city with a quiet village, and say where you would rather live.',
+      level: 'B2',
+      emoji: '🏙️',
+      warmUp: [
+        'Would you rather live in the middle of Cairo or in a quiet village?',
+        'What do you like most and least about your neighbourhood?',
+      ],
+      grammar: {
+        title: 'Preferences: would rather, prefer, would prefer',
+        points: [
+          { form: 'would rather + base verb (+ than …)', use: 'What you want in a particular situation.', example: 'I’d rather live in a village than in a crowded city.' },
+          { form: 'prefer + V-ing / noun + to …', use: 'General preferences.', example: 'I prefer walking to driving.' },
+          { form: 'would prefer + to + verb', use: 'A specific preference, like “would rather”.', example: 'I’d prefer to stay in tonight.' },
+          { form: 'would rather + someone + past simple', use: 'What you want someone else to do.', example: 'I’d rather you didn’t smoke in the car.' },
+        ],
+        tip: 'No “to” after “would rather”: “I’d rather stay”, not “I’d rather to stay”.',
+      },
+      discussion: [
+        'Would you rather raise children in a city or in the countryside? Why?',
+        'How does rush hour affect your daily life?',
+        'Which amenities matter most to you when you choose where to live?',
+        'Are the opportunities in a big city worth the high cost of living?',
+        'Will more people move to rural areas because of remote work?',
+        'Where do you go to get away from the hustle and bustle?',
+      ],
+      task: {
+        prompt: 'City or countryside: where would you rather live, and why?',
+        points: [
+          'Two advantages of city life',
+          'Two advantages of the countryside',
+          'Your preference, with “would rather” or “prefer”',
+          'Where you would like to live in ten years',
+          'Use at least 4 new words',
+        ],
+      },
+      paragraph:
+        "I've lived in Cairo all my life, and I love the hustle and bustle. The city is vibrant, the nightlife is great, and all the amenities are close to my home. But it's crowded, the pollution is bad, and in rush hour a short trip can take two hours. The cost of living is also rising every year. My grandparents live in a rural village where there's real peace and quiet. When I need to get away from the noise, I visit them. Still, I'd rather live in the city now and move somewhere quieter when I'm older.",
+    },
+    `
+adj | crowded | Full of people. | The metro is so crowded in the morning that you can't move.
+n | rush hour | The time of day when roads and trains are busiest because people are travelling to or from work. | I try not to drive during rush hour.
+n | pollution | Dirty air, water or land, caused by people. | Air pollution in big cities causes breathing problems.
+n | cost of living | The amount of money you need for basic things such as food, rent and transport. | The cost of living in the capital keeps rising.
+adj | rural | Connected with the countryside, not with towns. | Many rural areas still don't have good internet.
+adj | urban | Connected with towns and cities. | Urban life is fast and noisy.
+n | peace and quiet | A calm situation without noise or worry. | I go to my grandfather's farm for some peace and quiet.
+n | amenities | Useful places and services in an area, such as shops, hospitals and parks. | The new area has good amenities, including a hospital and a mall.
+adj | vibrant | Full of energy and activity. | Downtown Cairo is vibrant at night.
+n | nightlife | Places to go and things to do in the evening, such as restaurants and cafés. | Alexandria has great nightlife in the summer.
+adj | remote | Far away from towns and other people. | They live in a remote village with one small shop.
+pv | get away from | To escape from a place or a situation for a while. | We go to the Red Sea to get away from the noise of the city.
+i | the hustle and bustle | The noise and busy activity of a crowded place. | I love the hustle and bustle of Khan el-Khalili.
+`
+  ),
+  pack(
+    {
+      id: 'home-and-neighbours',
+      group: 'life',
+      title: 'Home & Neighbours',
+      description: 'Rent or buy, describe your flat, get things fixed and deal with noisy neighbours.',
+      level: 'B1',
+      emoji: '🏠',
+      warmUp: [
+        'Describe the home you live in now in three words.',
+        'Do you know your neighbours well?',
+      ],
+      grammar: {
+        title: 'have / get something done',
+        points: [
+          { form: 'have + object + V3', use: 'Someone else does a job for you (you arrange it or pay for it).', example: 'We had the kitchen painted last month.' },
+          { form: 'get + object + V3', use: 'The same idea, more informal.', example: 'I need to get the air conditioner fixed before the summer.' },
+          { form: 'have + object + V3 (a bad experience)', use: 'Something bad that someone did to you.', example: 'We had our car stolen outside the building.' },
+        ],
+        tip: '“I fixed the sink” means you did it yourself; “I had the sink fixed” means someone did it for you.',
+      },
+      discussion: [
+        'Is it better to rent or to buy a flat today? Why?',
+        'What makes a good landlord, and what makes a good tenant?',
+        'What would you have done to your home if you had the money?',
+        'Have you ever had a problem with noisy neighbours? What did you do?',
+        'Which is more important: a spacious flat or a good neighbourhood?',
+        'What do you do to make guests feel at home?',
+      ],
+      task: {
+        prompt: 'Describe your dream home.',
+        points: [
+          'Where it is and what the neighbourhood is like',
+          'The rooms, and how spacious it is',
+          'Two things you would have done to it (have something done)',
+          'What your neighbours would be like',
+          'Use at least 4 new words',
+        ],
+      },
+      paragraph:
+        "Last month, we moved into a new flat in a quiet neighbourhood. It's spacious and bright, but it isn't furnished, so we've spent a lot on furniture. Our landlord is very kind. When we found a leak in the bathroom, he had it fixed the next day. We paid a deposit of two months' rent, and the maintenance fees are reasonable. Next year, we're going to have the kitchen renovated. Our neighbours aren't noisy at all. On our first day, they brought us dinner and told us to make ourselves at home.",
+    },
+    `
+n | landlord | A person who owns a flat or a house and rents it to other people. | My landlord wants to raise the rent again.
+n | tenant | A person who pays rent to live in a flat or a house. | The tenants upstairs are always moving furniture at night.
+n | rent | The money you pay regularly to live in a place that you don't own. | Rent is cheaper outside the city centre.
+n | deposit | Money you pay when you start renting, which you get back if you don't damage anything. | We paid two months' rent as a deposit.
+adj | furnished | (Of a flat or house) already having furniture in it. | We rented a furnished flat, so we didn't need to buy anything.
+adj | spacious | Large, with a lot of space inside. | The living room is bright and spacious.
+n | neighbourhood | An area of a town and the people who live there. | It's a quiet neighbourhood with lots of trees.
+n | maintenance | The work of keeping a building in good condition. | The building's maintenance fees went up this year.
+n | leak | A hole or crack that lets water or gas escape. | There's a leak under the kitchen sink.
+v | renovate | To repair and improve an old building or room. | They renovated the old flat and doubled its price.
+adj | noisy | Making a lot of loud or annoying sound. | Our neighbours are noisy, especially at weekends.
+pv | move in | To start living in a new home. | We moved in last week, and we're still unpacking.
+i | make yourself at home | Used to tell a guest to relax and feel comfortable. | Come in, sit down and make yourself at home!
+`
+  ),
+  pack(
+    {
+      id: 'transport-and-traffic',
+      group: 'life',
+      title: 'Transport & Traffic',
+      description: 'Getting around, traffic jams, public transport and guessing what happened on the road.',
+      level: 'B1',
+      emoji: '🚗',
+      warmUp: [
+        'How do you usually get to work or to university?',
+        'What is the worst traffic jam you have ever been in?',
+      ],
+      grammar: {
+        title: 'Guessing: must, might, can’t (present and past)',
+        points: [
+          { form: 'must + base verb / must be + V-ing', use: 'You are almost sure something is true now.', example: 'The road is closed. There must be an accident.' },
+          { form: 'might / could + base verb', use: 'It is possible.', example: 'Take an umbrella; it might rain later.' },
+          { form: 'can’t + base verb', use: 'You are sure something isn’t true.', example: 'He can’t be stuck in traffic; he left two hours ago.' },
+          { form: 'must have / might have / can’t have + V3', use: 'Guessing about the past.', example: 'She must have missed the bus; she isn’t here yet.' },
+        ],
+        tip: 'The opposite of “must” (sure it is true) is “can’t” (sure it isn’t), not “mustn’t”.',
+      },
+      discussion: [
+        'What is the best way to get around your city?',
+        'Should public transport be free? Who would pay for it?',
+        'Are ride-hailing apps better than normal taxis? Why?',
+        'What makes driving in your city stressful?',
+        'Have you ever had a breakdown on the road? What happened?',
+        'How could the government reduce traffic jams?',
+      ],
+      task: {
+        prompt: 'Tell the story of a difficult journey.',
+        points: [
+          'Where you were going, and how',
+          'What went wrong',
+          'One guess about what had happened (must have / might have)',
+          'How it ended',
+          'Use at least 4 new words',
+        ],
+      },
+      paragraph:
+        "Last Thursday, I was going to the airport to catch an early flight. I ordered a car on a ride-hailing app, but we got stuck in a terrible traffic jam on the ring road. Nothing was moving. There must have been an accident ahead. Then a police officer told us to pull over, because a truck had broken down in the middle of the road. My driver said we might miss the flight, so he took a different road and drove right at the speed limit. We reached the airport in the nick of time.",
+    },
+    `
+n | traffic jam | A long line of vehicles that can't move or are moving very slowly. | We were stuck in a traffic jam for two hours on the ring road.
+n | public transport | Buses, trains and the metro that everyone can use. | Cairo's public transport is cheap but very crowded.
+n | commuter | A person who travels regularly between home and work. | Thousands of commuters use the metro every morning.
+n | fare | The money you pay for a journey by bus, train or taxi. | The metro fare went up last year.
+n | pedestrian | A person who is walking, not driving or riding. | Drivers must stop for pedestrians at crossings.
+n | speed limit | The fastest speed you are allowed to drive on a road. | The speed limit on this road is 80 kilometres an hour.
+n | driving licence | An official document that shows you are allowed to drive. | I got my driving licence when I was eighteen.
+n | ride-hailing app | A phone app you use to order a car and a driver. | I use a ride-hailing app when I'm late.
+adj | stuck | Unable to move. | Sorry, I'm stuck in traffic. I'll be twenty minutes late.
+n | breakdown | An occasion when a vehicle stops working. | We had a breakdown on the desert road at midnight.
+v | overtake | To go past a slower vehicle on the road. | Never overtake on a bend.
+pv | pull over | To move a vehicle to the side of the road and stop. | The police officer asked me to pull over.
+i | in the nick of time | Just in time; at the last possible moment. | We reached the airport in the nick of time.
+`
+  ),
+  pack(
+    {
+      id: 'sports-and-fitness',
+      group: 'life',
+      title: 'Sports & Fitness',
+      description: 'Exercise, the sports you play or watch and how you stay motivated.',
+      level: 'B1',
+      emoji: '⚽',
+      warmUp: [
+        'Do you play any sports, or do you prefer to watch them?',
+        'What do you do to stay fit?',
+      ],
+      grammar: {
+        title: 'Ability: can, could, be able to, manage to',
+        points: [
+          { form: 'can / can’t + base verb', use: 'Ability now.', example: 'I can swim, but I can’t dive.' },
+          { form: 'could / couldn’t + base verb', use: 'General ability in the past.', example: 'When I was ten, I could run for hours.' },
+          { form: 'was able to / managed to + verb', use: 'Success in one particular situation in the past.', example: 'It was hard, but I managed to finish the race.' },
+          { form: 'will be able to + verb', use: 'Ability in the future (there is no “will can”).', example: 'If I train every day, I’ll be able to run 10 km by June.' },
+        ],
+        tip: 'For one specific success, use “managed to” or “was able to”, not “could”: “I managed to win the match.”',
+      },
+      discussion: [
+        'Which sport is the most popular in your country, and why?',
+        'Do you prefer working out alone or playing a team sport?',
+        'Are you competitive? In what situations?',
+        'Have you ever had a sports injury? What happened?',
+        'Should children have to do sport at school?',
+        'Do you agree with “no pain, no gain”? Can exercise be fun without pain?',
+      ],
+      task: {
+        prompt: 'Talk about sport and exercise in your life.',
+        points: [
+          'What you could do as a child',
+          'What you can do now',
+          'Something you managed to do that you are proud of',
+          'What you will be able to do if you keep training',
+          'Use at least 4 new words',
+        ],
+      },
+      paragraph:
+        "When I was a child, I could play football for hours, but at university I stopped exercising and lost my stamina. Last year I decided to get fit again. Now I work out three times a week. I always start with a warm-up and stretch for ten minutes, because I don't want another knee injury. At first I couldn't run more than one kilometre, but last month I managed to run five without stopping, a new personal best! I'm quite competitive, so now I'm training for a race. No pain, no gain.",
+    },
+    `
+n | workout | A period of physical exercise. | I do a 30-minute workout every morning.
+adj | fit | Healthy and strong, especially because of regular exercise. | Swimming keeps my father fit at seventy.
+n | stamina | The physical strength to keep doing something for a long time. | Running every day improved my stamina.
+n | injury | Damage to the body, for example in an accident or while playing sport. | He missed the whole season because of a knee injury.
+v | stretch | To make your muscles longer by reaching out your arms or legs. | Always stretch before you run.
+n | warm-up | Gentle exercise to prepare your body for harder exercise. | Never skip the warm-up before a match.
+n | opponent | A person or team that you play against. | Our opponents were much stronger than us.
+v | compete | To take part in a competition and try to win. | She competes in national swimming championships.
+n | referee | The official who controls a match and makes sure the players follow the rules. | The referee gave him a red card.
+adj | competitive | Wanting very much to win or to be better than others. | My brother is so competitive that he hates losing at cards.
+n | personal best | The best result someone has ever achieved in a sport. | I ran 5 km in 24 minutes: a new personal best!
+pv | work out | To do physical exercise, especially at a gym. | I work out three times a week after work.
+i | no pain, no gain | You have to work hard or suffer a little to achieve something. | My legs hurt after training, but no pain, no gain.
+`
+  ),
+  pack(
+    {
+      id: 'hobbies-and-free-time',
+      group: 'life',
+      title: 'Hobbies & Free Time',
+      description: 'How you relax, what you are into and how often you do it.',
+      level: 'B1',
+      emoji: '🎨',
+      warmUp: [
+        'What do you do to relax after a long day?',
+        'Is there a hobby you have always wanted to try?',
+      ],
+      grammar: {
+        title: 'How often: frequency adverbs and expressions',
+        points: [
+          { form: 'always / usually / often / sometimes / rarely / never', use: 'Before the main verb, but after “be”.', example: 'I usually read before bed. I am rarely bored.' },
+          { form: 'every day / once a week / twice a month', use: 'Usually at the end of the sentence.', example: 'I go to the gym twice a week.' },
+          { form: 'every other day / once in a while / now and then', use: 'Less regular frequency.', example: 'I play chess with my uncle once in a while.' },
+        ],
+        tip: 'Frequency adverbs go before the main verb but after “be”: “I often play”, “I am often tired”.',
+      },
+      discussion: [
+        'What did you use to do in your spare time as a child?',
+        'Is it important for adults to have a hobby? Why?',
+        'Which hobbies are expensive, and which are free?',
+        'Have you ever taken up a hobby and then given it up? Why?',
+        'How do you usually kill time when you are waiting?',
+        'Can a hobby become a job? Is that a good idea?',
+      ],
+      task: {
+        prompt: 'Talk about a hobby you love or want to take up.',
+        points: [
+          'What it is and when you started',
+          'How often you do it (frequency expressions)',
+          'Why it is relaxing or creative for you',
+          'Something you would like to try in the future',
+          'Use at least 4 new words',
+        ],
+      },
+      paragraph:
+        "In my spare time, I'm really into photography. I took it up three years ago, when my uncle gave me his old camera. Now I go out to take photos every other weekend, usually early in the morning when the streets are empty. It's relaxing, and it lets me be creative. I'm also keen on board games, so once in a while I play with my cousins. I used to collect stamps, but I gave it up because it got boring. When I'm waiting at the doctor's, I kill time by editing my photos on my phone.",
+    },
+    `
+n | hobby | An activity you do for pleasure in your free time. | Photography started as a hobby and became my job.
+n | pastime | Something you do regularly for fun. | Fishing is a popular pastime along the Nile.
+adj | relaxing | Making you feel calm and less worried. | Gardening is very relaxing after a busy week.
+adj | creative | Using your imagination to make new things or ideas. | Painting lets me be creative.
+n | craft | An activity in which you make things with your hands. | My sister sells her crafts online.
+n | board game | A game played on a board, such as chess. | We play board games with the family on Friday nights.
+n | spare time | Time when you are not working or studying. | What do you do in your spare time?
+p | be keen on | To be very interested in something, or to like it a lot. | I'm keen on photography, especially street photography.
+p | be into | To be very interested in an activity. | My son is really into video games these days.
+n | collection | A group of objects of the same type that someone has collected. | He has a huge collection of old coins.
+pv | take up | To start doing a new activity regularly. | I took up drawing during the lockdown.
+pv | give up | To stop doing something you used to do. | I gave up the guitar because I didn't have time.
+i | kill time | To do something while you are waiting so that the time passes more quickly. | I play games on my phone to kill time at the airport.
+`
+  ),
+  pack(
+    {
+      id: 'ramadan-and-celebrations',
+      group: 'life',
+      title: 'Ramadan, Eid & Celebrations',
+      description: 'Describe Ramadan, Eid, weddings and other celebrations: what people do, and when.',
+      level: 'B1',
+      emoji: '🌙',
+      warmUp: [
+        'What is your favourite time of the year, and why?',
+        'How do you usually celebrate Eid?',
+      ],
+      grammar: {
+        title: 'Time clauses: as soon as, until, while, before, after',
+        points: [
+          { form: 'as soon as + present', use: 'Immediately after something happens.', example: 'As soon as we hear the call to prayer, we break our fast.' },
+          { form: 'until + present', use: 'Up to the moment something happens.', example: 'We stay up until it is time for suhoor.' },
+          { form: 'while + clause / during + noun', use: 'At the same time as / in the period of.', example: 'While we are eating, my uncle tells stories. During Ramadan, the streets are full of lights.' },
+          { form: 'before / after + V-ing or clause', use: 'The order of two actions.', example: 'After eating, we go out to see the lanterns.' },
+        ],
+        tip: 'After time words, use the present for the future, not “will”: “as soon as the sun sets”, not “as soon as the sun will set”.',
+      },
+      discussion: [
+        'What do you love most about Ramadan?',
+        'How has the way people celebrate Eid changed since you were a child?',
+        'Is it better to celebrate with a big family or with a few close friends?',
+        'Do people spend too much money on celebrations and weddings?',
+        'Which celebration from another culture would you like to see?',
+        'What do you look forward to most every year?',
+      ],
+      task: {
+        prompt: 'Describe a typical day in Ramadan (or Eid) to a friend from another country.',
+        points: [
+          'What people do from suhoor until iftar',
+          'Two time clauses (as soon as / until / while)',
+          'The food and the decorations',
+          'Your favourite tradition',
+          'Use at least 4 new words',
+        ],
+      },
+      paragraph:
+        "Ramadan is my favourite time of the year. The streets are full of lanterns and decorations, and there's a festive atmosphere every night. We fast from dawn until sunset, so we wake up early for suhoor. As soon as we hear the call to prayer at sunset, we break our fast with dates and water, and then we have a big iftar with the family. Many people donate food to those who need it. At the end of the month, we celebrate Eid with a feast. Everyone is welcome at my grandmother's table: the more the merrier.",
+    },
+    `
+n | celebration | A special event or party for an important day or a success. | The wedding celebration lasted until 2 a.m.
+v | fast | To eat and drink nothing for a period, especially for religious reasons. | Muslims fast from dawn until sunset during Ramadan.
+n | iftar | The meal eaten after sunset to end the day's fast in Ramadan. | My grandmother invites the whole family for iftar on the first day.
+n | suhoor | The meal eaten before dawn during Ramadan. | We have yoghurt and beans for suhoor.
+n | decorations | Things that make a place look attractive for a special occasion. | The streets are full of lanterns and colourful decorations.
+n | lantern | A lamp with a cover, often used as a decoration in Ramadan. | My kids chose a new Ramadan lantern at the market.
+v | celebrate | To do something enjoyable for a special day or event. | We celebrate Eid with a big family breakfast.
+n | feast | A large special meal for many people. | On Eid al-Adha, families prepare a feast with meat.
+v | donate | To give money or things to help people. | Many people donate food to poor families during Ramadan.
+adj | festive | Happy and full of celebration. | The city has a festive atmosphere every night in Ramadan.
+n | occasion | A special event or ceremony. | My mother wears her gold bracelet only on special occasions.
+pv | look forward to | To feel happy and excited about something that is going to happen. | The kids look forward to Eid because relatives give them money.
+i | the more the merrier | The more people there are, the more fun it is. | Can I bring my cousins to the iftar? Of course, the more the merrier!
+`
+  ),
 ];

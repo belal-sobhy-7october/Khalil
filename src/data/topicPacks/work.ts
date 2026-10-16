@@ -459,4 +459,352 @@ pv | plug in | To connect a device to the electricity supply or to another devic
 i | on the blink | (informal, British) Not working properly. | My printer is on the blink again.
 `
   ),
+  pack(
+    {
+      id: 'starting-a-business',
+      group: 'work',
+      title: 'Starting a Business',
+      description: 'Turn an idea into a small business: funding, customers, competitors and risks.',
+      level: 'B2',
+      emoji: '🚀',
+      warmUp: [
+        'Would you rather work for a company or run your own business? Why?',
+        'Do you know someone who started a business? How did it go?',
+      ],
+      grammar: {
+        title: 'Future forms: plans, arrangements and decisions',
+        points: [
+          { form: 'be going to + base verb', use: 'A plan you have already decided on.', example: 'I’m going to open an online bakery next year.' },
+          { form: 'present continuous', use: 'A fixed arrangement with a time, a place or other people.', example: 'We’re meeting an investor on Thursday.' },
+          { form: 'will + base verb', use: 'A decision you make at the moment of speaking, or a promise.', example: 'Good idea — I’ll ask my cousin to design the logo.' },
+          { form: 'present simple', use: 'Timetables and schedules.', example: 'The training course starts on the 1st of March.' },
+        ],
+        tip: 'Use “going to”, not “will”, for a plan you made earlier: “I’m going to open a shop in June.”',
+      },
+      discussion: [
+        'Would you prefer to set up your own business or join a start-up? Why?',
+        'What makes a successful entrepreneur: talent, hard work or luck?',
+        'If you launched a product tomorrow, who would your target market be?',
+        'Is it better to get funding from an investor or from your family? What are the risks?',
+        'Why do so many new businesses fail in their first year?',
+        'How can a small shop compete with a big competitor?',
+      ],
+      task: {
+        prompt: 'Pitch your business idea in one minute.',
+        points: [
+          'What you are going to sell and why',
+          'Your target market',
+          'How you are going to get the funding',
+          'One risk and how you will deal with it',
+          'Your next step (present continuous for an arrangement)',
+          'Use at least 4 new words',
+        ],
+      },
+      paragraph:
+        "Next year, I'm going to set up a small business that delivers healthy lunches to offices. My target market is young employees who don't have time to cook. I've already written a business plan, and I'm meeting a possible investor on Sunday. It's risky, of course: there are a lot of competitors, and the profit margin on food is small. But I think we can launch with very little funding if we start in my mother's kitchen. If the first three months go well, I'll hire two drivers. I really believe we can get it off the ground.",
+    },
+    `
+n | entrepreneur | A person who starts their own business, often taking financial risks. | My uncle became an entrepreneur after twenty years of working for other people.
+n | start-up | A new, small company, often built around a new idea or technology. | She left her bank job to join a tech start-up in Cairo.
+n | business plan | A document that explains what a business will do, how it will make money and what it needs to start. | The bank asked to see our business plan before it gave us a loan.
+n | funding | Money that is given or lent to a business for a particular purpose. | We're looking for funding to open a second branch.
+n | investor | A person or company that puts money into a business to make a profit later. | An investor offered us money in exchange for 20% of the company.
+n | target market | The particular group of people that a business wants to sell to. | Our target market is university students who want cheap, healthy food.
+n | profit margin | The difference between what something costs to make and the price it sells for. | Coffee shops have a high profit margin on drinks but a low one on food.
+n | competitor | A company that sells similar products or services to the same customers. | Our main competitor is opening a shop on the same street.
+v | launch | To start selling a new product or service, or to start a new business. | We plan to launch the app in September.
+adj | risky | Involving the possibility that something bad will happen, such as losing money. | Quitting your job to start a business is risky, but it can pay off.
+pv | set up | To start a company or an organisation. | It took us three months to set up the company legally.
+i | get off the ground | (Of a plan or business) to start successfully. | With a small loan from my father, the business finally got off the ground.
+`
+  ),
+  pack(
+    {
+      id: 'negotiation',
+      group: 'work',
+      title: 'Negotiating & Making Deals',
+      description: 'Ask for a better price, a raise or more time — and reach a deal that works for both sides.',
+      level: 'B2',
+      emoji: '🤝',
+      warmUp: [
+        'When did you last negotiate something: a price, a salary or a deadline?',
+        'Do you enjoy bargaining at the market, or do you hate it?',
+      ],
+      grammar: {
+        title: 'Conditions for a deal: if, unless, as long as, provided that',
+        points: [
+          { form: 'if + present, will + base verb', use: 'A normal offer that depends on a condition.', example: 'If you order 500 units, we will give you a 10% discount.' },
+          { form: 'unless + present (= if … not)', use: 'What happens if the condition is not met.', example: 'We can’t lower the price unless you pay in advance.' },
+          { form: 'as long as / provided that + present', use: 'A strong condition: only if this happens.', example: 'I’ll accept the offer as long as I can work from home on Fridays.' },
+          { form: 'If you could …, we would …', use: 'A softer, more polite offer.', example: 'If you could deliver by the 10th, we would sign today.' },
+        ],
+        tip: 'After “unless”, the verb is positive: “unless you pay”, not “unless you don’t pay”.',
+      },
+      discussion: [
+        'Have you ever negotiated your salary? What happened?',
+        'Is bargaining polite or rude in your culture? Where do people do it?',
+        'What is non-negotiable for you in a job?',
+        'When is it smart to back down, and when should you stand firm?',
+        'How can you make a counteroffer without sounding rude?',
+        'Describe a win-win situation you have seen at work or at home.',
+      ],
+      task: {
+        prompt: 'Role-play: ask your manager for a raise.',
+        points: [
+          'What you want and why you deserve it',
+          'One condition with “as long as” or “provided that”',
+          'A concession you are willing to make',
+          'How you would answer a counteroffer',
+          'Use at least 4 new words',
+        ],
+      },
+      paragraph:
+        "Last month, I had to negotiate a new contract with a supplier. Their first offer was too expensive, so I made a counteroffer: we would sign for two years as long as they gave us a 10% discount. At first, they said the price was non-negotiable, and the talks almost reached a deadlock. Then we each made a concession. They agreed to better payment terms, and we agreed to a longer contract. Neither of us had to back down completely; we met each other halfway. In the end, it was a win-win situation, and we made the deal.",
+    },
+    `
+v | negotiate | To discuss something formally in order to reach an agreement. | I negotiated a higher salary before I accepted the job.
+n | deal | An agreement between two people or companies, especially in business. | After two hours of talks, we finally made a deal.
+n | offer | An amount of money or the conditions that someone says they are willing to give. | They made us an offer, but it was too low.
+n | counteroffer | A new offer that you make in reply to an offer you don't accept. | When they offered 10,000, we made a counteroffer of 12,000.
+n | discount | An amount of money taken off the usual price. | The supplier gave us a 15% discount for paying in cash.
+n | terms | The conditions of an agreement, such as the price, payment and dates. | We agreed on the price, but not on the payment terms.
+n | concession | Something you agree to give or allow so that you can reach an agreement. | Both sides had to make concessions to close the deal.
+n | deadlock | A situation in which neither side will change its position, so no agreement is possible. | The talks reached a deadlock over the delivery date.
+adj | non-negotiable | Not open to discussion or change. | For me, working from home two days a week is non-negotiable.
+n | win-win situation | A result that is good for everyone involved. | A longer contract at a lower price was a win-win situation.
+pv | back down | To stop asking for something because the other side is too strong. | They refused to pay more, so in the end we had to back down.
+i | meet someone halfway | To accept some of what someone wants so that you can agree. | You want 20 and I want 30, so let's meet halfway at 25.
+`
+  ),
+  pack(
+    {
+      id: 'presentations',
+      group: 'work',
+      title: 'Presentations & Public Speaking',
+      description: 'Open, organise and close a talk, answer questions and control your nerves.',
+      level: 'B2',
+      emoji: '🎤',
+      warmUp: [
+        'How do you feel when you have to speak in front of a group?',
+        'Think of a great speaker you have watched. What made them good?',
+      ],
+      grammar: {
+        title: 'Emphasis with “What …” and “It is … that …”',
+        points: [
+          { form: 'What + subject + verb + is / was …', use: 'Put your most important idea at the end, where people notice it.', example: 'What I want to show you today is how we cut costs by 20%.' },
+          { form: 'What surprised me / happened + was …', use: 'Build up to a key fact or result.', example: 'What surprised us was how quickly customers changed.' },
+          { form: 'The reason (why) … is that …', use: 'Give a reason with emphasis.', example: 'The reason we changed the plan is that the old one was too slow.' },
+          { form: 'It is / was + … + that / who …', use: 'Stress one part of the sentence.', example: 'It was the sales team that made the difference.' },
+        ],
+        tip: 'Use them at key moments only: one or two sound powerful, ten sound strange.',
+      },
+      discussion: [
+        'Do you suffer from stage fright? What helps you calm down?',
+        'How much rehearsal do you need before an important talk?',
+        'What makes a visual aid helpful, and what makes it boring?',
+        'How can a speaker engage an audience in the first thirty seconds?',
+        'Is it better to read from notes or to speak without them?',
+        'How do you answer a question in a Q&A session when you don’t know the answer?',
+      ],
+      task: {
+        prompt: 'Give the opening and the ending of a short presentation about your job or your studies.',
+        points: [
+          'A strong first sentence that engages the audience',
+          'Your three key points',
+          'One “What …” sentence for emphasis',
+          'An ending that sums up',
+          'Use at least 4 new words',
+        ],
+      },
+      paragraph:
+        "I used to have terrible stage fright. Before every presentation, my hands shook and my mind went blank. What changed everything was rehearsal. Now I practise my talk three times, out loud, in front of a mirror. I keep my slides simple and use one visual aid for each key point. I start with a question to engage the audience, and I speak slowly and confidently. At the end, I sum up the main ideas in one sentence. The Q&A session still makes me a little nervous, but I know I can get my point across.",
+    },
+    `
+n | audience | The group of people who watch or listen to a talk or a performance. | Know your audience before you prepare your slides.
+n | public speaking | The activity of speaking to a group of people. | Public speaking used to terrify me, but practice helped.
+n | stage fright | Nervousness before or during a talk or performance in front of people. | My hands were shaking from stage fright before the presentation.
+n | visual aid | A picture, chart or video that helps people understand a talk. | A simple chart is a better visual aid than a slide full of text.
+n | key point | One of the most important ideas in a talk or an argument. | Repeat your key points at the end so the audience remembers them.
+n | rehearsal | A practice of a talk or performance before the real event. | We did a full rehearsal the night before the meeting.
+v | engage | To attract someone's interest and keep their attention. | Starting with a question is a great way to engage the audience.
+adj | concise | Short and clear, using no more words than necessary. | Keep your introduction concise: no more than one minute.
+n | Q&A session | The part of a talk when the audience can ask questions. | I was more nervous about the Q&A session than the presentation itself.
+adv | confidently | In a way that shows you are sure of yourself and your abilities. | She walked onto the stage and spoke confidently, without notes.
+pv | sum up | To repeat the most important ideas briefly at the end. | To sum up, we need more staff, a bigger budget and more time.
+i | get your point across | To make people understand what you mean. | Use simple examples to get your point across.
+`
+  ),
+  pack(
+    {
+      id: 'leadership-and-teamwork',
+      group: 'work',
+      title: 'Leadership & Teamwork',
+      description: 'Good and bad managers, working in a team and solving problems together.',
+      level: 'B2',
+      emoji: '🧭',
+      warmUp: [
+        'Think of the best manager or teacher you have had. What made them special?',
+        'Do you prefer working alone or in a team? Why?',
+      ],
+      grammar: {
+        title: 'make, let, allow and encourage',
+        points: [
+          { form: 'make + someone + base verb', use: 'Force someone to do something.', example: 'My old boss made us stay late every Thursday.' },
+          { form: 'let + someone + base verb', use: 'Give someone permission (informal).', example: 'Our manager lets us choose our own projects.' },
+          { form: 'allow / encourage / expect + someone + to + verb', use: 'Permission, support or expectations (more formal).', example: 'A good leader encourages people to share their ideas.' },
+          { form: 'be made / be allowed + to + verb', use: 'The same ideas in the passive, from the worker’s point of view.', example: 'We were made to work at weekends, and we weren’t allowed to work from home.' },
+        ],
+        tip: 'No “to” after “make” and “let” in the active: “She made me laugh”, not “She made me to laugh”.',
+      },
+      discussion: [
+        'Are leaders born or made?',
+        'What does a manager do that destroys team morale?',
+        'Why do some managers micromanage? How would you deal with one?',
+        'What would you do if a colleague didn’t pull their weight?',
+        'Should a leader take the credit when the team succeeds? Why or why not?',
+        'Who is your role model at work or in life, and why?',
+      ],
+      task: {
+        prompt: 'Describe the best (or the worst) manager you have had.',
+        points: [
+          'What they made you do and what they let you do',
+          'How they motivated the team (or didn’t)',
+          'A time they stepped in to solve a problem',
+          'What you learned about leadership from them',
+          'Use at least 4 new words',
+        ],
+      },
+      paragraph:
+        "The best manager I ever had was a real role model. She didn't micromanage; she let us decide how to do our work, but she expected everyone to pull their weight. She was very hands-on: when we were busy, she answered calls with us. She always gave the team credit for every success, so morale was high. When two of us had an argument, she stepped in calmly and made us listen to each other. Her leadership was inspiring, and she motivated me to become a team leader myself.",
+    },
+    `
+n | leadership | The ability to guide and inspire a group of people. | Good leadership means listening as much as giving orders.
+n | team player | A person who works well with others to reach a shared goal. | We need a team player, not someone who wants all the credit.
+v | motivate | To make someone want to do something, especially to work hard. | She motivates her team with clear goals and honest praise.
+v | micromanage | To control every small detail of other people's work. | I hate it when managers micromanage; it shows they don't trust you.
+n | morale | The level of confidence and enthusiasm in a group of people. | Team morale dropped after the salary cuts.
+n | credit | Praise or recognition for something good that you have done. | A good leader gives the team the credit for its success.
+adj | inspiring | Making people feel excited and want to do something. | Our CEO gave an inspiring speech about the company's future.
+n | decision-making | The process of thinking about a problem and choosing what to do. | Fast decision-making is important in a crisis.
+n | role model | A person whose behaviour other people want to copy. | My first manager was my role model: calm, fair and always prepared.
+adj | hands-on | Taking an active part in the work, not just giving instructions. | He's a hands-on manager who helps us when we're busy.
+pv | step in | To get involved in a difficult situation to help or to stop a problem. | When two colleagues started arguing, our team leader stepped in.
+i | pull your weight | To do your fair share of the work. | Everyone has to pull their weight, or the project will fail.
+`
+  ),
+  pack(
+    {
+      id: 'remote-work-and-freelancing',
+      group: 'work',
+      title: 'Remote Work & Freelancing',
+      description: 'Working from home, finding clients online and managing your own time and money.',
+      level: 'B2',
+      emoji: '💻',
+      warmUp: [
+        'Could you do your job from home? Would you want to?',
+        'What do you think freelancers love and hate about their work?',
+      ],
+      grammar: {
+        title: 'Present simple vs present continuous: routines and temporary situations',
+        points: [
+          { form: 'present simple', use: 'Routines, habits and permanent facts.', example: 'I usually start work at nine and finish at five.' },
+          { form: 'present continuous', use: 'Actions happening now or around now, and temporary situations.', example: 'This month I’m working on a website for a client in Dubai.' },
+          { form: 'always + present continuous', use: 'A habit that annoys you.', example: 'My neighbour is always drilling when I have a video call!' },
+          { form: 'state verbs: know, need, prefer, belong', use: 'Verbs for states, not actions, are not used with -ing.', example: 'I prefer working alone. (not: I am preferring)' },
+        ],
+        tip: '“I work from home” is your normal routine; “I’m working from home this week” is temporary.',
+      },
+      discussion: [
+        'Do you think remote work will replace offices completely?',
+        'Would you prefer a stable salary or the freedom of being your own boss?',
+        'How do freelancers find their first clients?',
+        'What do people miss when they work from home?',
+        'How can you avoid feeling isolated when you work alone?',
+        'Is it a good idea to take on every project you are offered? Why or why not?',
+      ],
+      task: {
+        prompt: 'Describe your ideal working week as a freelancer or a remote worker.',
+        points: [
+          'Your routine (present simple)',
+          'What you are working on these days (present continuous)',
+          'Two advantages and one disadvantage',
+          'How you would find clients',
+          'Use at least 4 new words',
+        ],
+      },
+      paragraph:
+        "I've been self-employed for two years now. I work as a freelance translator, and I usually start at eight, before my clients in Europe wake up. Working with people in another time zone isn't always easy, but I love having flexible hours and no commute. This month, I'm working on a big project for a client in Germany, so I'm not taking on anything new. Every Friday, I send my invoices and update my portfolio. My income isn't always stable, and sometimes I feel isolated. Still, being my own boss is worth it.",
+    },
+    `
+n | freelancer | A person who works for different clients and is not a permanent employee of any company. | As a freelancer, I choose my own projects and hours.
+n | client | A person or company that pays for a professional service. | I have three regular clients, and one of them is in Germany.
+adj | self-employed | Working for yourself rather than for an employer. | Being self-employed means nobody pays you when you're sick.
+n | flexible hours | Working hours that you can choose or change. | Flexible hours let me take my kids to school.
+n | commute | The journey between your home and your workplace. | Working from home saved me a two-hour commute every day.
+n | time zone | One of the areas of the world that has its own time. | My client is in a different time zone, so our meetings are at 7 p.m.
+n | portfolio | A collection of examples of your work that you show to clients or employers. | Put your best designs in your portfolio.
+n | invoice | A document that lists the work done and how much the client must pay. | I send each client an invoice at the end of the month.
+n | income | The money you receive regularly, for example for your work. | My income changes a lot from month to month.
+adj | isolated | Alone and without much contact with other people. | Working from home all week can make you feel isolated.
+pv | take on | To accept some work or a responsibility. | I took on too many projects last month and hardly slept.
+i | be your own boss | To work for yourself and make your own decisions. | I love being my own boss, but I miss having colleagues.
+`
+  ),
+  pack(
+    {
+      id: 'time-management',
+      group: 'work',
+      title: 'Time Management & Productivity',
+      description: 'Plan your day, stop wasting time and say what you will have done by when.',
+      level: 'B2',
+      emoji: '⏰',
+      warmUp: [
+        'Are you an early bird or a night owl? When do you work best?',
+        'What wastes most of your time every day?',
+      ],
+      grammar: {
+        title: 'Future continuous and future perfect',
+        points: [
+          { form: 'will be + V-ing', use: 'An action in progress at a time in the future.', example: 'This time tomorrow, I’ll be sitting my exam.' },
+          { form: 'will have + V3', use: 'An action that will be finished before a time in the future.', example: 'By Friday, I’ll have finished the report.' },
+          { form: 'by + time / by the time + present simple', use: 'The deadline for the future perfect.', example: 'By the time you get home, I’ll have cooked dinner.' },
+        ],
+        tip: 'After “by the time”, use the present simple, not “will”: “by the time you arrive”.',
+      },
+      discussion: [
+        'Do you write a to-do list? Does it help you?',
+        'What is your biggest distraction, and how could you remove it?',
+        'What do you usually put off, and why?',
+        'What will you have achieved by this time next year?',
+        'Is it possible to be too productive? When does it become unhealthy?',
+        'Which time-waster would you remove from your life first?',
+      ],
+      task: {
+        prompt: 'Talk about your plan for next week.',
+        points: [
+          'Your top priority',
+          'What you will be doing at a certain time (future continuous)',
+          'What you will have finished by Friday (future perfect)',
+          'A task you usually put off and how you will stop',
+          'Use at least 4 new words',
+        ],
+      },
+      paragraph:
+        "I used to put off everything until the last minute, so my productivity was terrible. Now I have a simple routine. Every evening, I write a to-do list and choose one top priority for the next day. I schedule the hardest task for the morning, when I'm most productive, and I leave my phone in another room because it's my biggest distraction. I also listen to podcasts on the metro, so I kill two birds with one stone. This time next month, I'll be studying for my exam, and by June, I'll have finished the whole course.",
+    },
+    `
+n | productivity | How much useful work someone does in a period of time. | Turning off my phone doubled my productivity.
+n | to-do list | A list of the tasks you need to do. | I write a to-do list every night for the next day.
+n | time management | The ability to plan your time and use it well. | Good time management is the secret to studying while you work.
+n | distraction | Something that takes your attention away from what you are doing. | Social media is my biggest distraction when I study.
+n | routine | The usual order in which you do things every day. | My morning routine starts with a glass of water and a short walk.
+n | priority | Something important that you deal with before other things. | My top priority this week is finishing the project.
+adj | productive | Achieving a lot in a period of time. | I'm most productive early in the morning.
+v | schedule | To plan that something will happen at a particular time. | I schedule my hardest tasks for the morning.
+n | time-waster | An activity that uses time without achieving anything useful. | Long meetings with no agenda are a real time-waster.
+adv | efficiently | In a way that gets good results without wasting time or effort. | If you work efficiently, you can finish by four.
+pv | put off | To delay doing something until later. | I always put off boring tasks until the last minute.
+i | kill two birds with one stone | To achieve two things with one action. | I practise English on the bus, so I kill two birds with one stone.
+`
+  ),
 ];
