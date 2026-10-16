@@ -4,6 +4,7 @@
  * audio. Results are cached in memory per word, misses included.
  */
 import type { VocabularyItemType } from '../types';
+import { rankSenses, senseScore, type Sense } from './senseRank';
 
 export interface DictionaryEntry {
   definition: string;
@@ -11,6 +12,20 @@ export interface DictionaryEntry {
   phonetic?: string;
   type: VocabularyItemType;
   audio: { us?: string; uk?: string };
+  /** Every sense found, dictionary order (most common first). */
+  senses: Sense[];
+}
+
+const MAX_SENSES = 12;
+
+/**
+ * The sense of `entry` that fits a topic best, with its own example (never an
+ * example borrowed from another sense). Without a topic match, the default.
+ */
+export function senseForTopic(entry: DictionaryEntry, context: Map<string, number>): Sense {
+  const best = rankSenses(entry.senses ?? [], context)[0];
+  if (best && senseScore(best, context) > 0) return best;
+  return { definition: entry.definition, example: entry.example };
 }
 
 interface ApiEntry {
@@ -42,6 +57,11 @@ function toEntry(word: string, entries: ApiEntry[]): DictionaryEntry | null {
   }
   if (!chosen) return null;
 
+  const senses: Sense[] = meanings
+    .flatMap((m) => (m.definitions ?? []).map((d) => ({ definition: d.definition ?? '', example: d.example, pos: m.partOfSpeech })))
+    .filter((d) => d.definition)
+    .slice(0, MAX_SENSES);
+
   const phonetics = entries.flatMap((e) => e.phonetics ?? []);
   const audios = phonetics.map((p) => p.audio).filter((a): a is string => !!a);
   const phonetic = entries.find((e) => e.phonetic)?.phonetic ?? phonetics.find((p) => p.text)?.text;
@@ -59,6 +79,7 @@ function toEntry(word: string, entries: ApiEntry[]): DictionaryEntry | null {
       us: audios.find((a) => a.includes('-us.mp3')),
       uk: audios.find((a) => a.includes('-uk.mp3')),
     },
+    senses,
   };
 }
 
@@ -104,20 +125,27 @@ function stripHtml(html: string): string {
 // Wiktionary covers idioms and phrasal verbs ("match made in heaven",
 // "split up") that the dictionary API doesn't have.
 function fromWiktionary(word: string, data: WiktionaryResponse): DictionaryEntry | null {
+  const senses: Sense[] = [];
+  let firstPos = '';
   for (const section of data.en ?? []) {
     for (const sense of section.definitions ?? []) {
-      const definition = sense.definition ? stripHtml(sense.definition) : '';
+      // Grammar labels like "(intransitive)" don't help a learner.
+      const definition = sense.definition
+        ? stripHtml(sense.definition).replace(/^\((?:(?:in)?transitive|ergative|countable|uncountable)(?:,\s*)?\)\s*/i, '').replace(/^\((?:in)?transitive,\s*/i, '(')
+        : '';
       if (!definition) continue;
       const rawExample = sense.parsedExamples?.[0]?.example ?? sense.examples?.[0];
       const pos = (section.partOfSpeech ?? '').toLowerCase();
-      let type: VocabularyItemType = 'word';
-      if (pos === 'idiom' || pos === 'proverb') type = 'idiom';
-      else if (pos === 'verb') type = 'verb';
-      else if (word.includes(' ')) type = 'phrase';
-      return { definition, example: rawExample ? stripHtml(rawExample) : undefined, type, audio: {} };
+      if (!senses.length) firstPos = pos;
+      senses.push({ definition, example: rawExample ? stripHtml(rawExample) : undefined, pos });
     }
   }
-  return null;
+  if (!senses.length) return null;
+  let type: VocabularyItemType = 'word';
+  if (firstPos === 'idiom' || firstPos === 'proverb') type = 'idiom';
+  else if (firstPos === 'verb') type = 'verb';
+  else if (word.includes(' ')) type = 'phrase';
+  return { definition: senses[0].definition, example: senses[0].example, type, audio: {}, senses: senses.slice(0, MAX_SENSES) };
 }
 
 export function lookupWord(word: string, timeoutMs = 8000): Promise<DictionaryEntry | null> {

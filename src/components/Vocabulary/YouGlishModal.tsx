@@ -8,7 +8,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { X, Loader2, ExternalLink } from 'lucide-react';
 import { useTranslation } from '../../i18n/useTranslation';
-import { buildYouGlishUrl, type YouGlishAccent } from '../../lib/pronunciation';
+import { buildYouGlishUrl, type YouGlishAccent, youglishQuery } from '../../lib/pronunciation';
 import { useDialog } from '../../lib/useDialog';
 
 // Minimal TypeScript types for YouGlish widget
@@ -69,6 +69,8 @@ function loadYouGlishApi(): Promise<void> {
 }
 
 export default function YouGlishModal({ word, onClose }: YouGlishModalProps) {
+  // "résumé / CV" finds nothing on YouGlish; search "resume".
+  const query = youglishQuery(word);
   const { t } = useTranslation();
   const [accent, setAccent] = useState<YouGlishAccent>('us');
   const [widgetState, setWidgetState] = useState<WidgetState>('loading');
@@ -106,7 +108,7 @@ export default function YouGlishModal({ word, onClose }: YouGlishModalProps) {
             },
           });
         }
-        widgetRef.current.fetch(word, 'english', accent);
+        widgetRef.current.fetch(query, 'english', accent);
       })
       .catch(() => {
         if (!cancelled) setWidgetState('error');
@@ -116,7 +118,7 @@ export default function YouGlishModal({ word, onClose }: YouGlishModalProps) {
       cancelled = true;
       window.clearTimeout(timeout);
     };
-  }, [word, accent]);
+  }, [query, accent]);
 
   useEffect(() => {
     const host = hostRef.current;
@@ -146,7 +148,7 @@ export default function YouGlishModal({ word, onClose }: YouGlishModalProps) {
     setAccent(newAccent);
   }, []);
 
-  const fallbackUrl = buildYouGlishUrl(word, accent);
+  const fallbackUrl = buildYouGlishUrl(query, accent);
 
   const dialog = useDialog(onClose);
 

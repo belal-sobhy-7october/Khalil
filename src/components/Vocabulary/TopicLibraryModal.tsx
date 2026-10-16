@@ -1,11 +1,12 @@
 import { useMemo, useState } from 'react';
-import { X, ArrowLeft, ArrowRight, Volume2, Check, Loader2, Library } from 'lucide-react';
+import { X, ArrowLeft, ArrowRight, Volume2, Check, Loader2, Library, PlayCircle, Search } from 'lucide-react';
 import { useTranslation } from '../../i18n/useTranslation';
 import { useAppStore } from '../../store/appStore';
 import { speakWord, getPronunciationPrefs } from '../../lib/pronunciation';
-import { TOPIC_PACKS, type TopicPack } from '../../data/topicPacks';
+import { TOPIC_PACKS, type PackGroup, type TopicPack } from '../../data/topicPacks';
 import type { VocabularyItemType } from '../../types';
 import { useDialog } from '../../lib/useDialog';
+import YouGlishModal from './YouGlishModal';
 
 const NEW_GROUP = '__pack__';
 
@@ -66,6 +67,18 @@ export default function TopicLibraryModal({ onClose, onAdded }: TopicLibraryModa
   const BackIcon = isRTL ? ArrowRight : ArrowLeft;
   const accent = getPronunciationPrefs().accent;
 
+  const [youglishWord, setYouglishWord] = useState<string | null>(null);
+  const [query, setQuery] = useState('');
+  const [group, setGroup] = useState<PackGroup | 'all'>('all');
+  const [onlyNew, setOnlyNew] = useState(false);
+  // Matches the topic's title/description or any of its words.
+  const q = query.trim().toLowerCase();
+  const visiblePacks = TOPIC_PACKS.filter(
+    (pack) =>
+      (group === 'all' || pack.group === group) &&
+      (!onlyNew || newCountOf(pack) > 0) &&
+      (!q || `${pack.title} ${pack.description}`.toLowerCase().includes(q) || pack.items.some((item) => item.word.toLowerCase().includes(q)))
+  );
   const dialog = useDialog(() => !adding && onClose());
 
   return (
@@ -111,8 +124,41 @@ export default function TopicLibraryModal({ onClose, onAdded }: TopicLibraryModa
           {!selected ? (
             <>
               <p className="text-sm text-ink-light mb-4">{t('vocabulary.library.subtitle')}</p>
+              <div className="flex flex-wrap items-center gap-2 mb-4">
+                <label className="relative flex-1 min-w-[12rem]">
+                  <Search size={15} className="absolute top-1/2 -translate-y-1/2 start-3 text-ink-lighter" aria-hidden="true" />
+                  <input
+                    type="search"
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder={t('vocabulary.library.search')}
+                    aria-label={t('vocabulary.library.search')}
+                    className="w-full ps-9 pe-3 py-2 rounded-lg bg-ink/5 border border-border-subtle text-sm text-ink placeholder:text-ink-lighter focus:outline-none focus:border-clay-soft"
+                  />
+                </label>
+                <div className="flex flex-wrap gap-1" role="group" aria-label={t('vocabulary.library.title')}>
+                  {(['all', 'work', 'talk', 'life'] as const).map((g) => (
+                    <button
+                      key={g}
+                      onClick={() => setGroup(g)}
+                      aria-pressed={group === g}
+                      className={`px-3 py-1.5 rounded-full text-xs ${group === g ? 'bg-clay-soft text-white' : 'bg-ink/5 text-ink-light hover:text-ink'}`}
+                    >
+                      {t(`vocabulary.library.group.${g}`)}
+                    </button>
+                  ))}
+                  <button
+                    onClick={() => setOnlyNew((v) => !v)}
+                    aria-pressed={onlyNew}
+                    className={`px-3 py-1.5 rounded-full text-xs ${onlyNew ? 'bg-ink text-card' : 'bg-ink/5 text-ink-light hover:text-ink'}`}
+                  >
+                    {t('vocabulary.library.notAdded')}
+                  </button>
+                </div>
+              </div>
+              {visiblePacks.length === 0 && <p className="text-sm text-ink-light py-8 text-center">{t('vocabulary.library.noMatch')}</p>}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {TOPIC_PACKS.map((pack) => {
+                {visiblePacks.map((pack) => {
                   const newCount = newCountOf(pack);
                   const allAdded = newCount === 0;
                   return (
@@ -163,6 +209,14 @@ export default function TopicLibraryModal({ onClose, onAdded }: TopicLibraryModa
                           aria-label={`${t('vocabulary.pronounce')}: ${item.word}`}
                         >
                           <Volume2 size={14} className="text-ink-light" />
+                        </button>
+                        <button
+                          onClick={() => setYouglishWord(item.word)}
+                          className="p-1 hover:bg-ink/5 rounded transition-colors"
+                          aria-label={`YouGlish: ${item.word}`}
+                          title={t('vocabulary.pronounceYouGlish')}
+                        >
+                          <PlayCircle size={14} className="text-ink-light" />
                         </button>
                         <span className="text-[10px] px-1.5 py-0.5 rounded bg-ink/5 text-ink-light">{typeLabel(item.type)}</span>
                         {owned && <Check size={12} className="text-green-600" />}
@@ -226,6 +280,7 @@ export default function TopicLibraryModal({ onClose, onAdded }: TopicLibraryModa
           </div>
         )}
       </div>
+      {youglishWord && <YouGlishModal word={youglishWord} onClose={() => setYouglishWord(null)} />}
     </div>
   );
 }

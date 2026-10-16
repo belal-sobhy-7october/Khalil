@@ -1,11 +1,15 @@
 import { useMemo, useState } from 'react';
-import { X, Loader2, Sparkles, Trash2, Check, AlertCircle } from 'lucide-react';
+import { X, Loader2, Sparkles, Trash2, Check, AlertCircle, Volume2, PlayCircle } from 'lucide-react';
 import { useTranslation } from '../../i18n/useTranslation';
 import { useAppStore } from '../../store/appStore';
-import { lookupMany } from '../../lib/dictionary';
+import { lookupMany, senseForTopic } from '../../lib/dictionary';
+import { topicContext, type Sense } from '../../lib/senseRank';
 import { parseQuickLine } from '../../lib/quickAddParse';
 import type { VocabularyItemType } from '../../types';
 import { useDialog } from '../../lib/useDialog';
+import { getPronunciationPrefs, speakWord } from '../../lib/pronunciation';
+import YouGlishModal from './YouGlishModal';
+import SensePicker from './SensePicker';
 
 type LookupStatus = 'pending' | 'found' | 'missing' | 'manual';
 
@@ -17,6 +21,8 @@ interface Row {
   example: string;
   pronunciation: string;
   status: LookupStatus;
+  /** Every sense the dictionary has, so the user can pick the one for the topic. */
+  senses?: Sense[];
 }
 
 const NEW_GROUP = '__new__';
@@ -44,6 +50,7 @@ export default function QuickAddModal({ onClose, defaultCategory }: { onClose: (
   );
 
   const lineCount = text.split('\n').filter((l) => l.trim()).length;
+  const categoryName = group === NEW_GROUP ? newGroupName.trim() : group;
 
   const updateRow = (key: number, patch: Partial<Row>) =>
     setRows((prev) => prev && prev.map((r) => (r.key === key ? { ...r, ...patch } : r)));
@@ -69,7 +76,13 @@ export default function QuickAddModal({ onClose, defaultCategory }: { onClose: (
     });
     setRows(parsed);
 
-    // Fill in the blanks from the dictionary, row by row as answers arrive.
+    // Fill in the blanks from the dictionary, row by row as answers arrive,
+    // choosing the sense that fits the topic the words go into.
+    const topic = vocabularyCategories.find((c) => c.name.toLowerCase() === categoryName.toLowerCase());
+    const context = topicContext(
+      categoryName,
+      topic ? vocabularyItems.filter((i) => i.categoryId === topic.id).map((i) => i.definition) : []
+    );
     const toLookUp = parsed.filter((r) => r.status === 'pending');
     void lookupMany(
       toLookUp.map((r) => r.word),
@@ -80,14 +93,16 @@ export default function QuickAddModal({ onClose, defaultCategory }: { onClose: (
           prev.map((r) => {
             if (r.key !== key) return r;
             if (!entry) return { ...r, status: 'missing' };
+            const sense = senseForTopic(entry, context);
             return {
               ...r,
               status: 'found',
               type: entry.type,
               // Never overwrite something the user typed while the lookup ran.
-              definition: r.definition || entry.definition,
-              example: r.example || entry.example || '',
+              definition: r.definition || sense.definition,
+              example: r.example || sense.example || '',
               pronunciation: r.pronunciation || entry.phonetic || '',
+              senses: entry.senses,
             };
           })
         );
@@ -97,7 +112,6 @@ export default function QuickAddModal({ onClose, defaultCategory }: { onClose: (
 
   const readyRows = rows?.filter((r) => r.definition.trim() && !existingWords.has(r.word.toLowerCase())) ?? [];
   const pendingCount = rows?.filter((r) => r.status === 'pending').length ?? 0;
-  const categoryName = group === NEW_GROUP ? newGroupName.trim() : group;
 
   const handleSave = async () => {
     if (readyRows.length === 0) return;
@@ -120,6 +134,8 @@ export default function QuickAddModal({ onClose, defaultCategory }: { onClose: (
   const inputClass =
     'w-full px-2 py-1 bg-ink/5 border border-border-subtle rounded text-ink text-sm focus:outline-none focus:border-clay-soft';
 
+  const [youglishWord, setYouglishWord] = useState<string | null>(null);
+  const accent = getPronunciationPrefs().accent;
   const dialog = useDialog(() => !saving && onClose());
 
   return (
@@ -215,6 +231,12 @@ export default function QuickAddModal({ onClose, defaultCategory }: { onClose: (
                       {r.status === 'found' && <Check size={14} className="text-green-500 shrink-0" />}
                       {r.status === 'missing' && !r.definition && <AlertCircle size={14} className="text-amber-500 shrink-0" />}
                       <span className="font-semibold text-ink text-sm truncate" title={r.word}>{r.word}</span>
+                      <button onClick={() => void speakWord(r.word, accent)} className="p-1 rounded hover:bg-ink/5 shrink-0" aria-label={`${t('vocabulary.pronounce')}: ${r.word}`}>
+                        <Volume2 size={13} className="text-ink-light" />
+                      </button>
+                      <button onClick={() => setYouglishWord(r.word)} className="p-1 rounded hover:bg-ink/5 shrink-0" aria-label={`YouGlish: ${r.word}`}>
+                        <PlayCircle size={13} className="text-ink-light" />
+                      </button>
                     </div>
                     <select
                       value={r.type}
@@ -230,13 +252,23 @@ export default function QuickAddModal({ onClose, defaultCategory }: { onClose: (
                       <span className="md:col-span-2 text-xs text-ink-light pt-1">{t('vocabulary.quickAdd.alreadyInList')}</span>
                     ) : (
                       <>
-                        <textarea
-                          value={r.definition}
-                          onChange={(e) => updateRow(r.key, { definition: e.target.value })}
-                          placeholder={r.status === 'missing' ? t('vocabulary.quickAdd.notFound') : t('vocabulary.definition')}
-                          rows={2}
-                          className={`${inputClass} resize-none`}
-                        />
+                        <div className="space-y-1">
+                          <textarea
+                            value={r.definition}
+                            onChange={(e) => updateRow(r.key, { definition: e.target.value })}
+                            placeholder={r.status === 'missing' ? t('vocabulary.quickAdd.notFound') : t('vocabulary.definition')}
+                            rows={2}
+                            className={`${inputClass} resize-none`}
+                          />
+                          {r.senses && r.senses.length > 1 && (
+                            <SensePicker
+                              senses={r.senses}
+                              definition={r.definition}
+                              label={tn('vocabulary.meaning.count', r.senses.length)}
+                              onPick={(sense) => updateRow(r.key, { definition: sense.definition, example: sense.example ?? '' })}
+                            />
+                          )}
+                        </div>
                         <textarea
                           value={r.example}
                           onChange={(e) => updateRow(r.key, { example: e.target.value })}
@@ -294,6 +326,7 @@ export default function QuickAddModal({ onClose, defaultCategory }: { onClose: (
           )}
         </div>
       </div>
+      {youglishWord && <YouGlishModal word={youglishWord} onClose={() => setYouglishWord(null)} />}
     </div>
   );
 }

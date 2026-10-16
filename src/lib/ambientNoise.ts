@@ -1,3 +1,5 @@
+import { create } from 'zustand';
+
 /** Looping generated background noise for focus (white / pink / brown). */
 export type NoiseKind = 'white' | 'pink' | 'brown';
 
@@ -62,3 +64,55 @@ export function stopNoise() {
   source = null;
   gain = null;
 }
+
+const VOLUME_KEY = 'khalil-noise-volume';
+
+function readVolume(): number {
+  try {
+    const v = Number(localStorage.getItem(VOLUME_KEY));
+    return Number.isFinite(v) && v > 0 && v <= 1 ? v : 0.3;
+  } catch {
+    return 0.3;
+  }
+}
+
+interface NoiseState {
+  kind: NoiseKind | null;
+  volume: number;
+  /** Plays `kind`, or stops it if it is already playing. */
+  toggle: (kind: NoiseKind) => void;
+  setVolume: (volume: number) => void;
+  stop: () => void;
+}
+
+/**
+ * App-wide ambient sound: it keeps playing while you move to other sections
+ * (it used to stop when the Focus page closed) and can be stopped from the
+ * floating timer.
+ */
+export const useNoiseStore = create<NoiseState>((set, get) => ({
+  kind: null,
+  volume: readVolume(),
+  toggle: (kind) => {
+    if (get().kind === kind) {
+      stopNoise();
+      set({ kind: null });
+    } else {
+      startNoise(kind, get().volume);
+      set({ kind });
+    }
+  },
+  setVolume: (volume) => {
+    setNoiseVolume(volume);
+    set({ volume });
+    try {
+      localStorage.setItem(VOLUME_KEY, String(volume));
+    } catch {
+      // ignore
+    }
+  },
+  stop: () => {
+    stopNoise();
+    set({ kind: null });
+  },
+}));

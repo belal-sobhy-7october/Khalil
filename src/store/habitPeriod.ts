@@ -30,3 +30,19 @@ export function stepHabitPeriod(range: HabitRange, anchor: string, direction: -1
   if (range === 7) return addDaysToDateString(habitPeriodStart(7, anchor), 7 * direction);
   return addMonthsToDateString(monthStart(anchor), (range === 30 ? 1 : 2) * direction);
 }
+
+/**
+ * The period's days, minus the ones before the first habit started: those
+ * columns could only ever be empty.
+ */
+export function visibleHabitDates(range: HabitRange, anchor: string, firstStart: string | null): string[] {
+  const dates = habitPeriodDates(range, anchor);
+  if (!firstStart) return dates;
+  const kept = dates.filter((d) => d >= firstStart);
+  return kept.length ? kept : dates;
+}
+
+/** Whether an earlier period has any day on or after the first habit's start. */
+export function canStepBack(range: HabitRange, anchor: string, firstStart: string | null): boolean {
+  return !firstStart || habitPeriodStart(range, anchor) > firstStart;
+}

@@ -50,6 +50,17 @@ describe('HabitsTracker grid', () => {
     expect(document.querySelector('[data-today="true"]')).toBeNull();
   });
 
+  it('begins at the first habit start rather than with empty days', () => {
+    const start = addDaysToDateString(today, -3);
+    useAppStore.setState({ habits: habits.map((h) => ({ ...h, startDate: start })) });
+    render(<HabitsTracker />);
+    fireEvent.click(screen.getByRole('button', { name: '2 months' }));
+    const expected = habitPeriodDates(60, today).filter((d) => d >= start);
+    const cells = screen.getAllByRole('button', { name: /^Study — / });
+    expect(cells[0]).toHaveAccessibleName(`Study — ${expected[0]}`);
+    expect(screen.getByRole('button', { name: 'Previous period' })).toBeDisabled();
+  });
+
   it('gives edit/delete buttons accessible names that include the habit name', () => {
     render(<HabitsTracker />);
     expect(screen.getByRole('button', { name: 'Delete habit "Exercise"' })).toBeInTheDocument();
@@ -90,11 +101,13 @@ describe('HabitsTracker grid', () => {
   it('checking a day before the start date moves the start date back', () => {
     const updateHabit = vi.fn();
     const start = addDaysToDateString(today, -2);
+    // Days before the first habit aren't shown, so another habit started earlier.
     useAppStore.setState({
-      habits: [{ ...habits[0], startDate: start }],
+      habits: [{ ...habits[0], startDate: start }, { ...habits[1], startDate: addDaysToDateString(today, -10) }],
       updateHabit,
     });
     render(<HabitsTracker />);
+    fireEvent.click(screen.getByRole('button', { name: '2 months' }));
     const earlier = addDaysToDateString(today, -4);
     fireEvent.click(screen.getByRole('button', { name: new RegExp(`^Study — ${earlier}`) }));
     expect(updateHabit).toHaveBeenCalledWith('h1', { startDate: earlier });

@@ -2,7 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { X, Loader2, Languages, Check, AlertCircle, RotateCw } from 'lucide-react';
 import { useTranslation } from '../../i18n/useTranslation';
 import { useAppStore } from '../../store/appStore';
-import { lookupMany } from '../../lib/dictionary';
+import { lookupMany, senseForTopic } from '../../lib/dictionary';
+import { topicContext } from '../../lib/senseRank';
 import { TOPIC_PACKS } from '../../data/topicPacks';
 import type { VocabularyItem } from '../../types';
 import { ARABIC, hasArabicDefinition } from '../../lib/arabicText';
@@ -24,6 +25,7 @@ const packIndex = new Map(
 export default function ConvertToEnglishModal({ onClose }: { onClose: () => void }) {
   const { t, tn } = useTranslation();
   const vocabularyItems = useAppStore((s) => s.vocabularyItems);
+  const vocabularyCategories = useAppStore((s) => s.vocabularyCategories);
   const updateVocabularyItem = useAppStore((s) => s.updateVocabularyItem);
 
   const targets = useMemo(() => vocabularyItems.filter(hasArabicDefinition), [vocabularyItems]);
@@ -54,11 +56,22 @@ export default function ConvertToEnglishModal({ onClose }: { onClose: () => void
           prev.map((r) => {
             if (r.item.id !== id) return r;
             if (!entry) return { ...r, status: 'missing' };
+            // Choose the sense that fits the word's topic, with its own example.
+            const topic = vocabularyCategories.find((c) => c.id === r.item.categoryId);
+            const sense = topic
+              ? senseForTopic(
+                  entry,
+                  topicContext(
+                    topic.name,
+                    vocabularyItems.filter((o) => o.categoryId === topic.id && o.id !== r.item.id && !hasArabicDefinition(o)).map((o) => o.definition)
+                  )
+                )
+              : entry;
             return {
               ...r,
               status: 'found',
-              definition: r.definition || entry.definition,
-              example: r.example || entry.example || '',
+              definition: r.definition || sense.definition,
+              example: r.example || sense.example || '',
               selected: true,
             };
           })

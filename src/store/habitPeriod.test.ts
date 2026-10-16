@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { habitPeriodDates, habitPeriodStart, stepHabitPeriod } from './habitPeriod';
+import { canStepBack, habitPeriodDates, habitPeriodStart, stepHabitPeriod, visibleHabitDates } from './habitPeriod';
 
 describe('habit grid periods', () => {
   it('week runs Saturday to Friday around the day', () => {
@@ -29,5 +29,16 @@ describe('habit grid periods', () => {
     expect(stepHabitPeriod(30, '2026-01-20', -1)).toBe('2025-12-01');
     expect(habitPeriodDates(60, stepHabitPeriod(60, '2026-10-16', -1))[0]).toBe('2026-07-01');
     expect(habitPeriodDates(60, stepHabitPeriod(60, '2026-10-16', 1))[0]).toBe('2026-11-01');
+  });
+
+  it('starts at the first habit instead of showing empty days before it', () => {
+    const dates = visibleHabitDates(60, '2026-10-16', '2026-10-11');
+    expect(dates[0]).toBe('2026-10-11');
+    expect(dates[dates.length - 1]).toBe('2026-10-31');
+    expect(visibleHabitDates(30, '2026-10-16', '2026-08-01')[0]).toBe('2026-10-01');
+    expect(visibleHabitDates(30, '2026-10-16', null)).toHaveLength(31);
+    expect(canStepBack(60, '2026-10-16', '2026-10-11')).toBe(false);
+    expect(canStepBack(30, '2026-10-16', '2026-09-20')).toBe(true);
+    expect(canStepBack(30, '2026-09-20', '2026-09-20')).toBe(false);
   });
 });

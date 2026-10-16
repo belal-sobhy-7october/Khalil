@@ -35,7 +35,8 @@ async function flow(name, opts, body) {
     await body({ ...app, fail, check, reload });
     await checkScreen(app.page, `${name}:end`);
   } catch (e) {
-    fail(`threw: ${String(e.message ?? e).split('\n')[0]}`);
+    const lines = String(e.message ?? e).split('\n');
+    fail(`threw: ${lines[0]} ${lines.find((l) => l.includes('waiting for')) ?? ''}`.trim());
   }
   await app.page.screenshot({ path: `${OUT}/flow-${name}.png`, fullPage: true }).catch(() => {});
   await app.context.close();
@@ -259,10 +260,14 @@ await flow('vocab-review-flashcards', { section: 'vocabulary', englishTab: 'voca
   const next = page.getByRole('button', { name: 'Next (Enter)' });
   let rated = 0;
   for (let i = 0; i < 20; i++) {
-    if (await next.isVisible()) await next.click();
+    // The answer view animates out; a click that lands on the leaving button just retries the loop.
+    if (await next.isVisible()) await next.click({ timeout: 2000 }).catch(() => {});
     else if (await visible(know, 1500)) {
-      await page.getByRole('button', { name: rated % 2 ? "I don't know it" : 'I know it' }).click();
-      rated++;
+      const answered = await page
+        .getByRole('button', { name: rated % 2 ? "I don't know it" : 'I know it' })
+        .click({ timeout: 2000 })
+        .then(() => true, () => false);
+      if (answered) rated++;
     } else break;
     await page.waitForTimeout(250);
   }
