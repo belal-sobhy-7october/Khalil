@@ -1,0 +1,15 @@
+{
+  "name": "Khalil — خليل",
+  "short_name": "Khalil",
+  "description": "Your day, habits and English topics — also without internet.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#1a1614",
+  "theme_color": "#c47860",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

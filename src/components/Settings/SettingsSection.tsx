@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { Check, Sun, Moon, Languages, Bell, Palette, Sparkles } from 'lucide-react';
+import { Check, Sun, Moon, Languages, Bell, Palette, Sparkles, WifiOff, Download, Loader2, CircleAlert } from 'lucide-react';
 import { useTranslation } from '../../i18n/useTranslation';
 import { useAppStore } from '../../store/appStore';
 import { APPEARANCES, useAppearance, type Appearance } from '../../lib/appearance';
 import { notificationPermission, requestNotificationPermission } from '../../lib/systemNotify';
+import { useInstallPrompt, useOfflineReadiness } from '../../lib/offline';
 
 function ThemePreview({ a, mode }: { a: Appearance; mode: 'light' | 'dark' }) {
   const v = (mode === 'dark' ? a.dark : a.light) ?? {
@@ -25,6 +26,37 @@ function ThemePreview({ a, mode }: { a: Appearance; mode: 'light' | 'dark' }) {
         <div className="w-5 h-5 rounded-full border-2" style={{ borderColor: v.accent }} />
       </div>
     </div>
+  );
+}
+
+/** Whether Khalil is saved on this device, and how to open it with no internet. */
+function OfflineCard() {
+  const { t } = useTranslation();
+  const readiness = useOfflineReadiness();
+  const install = useInstallPrompt();
+  const StateIcon = readiness === 'ready' ? Check : readiness === 'preparing' ? Loader2 : CircleAlert;
+  return (
+    <section className="rounded-xl border border-border-subtle bg-card p-4 space-y-3">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="flex items-start gap-2 text-ink min-w-0 flex-1">
+          <WifiOff size={18} className="text-clay-soft shrink-0 mt-0.5" />
+          <div className="min-w-0">
+            <div className="font-medium">{t('offline.title')}</div>
+            <div className={`mt-0.5 flex items-center gap-1.5 text-xs ${readiness === 'ready' ? 'text-green-700 dark:text-green-400' : 'text-ink-light'}`}>
+              <StateIcon size={13} className={`shrink-0 ${readiness === 'preparing' ? 'animate-spin' : ''}`} />
+              {t(`offline.${readiness}`)}
+            </div>
+          </div>
+        </div>
+        {install && (
+          <button onClick={() => void install()} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-clay-soft text-white text-sm hover:bg-clay-soft-dark">
+            <Download size={15} /> {t('offline.install')}
+          </button>
+        )}
+      </div>
+      <p className="text-sm text-ink-light">{t('offline.howTo')}</p>
+      <p className="text-xs text-ink-lighter">{t('offline.iosHint')}</p>
+    </section>
   );
 }
 
@@ -83,6 +115,8 @@ export default function SettingsSection() {
           </button>
         </div>
       </section>
+
+      <OfflineCard />
 
       {/* Colours */}
       <section className="space-y-3">

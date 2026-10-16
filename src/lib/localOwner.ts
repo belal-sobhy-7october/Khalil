@@ -5,7 +5,7 @@
  * else: drop it so it is neither shown to nor uploaded into the new account.
  */
 const OWNER_KEY = 'khalil-local-owner';
-const USER_KEYS = new Set(['khalil-wird-days', 'khalil-wird-unsynced', 'khalil-pomodoro-sessions', 'khalil-pomodoro-run']);
+const USER_KEYS = new Set(['khalil-wird-days', 'khalil-wird-unsynced', 'khalil-pomodoro-sessions', 'khalil-pomodoro-run', 'khalil-studied-topics']);
 const KV_PREFIX = 'khalil-kv:';
 // The look of the app is a device preference too; it is re-read from the account anyway.
 const KEEP = new Set(['khalil-kv:appearance']);
