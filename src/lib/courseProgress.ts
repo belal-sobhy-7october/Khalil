@@ -3,17 +3,29 @@ import type { CourseEpisode, CoursePlaylist, CourseTrack } from '../data/courses
 import { addDaysToDateString } from '../store/dateHelpers';
 
 export const COURSE_PROGRESS_KEY = 'english-course-progress';
+export const COURSE_POSITIONS_KEY = 'english-course-positions';
 
 /** videoId → the local date (YYYY-MM-DD) the lesson was ticked off. */
 export type CourseProgress = Record<string, string>;
 
+/** videoId → how far (seconds) a lesson that isn't done yet was watched. */
+export type WatchPositions = Record<string, number>;
+
 export interface ProgressStats {
+  /** Lessons ticked off. */
   done: number;
+  /** Lessons started but not ticked off. */
+  started: number;
   total: number;
   seconds: number;
-  doneSeconds: number;
-  /** 0–100; only 100 once every lesson is done. */
+  /** Time watched: whole lessons done plus how far into the started ones. */
+  watchedSeconds: number;
+  /** 0–1, counting a started lesson by how much of it was watched; 1 only once every lesson is done. */
+  ratio: number;
+  /** `ratio` as a whole percentage. */
   percent: number;
+  /** Lessons done as a whole percentage (milestones go by this). */
+  lessonsPercent: number;
 }
 
 /** A track's lessons in study order, each once (a video can sit in two playlists). */
@@ -22,23 +34,46 @@ export function trackEpisodes(track: CourseTrack): CourseEpisode[] {
   return track.playlists.flatMap((p) => p.episodes).filter((e) => !seen.has(e.id) && !!seen.add(e.id));
 }
 
-export function episodeStats(episodes: CourseEpisode[], progress: CourseProgress): ProgressStats {
-  let done = 0;
-  let seconds = 0;
-  let doneSeconds = 0;
-  for (const e of episodes) {
-    seconds += e.seconds;
-    if (progress[e.id]) {
-      done += 1;
-      doneSeconds += e.seconds;
-    }
-  }
-  const total = episodes.length;
-  const percent = total === 0 ? 0 : done === total ? 100 : Math.floor((done * 100) / total);
-  return { done, total, seconds, doneSeconds, percent };
+/** How much of one lesson counts as watched, 0–1 (1 only when ticked off). */
+export function lessonFraction(episode: CourseEpisode, progress: CourseProgress, positions: WatchPositions = {}): number {
+  if (progress[episode.id]) return 1;
+  const position = positions[episode.id] ?? 0;
+  if (episode.seconds <= 0 || position <= 0) return 0;
+  return Math.min(0.99, position / episode.seconds);
 }
 
-export const trackStats = (track: CourseTrack, progress: CourseProgress) => episodeStats(trackEpisodes(track), progress);
+const wholePercent = (part: number, whole: number) => (whole === 0 ? 0 : part >= whole ? 100 : Math.floor((part * 100) / whole));
+
+export function episodeStats(episodes: CourseEpisode[], progress: CourseProgress, positions: WatchPositions = {}): ProgressStats {
+  let done = 0;
+  let started = 0;
+  let seconds = 0;
+  let watchedSeconds = 0;
+  let units = 0;
+  for (const e of episodes) {
+    const fraction = lessonFraction(e, progress, positions);
+    seconds += e.seconds;
+    watchedSeconds += fraction === 1 ? e.seconds : Math.round(fraction * e.seconds);
+    units += fraction;
+    if (fraction === 1) done += 1;
+    else if (fraction > 0) started += 1;
+  }
+  const total = episodes.length;
+  const ratio = total === 0 ? 0 : done === total ? 1 : units / total;
+  return {
+    done,
+    started,
+    total,
+    seconds,
+    watchedSeconds,
+    ratio,
+    percent: done === total && total > 0 ? 100 : Math.min(99, Math.floor(ratio * 100)),
+    lessonsPercent: wholePercent(done, total),
+  };
+}
+
+export const trackStats = (track: CourseTrack, progress: CourseProgress, positions: WatchPositions = {}) =>
+  episodeStats(trackEpisodes(track), progress, positions);
 
 export interface EpisodeRef {
   playlist: CoursePlaylist;
@@ -75,6 +110,28 @@ export function setDone(progress: CourseProgress, ids: string[], done: boolean, 
   return next;
 }
 
+/** Positions without the given lessons (the same object when none of them had one). */
+export function dropPositions(positions: WatchPositions, ids: string[]): WatchPositions {
+  if (!ids.some((id) => id in positions)) return positions;
+  const next = { ...positions };
+  for (const id of ids) delete next[id];
+  return next;
+}
+
+/**
+ * Whether a lesson has been watched to its end: what's left is at most 8% of
+ * it and never more than 45 seconds (the outro and end screen).
+ */
+export function isNearEnd(position: number, length: number): boolean {
+  return length > 0 && position >= length - Math.min(45, length * 0.08);
+}
+
+/** Where to start a lesson again: a few seconds before where it was left, or the start. */
+export function resumeAt(position: number | undefined, length: number): number {
+  if (!position || position < 10 || isNearEnd(position, length)) return 0;
+  return Math.max(0, Math.floor(position) - 3);
+}
+
 /** Days in a row with at least one lesson done, ending today (or yesterday, if today has none yet). */
 export function studyStreak(progress: CourseProgress, today: string): number {
   const days = new Set(Object.values(progress));
@@ -109,9 +166,10 @@ export function durationParts(seconds: number): { h: number; m: number } {
 
 /** "12:05" / "1:02:09" — a video's length. */
 export function clockLength(seconds: number): string {
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  const s = seconds % 60;
+  const total = Math.max(0, Math.floor(seconds));
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const s = total % 60;
   const pad = (n: number) => String(n).padStart(2, '0');
   return h ? `${h}:${pad(m)}:${pad(s)}` : `${m}:${pad(s)}`;
 }

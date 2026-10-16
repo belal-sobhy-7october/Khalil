@@ -9,22 +9,18 @@
  * This file must stay free of imports so the sync script can load it.
  */
 
-export type CourseTrackId = 'accent' | 'phonetics' | 'grammar' | 'listening' | 'reading' | 'ielts';
+export type CourseTrackId = 'accent' | 'phonetics' | 'grammar' | 'listening' | 'reading';
 
 export interface CatalogPlaylist {
   /** YouTube playlist id (the `list=` parameter). */
   id: string;
   name: { en: string; ar: string };
-  /** Where the playlist comes from, when not the track's channel. */
-  channel?: CourseChannel;
   /** Episodes to leave out (off-topic or promos). */
   exclude?: string[];
-  /** Keep only episodes shorter than this. */
-  maxMinutes?: number;
 }
 
 export interface CourseChannel {
-  name: string;
+  name: { en: string; ar: string };
   url: string;
 }
 
@@ -35,9 +31,11 @@ export interface CatalogTrack {
   playlists: CatalogPlaylist[];
 }
 
-const Z_AMERICAN_ENGLISH = { name: 'Z American English', url: 'https://www.youtube.com/@ZAmericanEnglish/courses' };
-const DALILK_IELTS = { name: 'دليلك للايلتس', url: 'https://www.youtube.com/@dalilk4ielts/playlists' };
-const LISTENING_TIME = { name: 'Listening Time Podcast', url: 'https://www.youtube.com/@listeningtimepodcast/playlists' };
+/** Ibrahim Adel's channel. */
+const Z_AMERICAN_ENGLISH: CourseChannel = {
+  name: { en: 'Ibrahim Adel · Z American English', ar: 'إبراهيم عادل · Z American English' },
+  url: 'https://www.youtube.com/@ZAmericanEnglish/courses',
+};
 
 export const COURSE_CATALOG: CatalogTrack[] = [
   {
@@ -77,16 +75,6 @@ export const COURSE_CATALOG: CatalogTrack[] = [
       { id: 'PLp22-4PivYmLmnv85IWWhNL4PtzcqC5mS', name: { en: 'Listening & understanding accents — Level 2', ar: 'الاستماع وفهم اللهجات — المستوى الثاني' } },
       { id: 'PLp22-4PivYmKpHQio7q6UsspV1lpXwzAp', name: { en: 'Listening course — Level 3', ar: 'كورس الاستماع — المستوى الثالث' } },
       { id: 'PLp22-4PivYmIZtXNNriSBxmSeCK7juwS_', name: { en: 'English news, explained — Level 2', ar: 'كورس الأخبار: نشرة إنجليزي مترجمة — المستوى الثاني' } },
-      {
-        id: 'PLhNRdHEdUQeynyOmJASMe_xVYg0YZHWyt',
-        name: { en: 'Listening Time: short B2 clips', ar: 'Listening Time: مقاطع B2 قصيرة' },
-        channel: LISTENING_TIME,
-        // The playlist also holds full podcast episodes (next playlist) and seminars.
-        maxMinutes: 10,
-        exclude: ['BXCQpEqu7L0', 'H8DyKBj5v3M', 'HBWijSabtmQ'], // channel trailer and announcements
-      },
-      { id: 'PLhNRdHEdUQezqXdGmIbzd7zWu0pxs6s9J', name: { en: 'Listening Time: podcast episodes', ar: 'Listening Time: حلقات البودكاست' }, channel: LISTENING_TIME },
-      { id: 'PLhNRdHEdUQew0ZsHKGSILmKO-XAziYOzD', name: { en: 'Listening Time: long listening practice', ar: 'Listening Time: تدريب استماع طويل' }, channel: LISTENING_TIME },
     ],
   },
   {
@@ -100,21 +88,6 @@ export const COURSE_CATALOG: CatalogTrack[] = [
       { id: 'PLp22-4PivYmKzTfbSx_nm0oCFSQ9-IpgL', name: { en: 'Reading & advanced vocabulary — Level 4', ar: 'القراءة والمفردات المتقدمة — المستوى الرابع' } },
       { id: 'PLp22-4PivYmKcPVkKIQ1fj4TBhFSkQ40C', name: { en: 'Wordsmith: English through American novels', ar: 'Wordsmith: الإنجليزي من الروايات الأمريكية' } },
       { id: 'PLp22-4PivYmIsCOWJ0D8lXBsbKfcyc3So', name: { en: 'Bookworm', ar: 'دودة الكتب Bookworm' } },
-    ],
-  },
-  {
-    id: 'ielts',
-    icon: '🎯',
-    channel: DALILK_IELTS,
-    playlists: [
-      { id: 'PLtNAQ6Bi8JoUt1pqgsXjcCJx6q3-rJ5x8', name: { en: 'IELTS Listening: basics & techniques', ar: 'الاستماع بالايلتس: الأساسيات والتكنيكات' } },
-      {
-        id: 'PLtNAQ6Bi8JoXPqa0fCVPgRyI2sH0-GWBY',
-        name: { en: 'IELTS Listening: practice & mock tests', ar: 'الاستماع بالايلتس: تدريبات واختبارات تجريبية' },
-        exclude: ['xsEy0zKC0qM'], // about the STEP exam, not IELTS
-      },
-      { id: 'PLtNAQ6Bi8JoWTVAVLigPUn3UY9Lelj4e7', name: { en: 'IELTS Reading: basics & techniques', ar: 'القراءة بالايلتس: الأساسيات والتكنيكات' } },
-      { id: 'PLtNAQ6Bi8JoUtst0lgSDp4q_iIYLyA8bo', name: { en: 'IELTS Reading: practice', ar: 'القراءة بالايلتس: تدريبات عملية' } },
     ],
   },
 ];

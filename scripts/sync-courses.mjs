@@ -7,8 +7,8 @@
  *
  * Reads public playlists through YouTube's web client API (the one
  * youtube.com itself calls) — no API key needed. Unavailable/private
- * episodes, the catalog's `exclude` ids, episodes longer than `maxMinutes`
- * and lessons already in an earlier playlist of the same track are dropped.
+ * episodes, the catalog's `exclude` ids and lessons already in an earlier
+ * playlist of the same track are dropped.
  */
 import { writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -82,10 +82,7 @@ for (const track of COURSE_CATALOG) {
   const inTrack = new Set();
   for (const playlist of track.playlists) {
     const skip = new Set(playlist.exclude ?? []);
-    const maxSeconds = (playlist.maxMinutes ?? Infinity) * 60;
-    const episodes = (await playlistEpisodes(playlist.id)).filter(
-      (e) => !skip.has(e.id) && !inTrack.has(e.id) && e.seconds < maxSeconds
-    );
+    const episodes = (await playlistEpisodes(playlist.id)).filter((e) => !skip.has(e.id) && !inTrack.has(e.id));
     for (const e of episodes) inTrack.add(e.id);
     if (!episodes.length) throw new Error(`No episodes found for ${playlist.id} — has YouTube's response changed?`);
     out[playlist.id] = episodes;

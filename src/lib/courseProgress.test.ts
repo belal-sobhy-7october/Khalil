@@ -2,14 +2,15 @@ import { describe, expect, it } from 'vitest';
 import type { CourseTrack } from '../data/courses';
 import { COURSE_TRACKS } from '../data/courses';
 import {
-  clockLength, doneThisWeek, durationParts, episodeStats, milestoneCrossed, nextEpisode, setDone, studyStreak, trackEpisodes, trackStats,
+  clockLength, doneThisWeek, dropPositions, durationParts, episodeStats, isNearEnd, lessonFraction, milestoneCrossed, nextEpisode,
+  resumeAt, setDone, studyStreak, trackEpisodes, trackStats,
 } from './courseProgress';
 
 const ep = (id: string, seconds = 600) => ({ id, title: id, seconds });
 const track: CourseTrack = {
   id: 'accent',
   icon: '🗣️',
-  channel: { name: 'Channel', url: 'https://example.com' },
+  channel: { name: { en: 'Channel', ar: 'قناة' }, url: 'https://example.com' },
   playlists: [
     { id: 'P1', name: { en: 'One', ar: 'واحد' }, episodes: [ep('a'), ep('b'), ep('c')] },
     { id: 'P2', name: { en: 'Two', ar: 'اتنين' }, episodes: [ep('b'), ep('d', 1200)] },
@@ -19,13 +20,26 @@ const track: CourseTrack = {
 describe('course progress', () => {
   it('counts each lesson once even when it sits in two playlists', () => {
     expect(trackEpisodes(track).map((e) => e.id)).toEqual(['a', 'b', 'c', 'd']);
-    expect(trackStats(track, { b: '2026-10-16' })).toEqual({ done: 1, total: 4, seconds: 3000, doneSeconds: 600, percent: 25 });
+    expect(trackStats(track, { b: '2026-10-16' })).toEqual({
+      done: 1, started: 0, total: 4, seconds: 3000, watchedSeconds: 600, ratio: 0.25, percent: 25, lessonsPercent: 25,
+    });
+  });
+
+  it('gives part-watched lessons partial credit, but never a full lesson', () => {
+    expect(lessonFraction(ep('a'), {}, { a: 300 })).toBe(0.5);
+    expect(lessonFraction(ep('a'), {}, { a: 9999 })).toBe(0.99);
+    expect(lessonFraction(ep('a'), { a: 'x' }, { a: 10 })).toBe(1);
+    const s = trackStats(track, { b: 'x' }, { a: 300, d: 600 });
+    expect(s).toMatchObject({ done: 1, started: 2, watchedSeconds: 600 + 300 + 600, lessonsPercent: 25 });
+    expect(s.ratio).toBeCloseTo((1 + 0.5 + 0.5) / 4);
+    expect(s.percent).toBe(50);
   });
 
   it('only reaches 100% when every lesson is done', () => {
     const many = Array.from({ length: 199 }, (_, i) => ep(`v${i}`));
     const progress = Object.fromEntries(many.slice(0, 198).map((e) => [e.id, '2026-10-16']));
-    expect(episodeStats(many, progress).percent).toBe(99);
+    expect(episodeStats(many, progress, { v198: 599 }).percent).toBe(99);
+    expect(episodeStats(many, progress).lessonsPercent).toBe(99);
     expect(episodeStats([], {}).percent).toBe(0);
   });
 
@@ -41,6 +55,24 @@ describe('course progress', () => {
     const p = setDone({ a: '2026-10-01' }, ['a', 'b'], true, '2026-10-16');
     expect(p).toEqual({ a: '2026-10-01', b: '2026-10-16' });
     expect(setDone(p, ['a'], false, '2026-10-16')).toEqual({ b: '2026-10-16' });
+  });
+
+  it('drops saved positions of finished lessons', () => {
+    const positions = { a: 10, b: 20 };
+    expect(dropPositions(positions, ['a'])).toEqual({ b: 20 });
+    expect(dropPositions(positions, ['z'])).toBe(positions);
+  });
+
+  it('treats the outro as the end, and resumes a little before where you stopped', () => {
+    expect(isNearEnd(560, 600)).toBe(true); // 8% of 10 min = 48s → capped at 45s left
+    expect(isNearEnd(550, 600)).toBe(false);
+    expect(isNearEnd(1756, 1800)).toBe(true); // 45s left of 30 min
+    expect(isNearEnd(1700, 1800)).toBe(false);
+    expect(isNearEnd(56, 60)).toBe(true);
+    expect(resumeAt(undefined, 600)).toBe(0);
+    expect(resumeAt(5, 600)).toBe(0); // barely started
+    expect(resumeAt(250.7, 600)).toBe(247);
+    expect(resumeAt(590, 600)).toBe(0); // at the end: start over
   });
 
   it('counts the streak of study days up to today or yesterday', () => {
@@ -64,12 +96,13 @@ describe('course progress', () => {
     expect(durationParts(3 * 3600 + 25 * 60 + 40)).toEqual({ h: 3, m: 26 });
     expect(clockLength(605)).toBe('10:05');
     expect(clockLength(4568)).toBe('1:16:08');
+    expect(clockLength(-3)).toBe('0:00');
   });
 });
 
 describe('course catalog', () => {
   it('has episodes for every playlist and no lesson twice in one track', () => {
-    expect(COURSE_TRACKS.map((t) => t.id)).toEqual(['accent', 'phonetics', 'grammar', 'listening', 'reading', 'ielts']);
+    expect(COURSE_TRACKS.map((t) => t.id)).toEqual(['accent', 'phonetics', 'grammar', 'listening', 'reading']);
     for (const t of COURSE_TRACKS) {
       for (const p of t.playlists) expect(p.episodes.length, p.id).toBeGreaterThan(0);
       const ids = t.playlists.flatMap((p) => p.episodes.map((e) => e.id));

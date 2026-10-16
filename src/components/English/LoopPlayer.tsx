@@ -8,25 +8,32 @@ const RATES = [0.5, 0.75, 1, 1.25];
 
 const fmt = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
 
-/** YT.PlayerState.ENDED */
+/** YT.PlayerState values. */
 const ENDED = 0;
+const PLAYING = 1;
+const PAUSED = 2;
 
 /**
  * YouTube player with shadowing controls: speed, "back 5s", and an A–B loop
- * to repeat one sentence until it sounds right.
+ * to repeat one sentence until it sounds right. `compact` keeps only speed
+ * and "back 5s".
  */
-export default function LoopPlayer({ source, onEnded, hideHint = false }: {
+export default function LoopPlayer({ source, onEnded, onProgress, compact = false }: {
   source: YouTubeRef;
   onEnded?: () => void;
-  hideHint?: boolean;
+  /** Where playback is, every second while playing and when it pauses or ends. */
+  onProgress?: (seconds: number, playing: boolean) => void;
+  compact?: boolean;
 }) {
   const { t } = useTranslation();
   // React owns the host only; the API replaces its child with an iframe.
   const hostRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<YTPlayer | null>(null);
   const onEndedRef = useRef(onEnded);
+  const onProgressRef = useRef(onProgress);
   useEffect(() => {
     onEndedRef.current = onEnded;
+    onProgressRef.current = onProgress;
   });
   const [ready, setReady] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -58,7 +65,9 @@ export default function LoopPlayer({ source, onEnded, hideHint = false }: {
             onReady: () => alive && setReady(true),
             onError: () => alive && setFailed(true),
             onStateChange: (e) => {
-              if (alive && e.data === ENDED) onEndedRef.current?.();
+              if (!alive) return;
+              if (e.data === PAUSED || e.data === ENDED) onProgressRef.current?.(playerRef.current?.getCurrentTime() ?? 0, false);
+              if (e.data === ENDED) onEndedRef.current?.();
             },
           },
         });
@@ -75,6 +84,20 @@ export default function LoopPlayer({ source, onEnded, hideHint = false }: {
       host?.replaceChildren();
     };
   }, [source.videoId, source.listId, source.start]);
+
+  // Report the position while playing.
+  useEffect(() => {
+    if (!ready) return;
+    const id = window.setInterval(() => {
+      const p = playerRef.current;
+      try {
+        if (p && p.getPlayerState() === PLAYING) onProgressRef.current?.(p.getCurrentTime(), true);
+      } catch {
+        // player torn down between ticks
+      }
+    }, 1000);
+    return () => window.clearInterval(id);
+  }, [ready]);
 
   // A–B loop: jump back to A whenever playback passes B.
   useEffect(() => {
@@ -130,36 +153,40 @@ export default function LoopPlayer({ source, onEnded, hideHint = false }: {
         <button disabled={!ready} onClick={() => playerRef.current?.seekTo(Math.max(0, now() - 5), true)} className={`${btn} bg-ink/5 text-ink hover:bg-ink/10`}>
           <RotateCcw size={13} /> 5s
         </button>
-        <button disabled={!ready} onClick={() => { setA(now()); setLooping(false); }} className={`${btn} bg-ink/5 text-ink hover:bg-ink/10`}>
-          <Flag size={13} /> A{a !== null ? ` ${fmt(a)}` : ''}
-        </button>
-        <button
-          disabled={!ready || a === null}
-          onClick={() => {
-            const end = now();
-            if (a !== null && end > a) {
-              setB(end);
-              setLooping(true);
-              playerRef.current?.seekTo(a, true);
-            }
-          }}
-          className={`${btn} bg-ink/5 text-ink hover:bg-ink/10 disabled:opacity-40`}
-        >
-          <Flag size={13} /> B{b !== null ? ` ${fmt(b)}` : ''}
-        </button>
-        <button
-          disabled={a === null || b === null}
-          onClick={() => setLooping((l) => !l)}
-          className={`${btn} ${looping ? 'bg-clay-soft text-white' : 'bg-ink/5 text-ink hover:bg-ink/10'} disabled:opacity-40`}
-          aria-pressed={looping}
-        >
-          <Repeat size={13} /> {t('english.player.loop')}
-        </button>
-        {(a !== null || b !== null) && (
-          <button onClick={clearLoop} className="text-xs text-ink-lighter hover:text-ink">{t('english.player.clear')}</button>
+        {!compact && (
+          <>
+            <button disabled={!ready} onClick={() => { setA(now()); setLooping(false); }} className={`${btn} bg-ink/5 text-ink hover:bg-ink/10`}>
+              <Flag size={13} /> A{a !== null ? ` ${fmt(a)}` : ''}
+            </button>
+            <button
+              disabled={!ready || a === null}
+              onClick={() => {
+                const end = now();
+                if (a !== null && end > a) {
+                  setB(end);
+                  setLooping(true);
+                  playerRef.current?.seekTo(a, true);
+                }
+              }}
+              className={`${btn} bg-ink/5 text-ink hover:bg-ink/10 disabled:opacity-40`}
+            >
+              <Flag size={13} /> B{b !== null ? ` ${fmt(b)}` : ''}
+            </button>
+            <button
+              disabled={a === null || b === null}
+              onClick={() => setLooping((l) => !l)}
+              className={`${btn} ${looping ? 'bg-clay-soft text-white' : 'bg-ink/5 text-ink hover:bg-ink/10'} disabled:opacity-40`}
+              aria-pressed={looping}
+            >
+              <Repeat size={13} /> {t('english.player.loop')}
+            </button>
+            {(a !== null || b !== null) && (
+              <button onClick={clearLoop} className="text-xs text-ink-lighter hover:text-ink">{t('english.player.clear')}</button>
+            )}
+          </>
         )}
       </div>
-      {!hideHint && <p className="text-[11px] text-ink-lighter">{t('english.player.hint')}</p>}
+      {!compact && <p className="text-[11px] text-ink-lighter">{t('english.player.hint')}</p>}
     </div>
   );
 }

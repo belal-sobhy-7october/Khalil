@@ -1,69 +1,126 @@
-import { useEffect, useId } from 'react';
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
+import { AnimatePresence, animate, motion, useReducedMotion } from 'framer-motion';
 import { Check } from 'lucide-react';
+import { PROGRESS_TRANSITION } from './courseMotion';
 
-const fillGradient = (value: number) =>
-  value === 100 ? 'bg-linear-to-r from-sage-soft to-gold-soft' : 'bg-linear-to-r from-clay-soft to-gold-soft';
+const fillGradient = (complete: boolean) =>
+  complete ? 'bg-linear-to-r from-sage-soft to-gold-soft' : 'bg-linear-to-r from-clay-soft to-gold-soft';
 
-/** A bar that fills as lessons are ticked off; `milestones` marks 25/50/75%. */
-export function ProgressBar({ value, size = 'md', milestones = false, label, className = '' }: {
-  value: number;
-  size?: 'sm' | 'md' | 'lg';
-  milestones?: boolean;
+const pct = (ratio: number) => `${Math.max(0, Math.min(1, ratio)) * 100}%`;
+
+/** A bar that fills as lessons are watched. `ratio` is 0–1. */
+export function ProgressBar({ ratio, size = 'md', label, animateIn = false, className = '' }: {
+  ratio: number;
+  size?: 'xs' | 'sm' | 'md';
   label?: string;
+  /** Fill from empty when it first appears. */
+  animateIn?: boolean;
   className?: string;
 }) {
-  const height = size === 'lg' ? 'h-3.5' : size === 'md' ? 'h-2' : 'h-1.5';
+  const height = size === 'md' ? 'h-2' : size === 'sm' ? 'h-1.5' : 'h-1';
   return (
     <div
-      className={`relative ${className}`}
+      className={`${height} rounded-full bg-ink/10 overflow-hidden ${className}`}
       role="progressbar"
       aria-label={label}
-      aria-valuenow={value}
+      aria-valuenow={Math.round(ratio * 100)}
       aria-valuemin={0}
       aria-valuemax={100}
     >
-      <div className={`${height} rounded-full bg-ink/10 overflow-hidden`}>
-        <motion.div
-          className={`relative h-full rounded-full overflow-hidden ${fillGradient(value)}`}
-          initial={false}
-          animate={{ width: `${value}%` }}
-          transition={{ type: 'spring', stiffness: 110, damping: 20 }}
-        >
-          {size === 'lg' && value > 0 && <span className="course-shimmer absolute inset-0" />}
-        </motion.div>
-      </div>
-      {milestones &&
-        [25, 50, 75].map((m) => (
-          <span
-            key={m}
-            className={`absolute top-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full ring-2 ring-card transition-colors ${
-              value >= m ? 'bg-gold-soft' : 'bg-ink/15'
-            }`}
-            style={{ insetInlineStart: `calc(${m}% - 5px)` }}
-          />
-        ))}
+      <motion.div
+        className={`h-full rounded-full ${fillGradient(ratio >= 1)}`}
+        initial={animateIn ? { width: 0 } : false}
+        animate={{ width: pct(ratio) }}
+        transition={PROGRESS_TRANSITION}
+      />
     </div>
   );
 }
 
-/** Circular progress with content (e.g. the percentage) in the middle. */
-export function ProgressRing({ value, size = 96, stroke = 9, children }: {
-  value: number;
+export interface ProgressSegment {
+  id: string;
+  label: string;
+  /** How many lessons the segment holds (its share of the bar). */
+  size: number;
+  ratio: number;
+}
+
+/**
+ * A track's progress as one bar split into its playlists: each part is as
+ * wide as its playlist is long and fills on its own. The part you're on
+ * shimmers; clicking a part opens that playlist.
+ */
+export function SegmentedProgress({ segments, activeId, label, ratio, onSelect }: {
+  segments: ProgressSegment[];
+  activeId?: string;
+  label: string;
+  ratio: number;
+  onSelect?: (id: string) => void;
+}) {
+  return (
+    <div
+      className="flex gap-1"
+      role="progressbar"
+      aria-label={label}
+      aria-valuenow={Math.round(ratio * 100)}
+      aria-valuemin={0}
+      aria-valuemax={100}
+    >
+      {segments.map((s) => {
+        const complete = s.ratio >= 1;
+        const active = s.id === activeId;
+        return (
+          <div
+            key={s.id}
+            title={s.label}
+            onClick={onSelect ? () => onSelect(s.id) : undefined}
+            className={`relative h-3 min-w-2 rounded-full bg-ink/10 overflow-hidden ${onSelect ? 'cursor-pointer' : ''} ${
+              active ? 'ring-1 ring-clay-soft/60' : ''
+            }`}
+            style={{ flexGrow: s.size, flexBasis: 0 }}
+          >
+            <motion.div
+              className={`relative h-full rounded-full overflow-hidden ${fillGradient(complete)}`}
+              initial={{ width: 0 }}
+              animate={{ width: pct(s.ratio) }}
+              transition={PROGRESS_TRANSITION}
+            >
+              {active && s.ratio > 0 && !complete && <span className="course-shimmer absolute inset-0" />}
+            </motion.div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/** Circular progress with content (e.g. an icon or the percentage) in the middle. */
+export function ProgressRing({ ratio, size = 96, stroke = 9, label, animateIn = false, children }: {
+  ratio: number;
   size?: number;
   stroke?: number;
+  label?: string;
+  animateIn?: boolean;
   children?: React.ReactNode;
 }) {
   const gradientId = `ring-${useId().replace(/[^\w-]/g, '')}`;
   const r = (size - stroke) / 2;
-  const circumference = 2 * Math.PI * r;
-  const done = value === 100;
+  const complete = ratio >= 1;
+  const value = Math.max(0, Math.min(1, ratio));
   return (
-    <div className="relative shrink-0" style={{ width: size, height: size }}>
+    <div
+      className="relative shrink-0"
+      style={{ width: size, height: size }}
+      role="progressbar"
+      aria-label={label}
+      aria-valuenow={Math.round(value * 100)}
+      aria-valuemin={0}
+      aria-valuemax={100}
+    >
       <svg width={size} height={size} className="-rotate-90" aria-hidden="true">
         <defs>
           <linearGradient id={gradientId} x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor={done ? 'var(--color-sage-soft)' : 'var(--color-clay-soft)'} />
+            <stop offset="0%" stopColor={complete ? 'var(--color-sage-soft)' : 'var(--color-clay-soft)'} />
             <stop offset="100%" stopColor="var(--color-gold-soft)" />
           </linearGradient>
         </defs>
@@ -76,10 +133,10 @@ export function ProgressRing({ value, size = 96, stroke = 9, children }: {
           stroke={`url(#${gradientId})`}
           strokeWidth={stroke}
           strokeLinecap="round"
-          strokeDasharray={circumference}
-          initial={false}
-          animate={{ strokeDashoffset: circumference * (1 - value / 100) }}
-          transition={{ type: 'spring', stiffness: 90, damping: 20 }}
+          initial={animateIn ? { pathLength: 0, opacity: 0 } : false}
+          // A zero-length round cap still draws a dot, so hide it at 0.
+          animate={{ pathLength: value, opacity: value > 0 ? 1 : 0 }}
+          transition={PROGRESS_TRANSITION}
         />
       </svg>
       <div className="absolute inset-0 flex items-center justify-center">{children}</div>
@@ -87,14 +144,51 @@ export function ProgressRing({ value, size = 96, stroke = 9, children }: {
   );
 }
 
-/** Round tick box for one lesson; pops when ticked. */
-export function DoneCheck({ done, onToggle, label, size = 'md' }: {
+/** A whole number that counts to its new value on the progress curve. */
+export function AnimatedNumber({ value, animateIn = false, className }: { value: number; animateIn?: boolean; className?: string }) {
+  const reduceMotion = useReducedMotion();
+  const ref = useRef<HTMLSpanElement>(null);
+  // React renders the first value only; later values are written by the animation.
+  const [first] = useState(animateIn ? 0 : value);
+  const shown = useRef(first);
+
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    if (reduceMotion || shown.current === value) {
+      shown.current = value;
+      el.textContent = String(value);
+      return;
+    }
+    const controls = animate(shown.current, value, {
+      ...PROGRESS_TRANSITION,
+      onUpdate: (v) => {
+        shown.current = v;
+        el.textContent = String(Math.round(v));
+      },
+    });
+    return () => controls.stop();
+  }, [value, reduceMotion]);
+
+  return (
+    <span ref={ref} className={className}>
+      {first}
+    </span>
+  );
+}
+
+/**
+ * Round tick box for one lesson. While a lesson is part-watched its rim fills
+ * with how much was watched; ticking it pops a check.
+ */
+export function DoneCheck({ done, fraction = 0, onToggle, label }: {
   done: boolean;
+  /** 0–1 of the lesson watched, shown while not done. */
+  fraction?: number;
   onToggle: () => void;
   label: string;
-  size?: 'md' | 'lg';
 }) {
-  const box = size === 'lg' ? 'w-7 h-7' : 'w-6 h-6';
+  const partial = !done && fraction > 0;
   return (
     <button
       type="button"
@@ -102,30 +196,52 @@ export function DoneCheck({ done, onToggle, label, size = 'md' }: {
       aria-checked={done}
       aria-label={label}
       onClick={onToggle}
-      className={`relative shrink-0 ${box} rounded-full border-2 flex items-center justify-center transition-colors ${
-        done ? 'bg-sage-soft border-sage-soft text-white' : 'border-ink/25 hover:border-sage-soft hover:bg-sage-soft/10'
+      className={`relative shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors duration-300 ${
+        done ? 'bg-sage-soft border-sage-soft text-white' : 'border-ink/20 hover:border-sage-soft hover:bg-sage-soft/10'
       }`}
     >
       <AnimatePresence initial={false}>
+        {partial && (
+          <motion.svg
+            key="watched"
+            viewBox="0 0 24 24"
+            className="absolute -inset-[2px] w-6 h-6 -rotate-90 pointer-events-none"
+            aria-hidden="true"
+            exit={{ opacity: 0 }}
+          >
+            <motion.circle
+              cx="12"
+              cy="12"
+              r="11"
+              fill="none"
+              stroke="var(--color-clay-soft)"
+              strokeWidth="2"
+              strokeLinecap="round"
+              initial={false}
+              animate={{ pathLength: fraction }}
+              transition={PROGRESS_TRANSITION}
+            />
+          </motion.svg>
+        )}
         {done && (
           <motion.span
             key="tick"
             initial={{ scale: 0, rotate: -60 }}
             animate={{ scale: 1, rotate: 0 }}
-            exit={{ scale: 0 }}
-            transition={{ type: 'spring', stiffness: 520, damping: 18 }}
+            exit={{ scale: 0, opacity: 0 }}
+            transition={{ type: 'spring', stiffness: 520, damping: 20 }}
             className="flex"
           >
-            <Check size={size === 'lg' ? 16 : 14} strokeWidth={3} />
+            <Check size={14} strokeWidth={3} />
           </motion.span>
         )}
         {done && (
           <motion.span
-            key="ring"
-            className="absolute inset-0 rounded-full border-2 border-sage-soft pointer-events-none"
-            initial={{ scale: 1, opacity: 0.7 }}
-            animate={{ scale: 2.1, opacity: 0 }}
-            transition={{ duration: 0.55, ease: 'easeOut' }}
+            key="pulse"
+            className="absolute -inset-[2px] rounded-full border-2 border-sage-soft pointer-events-none"
+            initial={{ scale: 1, opacity: 0.6 }}
+            animate={{ scale: 2, opacity: 0 }}
+            transition={{ duration: 0.6, ease: 'easeOut' }}
           />
         )}
       </AnimatePresence>
@@ -145,6 +261,21 @@ export function Thumb({ src, className, eager = false }: { src: string; classNam
         e.currentTarget.style.visibility = 'hidden';
       }}
     />
+  );
+}
+
+/** YouTube-style "watched so far" line along the bottom of a thumbnail. */
+export function ThumbProgress({ fraction, className = 'h-[3px]' }: { fraction: number; className?: string }) {
+  if (fraction <= 0 || fraction >= 1) return null;
+  return (
+    <span className={`absolute inset-x-0 bottom-0 bg-white/30 ${className}`} aria-hidden="true">
+      <motion.span
+        className="block h-full bg-clay-soft"
+        initial={false}
+        animate={{ width: pct(fraction) }}
+        transition={PROGRESS_TRANSITION}
+      />
+    </span>
   );
 }
 
