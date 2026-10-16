@@ -32,14 +32,15 @@ export function stepHabitPeriod(range: HabitRange, anchor: string, direction: -1
 }
 
 /**
- * The period's days, minus the ones before the first habit started: those
- * columns could only ever be empty.
+ * The days to show for a period. Days before the first habit started could
+ * only ever be empty, so when the period begins earlier the window starts at
+ * the first habit instead and keeps the period's length — the extra days come
+ * after today. That way "month" and "2 months" still differ for new habits.
  */
 export function visibleHabitDates(range: HabitRange, anchor: string, firstStart: string | null): string[] {
   const dates = habitPeriodDates(range, anchor);
-  if (!firstStart) return dates;
-  const kept = dates.filter((d) => d >= firstStart);
-  return kept.length ? kept : dates;
+  if (!firstStart || firstStart <= dates[0] || firstStart > dates[dates.length - 1]) return dates;
+  return dates.map((_, i) => addDaysToDateString(firstStart, i));
 }
 
 /** Whether an earlier period has any day on or after the first habit's start. */

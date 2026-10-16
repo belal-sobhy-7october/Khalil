@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo } from 'react';
-import { Plus, Search, Filter, Flame, Upload, Library, Sparkles, PlayCircle, Languages, Compass, Trophy, SearchCheck } from 'lucide-react';
+import { useState, useEffect, useMemo, useRef } from 'react';
+import { Plus, Search, Filter, Flame, Upload, Library, Sparkles, PlayCircle, Languages, Compass, Trophy, SearchCheck, ListFilter, ChevronDown, RefreshCw } from 'lucide-react';
 import { useAppStore } from '../../store/appStore';
 import { useTranslation } from '../../i18n/useTranslation';
 import { speakWord, getPronunciationPrefs } from '../../lib/pronunciation';
@@ -17,6 +17,10 @@ import TypingPractice from './TypingPractice';
 import ResourcesModal from './ResourcesModal';
 import TopicChallenge from './TopicChallenge';
 import CheckMeaningsModal from './CheckMeaningsModal';
+import UpgradeTopicsModal from './UpgradeTopicsModal';
+import { hasUpgrade, planTopicUpgrade } from '../../lib/topicUpgrade';
+
+const UPGRADE_DISMISSED_KEY = 'khalil-topic-upgrade-dismissed';
 import { hasArabicDefinition } from '../../lib/arabicText';
 import type { VocabularyItemType } from '../../types';
 
@@ -39,6 +43,31 @@ export default function VocabularySection() {
   const [showResources, setShowResources] = useState(false);
   const [showChallenge, setShowChallenge] = useState(false);
   const [showMeanings, setShowMeanings] = useState(false);
+  const [showUpgrade, setShowUpgrade] = useState(false);
+  const upgradeAvailable = useMemo(
+    () => hasUpgrade(planTopicUpgrade(vocabularyCategories, vocabularyItems)),
+    [vocabularyCategories, vocabularyItems]
+  );
+  const [upgradeDismissed, setUpgradeDismissed] = useState(() => {
+    try {
+      return localStorage.getItem(UPGRADE_DISMISSED_KEY) === '1';
+    } catch {
+      return false;
+    }
+  });
+  const dismissUpgrade = () => {
+    setUpgradeDismissed(true);
+    try {
+      localStorage.setItem(UPGRADE_DISMISSED_KEY, '1');
+    } catch {
+      // only hidden for this visit
+    }
+  };
+  // Topics live in one scrolling row; the picker lists all of them, so
+  // topics beyond the edge of the screen are never out of reach.
+  const [showTopicPicker, setShowTopicPicker] = useState(false);
+  const [topicQuery, setTopicQuery] = useState('');
+  const topicRowRef = useRef<HTMLDivElement>(null);
   const [reviewItemIds, setReviewItemIds] = useState<string[] | undefined>(undefined);
   // Every review entry point goes through the mode picker first.
   const [pickerIds, setPickerIds] = useState<string[] | null>(null);
@@ -96,6 +125,18 @@ export default function VocabularySection() {
   const arabicCount = useMemo(() => vocabularyItems.filter(hasArabicDefinition).length, [vocabularyItems]);
 
   const selectedCategory = vocabularyCategories.find((c) => c.id === filterCategory);
+  const pickerTopics = vocabularyCategories
+    .filter((c) => c.name.toLowerCase().includes(topicQuery.trim().toLowerCase()))
+    .sort((a, b) => a.name.localeCompare(b.name));
+  const pickTopic = (id: string) => {
+    setFilterCategory(id);
+    setShowTopicPicker(false);
+    setTopicQuery('');
+    // Bring the chosen chip into view in the scrolling row.
+    requestAnimationFrame(() =>
+      topicRowRef.current?.querySelector(`[data-topic-id="${id}"]`)?.scrollIntoView?.({ block: 'nearest', inline: 'nearest' })
+    );
+  };
 
   const startTopicReview = () => {
     const ids = vocabularyItems.filter((i) => i.categoryId === filterCategory).map((i) => i.id);
@@ -144,6 +185,19 @@ export default function VocabularySection() {
           <div className="text-sm text-ink-light">{t('vocabulary.hardWords')}</div>
         </div>
       </div>
+
+      {upgradeAvailable && !upgradeDismissed && (
+        <div className="mb-6 flex flex-wrap items-center gap-3 p-3 rounded-xl border border-clay-soft/40 bg-clay-soft/5">
+          <RefreshCw size={18} className="text-clay-soft shrink-0" />
+          <p className="flex-1 text-sm text-ink min-w-[12rem]">{t('vocabulary.upgrade.banner')}</p>
+          <button onClick={dismissUpgrade} className="px-3 py-1.5 text-sm rounded-lg text-ink-light hover:text-ink hover:bg-ink/5">
+            {t('vocabulary.upgrade.dismiss')}
+          </button>
+          <button onClick={() => setShowUpgrade(true)} className="px-3 py-1.5 bg-clay-soft text-white text-sm rounded-lg hover:bg-clay-soft-dark transition-colors">
+            {t('vocabulary.upgrade.open')}
+          </button>
+        </div>
+      )}
 
       {arabicCount > 0 && (
         <div className="mb-6 flex flex-wrap items-center gap-3 p-3 rounded-xl border border-clay-soft/40 bg-clay-soft/5">
@@ -222,7 +276,19 @@ export default function VocabularySection() {
       {/* Topics */}
       {vocabularyCategories.length > 0 && (
         <div className="mb-4">
-          <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:thin]">
+          <div className="flex items-start gap-2">
+          <button
+            onClick={() => setShowTopicPicker((v) => !v)}
+            aria-expanded={showTopicPicker}
+            className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm border transition-colors ${
+              showTopicPicker ? 'bg-ink text-card border-ink' : 'border-border-subtle text-ink hover:bg-ink/5'
+            }`}
+          >
+            <ListFilter size={15} />
+            {t('vocabulary.topicPicker.open').replace('{count}', String(vocabularyCategories.length))}
+            <ChevronDown size={14} className={`transition-transform ${showTopicPicker ? 'rotate-180' : ''}`} />
+          </button>
+          <div ref={topicRowRef} className="flex-1 min-w-0 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:thin]">
             <button
               onClick={() => setFilterCategory('all')}
               className={`shrink-0 px-3 py-1.5 rounded-full text-sm border transition-colors ${
@@ -238,6 +304,7 @@ export default function VocabularySection() {
               return (
                 <button
                   key={cat.id}
+                  data-topic-id={cat.id}
                   onClick={() => setFilterCategory(active ? 'all' : cat.id)}
                   title={`${t('vocabulary.topicMastery')}: ${pct}%`}
                   className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm border transition-colors ${
@@ -256,6 +323,44 @@ export default function VocabularySection() {
               );
             })}
           </div>
+          </div>
+          {showTopicPicker && (
+            <div className="mt-2 p-3 rounded-xl border border-border-subtle bg-card space-y-2">
+              <label className="relative block">
+                <Search size={14} className="absolute top-1/2 -translate-y-1/2 start-3 text-ink-lighter" aria-hidden="true" />
+                <input
+                  type="search"
+                  autoFocus
+                  value={topicQuery}
+                  onChange={(e) => setTopicQuery(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Escape' && setShowTopicPicker(false)}
+                  placeholder={t('vocabulary.topicPicker.search')}
+                  aria-label={t('vocabulary.topicPicker.search')}
+                  className="w-full ps-8 pe-3 py-1.5 rounded-lg bg-ink/5 border border-border-subtle text-sm text-ink placeholder:text-ink-lighter focus:outline-none focus:border-clay-soft"
+                />
+              </label>
+              <div className="flex flex-wrap gap-2 max-h-56 overflow-y-auto" role="listbox" aria-label={t('vocabulary.topicPicker.open').replace('{count}', String(vocabularyCategories.length))}>
+                {pickerTopics.length === 0 && <p className="text-sm text-ink-light">{t('vocabulary.topicPicker.none')}</p>}
+                {pickerTopics.map((cat) => {
+                  const active = filterCategory === cat.id;
+                  return (
+                    <button
+                      key={cat.id}
+                      role="option"
+                      aria-selected={active}
+                      onClick={() => pickTopic(cat.id)}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm border transition-colors ${
+                        active ? 'bg-clay-soft text-white border-clay-soft' : 'border-border-subtle text-ink hover:bg-ink/5'
+                      }`}
+                    >
+                      <span dir="auto">{cat.name}</span>
+                      <span className="opacity-70 tabular-nums">{topicStats.get(cat.id)?.count ?? 0}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
           {selectedCategory && (
             <div className="mt-3 flex flex-wrap items-center gap-2">
               <button
@@ -414,6 +519,7 @@ export default function VocabularySection() {
       )}
 
       {showMeanings && selectedCategory && <CheckMeaningsModal category={selectedCategory} onClose={() => setShowMeanings(false)} />}
+      {showUpgrade && <UpgradeTopicsModal onClose={() => setShowUpgrade(false)} />}
       {showChallenge && selectedCategory && (
         <TopicChallenge category={selectedCategory} onClose={() => setShowChallenge(false)} />
       )}

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { X, ArrowLeft, ArrowRight, Volume2, Check, Loader2, Library, PlayCircle, Search } from 'lucide-react';
+import { X, ArrowLeft, ArrowRight, Volume2, Check, Loader2, Library, PlayCircle, Search, RefreshCw } from 'lucide-react';
 import { useTranslation } from '../../i18n/useTranslation';
 import { useAppStore } from '../../store/appStore';
 import { speakWord, getPronunciationPrefs } from '../../lib/pronunciation';
@@ -7,6 +7,7 @@ import { TOPIC_PACKS, type PackGroup, type TopicPack } from '../../data/topicPac
 import { useDialog } from '../../lib/useDialog';
 import YouGlishModal from './YouGlishModal';
 import TopicLesson from './TopicLesson';
+import UpgradeTopicsModal from './UpgradeTopicsModal';
 
 const NEW_GROUP = '__pack__';
 
@@ -65,6 +66,7 @@ export default function TopicLibraryModal({ onClose, onAdded }: TopicLibraryModa
   const accent = getPronunciationPrefs().accent;
 
   const [youglishWord, setYouglishWord] = useState<string | null>(null);
+  const [showUpgrade, setShowUpgrade] = useState(false);
   const [query, setQuery] = useState('');
   const [group, setGroup] = useState<PackGroup | 'all'>('all');
   const [onlyNew, setOnlyNew] = useState(false);
@@ -120,7 +122,17 @@ export default function TopicLibraryModal({ onClose, onAdded }: TopicLibraryModa
         <div className="flex-1 overflow-y-auto p-6">
           {!selected ? (
             <>
-              <p className="text-sm text-ink-light mb-4">{t('vocabulary.library.subtitle')}</p>
+              <div className="flex flex-wrap items-start gap-3 mb-4">
+                <p className="flex-1 min-w-[14rem] text-sm text-ink-light">{t('vocabulary.library.subtitle')}</p>
+                {vocabularyCategories.length > 0 && (
+                  <button
+                    onClick={() => setShowUpgrade(true)}
+                    className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg border border-border-subtle text-ink hover:bg-ink/5"
+                  >
+                    <RefreshCw size={14} className="text-clay-soft" /> {t('vocabulary.upgrade.title')}
+                  </button>
+                )}
+              </div>
               <div className="flex flex-wrap items-center gap-2 mb-4">
                 <label className="relative flex-1 min-w-[12rem]">
                   <Search size={15} className="absolute top-1/2 -translate-y-1/2 start-3 text-ink-lighter" aria-hidden="true" />
@@ -285,6 +297,7 @@ export default function TopicLibraryModal({ onClose, onAdded }: TopicLibraryModa
         )}
       </div>
       {youglishWord && <YouGlishModal word={youglishWord} onClose={() => setYouglishWord(null)} />}
+      {showUpgrade && <UpgradeTopicsModal onClose={() => setShowUpgrade(false)} />}
     </div>
   );
 }
