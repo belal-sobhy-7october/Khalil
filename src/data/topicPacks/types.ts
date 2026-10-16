@@ -5,6 +5,8 @@
  * serves the topic, discussion questions that use the words, and a one-minute
  * speaking task. Each word carries the one meaning it has in this topic and an
  * example that puts it in that context.
+ *
+ * Adding a topic? Follow ./README.md.
  */
 import type { VocabularyItemType } from '../../types';
 
