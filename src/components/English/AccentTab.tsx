@@ -1,12 +1,9 @@
 import { useState } from 'react';
-import { ExternalLink, Volume2, Snail } from 'lucide-react';
+import { Volume2, Snail } from 'lucide-react';
 import { useTranslation } from '../../i18n/useTranslation';
 import { speakBrowser, speakWord, getPronunciationPrefs } from '../../lib/pronunciation';
-import { youtubeEmbedUrl, type YouTubeRef } from '../../lib/youtube';
-import {
-  ACCENT_FEATURES, ACCENT_TRACKS, CONSONANTS, VOWELS, Z_AMERICAN_ENGLISH, channelSearchUrl, type AccentTrack, type SoundEntry,
-} from '../../data/englishStudy';
-import SavedLinks from './SavedLinks';
+import { ACCENT_FEATURES, CONSONANTS, VOWELS, type SoundEntry } from '../../data/englishStudy';
+import CourseTracker from './CourseTracker';
 import StudyTimer from './StudyTimer';
 
 function SoundGrid({ title, sounds }: { title: string; sounds: SoundEntry[] }) {
@@ -40,74 +37,13 @@ function SoundGrid({ title, sounds }: { title: string; sounds: SoundEntry[] }) {
 export default function AccentTab() {
   const { t } = useTranslation();
   const accent = getPronunciationPrefs().accent;
-  const [track, setTrack] = useState<AccentTrack>('accent');
-  const [playing, setPlaying] = useState<{ ref: YouTubeRef; url: string } | null>(null);
   const [panel, setPanel] = useState<'sounds' | 'features'>('features');
 
   return (
     <div className="space-y-6">
       <StudyTimer kind="accent" />
 
-      {/* Z American English */}
-      <div className="rounded-xl border border-border-subtle p-4 space-y-4">
-        <div className="flex flex-wrap items-start justify-between gap-2">
-          <div>
-            <h3 className="font-semibold text-ink">Z American English</h3>
-            <p className="text-sm text-ink-light">{t('english.accent.channelDesc')}</p>
-          </div>
-          <a href={`${Z_AMERICAN_ENGLISH}/playlists`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-clay-soft text-white text-sm hover:bg-clay-soft-dark">
-            <ExternalLink size={14} /> {t('english.accent.allPlaylists')}
-          </a>
-        </div>
-
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2" role="tablist">
-          {ACCENT_TRACKS.map((tr) => (
-            <button
-              key={tr.id}
-              role="tab"
-              aria-selected={track === tr.id}
-              onClick={() => setTrack(tr.id)}
-              className={`p-3 rounded-xl border text-start transition-colors ${
-                track === tr.id ? 'border-clay-soft bg-clay-soft/10' : 'border-border-subtle hover:bg-ink/5'
-              }`}
-            >
-              <div className="text-xl">{tr.icon}</div>
-              <div className="text-sm font-medium text-ink">{t(`english.accent.track.${tr.id}`)}</div>
-            </button>
-          ))}
-        </div>
-
-        <div className="space-y-2">
-          <p className="text-xs text-ink-light">{t(`english.accent.trackHint.${track}`)}</p>
-          <a
-            href={channelSearchUrl(Z_AMERICAN_ENGLISH, ACCENT_TRACKS.find((x) => x.id === track)!.query)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 text-xs text-clay-soft hover:underline"
-          >
-            <ExternalLink size={12} /> {t('english.accent.findOnChannel')}
-          </a>
-          <SavedLinks
-            section="accent"
-            track={track}
-            activeUrl={playing?.url}
-            onPlay={(ref, url) => setPlaying({ ref, url })}
-          />
-        </div>
-
-        {playing && (
-          <div className="aspect-video w-full rounded-xl overflow-hidden bg-black">
-            <iframe
-              key={playing.url}
-              src={youtubeEmbedUrl(playing.ref)}
-              title="Lesson"
-              className="w-full h-full"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; picture-in-picture"
-              allowFullScreen
-            />
-          </div>
-        )}
-      </div>
+      <CourseTracker />
 
       {/* Built-in reference */}
       <div className="rounded-xl border border-border-subtle p-4 space-y-4">

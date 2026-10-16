@@ -8,15 +8,26 @@ const RATES = [0.5, 0.75, 1, 1.25];
 
 const fmt = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
 
+/** YT.PlayerState.ENDED */
+const ENDED = 0;
+
 /**
  * YouTube player with shadowing controls: speed, "back 5s", and an A–B loop
  * to repeat one sentence until it sounds right.
  */
-export default function LoopPlayer({ source }: { source: YouTubeRef }) {
+export default function LoopPlayer({ source, onEnded, hideHint = false }: {
+  source: YouTubeRef;
+  onEnded?: () => void;
+  hideHint?: boolean;
+}) {
   const { t } = useTranslation();
   // React owns the host only; the API replaces its child with an iframe.
   const hostRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<YTPlayer | null>(null);
+  const onEndedRef = useRef(onEnded);
+  useEffect(() => {
+    onEndedRef.current = onEnded;
+  });
   const [ready, setReady] = useState(false);
   const [failed, setFailed] = useState(false);
   const [rate, setRate] = useState(1);
@@ -46,6 +57,9 @@ export default function LoopPlayer({ source }: { source: YouTubeRef }) {
           events: {
             onReady: () => alive && setReady(true),
             onError: () => alive && setFailed(true),
+            onStateChange: (e) => {
+              if (alive && e.data === ENDED) onEndedRef.current?.();
+            },
           },
         });
       })
@@ -145,7 +159,7 @@ export default function LoopPlayer({ source }: { source: YouTubeRef }) {
           <button onClick={clearLoop} className="text-xs text-ink-lighter hover:text-ink">{t('english.player.clear')}</button>
         )}
       </div>
-      <p className="text-[11px] text-ink-lighter">{t('english.player.hint')}</p>
+      {!hideHint && <p className="text-[11px] text-ink-lighter">{t('english.player.hint')}</p>}
     </div>
   );
 }

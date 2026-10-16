@@ -287,3 +287,39 @@ select option {
   font-family: var(--app-heading-font);
   letter-spacing: 0.01em;
 }
+
+/* English hub course tracker: progress-bar sheen and "now playing" bars. */
+.course-shimmer {
+  background: linear-gradient(100deg, transparent 20%, rgb(255 255 255 / 0.35) 50%, transparent 80%);
+  transform: translateX(-100%);
+  animation: course-shimmer 2.6s ease-in-out infinite;
+}
+
+@keyframes course-shimmer {
+  60%,
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.course-eq-bar {
+  transform-origin: bottom;
+  animation: course-eq 0.9s ease-in-out infinite;
+}
+
+@keyframes course-eq {
+  0%,
+  100% {
+    transform: scaleY(0.3);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .course-shimmer,
+  .course-eq-bar {
+    animation: none;
+  }
+}

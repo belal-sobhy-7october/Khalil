@@ -15,7 +15,7 @@ export interface StudySource {
   embedUrl?: string;
 }
 
-export const Z_AMERICAN_ENGLISH = 'https://www.youtube.com/@ZAmericanEnglish';
+const Z_AMERICAN_ENGLISH = 'https://www.youtube.com/@ZAmericanEnglish';
 export const LISTENING_TIME = 'https://www.youtube.com/@listeningtimepodcast';
 const READING_PDF_ID = '100Y_ZLHJMrSkamc1Cp66LlUUfVJgEBci';
 
@@ -43,18 +43,6 @@ export const STUDY_SOURCES: StudySource[] = [
     section: 'reading',
   },
 ];
-
-/** The four accent tracks, each searchable on the Z American English channel. */
-export const ACCENT_TRACKS = [
-  { id: 'accent', query: 'accent', icon: '🗣️' },
-  { id: 'phonetics', query: 'pronunciation', icon: '🔤' },
-  { id: 'grammar', query: 'grammar', icon: '📘' },
-  { id: 'reading', query: 'reading', icon: '📖' },
-] as const;
-export type AccentTrack = (typeof ACCENT_TRACKS)[number]['id'];
-
-export const channelSearchUrl = (channel: string, query: string) =>
-  `${channel}/search?query=${encodeURIComponent(query)}`;
 
 /** American English sounds (General American), with example words to hear. */
 export interface SoundEntry {

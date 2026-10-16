@@ -91,3 +91,4 @@ npm run dev
 | `npm run lint` | Run ESLint |
 | `npm test` | Run the test suite once (Vitest) |
 | `npm run test:watch` | Run tests in watch mode |
+| `node scripts/sync-courses.mjs` | Refresh the English hub's course episodes from YouTube (`src/data/courseCatalog.ts` lists the playlists) |
