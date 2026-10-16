@@ -122,3 +122,14 @@ describe('buildYouGlishUrl', () => {
     expect(url).toBe('https://youglish.com/pronounce//english/us');
   });
 });
+describe('spokenForm / youglishQuery', () => {
+  it('uses the first alternative and drops notes and placeholders', async () => {
+    const { spokenForm, youglishQuery } = await import('./pronunciation');
+    expect(spokenForm('résumé / CV')).toBe('résumé');
+    expect(youglishQuery('résumé / CV')).toBe('resume');
+    expect(youglishQuery('pick sb up')).toBe('pick up');
+    expect(youglishQuery('take (something) for granted')).toBe('take for granted');
+    expect(youglishQuery('cover letter')).toBe('cover letter');
+    expect(youglishQuery("don't")).toBe("don't");
+  });
+});

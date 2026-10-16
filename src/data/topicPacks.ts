@@ -16,8 +16,11 @@ export interface PackItem {
   example: string;
 }
 
+export type PackGroup = 'work' | 'talk' | 'life';
+
 export interface TopicPack {
   id: string;
+  group: PackGroup;
   title: string;
   description: string;
   level: 'B1' | 'B2' | 'C1';
@@ -45,6 +48,7 @@ export const TOPIC_PACKS: TopicPack[] = [
   pack(
     {
       id: 'call-center-interview',
+      group: 'work',
       title: 'Call Center Interview',
       description: 'Answer the questions call center recruiters always ask, in natural English.',
       level: 'B2',
@@ -95,6 +99,7 @@ p | I'm available to start immediately | I can start the job right away. | I'm a
   pack(
     {
       id: 'call-center-on-the-call',
+      group: 'work',
       title: 'Call Center: On the Call',
       description: 'The exact phrases agents use from greeting to closing a call.',
       level: 'B2',
@@ -145,6 +150,7 @@ w | troubleshoot | To find and fix the cause of a technical problem. | Let's tro
   pack(
     {
       id: 'call-center-difficult-customers',
+      group: 'work',
       title: 'Call Center: Difficult Customers',
       description: 'Stay calm, de-escalate and say no politely.',
       level: 'B2',
@@ -184,6 +190,7 @@ i | at the end of the day | Finally, when everything is considered. | At the end
   pack(
     {
       id: 'job-interview',
+      group: 'work',
       title: 'Job Interview',
       description: 'Talk about your experience, skills and goals with confidence.',
       level: 'B2',
@@ -230,6 +237,7 @@ i | a quick learner | Someone who learns new things easily. | I'm a quick learne
   pack(
     {
       id: 'phone-and-email',
+      group: 'work',
       title: 'Phone & Email English',
       description: 'Clear, polite English for calls, voicemails and work emails.',
       level: 'B2',
@@ -266,6 +274,7 @@ i | touch base | To make brief contact with someone. | Let's touch base next wee
   pack(
     {
       id: 'work-and-office',
+      group: 'work',
       title: 'Work & Office',
       description: 'Everyday language for working with a team.',
       level: 'B2',
@@ -305,6 +314,7 @@ i | back to square one | Back to the start after a failure. | The client rejecte
   pack(
     {
       id: 'meetings-and-discussions',
+      group: 'work',
       title: 'Meetings & Discussions',
       description: 'Join in, agree, disagree and keep a meeting moving.',
       level: 'B2',
@@ -340,6 +350,7 @@ i | think outside the box | To think in a new, creative way. | We need to think 
   pack(
     {
       id: 'small-talk',
+      group: 'talk',
       title: 'Small Talk',
       description: 'Start conversations, keep them going and end them politely.',
       level: 'B1',
@@ -374,6 +385,7 @@ i | speak of the devil | Said when the person you are talking about arrives. | S
   pack(
     {
       id: 'opinions-and-arguing',
+      group: 'talk',
       title: 'Opinions & Arguing',
       description: 'Give opinions, support them and disagree politely.',
       level: 'B2',
@@ -408,6 +420,7 @@ i | sit on the fence | To avoid choosing a side. | You can't sit on the fence fo
   pack(
     {
       id: 'feelings-and-personality',
+      group: 'talk',
       title: 'Feelings & Personality',
       description: 'Describe how people feel and what they are like.',
       level: 'B2',
@@ -445,6 +458,7 @@ i | lose your temper | To suddenly become very angry. | He lost his temper with 
   pack(
     {
       id: 'shopping-and-money',
+      group: 'life',
       title: 'Shopping & Money',
       description: 'Buying, returning, paying and talking about money.',
       level: 'B1',
@@ -481,6 +495,7 @@ i | make ends meet | To have just enough money to live. | It's hard to make ends
   pack(
     {
       id: 'travel',
+      group: 'life',
       title: 'Travel & Airport',
       description: 'From booking to check-in, hotels and getting around.',
       level: 'B1',
@@ -516,6 +531,7 @@ i | hit the road | To start a journey. | It's late — let's hit the road.
   pack(
     {
       id: 'restaurant-and-food',
+      group: 'life',
       title: 'Restaurant & Food',
       description: 'Order, ask about dishes and talk about taste.',
       level: 'B1',
@@ -550,6 +566,7 @@ i | eat like a horse | To eat a lot. | My brother eats like a horse.
   pack(
     {
       id: 'health',
+      group: 'life',
       title: 'Health & The Doctor',
       description: 'Describe symptoms and talk to a doctor or pharmacist.',
       level: 'B1',
@@ -584,6 +601,7 @@ i | back on my feet | Healthy again after an illness. | I'm back on my feet afte
   pack(
     {
       id: 'tech-everyday',
+      group: 'life',
       title: 'Tech Support & Everyday Tech',
       description: 'Explain technical problems — useful for tech-support call centers too.',
       level: 'B2',
@@ -618,6 +636,7 @@ p | Walk me through what happened | Explain step by step. | Could you walk me th
   pack(
     {
       id: 'daily-routine',
+      group: 'life',
       title: 'Daily Routine & Home',
       description: 'Describe your day, chores and life at home.',
       level: 'B1',

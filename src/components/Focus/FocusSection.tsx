@@ -10,7 +10,7 @@ import { focusStreak, lastNDays, localDay, minutesByDay } from '../../lib/focusS
 import { primeAudio } from '../../lib/chime';
 import { notificationPermission, requestNotificationPermission } from '../../lib/systemNotify';
 import { documentPipSupported, useFloatingWindow } from '../../lib/floatingWindow';
-import { setNoiseVolume, startNoise, stopNoise, type NoiseKind } from '../../lib/ambientNoise';
+import { useNoiseStore, type NoiseKind } from '../../lib/ambientNoise';
 import { formatClock } from './clock';
 import { useTimerNow } from './useTimerNow';
 
@@ -52,8 +52,10 @@ export default function FocusSection() {
   const [permission, setPermission] = useState(notificationPermission);
   const pipWindow = useFloatingWindow((f) => f.win);
   const openPip = useFloatingWindow((f) => f.open);
-  const [noise, setNoise] = useState<NoiseKind | null>(null);
-  const [volume, setVolume] = useState(0.3);
+  const noise = useNoiseStore((n) => n.kind);
+  const volume = useNoiseStore((n) => n.volume);
+  const toggleNoise = useNoiseStore((n) => n.toggle);
+  const setVolume = useNoiseStore((n) => n.setVolume);
 
   const remaining = s.remaining(now);
   const progress = 1 - remaining / s.durationMs();
@@ -87,18 +89,6 @@ export default function FocusSection() {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, []);
-
-  useEffect(() => () => stopNoise(), []);
-
-  const toggleNoise = (kind: NoiseKind) => {
-    if (noise === kind) {
-      stopNoise();
-      setNoise(null);
-    } else {
-      startNoise(kind, volume);
-      setNoise(kind);
-    }
-  };
 
   const enableNotifications = async () => {
     setPermission(await requestNotificationPermission());
@@ -242,10 +232,7 @@ export default function FocusSection() {
                 max={1}
                 step={0.05}
                 value={volume}
-                onChange={(e) => {
-                  setVolume(Number(e.target.value));
-                  setNoiseVolume(Number(e.target.value));
-                }}
+                onChange={(e) => setVolume(Number(e.target.value))}
                 aria-label={t('focus.noise.volume')}
                 className="w-28 accent-clay-soft"
               />

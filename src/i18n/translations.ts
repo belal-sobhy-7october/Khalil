@@ -423,6 +423,7 @@ export const translations = {
       enableNotifications: 'Enable desktop notifications',
       notificationsBlocked: 'Notifications blocked — allow them from the address bar',
       noise: { white: 'White noise', pink: 'Rain (pink)', brown: 'Deep (brown)', volume: 'Volume' },
+      chip: { settings: 'Floating timer settings', opacity: 'Transparency', size: 'Size', small: 'Small', medium: 'Medium', large: 'Large', sound: 'Background sound', open: 'Open the focus page' },
       notify: {
         focusDoneTitle: 'Focus session done 🍅',
         focusDoneBody: 'Great work — time for a break.',
@@ -581,6 +582,10 @@ export const translations = {
       reviewTopic: 'Review "{name}"',
       addToTopic: 'Add words to this topic',
       library: {
+        search: 'Search topics or words…',
+        group: { all: 'All', work: 'Work & career', talk: 'Conversation', life: 'Daily life' },
+        notAdded: 'Not added yet',
+        noMatch: 'No topic matches your search.',
         open: 'Topic Library',
         title: 'Topic Library',
         subtitle: 'Ready-made packs of the most useful words, phrasal verbs, idioms and phrases — all in English. Open one, check it, and add it to your list in one click.',
@@ -1207,6 +1212,7 @@ export const translations = {
       enableNotifications: 'فعّل إشعارات الجهاز',
       notificationsBlocked: 'الإشعارات مقفولة — اسمح بيها من شريط العنوان',
       noise: { white: 'ضوضاء بيضاء', pink: 'مطر', brown: 'عميق', volume: 'مستوى الصوت' },
+      chip: { settings: 'إعدادات المؤقت العائم', opacity: 'الشفافية', size: 'الحجم', small: 'صغير', medium: 'متوسط', large: 'كبير', sound: 'صوت الخلفية', open: 'افتح صفحة التركيز' },
       notify: {
         focusDoneTitle: 'خلصت جلسة تركيز 🍅',
         focusDoneBody: 'شغل عظيم — وقت الراحة.',
@@ -1365,6 +1371,10 @@ export const translations = {
       reviewTopic: 'مراجعة "{name}"',
       addToTopic: 'إضافة كلمات لهذا الموضوع',
       library: {
+        search: 'دوّر على موضوع أو كلمة…',
+        group: { all: 'الكل', work: 'الشغل', talk: 'المحادثة', life: 'الحياة اليومية' },
+        notAdded: 'لسه ما اتضافتش',
+        noMatch: 'مفيش موضوع مطابق للبحث.',
         open: 'مكتبة المواضيع',
         title: 'مكتبة المواضيع',
         subtitle: 'باقات جاهزة لأهم الكلمات والأفعال والتعبيرات والجمل — كلها بالإنجليزي. افتح الباقة، راجعها، وأضفها لقائمتك بضغطة.',

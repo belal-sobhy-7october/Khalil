@@ -88,6 +88,30 @@ export function speakBrowser(text: string, accent: BrowserAccent = 'us', rate = 
 }
 
 /**
+ * The part of a vocabulary entry worth saying out loud: its first
+ * alternative ("résumé / CV" → "résumé"), without notes in parentheses or
+ * sb/sth placeholders ("pick sb up" → "pick up").
+ */
+export function spokenForm(text: string): string {
+  const first = text.split('/').map((part) => part.trim()).find(Boolean) ?? '';
+  const cleaned = first
+    .replace(/\([^)]*\)/g, ' ')
+    .replace(/\b(?:sb|sth|smb|smth)(?:'s)?\b/gi, ' ')
+    .replace(/…|\.\.\./g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  return cleaned || text.trim();
+}
+
+/**
+ * What to search YouGlish for. It matches video captions, which almost never
+ * carry accents, so "résumé" is searched as "resume".
+ */
+export function youglishQuery(text: string): string {
+  return spokenForm(text).normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
+/**
  * Build the fallback YouGlish URL for a word/phrase.
  * @param word - The word or phrase to look up
  * @param accent - 'us', 'uk', or 'aus'
@@ -102,7 +126,7 @@ export function buildYouGlishUrl(word: string, accent: YouGlishAccent = 'us'): s
  * accent (single words only), otherwise the browser's speech synthesis.
  */
 export async function speakWord(text: string, accent: BrowserAccent = 'us'): Promise<void> {
-  const trimmed = text.trim();
+  const trimmed = spokenForm(text);
   if (/^[a-zA-Z'-]+$/.test(trimmed)) {
     // Don't keep the user waiting on a slow lookup: after 1.5s speak with
     // the browser voice instead (the lookup still lands in the cache).

@@ -1,11 +1,13 @@
 import { useMemo, useState } from 'react';
-import { X, Loader2, Sparkles, Trash2, Check, AlertCircle } from 'lucide-react';
+import { X, Loader2, Sparkles, Trash2, Check, AlertCircle, Volume2, PlayCircle } from 'lucide-react';
 import { useTranslation } from '../../i18n/useTranslation';
 import { useAppStore } from '../../store/appStore';
 import { lookupMany } from '../../lib/dictionary';
 import { parseQuickLine } from '../../lib/quickAddParse';
 import type { VocabularyItemType } from '../../types';
 import { useDialog } from '../../lib/useDialog';
+import { getPronunciationPrefs, speakWord } from '../../lib/pronunciation';
+import YouGlishModal from './YouGlishModal';
 
 type LookupStatus = 'pending' | 'found' | 'missing' | 'manual';
 
@@ -120,6 +122,8 @@ export default function QuickAddModal({ onClose, defaultCategory }: { onClose: (
   const inputClass =
     'w-full px-2 py-1 bg-ink/5 border border-border-subtle rounded text-ink text-sm focus:outline-none focus:border-clay-soft';
 
+  const [youglishWord, setYouglishWord] = useState<string | null>(null);
+  const accent = getPronunciationPrefs().accent;
   const dialog = useDialog(() => !saving && onClose());
 
   return (
@@ -215,6 +219,12 @@ export default function QuickAddModal({ onClose, defaultCategory }: { onClose: (
                       {r.status === 'found' && <Check size={14} className="text-green-500 shrink-0" />}
                       {r.status === 'missing' && !r.definition && <AlertCircle size={14} className="text-amber-500 shrink-0" />}
                       <span className="font-semibold text-ink text-sm truncate" title={r.word}>{r.word}</span>
+                      <button onClick={() => void speakWord(r.word, accent)} className="p-1 rounded hover:bg-ink/5 shrink-0" aria-label={`${t('vocabulary.pronounce')}: ${r.word}`}>
+                        <Volume2 size={13} className="text-ink-light" />
+                      </button>
+                      <button onClick={() => setYouglishWord(r.word)} className="p-1 rounded hover:bg-ink/5 shrink-0" aria-label={`YouGlish: ${r.word}`}>
+                        <PlayCircle size={13} className="text-ink-light" />
+                      </button>
                     </div>
                     <select
                       value={r.type}
@@ -294,6 +304,7 @@ export default function QuickAddModal({ onClose, defaultCategory }: { onClose: (
           )}
         </div>
       </div>
+      {youglishWord && <YouGlishModal word={youglishWord} onClose={() => setYouglishWord(null)} />}
     </div>
   );
 }

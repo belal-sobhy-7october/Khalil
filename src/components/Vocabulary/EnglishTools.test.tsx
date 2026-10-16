@@ -53,6 +53,26 @@ describe('TopicLibraryModal', () => {
     expect(options.categoryForAll).toBe('Call Center Interview');
     await waitFor(() => expect(onAdded).toHaveBeenCalledWith('Call Center Interview'));
   });
+
+  it('filters topics by group and by a word they contain', () => {
+    render(<TopicLibraryModal onClose={() => {}} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Daily life' }));
+    expect(screen.queryByText('Job Interview')).toBeNull();
+    expect(screen.getByText(TOPIC_PACKS.find((p) => p.group === 'life')!.title)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'All' }));
+    const word = TOPIC_PACKS.find((p) => p.id === 'job-interview')!.items[0].word;
+    fireEvent.change(screen.getByRole('searchbox'), { target: { value: word } });
+    expect(screen.getByText('Job Interview')).toBeInTheDocument();
+    fireEvent.change(screen.getByRole('searchbox'), { target: { value: 'zzzz' } });
+    expect(screen.getByText('No topic matches your search.')).toBeInTheDocument();
+  });
+
+  it('offers YouGlish next to every pack word', () => {
+    render(<TopicLibraryModal onClose={() => {}} />);
+    fireEvent.click(screen.getByText('Job Interview'));
+    const pack = TOPIC_PACKS.find((p) => p.id === 'job-interview')!;
+    expect(screen.getAllByRole('button', { name: /^YouGlish: / })).toHaveLength(pack.items.length);
+  });
 });
 
 describe('QuickAddModal', () => {

@@ -10,6 +10,7 @@ import WirdSection from './Wird/WirdSection';
 import AnalyticsSection from './Analytics/AnalyticsSection';
 import SettingsSection from './Settings/SettingsSection';
 import FocusChip from './Focus/FocusChip';
+import { useNoiseStore } from '../lib/ambientNoise';
 
 vi.mock('../lib/supabase', async () => {
   const mod = await import('../test/mockSupabase');
@@ -187,5 +188,36 @@ describe('FocusChip', () => {
     expect(onOpen).toHaveBeenCalled();
     fireEvent.click(screen.getByRole('button', { name: 'Resume' }));
     expect(usePomodoroStore.getState().status).toBe('running');
+  });
+
+  it('remembers transparency and size from its settings', () => {
+    usePomodoroStore.setState({ status: 'paused', remainingMs: 60_000 });
+    render(<FocusChip onOpen={() => {}} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Floating timer settings' }));
+    const panel = screen.getByRole('dialog', { name: 'Floating timer settings' });
+    fireEvent.change(within(panel).getByRole('slider'), { target: { value: '40' } });
+    fireEvent.click(within(panel).getByRole('button', { name: 'Large' }));
+    expect(JSON.parse(localStorage.getItem('khalil-focus-chip') ?? '{}')).toEqual({ opacity: 0.6, size: 'large' });
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('stays visible while background sound plays, even when the timer is idle', () => {
+    useNoiseStore.setState({ kind: 'pink' });
+    render(<FocusChip onOpen={() => {}} />);
+    expect(screen.getByText('25:00')).toBeInTheDocument();
+    useNoiseStore.setState({ kind: null });
+  });
+});
+
+describe('background sound', () => {
+  it('keeps playing after leaving the Focus page', () => {
+    const { unmount } = render(<FocusSection />);
+    fireEvent.click(screen.getByRole('button', { name: 'Rain (pink)' }));
+    expect(useNoiseStore.getState().kind).toBe('pink');
+    unmount();
+    expect(useNoiseStore.getState().kind).toBe('pink');
+    useNoiseStore.getState().stop();
+    expect(useNoiseStore.getState().kind).toBeNull();
   });
 });
