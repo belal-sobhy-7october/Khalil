@@ -52,7 +52,7 @@ import {
 import { useAppStore } from '../../store/appStore';
 import { useTranslation } from '../../i18n/useTranslation';
 import { getHabitWeekStart, addDaysToDateString, getToday } from '../../store/dateHelpers';
-import { habitPeriodDates, habitPeriodStart, stepHabitPeriod } from '../../store/habitPeriod';
+import { canStepBack, habitPeriodStart, stepHabitPeriod, visibleHabitDates } from '../../store/habitPeriod';
 import { countEligibleDays, computeHabitStats, computeStreaks, isScheduledOn, weekdayOf, type HabitStreaks } from '../../store/habitStats';
 import type { Habit } from '../../types';
 
@@ -95,7 +95,8 @@ const RANGE_STORAGE_KEY = 'khalil-habits-range';
 // Cells get smaller as the range grows so a week fits without scrolling.
 // Wider ranges get narrower cells so more days fit on screen (60 days used to
 // have *bigger* cells than 30, which made the two views look swapped).
-const CELL_WIDTH: Record<RangeOption, string> = { 7: '3.25rem', 30: '2rem', 60: '1.375rem' };
+// Fewer days get wider cells, so a short span still fills the card.
+const cellWidthFor = (days: number) => (days <= 7 ? '3.25rem' : days <= 16 ? '2.5rem' : days <= 31 ? '2rem' : '1.375rem');
 
 function readStoredRange(): RangeOption {
   try {
@@ -386,7 +387,7 @@ const SortableHabitRow = memo(function SortableHabitRow({ habit, dates, entrySet
             <div
               key={date}
               aria-disabled="true"
-              className="w-(--cell-w) h-(--cell-w) border border-border-subtle bg-ink/3"
+              className="w-full h-(--cell-w) border border-border-subtle bg-ink/3"
             />
           );
         }
@@ -416,7 +417,7 @@ const SortableHabitRow = memo(function SortableHabitRow({ habit, dates, entrySet
             aria-label={`${habit.name} — ${date}${note}`}
             title={`${habit.name} — ${dayNameOf(date, locale)} ${shortDate(date, locale)}${note}`}
             aria-pressed={isCompleted}
-            className={`w-(--cell-w) h-(--cell-w) flex items-center justify-center border border-border-subtle transition-all ${look} ${todayRing}`}
+            className={`w-full h-(--cell-w) flex items-center justify-center border border-border-subtle transition-all ${look} ${todayRing}`}
           >
             {isCompleted ? <Check size={14} strokeWidth={3} /> : !scheduled && !beforeStart ? <span className="w-1 h-1 rounded-full bg-ink-lighter/60" /> : null}
           </button>
@@ -515,7 +516,12 @@ export default function HabitsTracker() {
   // Columns run in reading order (oldest → newest: right-to-left in Arabic,
   // left-to-right in English), like any calendar. Longer ranges scroll, and
   // the grid opens scrolled to today — see the layout effect below.
-  const gridDates = useMemo(() => habitPeriodDates(range, anchor), [range, anchor]);
+  // Nothing can be logged before the first habit started, so the grid begins there.
+  const firstStart = useMemo(
+    () => habits.reduce<string | null>((min, h) => (h.startDate <= today && (!min || h.startDate < min) ? h.startDate : min), null),
+    [habits, today]
+  );
+  const gridDates = useMemo(() => visibleHabitDates(range, anchor, firstStart), [range, anchor, firstStart]);
 
   const currentMonth = today.slice(0, 7);
   const daysInMonth = new Date(parseInt(currentMonth.slice(0, 4)), parseInt(currentMonth.slice(5, 7)), 0).getDate();
@@ -641,11 +647,13 @@ export default function HabitsTracker() {
     }
   }, [range, anchor, isRTL, habits.length]);
 
-  // Periods that start after today have nothing to log yet.
+  // Periods that start after today have nothing to log yet, and ones before
+  // the first habit have nothing to show.
   const canGoNext = habitPeriodStart(range, stepHabitPeriod(range, anchor, 1)) <= today;
+  const canGoPrev = canStepBack(range, anchor, firstStart);
 
   const goToPrevWeek = () => {
-    setAnchor((a) => stepHabitPeriod(range, a, -1));
+    if (canGoPrev) setAnchor((a) => stepHabitPeriod(range, a, -1));
   };
 
   const goToNextWeek = () => {
@@ -795,16 +803,17 @@ export default function HabitsTracker() {
 
       {/* Week grid */}
       <div className="bg-card border border-border-subtle rounded-xl p-4 mb-6">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between gap-2 mb-4">
             <button
               onClick={goToPrevWeek}
+              disabled={!canGoPrev}
               aria-label={t('a11y.previousPeriod')}
-              className="p-1 rounded hover:bg-ink/5 text-ink-light transition-colors"
+              className="p-1 rounded hover:bg-ink/5 text-ink-light transition-colors disabled:opacity-30 disabled:hover:bg-transparent"
             >
               {isRTL ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
             </button>
-            <div className="flex items-center gap-3">
-              <div className="text-sm font-medium text-ink">
+            <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-2 min-w-0">
+              <div className="text-sm font-medium text-ink whitespace-nowrap">
                 {dateRangeLabel}
               </div>
               <button
@@ -841,8 +850,8 @@ export default function HabitsTracker() {
           <div ref={scrollContainerRef} className="overflow-x-auto overscroll-x-contain">
             {/* One grid for header + rows (rows are subgrids) so columns always align. */}
             <div
-              className="grid w-max gap-y-0.5 border border-border-subtle [--label-w:170px] sm:[--label-w:220px]"
-              style={{ gridTemplateColumns: `var(--label-w) repeat(${gridDates.length}, var(--cell-w))`, ['--cell-w' as string]: CELL_WIDTH[range] }}
+              className="grid w-max min-w-full gap-y-0.5 border border-border-subtle [--label-w:170px] sm:[--label-w:220px]"
+              style={{ gridTemplateColumns: `var(--label-w) repeat(${gridDates.length}, minmax(var(--cell-w), 1fr))`, ['--cell-w' as string]: cellWidthFor(gridDates.length) }}
             >
               <div className="grid grid-cols-subgrid col-span-full">
                 <div data-grid-label className={`${STICKY_LABEL_CLASSES} z-20`} />
@@ -850,14 +859,14 @@ export default function HabitsTracker() {
                   <div
                     key={date}
                     data-today={date === today || undefined}
-                    className={`text-center py-1 w-(--cell-w) h-(--cell-w) border border-border-subtle flex items-center justify-center ${
+                    className={`text-center py-1 w-full h-(--cell-w) border border-border-subtle flex items-center justify-center ${
                       date === today ? 'bg-clay-soft/10 ring-1 ring-inset ring-clay-soft/40' : date > today ? 'opacity-60' : ''
                     }`}
                   >
                     <div className="flex flex-col items-center leading-tight text-ink-lighter">
-                      {range !== 60 && (
+                      {gridDates.length <= 31 && (
                         <span className="text-[9px]">
-                          {range === 7 ? dayNameOf(date, locale) : weekdayName(weekdayOf(date), locale, 'narrow')}
+                          {gridDates.length <= 7 ? dayNameOf(date, locale) : weekdayName(weekdayOf(date), locale, 'narrow')}
                         </span>
                       )}
                       <span className={`text-[10px] ${date === today ? 'text-clay-soft font-semibold' : ''}`}>
