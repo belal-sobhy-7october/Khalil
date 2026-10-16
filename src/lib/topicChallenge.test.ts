@@ -11,7 +11,7 @@ const item = (id: string, word: string, exampleSentence?: string): VocabularyIte
 describe('buildPracticeTexts', () => {
   it('uses the pack paragraph first for library topics', () => {
     const texts = buildPracticeTexts('Call Center Interview', []);
-    expect(texts[0]).toMatch(/people person/);
+    expect(texts[0]).toMatch(/I graduated in 2023/);
   });
 
   it('stitches example sentences into paragraphs and skips Arabic ones', () => {
@@ -59,5 +59,15 @@ describe('matchesSpoken', () => {
     expect(matchesSpoken('pull up', ['pulled up'])).toBe(false);
     expect(matchesSpoken('résumé / CV', ['my resume is here'])).toBe(true);
     expect(matchesSpoken('résumé / CV', ['send your CV'])).toBe(true);
+  });
+});
+
+describe('buildAiPrompt for library topics', () => {
+  it("brings the pack's questions, grammar and speaking task", () => {
+    const p = buildAiPrompt('Crimes', []);
+    expect(p).toMatch(/witness in court/);
+    expect(p).toMatch(/passive voice/i);
+    expect(p).toMatch(/news reporter/);
+    expect(p).toMatch(/forensics/);
   });
 });

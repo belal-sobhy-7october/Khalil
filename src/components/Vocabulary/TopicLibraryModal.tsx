@@ -4,9 +4,9 @@ import { useTranslation } from '../../i18n/useTranslation';
 import { useAppStore } from '../../store/appStore';
 import { speakWord, getPronunciationPrefs } from '../../lib/pronunciation';
 import { TOPIC_PACKS, type PackGroup, type TopicPack } from '../../data/topicPacks';
-import type { VocabularyItemType } from '../../types';
 import { useDialog } from '../../lib/useDialog';
 import YouGlishModal from './YouGlishModal';
+import TopicLesson from './TopicLesson';
 
 const NEW_GROUP = '__pack__';
 
@@ -35,9 +35,6 @@ export default function TopicLibraryModal({ onClose, onAdded }: TopicLibraryModa
 
   const newCountOf = (pack: TopicPack) =>
     pack.items.filter((i) => !existingWords.has(i.word.toLowerCase())).length;
-
-  const typeLabel = (type: VocabularyItemType) =>
-    t(`vocabulary.type${type.charAt(0).toUpperCase()}${type.slice(1)}`);
 
   const openPack = (pack: TopicPack) => {
     setSelected(pack);
@@ -137,7 +134,7 @@ export default function TopicLibraryModal({ onClose, onAdded }: TopicLibraryModa
                   />
                 </label>
                 <div className="flex flex-wrap gap-1" role="group" aria-label={t('vocabulary.library.title')}>
-                  {(['all', 'work', 'talk', 'life'] as const).map((g) => (
+                  {(['all', 'work', 'talk', 'life', 'society'] as const).map((g) => (
                     <button
                       key={g}
                       onClick={() => setGroup(g)}
@@ -172,7 +169,12 @@ export default function TopicLibraryModal({ onClose, onAdded }: TopicLibraryModa
                     >
                       <div className="flex items-start justify-between gap-2 mb-1">
                         <span className="text-2xl">{pack.emoji}</span>
-                        <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-ink/5 text-ink-light">{pack.level}</span>
+                        <span className="flex items-center gap-1">
+                          {pack.fromCourse && (
+                            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-clay-soft/15 text-clay-soft" dir="auto">{t('vocabulary.library.fromCourse')}</span>
+                          )}
+                          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-ink/5 text-ink-light">{pack.level}</span>
+                        </span>
                       </div>
                       <div className="font-semibold text-ink">{pack.title}</div>
                       <div className="text-xs text-ink-light mt-1 line-clamp-2">{pack.description}</div>
@@ -194,40 +196,42 @@ export default function TopicLibraryModal({ onClose, onAdded }: TopicLibraryModa
               </div>
             </>
           ) : (
-            <div dir="ltr">
-              <p className="text-sm text-ink-light mb-4">{selected.description}</p>
-              <ul className="divide-y divide-border-subtle border border-border-subtle rounded-xl overflow-hidden">
-                {selected.items.map((item) => {
-                  const owned = existingWords.has(item.word.toLowerCase());
-                  return (
-                    <li key={item.word} className={`p-3 ${owned ? 'opacity-50' : ''}`}>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-semibold text-ink">{item.word}</span>
-                        <button
-                          onClick={() => void speakWord(item.word, accent)}
-                          className="p-1 hover:bg-ink/5 rounded transition-colors"
-                          aria-label={`${t('vocabulary.pronounce')}: ${item.word}`}
-                        >
-                          <Volume2 size={14} className="text-ink-light" />
-                        </button>
-                        <button
-                          onClick={() => setYouglishWord(item.word)}
-                          className="p-1 hover:bg-ink/5 rounded transition-colors"
-                          aria-label={`YouGlish: ${item.word}`}
-                          title={t('vocabulary.pronounceYouGlish')}
-                        >
-                          <PlayCircle size={14} className="text-ink-light" />
-                        </button>
-                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-ink/5 text-ink-light">{typeLabel(item.type)}</span>
-                        {owned && <Check size={12} className="text-green-600" />}
-                      </div>
-                      <div className="text-sm text-ink mt-1">{item.definition}</div>
-                      <div className="text-xs text-ink-light italic mt-0.5">{item.example}</div>
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
+            <TopicLesson
+              pack={selected}
+              words={
+                <ul className="divide-y divide-border-subtle border border-border-subtle rounded-xl overflow-hidden">
+                  {selected.items.map((item) => {
+                    const owned = existingWords.has(item.word.toLowerCase());
+                    return (
+                      <li key={item.word} className={`p-3 ${owned ? 'opacity-50' : ''}`}>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-semibold text-ink">{item.word}</span>
+                          <button
+                            onClick={() => void speakWord(item.word, accent)}
+                            className="p-1 hover:bg-ink/5 rounded transition-colors"
+                            aria-label={`${t('vocabulary.pronounce')}: ${item.word}`}
+                          >
+                            <Volume2 size={14} className="text-ink-light" />
+                          </button>
+                          <button
+                            onClick={() => setYouglishWord(item.word)}
+                            className="p-1 hover:bg-ink/5 rounded transition-colors"
+                            aria-label={`YouGlish: ${item.word}`}
+                            title={t('vocabulary.pronounceYouGlish')}
+                          >
+                            <PlayCircle size={14} className="text-ink-light" />
+                          </button>
+                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-ink/5 text-ink-light">{item.pos}</span>
+                          {owned && <Check size={12} className="text-green-600" />}
+                        </div>
+                        <div className="text-sm text-ink mt-1">{item.definition}</div>
+                        <div className="text-xs text-ink-light italic mt-0.5">{item.example}</div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              }
+            />
           )}
         </div>
 

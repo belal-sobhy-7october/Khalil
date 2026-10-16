@@ -69,6 +69,20 @@ describe('TopicLibraryModal', () => {
     expect(screen.getByText('No topic matches your search.')).toBeInTheDocument();
   });
 
+  it.each(['en', 'ar'] as const)('opens a pack as a full lesson (%s)', (language) => {
+    useAppStore.setState({ language });
+    render(<TopicLibraryModal onClose={() => {}} />);
+    expect(screen.getAllByText(language === 'en' ? 'Your course' : 'من الكورس بتاعك')).toHaveLength(8);
+    fireEvent.click(screen.getByText('Artificial Intelligence'));
+    const pack = TOPIC_PACKS.find((p) => p.id === 'artificial-intelligence')!;
+    expect(screen.getByText(pack.warmUp[0])).toBeInTheDocument();
+    expect(screen.getByText(pack.grammar.title)).toBeInTheDocument();
+    expect(screen.getByText(pack.discussion[0])).toBeInTheDocument();
+    expect(screen.getByText(pack.task.prompt)).toBeInTheDocument();
+    expect(screen.getAllByText('phrasal verb').length).toBeGreaterThan(0);
+    expectNoRawKeys();
+  });
+
   it('offers YouGlish next to every pack word', () => {
     render(<TopicLibraryModal onClose={() => {}} />);
     fireEvent.click(screen.getByText('Job Interview'));
@@ -177,15 +191,15 @@ describe('ConvertToEnglishModal', () => {
   it('fills English definitions from packs and saves them', async () => {
     const updateVocabularyItem = vi.fn(async () => {});
     lookupMany.mockImplementation(async () => {});
-    useAppStore.setState({ vocabularyItems: [arabicItem('a', 'Bargain')], updateVocabularyItem });
+    useAppStore.setState({ vocabularyItems: [arabicItem('a', 'Splurge')], updateVocabularyItem });
     render(<ConvertToEnglishModal onClose={() => {}} />);
-    expect(screen.getByDisplayValue(/much less than its usual price/)).toBeInTheDocument();
+    expect(screen.getByDisplayValue(/spend a lot of money on something you enjoy/)).toBeInTheDocument();
     // An English example the user already wrote is kept.
     expect(screen.getByDisplayValue('This phone was a real bargain')).toBeInTheDocument();
     expectNoRawKeys();
     fireEvent.click(screen.getByRole('button', { name: 'Update 1 word' }));
     await waitFor(() => expect(updateVocabularyItem).toHaveBeenCalledWith('a', expect.objectContaining({
-      definition: expect.stringMatching(/much less than its usual price/),
+      definition: expect.stringMatching(/spend a lot of money on something you enjoy/),
     })));
   });
 });
@@ -193,13 +207,13 @@ describe('ConvertToEnglishModal', () => {
 describe('ConvertToEnglishModal select all', () => {
   it('selects and unselects every row', () => {
     lookupMany.mockImplementation(async () => {});
-    useAppStore.setState({ vocabularyItems: [arabicItem('a', 'Bargain'), arabicItem('b', 'Zzqx')] });
+    useAppStore.setState({ vocabularyItems: [arabicItem('a', 'Splurge'), arabicItem('b', 'Zzqx')] });
     render(<ConvertToEnglishModal onClose={() => {}} />);
     const all = screen.getByRole('checkbox', { name: /Select all/ });
     fireEvent.click(all);
     expect(screen.getByRole('checkbox', { name: 'Zzqx' })).toBeChecked();
     fireEvent.click(all);
-    expect(screen.getByRole('checkbox', { name: 'Bargain' })).not.toBeChecked();
+    expect(screen.getByRole('checkbox', { name: 'Splurge' })).not.toBeChecked();
   });
 });
 

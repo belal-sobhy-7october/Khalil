@@ -1,4 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
+import { isStaleChunkError, reloadForNewVersion } from '../../lib/staleChunk';
 
 interface State {
   error: Error | null;
@@ -15,6 +16,8 @@ export default class ErrorBoundary extends Component<{ children: ReactNode }, St
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
+    // A section's file vanished because a new version was deployed: reload once.
+    if (isStaleChunkError(error) && reloadForNewVersion()) return;
     console.error('Unhandled UI error:', error, info.componentStack);
   }
 

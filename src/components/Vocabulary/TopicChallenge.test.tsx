@@ -80,7 +80,7 @@ describe('TopicChallenge', () => {
   it('listen step uses the pack paragraph plus texts from example sentences', async () => {
     render(<TopicChallenge category={category} onClose={() => {}} />);
     fireEvent.click(await screen.findByRole('tab', { name: /Listen & repeat/ }));
-    expect(screen.getByText(/I'm a people person/)).toBeInTheDocument();
+    expect(screen.getByText(/I graduated in 2023/)).toBeInTheDocument();
     expect(screen.getAllByRole('button', { name: /Copy & open NaturalReaders/ })).toHaveLength(1);
   });
 
