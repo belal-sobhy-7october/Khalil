@@ -473,11 +473,12 @@ export const translations = {
         hint: 'Mark A at the start of a sentence and B at its end — it repeats until you sound the same. Slow it down to 0.75x first.',
       },
       accent: {
-        track: { accent: 'Accent', phonetics: 'Phonetics & sounds', grammar: 'Grammar', reading: 'Reading', ielts: 'IELTS: Listening & Reading' },
+        track: { accent: 'Accent', phonetics: 'Phonetics & sounds', grammar: 'Grammar', listening: 'Listening', reading: 'Reading', ielts: 'IELTS: Listening & Reading' },
         trackHint: {
           accent: 'After each lesson, repeat its examples out loud — copy the rhythm, not just the words.',
           phonetics: 'Practise each new sound with the sounds chart below right after the lesson.',
           grammar: 'After each lesson, write 3 sentences of your own with the new rule.',
+          listening: 'Listen once without subtitles, then again with them — and say the new phrases out loud.',
           reading: 'After the lesson, read the story aloud with the timer running, then retell it in your own words.',
           ielts: 'Watch the technique lessons first, then do a practice test — and tick it off.',
         },
@@ -1347,11 +1348,12 @@ export const translations = {
         hint: 'علّم A في أول الجملة و B في آخرها — هتتكرر لحد ما تقولها زيه. ابدأ بسرعة 0.75x.',
       },
       accent: {
-        track: { accent: 'الأكسنت', phonetics: 'الصوتيات والنطق', grammar: 'الجرامر', reading: 'القراءة', ielts: 'الايلتس: استماع وقراءة' },
+        track: { accent: 'الأكسنت', phonetics: 'الصوتيات والنطق', grammar: 'الجرامر', listening: 'الاستماع', reading: 'القراءة', ielts: 'الايلتس: استماع وقراءة' },
         trackHint: {
           accent: 'بعد كل درس كرّر الأمثلة بصوت عالي — قلّد الإيقاع مش الكلام بس.',
           phonetics: 'بعد الدرس اتدرّب على كل صوت جديد من جدول الأصوات تحت.',
           grammar: 'بعد كل درس اكتب 3 جمل من عندك بالقاعدة الجديدة.',
+          listening: 'اسمع مرة من غير ترجمة، وبعدين مرة بالترجمة — وقول العبارات الجديدة بصوت عالي.',
           reading: 'بعد الدرس اقرا القصة بصوت عالي والعدّاد شغال، وبعدين احكيها بكلامك.',
           ielts: 'اتفرّج على دروس التكنيكات الأول، وبعدين حل اختبار تجريبي — وعلّم عليه.',
         },

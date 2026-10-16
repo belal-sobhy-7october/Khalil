@@ -41,7 +41,7 @@ describe('EnglishHub', () => {
     render(<EnglishHub />);
     fireEvent.click(screen.getByRole('tab', { name: 'Accent' }));
     expect(screen.queryByRole('link', { name: /Find lessons/ })).toBeNull();
-    for (const name of [/Phonetics/, /Grammar/, /Reading/, /IELTS/, /Accent/]) {
+    for (const name of [/Phonetics/, /Grammar/, /Listening/, /Reading/, /IELTS/, /Accent/]) {
       fireEvent.click(screen.getAllByRole('tab', { name }).find((el) => el.textContent?.includes('/'))!);
       noRawKeys();
     }
@@ -53,14 +53,14 @@ describe('EnglishHub', () => {
     expect(screen.getAllByRole('progressbar')[0]).toHaveAttribute('aria-valuenow', '0');
     fireEvent.click(boxes[0]);
     expect(screen.getAllByRole('checkbox')[0]).toHaveAttribute('aria-checked', 'true');
-    expect(screen.getByText('1 of 25 lessons')).toBeInTheDocument();
+    expect(screen.getAllByText('1 of 20 lessons')).toHaveLength(2); // track and its one playlist
     expect(saveKv).toHaveBeenCalledWith('u1', 'english-course-progress', { ZD8lvpRKGCY: expect.any(String) });
 
     // "Up next" moves on to lesson 2 and plays it in the page.
     fireEvent.click(screen.getByRole('button', { name: /Up next · Lesson 2 of 20/ }));
     expect(screen.getByTestId('loop-player')).toHaveTextContent('bI_NJIBq5uI');
     fireEvent.click(screen.getByRole('button', { name: 'Mark as watched' }));
-    expect(screen.getByText('2 of 25 lessons')).toBeInTheDocument();
+    expect(screen.getAllByText('2 of 20 lessons')).toHaveLength(2);
 
     // Hide what's watched.
     fireEvent.click(screen.getByRole('button', { name: 'Left' }));
@@ -75,6 +75,19 @@ describe('EnglishHub', () => {
     fireEvent.click(screen.getByRole('button', { name: /Mark all as watched/ }));
     expect(screen.getByRole('status')).toHaveTextContent('Playlist complete!');
     expect(screen.getByText('8 of 43 lessons')).toBeInTheDocument();
+  });
+
+  it('listening track: Z American English listening courses plus the Listening Time podcast', () => {
+    render(<EnglishHub />);
+    fireEvent.click(screen.getByRole('tab', { name: 'Accent' }));
+    fireEvent.click(screen.getAllByRole('tab', { name: /^🎧/ })[0]);
+    expect(screen.getByRole('link', { name: /Z American English/ })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Listening Time Podcast/ })).toHaveAttribute('href', 'https://www.youtube.com/@listeningtimepodcast/playlists');
+    for (const name of [/Listening course — Level 1/, /understanding accents — Level 2/, /English news/, /short B2 clips/, /podcast episodes/]) {
+      expect(screen.getAllByRole('button', { name }).some((b) => b.hasAttribute('aria-expanded'))).toBe(true);
+    }
+    expect(screen.getByText('0 of 125 lessons')).toBeInTheDocument();
+    expect(screen.getAllByRole('checkbox')).toHaveLength(16); // Level 1 is open
   });
 
   it('accent tab: your own links still play inside the page', () => {

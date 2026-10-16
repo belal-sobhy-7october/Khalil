@@ -6,7 +6,7 @@ import { useKv } from '../../lib/useKv';
 import { getToday } from '../../store/dateHelpers';
 import type { YouTubeRef } from '../../lib/youtube';
 import {
-  COURSE_TRACKS, getCourseTrack, isCourseTrackId, videoThumb, videoUrl, type CourseEpisode, type CourseTrackId,
+  COURSE_TRACKS, getCourseTrack, isCourseTrackId, trackChannels, videoThumb, videoUrl, type CourseEpisode, type CourseTrackId,
 } from '../../data/courses';
 import {
   COURSE_PROGRESS_KEY, doneThisWeek, durationParts, episodeStats, findEpisode, milestoneCrossed, nextEpisode, setDone,
@@ -125,7 +125,7 @@ export default function CourseTracker() {
   return (
     <div className="space-y-5">
       {/* Tracks */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2" role="tablist" aria-label={t('english.courses.tracks')}>
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2" role="tablist" aria-label={t('english.courses.tracks')}>
         {COURSE_TRACKS.map((tr) => {
           const s = trackStats(tr, progress);
           const selected = tr.id === trackId;
@@ -176,14 +176,17 @@ export default function CourseTracker() {
           <div className="flex-1 min-w-0 space-y-2.5">
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
               <h3 className="text-lg font-bold text-ink">{t(`english.accent.track.${track.id}`)}</h3>
-              <a
-                href={track.channel.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-xs text-ink-light hover:text-clay-soft"
-              >
-                <ExternalLink size={12} /> {track.channel.name}
-              </a>
+              {trackChannels(track).map((c) => (
+                <a
+                  key={c.url}
+                  href={c.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-xs text-ink-light hover:text-clay-soft"
+                >
+                  <ExternalLink size={12} /> {c.name}
+                </a>
+              ))}
             </div>
             <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-ink-light">
               <span>

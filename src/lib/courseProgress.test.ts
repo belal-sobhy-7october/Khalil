@@ -69,7 +69,7 @@ describe('course progress', () => {
 
 describe('course catalog', () => {
   it('has episodes for every playlist and no lesson twice in one track', () => {
-    expect(COURSE_TRACKS.map((t) => t.id)).toEqual(['accent', 'phonetics', 'grammar', 'reading', 'ielts']);
+    expect(COURSE_TRACKS.map((t) => t.id)).toEqual(['accent', 'phonetics', 'grammar', 'listening', 'reading', 'ielts']);
     for (const t of COURSE_TRACKS) {
       for (const p of t.playlists) expect(p.episodes.length, p.id).toBeGreaterThan(0);
       const ids = t.playlists.flatMap((p) => p.episodes.map((e) => e.id));
