@@ -52,6 +52,7 @@ import {
 import { useAppStore } from '../../store/appStore';
 import { useTranslation } from '../../i18n/useTranslation';
 import { getHabitWeekStart, addDaysToDateString, getToday } from '../../store/dateHelpers';
+import { habitPeriodDates, habitPeriodStart, stepHabitPeriod } from '../../store/habitPeriod';
 import { countEligibleDays, computeHabitStats, computeStreaks, isScheduledOn, weekdayOf, type HabitStreaks } from '../../store/habitStats';
 import type { Habit } from '../../types';
 
@@ -459,10 +460,11 @@ export default function HabitsTracker() {
 
   const today = getToday();
 
-  // The grid window is a `range`-day span ending at `windowEnd` (default: today).
-  // ‹ › shift the window by one range; the "Today" button resets it.
+  // The grid shows the calendar period (week / month / two months) that
+  // contains `anchor` (default: today), upcoming days included.
+  // ‹ › move one period; the "Today" button comes back.
   const [range, setRange] = useState<RangeOption>(readStoredRange);
-  const [windowEnd, setWindowEnd] = useState(() => today);
+  const [anchor, setAnchor] = useState(() => today);
   const [newHabitSchedule, setNewHabitSchedule] = useState<number[] | null>(null);
 
   const changeRange = (r: RangeOption) => {
@@ -510,15 +512,10 @@ export default function HabitsTracker() {
     })
   );
 
-  // Chronological (oldest -> windowEnd); used for the range label.
-  const weekDates = useMemo(() => {
-    return Array.from({ length: range }, (_, i) => addDaysToDateString(windowEnd, i - (range - 1)));
-  }, [windowEnd, range]);
-
   // Columns run in reading order (oldest → newest: right-to-left in Arabic,
   // left-to-right in English), like any calendar. Longer ranges scroll, and
-  // the grid opens scrolled to the newest end — see the layout effect below.
-  const gridDates = weekDates;
+  // the grid opens scrolled to today — see the layout effect below.
+  const gridDates = useMemo(() => habitPeriodDates(range, anchor), [range, anchor]);
 
   const currentMonth = today.slice(0, 7);
   const daysInMonth = new Date(parseInt(currentMonth.slice(0, 4)), parseInt(currentMonth.slice(5, 7)), 0).getDate();
@@ -622,28 +619,44 @@ export default function HabitsTracker() {
     }
   };
 
-  // The newest day is the last column, so show the inline end. In RTL,
+  // Bring today's column into the middle of the view (scrollLeft deltas work
+  // the same in LTR and RTL); in a past period show its newest end. In RTL,
   // browsers use negative scrollLeft toward the end; assigning ±scrollWidth
   // clamps to the end in either direction.
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   useLayoutEffect(() => {
     const el = scrollContainerRef.current;
-    if (el) el.scrollLeft = isRTL ? -el.scrollWidth : el.scrollWidth;
-  }, [range, windowEnd, isRTL, habits.length]);
+    if (!el) return;
+    const todayCell = el.querySelector<HTMLElement>('[data-today="true"]');
+    if (todayCell) {
+      // Centre it in the part not covered by the sticky habit-name column.
+      const box = el.getBoundingClientRect();
+      const labelWidth = el.querySelector('[data-grid-label]')?.getBoundingClientRect().width ?? 0;
+      const start = isRTL ? box.left : box.left + labelWidth;
+      const end = isRTL ? box.right - labelWidth : box.right;
+      const cell = todayCell.getBoundingClientRect();
+      el.scrollLeft += cell.left + cell.width / 2 - (start + end) / 2;
+    } else {
+      el.scrollLeft = isRTL ? -el.scrollWidth : el.scrollWidth;
+    }
+  }, [range, anchor, isRTL, habits.length]);
+
+  // Periods that start after today have nothing to log yet.
+  const canGoNext = habitPeriodStart(range, stepHabitPeriod(range, anchor, 1)) <= today;
 
   const goToPrevWeek = () => {
-    setWindowEnd((w) => addDaysToDateString(w, -range));
+    setAnchor((a) => stepHabitPeriod(range, a, -1));
   };
 
   const goToNextWeek = () => {
-    setWindowEnd((w) => (addDaysToDateString(w, range) > today ? today : addDaysToDateString(w, range)));
+    if (canGoNext) setAnchor((a) => stepHabitPeriod(range, a, 1));
   };
 
   const goToToday = () => {
-    setWindowEnd(today);
+    setAnchor(today);
   };
 
-  const dateRangeLabel = `${shortDate(weekDates[0], locale)} – ${shortDate(weekDates[weekDates.length - 1], locale)}`;
+  const dateRangeLabel = `${shortDate(gridDates[0], locale)} – ${shortDate(gridDates[gridDates.length - 1], locale)}`;
 
   return (
     <section id="section-habits">
@@ -810,15 +823,16 @@ export default function HabitsTracker() {
                       range === r ? 'bg-clay-soft text-white' : 'text-ink-light hover:bg-ink/5'
                     }`}
                   >
-                    {t('habits.days').replace('{count}', String(r))}
+                    {t(`habits.period.${r}`)}
                   </button>
                 ))}
               </div>
             </div>
             <button
               onClick={goToNextWeek}
+              disabled={!canGoNext}
               aria-label={t('a11y.nextPeriod')}
-              className="p-1 rounded hover:bg-ink/5 text-ink-light transition-colors"
+              className="p-1 rounded hover:bg-ink/5 text-ink-light transition-colors disabled:opacity-30 disabled:hover:bg-transparent"
             >
               {isRTL ? <ChevronLeft size={18} /> : <ChevronRight size={18} />}
             </button>
@@ -828,15 +842,16 @@ export default function HabitsTracker() {
             {/* One grid for header + rows (rows are subgrids) so columns always align. */}
             <div
               className="grid w-max gap-y-0.5 border border-border-subtle [--label-w:170px] sm:[--label-w:220px]"
-              style={{ gridTemplateColumns: `var(--label-w) repeat(${range}, var(--cell-w))`, ['--cell-w' as string]: CELL_WIDTH[range] }}
+              style={{ gridTemplateColumns: `var(--label-w) repeat(${gridDates.length}, var(--cell-w))`, ['--cell-w' as string]: CELL_WIDTH[range] }}
             >
               <div className="grid grid-cols-subgrid col-span-full">
-                <div className={`${STICKY_LABEL_CLASSES} z-20`} />
+                <div data-grid-label className={`${STICKY_LABEL_CLASSES} z-20`} />
                 {gridDates.map((date) => (
                   <div
                     key={date}
+                    data-today={date === today || undefined}
                     className={`text-center py-1 w-(--cell-w) h-(--cell-w) border border-border-subtle flex items-center justify-center ${
-                      date === today ? 'bg-clay-soft/10 ring-1 ring-inset ring-clay-soft/40' : ''
+                      date === today ? 'bg-clay-soft/10 ring-1 ring-inset ring-clay-soft/40' : date > today ? 'opacity-60' : ''
                     }`}
                   >
                     <div className="flex flex-col items-center leading-tight text-ink-lighter">
