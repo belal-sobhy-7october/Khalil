@@ -23,6 +23,20 @@ network at all):
   for supabase-js to fail refreshing the token.
 - `scripts/e2e/offline.mjs` checks all of this against a production build.
 
+## English hub sections (courses)
+
+The English hub's tabs after Vocabulary are study sections (Pronunciation & Accent, Listening,
+Reading, Grammar, Shadowing), named in English in both languages on the owner's request.
+
+- `src/data/courseCatalog.ts` lists each section's sources and their levels in study order.
+  YouTube episodes are generated into `src/data/courseEpisodes.ts` by
+  `node scripts/sync-courses.mjs` (YouTube's web API; run it to pick up new episodes).
+- Dalilk's daily podcast is read at runtime through `api/podcast.ts` (a Vercel function that
+  finds the feed via Apple Podcasts) and played inside the page; the list is saved on the device.
+- Dalilk's novel library (`src/data/dalilkNovels.ts`) appears in Reading once that list is filled.
+- Progress (`english-course-progress`) and watch positions (`english-course-positions`) are
+  per-user `user_kv` values; lessons resume where they stopped and tick themselves near the end.
+
 ## Checks
 
 ```bash

@@ -1,5 +1,5 @@
-/** Watched-lesson tracking for the English hub's YouTube courses. */
-import type { CourseEpisode, CoursePlaylist, CourseTrack } from '../data/courses';
+/** Lesson tracking for the English hub's study sections (videos, podcast episodes, books). */
+import type { CourseGroup, CourseLesson } from '../data/courses';
 import { addDaysToDateString } from '../store/dateHelpers';
 
 export const COURSE_PROGRESS_KEY = 'english-course-progress';
@@ -28,37 +28,37 @@ export interface ProgressStats {
   lessonsPercent: number;
 }
 
-/** A track's lessons in study order, each once (a video can sit in two playlists). */
-export function trackEpisodes(track: CourseTrack): CourseEpisode[] {
+/** A source's lessons in study order, each once (a video can sit in two playlists). */
+export function sourceLessons(groups: CourseGroup[]): CourseLesson[] {
   const seen = new Set<string>();
-  return track.playlists.flatMap((p) => p.episodes).filter((e) => !seen.has(e.id) && !!seen.add(e.id));
+  return groups.flatMap((g) => g.lessons).filter((l) => !seen.has(l.id) && !!seen.add(l.id));
 }
 
-/** How much of one lesson counts as watched, 0–1 (1 only when ticked off). */
-export function lessonFraction(episode: CourseEpisode, progress: CourseProgress, positions: WatchPositions = {}): number {
-  if (progress[episode.id]) return 1;
-  const position = positions[episode.id] ?? 0;
-  if (episode.seconds <= 0 || position <= 0) return 0;
-  return Math.min(0.99, position / episode.seconds);
+/** How much of one lesson counts as done, 0–1 (1 only when ticked off). */
+export function lessonFraction(lesson: CourseLesson, progress: CourseProgress, positions: WatchPositions = {}): number {
+  if (progress[lesson.id]) return 1;
+  const position = positions[lesson.id] ?? 0;
+  if (lesson.seconds <= 0 || position <= 0) return 0;
+  return Math.min(0.99, position / lesson.seconds);
 }
 
 const wholePercent = (part: number, whole: number) => (whole === 0 ? 0 : part >= whole ? 100 : Math.floor((part * 100) / whole));
 
-export function episodeStats(episodes: CourseEpisode[], progress: CourseProgress, positions: WatchPositions = {}): ProgressStats {
+export function lessonStats(lessons: CourseLesson[], progress: CourseProgress, positions: WatchPositions = {}): ProgressStats {
   let done = 0;
   let started = 0;
   let seconds = 0;
   let watchedSeconds = 0;
   let units = 0;
-  for (const e of episodes) {
-    const fraction = lessonFraction(e, progress, positions);
-    seconds += e.seconds;
-    watchedSeconds += fraction === 1 ? e.seconds : Math.round(fraction * e.seconds);
+  for (const l of lessons) {
+    const fraction = lessonFraction(l, progress, positions);
+    seconds += l.seconds;
+    watchedSeconds += fraction === 1 ? l.seconds : Math.round(fraction * l.seconds);
     units += fraction;
     if (fraction === 1) done += 1;
     else if (fraction > 0) started += 1;
   }
-  const total = episodes.length;
+  const total = lessons.length;
   const ratio = total === 0 ? 0 : done === total ? 1 : units / total;
   return {
     done,
@@ -72,33 +72,33 @@ export function episodeStats(episodes: CourseEpisode[], progress: CourseProgress
   };
 }
 
-export const trackStats = (track: CourseTrack, progress: CourseProgress, positions: WatchPositions = {}) =>
-  episodeStats(trackEpisodes(track), progress, positions);
+export const sourceStats = (groups: CourseGroup[], progress: CourseProgress, positions: WatchPositions = {}) =>
+  lessonStats(sourceLessons(groups), progress, positions);
 
-export interface EpisodeRef {
-  playlist: CoursePlaylist;
-  episode: CourseEpisode;
-  /** 0-based position inside its playlist. */
+export interface LessonRef {
+  group: CourseGroup;
+  lesson: CourseLesson;
+  /** 0-based position inside its group. */
   index: number;
 }
 
-export function findEpisode(track: CourseTrack, videoId: string): EpisodeRef | null {
-  for (const playlist of track.playlists) {
-    const index = playlist.episodes.findIndex((e) => e.id === videoId);
-    if (index >= 0) return { playlist, episode: playlist.episodes[index], index };
+export function findLesson(groups: CourseGroup[], id: string): LessonRef | null {
+  for (const group of groups) {
+    const index = group.lessons.findIndex((l) => l.id === id);
+    if (index >= 0) return { group, lesson: group.lessons[index], index };
   }
   return null;
 }
 
 /**
- * The lesson to watch next: the first one not done after `afterId` (when
- * given), wrapping round to the start of the track.
+ * The lesson to do next: the first one not done after `afterId` (when
+ * given), wrapping round to the start of the source.
  */
-export function nextEpisode(track: CourseTrack, progress: CourseProgress, afterId?: string): EpisodeRef | null {
-  const all = track.playlists.flatMap((playlist) => playlist.episodes.map((episode, index) => ({ playlist, episode, index })));
-  const from = afterId ? all.findIndex((r) => r.episode.id === afterId) + 1 : 0;
+export function nextLesson(groups: CourseGroup[], progress: CourseProgress, afterId?: string): LessonRef | null {
+  const all = groups.flatMap((group) => group.lessons.map((lesson, index) => ({ group, lesson, index })));
+  const from = afterId ? all.findIndex((r) => r.lesson.id === afterId) + 1 : 0;
   const ordered = [...all.slice(from), ...all.slice(0, from)];
-  return ordered.find((r) => !progress[r.episode.id] && r.episode.id !== afterId) ?? null;
+  return ordered.find((r) => !progress[r.lesson.id] && r.lesson.id !== afterId) ?? null;
 }
 
 export function setDone(progress: CourseProgress, ids: string[], done: boolean, date: string): CourseProgress {

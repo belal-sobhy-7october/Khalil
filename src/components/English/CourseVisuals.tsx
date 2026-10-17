@@ -7,6 +7,8 @@ const fillGradient = (complete: boolean) =>
   complete ? 'bg-linear-to-r from-sage-soft to-gold-soft' : 'bg-linear-to-r from-clay-soft to-gold-soft';
 
 const pct = (ratio: number) => `${Math.max(0, Math.min(1, ratio)) * 100}%`;
+/** Rounded down like the percentages on screen, so 100 means done. */
+const wholePercent = (ratio: number) => Math.floor(Math.max(0, Math.min(1, ratio)) * 100);
 
 /** A bar that fills as lessons are watched. `ratio` is 0–1. */
 export function ProgressBar({ ratio, size = 'md', label, animateIn = false, className = '' }: {
@@ -23,7 +25,7 @@ export function ProgressBar({ ratio, size = 'md', label, animateIn = false, clas
       className={`${height} rounded-full bg-ink/10 overflow-hidden ${className}`}
       role="progressbar"
       aria-label={label}
-      aria-valuenow={Math.round(ratio * 100)}
+      aria-valuenow={wholePercent(ratio)}
       aria-valuemin={0}
       aria-valuemax={100}
     >
@@ -62,7 +64,7 @@ export function SegmentedProgress({ segments, activeId, label, ratio, onSelect }
       className="flex gap-1"
       role="progressbar"
       aria-label={label}
-      aria-valuenow={Math.round(ratio * 100)}
+      aria-valuenow={wholePercent(ratio)}
       aria-valuemin={0}
       aria-valuemax={100}
     >
@@ -113,7 +115,7 @@ export function ProgressRing({ ratio, size = 96, stroke = 9, label, animateIn = 
       style={{ width: size, height: size }}
       role="progressbar"
       aria-label={label}
-      aria-valuenow={Math.round(value * 100)}
+      aria-valuenow={wholePercent(value)}
       aria-valuemin={0}
       aria-valuemax={100}
     >

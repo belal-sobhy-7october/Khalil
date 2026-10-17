@@ -1,5 +1,5 @@
 /** Shared types/keys for the English hub's saved links and practice log. */
-export type PracticeKind = 'accent' | 'shadowing' | 'reading';
+export type PracticeKind = 'accent' | 'listening' | 'reading' | 'grammar' | 'shadowing';
 
 export interface StudyLink {
   id: string;

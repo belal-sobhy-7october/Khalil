@@ -1,26 +1,21 @@
 import { describe, expect, it } from 'vitest';
-import type { CourseTrack } from '../data/courses';
-import { COURSE_TRACKS } from '../data/courses';
+import type { CourseGroup } from '../data/courses';
+import { COURSE_SECTIONS } from '../data/courses';
 import {
-  clockLength, doneThisWeek, dropPositions, durationParts, episodeStats, isNearEnd, lessonFraction, milestoneCrossed, nextEpisode,
-  resumeAt, setDone, studyStreak, trackEpisodes, trackStats,
+  clockLength, doneThisWeek, dropPositions, durationParts, isNearEnd, lessonFraction, lessonStats, milestoneCrossed, nextLesson,
+  resumeAt, setDone, sourceLessons, sourceStats, studyStreak,
 } from './courseProgress';
 
-const ep = (id: string, seconds = 600) => ({ id, title: id, seconds });
-const track: CourseTrack = {
-  id: 'accent',
-  icon: '🗣️',
-  channel: { name: { en: 'Channel', ar: 'قناة' }, url: 'https://example.com' },
-  playlists: [
-    { id: 'P1', name: { en: 'One', ar: 'واحد' }, episodes: [ep('a'), ep('b'), ep('c')] },
-    { id: 'P2', name: { en: 'Two', ar: 'اتنين' }, episodes: [ep('b'), ep('d', 1200)] },
-  ],
-};
+const ep = (id: string, seconds = 600) => ({ id, title: id, seconds, kind: 'video' as const });
+const groups: CourseGroup[] = [
+  { id: 'P1', name: 'One', lessons: [ep('a'), ep('b'), ep('c')] },
+  { id: 'P2', name: 'Two', lessons: [ep('b'), ep('d', 1200)] },
+];
 
 describe('course progress', () => {
   it('counts each lesson once even when it sits in two playlists', () => {
-    expect(trackEpisodes(track).map((e) => e.id)).toEqual(['a', 'b', 'c', 'd']);
-    expect(trackStats(track, { b: '2026-10-16' })).toEqual({
+    expect(sourceLessons(groups).map((e) => e.id)).toEqual(['a', 'b', 'c', 'd']);
+    expect(sourceStats(groups, { b: '2026-10-16' })).toEqual({
       done: 1, started: 0, total: 4, seconds: 3000, watchedSeconds: 600, ratio: 0.25, percent: 25, lessonsPercent: 25,
     });
   });
@@ -29,7 +24,7 @@ describe('course progress', () => {
     expect(lessonFraction(ep('a'), {}, { a: 300 })).toBe(0.5);
     expect(lessonFraction(ep('a'), {}, { a: 9999 })).toBe(0.99);
     expect(lessonFraction(ep('a'), { a: 'x' }, { a: 10 })).toBe(1);
-    const s = trackStats(track, { b: 'x' }, { a: 300, d: 600 });
+    const s = sourceStats(groups, { b: 'x' }, { a: 300, d: 600 });
     expect(s).toMatchObject({ done: 1, started: 2, watchedSeconds: 600 + 300 + 600, lessonsPercent: 25 });
     expect(s.ratio).toBeCloseTo((1 + 0.5 + 0.5) / 4);
     expect(s.percent).toBe(50);
@@ -38,17 +33,19 @@ describe('course progress', () => {
   it('only reaches 100% when every lesson is done', () => {
     const many = Array.from({ length: 199 }, (_, i) => ep(`v${i}`));
     const progress = Object.fromEntries(many.slice(0, 198).map((e) => [e.id, '2026-10-16']));
-    expect(episodeStats(many, progress, { v198: 599 }).percent).toBe(99);
-    expect(episodeStats(many, progress).lessonsPercent).toBe(99);
-    expect(episodeStats([], {}).percent).toBe(0);
+    expect(lessonStats(many, progress, { v198: 599 }).percent).toBe(99);
+    expect(lessonStats(many, progress).lessonsPercent).toBe(99);
+    expect(lessonStats([], {}).percent).toBe(0);
   });
 
   it('suggests the first unwatched lesson, or the next one after the current lesson', () => {
-    expect(nextEpisode(track, {})?.episode.id).toBe('a');
-    expect(nextEpisode(track, { a: 'x', b: 'x' })).toMatchObject({ playlist: { id: 'P1' }, index: 2 });
-    expect(nextEpisode(track, {}, 'c')?.episode.id).toBe('b'); // b in P2
-    expect(nextEpisode(track, { b: 'x', d: 'x' }, 'c')?.episode.id).toBe('a'); // wraps round
-    expect(nextEpisode(track, { a: 'x', b: 'x', c: 'x', d: 'x' })).toBeNull();
+    expect(nextLesson(groups, {})?.lesson.id).toBe('a');
+    expect(nextLesson(groups, { a: 'x', b: 'x' })).toMatchObject({ group: { id: 'P1' }, index: 2 });
+    expect(nextLesson(groups, {}, 'c')?.lesson.id).toBe('b'); // b in P2
+    expect(nextLesson(groups, { b: 'x', d: 'x' }, 'c')?.lesson.id).toBe('a'); // wraps round
+    expect(nextLesson(groups, { a: 'x', b: 'x', c: 'x', d: 'x' })).toBeNull();
+    // Books have no length: they count only once ticked.
+    expect(lessonFraction({ id: 'book:x', title: 'x', seconds: 0, kind: 'book' }, {}, { 'book:x': 50 })).toBe(0);
   });
 
   it('keeps the first date a lesson was ticked and removes unticked ones', () => {
@@ -101,12 +98,28 @@ describe('course progress', () => {
 });
 
 describe('course catalog', () => {
-  it('has episodes for every playlist and no lesson twice in one track', () => {
-    expect(COURSE_TRACKS.map((t) => t.id)).toEqual(['accent', 'phonetics', 'grammar', 'listening', 'reading']);
-    for (const t of COURSE_TRACKS) {
-      for (const p of t.playlists) expect(p.episodes.length, p.id).toBeGreaterThan(0);
-      const ids = t.playlists.flatMap((p) => p.episodes.map((e) => e.id));
-      expect(new Set(ids).size, t.id).toBe(ids.length);
+  it('has the five sections in study order, each with lessons and no lesson twice in one source', () => {
+    expect(COURSE_SECTIONS.map((s) => s.id)).toEqual(['pronunciation', 'listening', 'reading', 'grammar', 'shadowing']);
+    expect(COURSE_SECTIONS.map((s) => s.sources.map((src) => src.id))).toEqual([
+      ['ibrahim-adel'],
+      ['ibrahim-adel', 'dalilk-daily'],
+      ['ibrahim-adel', 'lovely-stories'], // Dalilk's novels join once their list is filled in
+      ['ibrahim-adel'],
+      ['listening-time'],
+    ]);
+    // Phonetics comes before the accent course.
+    expect(COURSE_SECTIONS[0].sources[0].groups.map((g) => g.name)).toEqual([
+      'Phonetics: Pronouncing Every Letter — Level 1',
+      'British & American Phonetics — Level 2',
+      'American & British Accent — Level 3',
+    ]);
+    for (const section of COURSE_SECTIONS) {
+      for (const source of section.sources) {
+        if (source.kind === 'podcast') continue; // read at runtime
+        for (const g of source.groups) expect(g.lessons.length, g.id).toBeGreaterThan(0);
+        const ids = source.groups.flatMap((g) => g.lessons.map((l) => l.id));
+        expect(new Set(ids).size, source.key).toBe(ids.length);
+      }
     }
   });
 });
