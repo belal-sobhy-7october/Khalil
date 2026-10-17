@@ -197,7 +197,7 @@ export default function TrackerView({ onGoTab }: { onGoTab: (tab: 'voice' | 'int
           </table>
         </div>
         <div>
-          <div className="text-sm font-semibold text-ink">Rough salaries (EGP a month, 2026 job ads)</div>
+          <div className="text-sm font-semibold text-ink">Rough salaries (EGP a month, from 2026 job ads and posts)</div>
           <ul className="mt-1 space-y-0.5 text-sm text-ink">
             {SALARY_GUIDE.map((s) => (
               <li key={s.level}>
