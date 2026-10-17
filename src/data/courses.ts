@@ -46,7 +46,7 @@ export interface CourseSource {
 
 export interface CourseSection {
   /** An English hub section, or Call Center Prep's library. */
-  id: CourseSectionId | 'callcenter';
+  id: CourseSectionId | 'callcenter' | 'callcenter-accent';
   name: string;
   icon: string;
   sources: CourseSource[];

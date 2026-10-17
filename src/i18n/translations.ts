@@ -550,6 +550,7 @@ export const translations = {
           grammar: 'After each lesson, write 3 sentences of your own with the new rule.',
           shadowing: 'Loop one sentence with A–B at 0.75x, speak along with the speaker, then record yourself.',
           callcenter: 'Watch role-play calls with a pen: write down every phrase you would steal, then say it out loud.',
+          'callcenter-accent': 'Extra practice: copy each sound after him out loud, and record yourself once a week to hear the change.',
         },
         celebrate: {
           playlist: 'Level complete! 🎉',
@@ -1457,6 +1458,7 @@ export const translations = {
           grammar: 'بعد كل درس اكتب 3 جمل من عندك بالقاعدة الجديدة.',
           shadowing: 'كرّر جملة واحدة بـ A–B على 0.75x، واتكلم مع المتحدث، وبعدين سجّل نفسك.',
           callcenter: 'اتفرج على المكالمات ومعاك ورقة وقلم: اكتب كل جملة عاجباك، وقولها بصوت عالي.',
+          'callcenter-accent': 'تدريب إضافي: قلّد كل صوت وراه بصوت عالي، وسجّل نفسك مرة كل أسبوع عشان تسمع الفرق.',
         },
         celebrate: {
           playlist: 'خلّصت المستوى! 🎉',

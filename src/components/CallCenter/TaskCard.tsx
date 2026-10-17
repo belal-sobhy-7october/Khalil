@@ -1,8 +1,9 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import {
-  AudioLines, BookOpen, Check, ChevronDown, ClipboardCheck, Headphones, Keyboard, Link2, MessageSquare, Mic, MonitorPlay, PenLine, Repeat, SpellCheck, Users,
+  AudioLines, BookOpen, Check, ChevronDown, ClipboardCheck, GraduationCap, Headphones, Keyboard, Link2, MessageSquare, Mic, MonitorPlay, PenLine, Repeat, SpellCheck, Users,
 } from 'lucide-react';
 import { getVoicePrompt } from '../../data/callCenter';
+import { IBRAHIM_ADEL_CHANNEL, getGrammarLesson } from '../../data/callCenter/ibrahimAdel';
 import type { LevelId, PlanTask, TaskKind } from '../../data/callCenter/types';
 import { bestAttempt } from '../../lib/callCenter/progress';
 import { TYPING_TARGETS, getTest } from '../../lib/callCenter/quiz';
@@ -36,6 +37,7 @@ const KIND: Record<TaskKind, { label: string; icon: typeof Mic }> = {
   review: { label: 'Review', icon: BookOpen },
   link: { label: 'Free test online', icon: Link2 },
   vocab: { label: 'Vocabulary', icon: SpellCheck },
+  lesson: { label: 'Grammar course · Ibrahim Adel', icon: GraduationCap },
 };
 
 function VoiceTask({ promptId, onDone }: { promptId: string; onDone: () => void }) {
@@ -123,6 +125,10 @@ export default function TaskCard({ task, level, done, open, onToggleOpen, onRunT
         return <EfsetActivity onDone={markDone} />;
       case 'vocab':
         return <VocabActivity refId={task.ref} onDone={markDone} />;
+      case 'lesson': {
+        const lesson = getGrammarLesson(task.ref);
+        return lesson ? <WatchActivity refId={task.ref} onDone={markDone} video={{ title: lesson.title, seconds: lesson.seconds, channel: IBRAHIM_ADEL_CHANNEL, arabic: true }} /> : null;
+      }
     }
   };
 

@@ -16,7 +16,7 @@ import { ArabicNote, Card, Pill, secondaryBtn } from './ui';
 
 /** Each level's exit criteria, checked against what's saved. */
 function useExitChecks(level: PlanLevel): Array<{ text: string; ok: boolean | null }> {
-  const { tests, typing, settings, calls } = useCallCenter();
+  const { tasks, tests, typing, settings, calls } = useCallCenter();
   const examBest = level.examId ? bestAttempt(tests[level.examId]) : null;
   const typingBest = bestTyping(typing);
   const target = TYPING_TARGETS[level.id];
@@ -35,6 +35,11 @@ function useExitChecks(level: PlanLevel): Array<{ text: string; ok: boolean | nu
       const need = Number(text.match(/(\d+)%/)?.[1] ?? 0);
       const best = calls.reduce((m, c) => Math.max(m, c.percent), 0);
       return { text: calls.length ? `${text} · best ${best}%` : text, ok: best >= need };
+    }
+    if (/^Grammar course/.test(text)) {
+      const lessons = PLAN_DAYS.filter((d) => d.level.id === level.id).flatMap(({ day }) => day.tasks.filter((t) => t.kind === 'lesson'));
+      const done = lessons.filter((t) => tasks[t.id]).length;
+      return { text: `${text} · ${done} / ${lessons.length} watched`, ok: lessons.length > 0 && done === lessons.length };
     }
     if (/^Vocabulary/.test(text)) {
       const best = bestAttempt(tests[VOCAB_CHECK_ID]);

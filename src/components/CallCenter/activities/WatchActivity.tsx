@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from 'react';
 import { ExternalLink, Play } from 'lucide-react';
 import { VIDEOS } from '../../../data/callCenter';
+import type { VideoInfo } from '../../../data/callCenter/types';
 import { videoThumb, videoUrl } from '../../../data/courses';
 import { useKv } from '../../../lib/useKv';
 import { getToday } from '../../../store/dateHelpers';
@@ -8,7 +9,7 @@ import {
   COURSE_POSITIONS_KEY, COURSE_PROGRESS_KEY, clockLength, dropPositions, isNearEnd, resumeAt, setDone, type CourseProgress, type WatchPositions,
 } from '../../../lib/courseProgress';
 import LoopPlayer from '../../English/LoopPlayer';
-import { NeedsInternet, Pill } from '../ui';
+import { NeedsInternet, Pill, secondaryBtn } from '../ui';
 
 const SAVE_EVERY_MS = 15_000;
 
@@ -16,8 +17,13 @@ const SAVE_EVERY_MS = 15_000;
  * A video lesson, played in the page. Its progress is the same as in the
  * English hub and the Library, so a video watched anywhere counts here.
  */
-export default function WatchActivity({ refId, onDone }: { refId: string; onDone: () => void }) {
-  const info = VIDEOS[refId];
+export default function WatchActivity({ refId, onDone, video }: {
+  refId: string;
+  onDone: () => void;
+  /** For videos that aren't in videos.ts (a grammar course lesson). */
+  video?: VideoInfo;
+}) {
+  const info = video ?? VIDEOS[refId];
   const [progress, setProgress] = useKv<CourseProgress>(COURSE_PROGRESS_KEY, {});
   const [positions, setPositions] = useKv<WatchPositions>(COURSE_POSITIONS_KEY, {});
   const [playing, setPlaying] = useState<number | null>(null);
@@ -79,9 +85,17 @@ export default function WatchActivity({ refId, onDone }: { refId: string; onDone
           <LoopPlayer source={{ videoId: refId, listId: null, start: playing || undefined }} onProgress={onProgress} onEnded={() => onProgress(seconds, false)} />
         </div>
       )}
-      <a href={videoUrl(refId)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-ink-light hover:text-clay-soft">
-        <ExternalLink size={12} /> Open on YouTube
-      </a>
+      <div className="flex flex-wrap items-center gap-3">
+        {watched && (
+          // Watched in the English hub or the Library: count it here too.
+          <button type="button" onClick={onDone} className={secondaryBtn}>
+            Watched it already: mark as done
+          </button>
+        )}
+        <a href={videoUrl(refId)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-ink-light hover:text-clay-soft">
+          <ExternalLink size={12} /> Open on YouTube
+        </a>
+      </div>
     </div>
   );
 }

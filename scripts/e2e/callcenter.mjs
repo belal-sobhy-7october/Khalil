@@ -16,7 +16,7 @@ const OUT = process.argv[3] ?? './shots';
 fs.mkdirSync(OUT, { recursive: true });
 const browser = await chromium.launch(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {});
 const phone = { width: 390, height: 844 };
-const TABS = ['today', 'roadmap', 'vocab', 'interview', 'voice', 'tests', 'tracker', 'library', 'toolkit'];
+const TABS = ['today', 'roadmap', 'vocab', 'interview', 'voice', 'tests', 'tracker', 'library', 'toolkit', 'accent'];
 const today = new Date().toISOString().slice(0, 10);
 const diagnosticDone = JSON.stringify({ 'L0-D1:voice:intro': today, 'L0-D1:test:L0-DIAG': today, 'L0-D1:link:efset': today });
 

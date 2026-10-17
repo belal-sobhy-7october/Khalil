@@ -3,6 +3,7 @@ import {
   VIDEOS, getGrammar, getVocabUnit, getPhraseSet, getQuestion, getScenario, getScript, getSound, getTypingText, getVoicePrompt,
 } from '../../data/callCenter';
 import type { PlanTask } from '../../data/callCenter/types';
+import { getGrammarLesson } from '../../data/callCenter/ibrahimAdel';
 import { getTest } from './quiz';
 
 export function taskTitle(task: PlanTask): string {
@@ -31,6 +32,10 @@ export function taskTitle(task: PlanTask): string {
       return task.ref.endsWith('-mistakes') ? 'Review before the exam' : 'Weekly review';
     case 'link':
       return 'EF SET: the free English test';
+    case 'lesson': {
+      const lesson = getGrammarLesson(task.ref);
+      return lesson ? `Lesson ${lesson.number} of ${lesson.course.lessons.length}: ${lesson.title}` : 'Grammar lesson';
+    }
     case 'vocab': {
       const unit = getVocabUnit(task.ref);
       return unit ? `New words: Unit ${unit.number} · ${unit.title}` : 'Review your due call center words';

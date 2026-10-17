@@ -184,7 +184,9 @@ export type TaskKind =
   | 'review'
   | 'link'
   /** A unit of the word bank (`v01`…), or `due`: the bank's words due for review. */
-  | 'vocab';
+  | 'vocab'
+  /** A lesson of Ibrahim Adel's grammar course (a YouTube id, see ibrahimAdel.ts). */
+  | 'lesson';
 
 export interface PlanTask {
   /** Stable id progress is saved under: `<day id>:<kind>:<ref>`. */

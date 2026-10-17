@@ -28,6 +28,7 @@ copying a prompt into ChatGPT or Gemini, and the level check is EF SET.
 | Job Tracker | Applications by hiring stage, what each stage tests, the numbers to beat, salaries, where to apply. |
 | Library | YouTube playlists (role-play calls, mock calls, interview questions, Versant, American accent), played in the page. |
 | Toolkit | The call flow on one card, the NATO alphabet, every phrase (searchable), typing practice, free tools. |
+| Accent (extra) | Ibrahim Adel's phonetics and accent course. Optional: nothing from it is in the plan or the levels. |
 
 The UI is English in both app languages (the owner asked for it), wrapped in `dir="ltr" lang="en"`,
 with short friendly Egyptian Arabic notes (`ArabicNote`).
@@ -58,6 +59,7 @@ lower-cased email) and compares it with `OWNER_HASHES`. The sidebar item and the
 | `scenarios.ts` | 28 role-plays for an AI partner (the AI is the customer or the interviewer). |
 | `interview.ts` | The interview bank (`QUESTIONS`) and the voice-note prompts (`VOICE_PROMPTS`). |
 | `typing.ts` | Typing texts (ticket notes, emails, chats). ASCII only. |
+| `ibrahimAdel.ts` | Ibrahim Adel's grammar course (three level playlists, scheduled in the plan) and accent course (the optional tab), from the English hub's catalog. |
 | `vocab.ts` | The word bank: 24 units of 16 words in the Topic Library's `pos \| word \| definition \| example` lines, and a short text per unit. |
 | `videos.ts` | The YouTube videos the plan's watch tasks use: id → title, length, channel. |
 | `plan.ts` | The levels, the week specs and the day template (`buildDays`). |
@@ -91,6 +93,14 @@ week has the same rhythm:
 
 So a week needs exactly: 4 sounds, 2–3 phrase sets, 1 grammar point, 2 scripts, 2 scenarios,
 5 speaking refs (interview question ids, or `voice:<id>` for a voice note), 5 videos and 2 typing texts.
+
+**Ibrahim Adel's grammar course runs alongside too.** His three grammar playlists (Grammar from
+Films for Level 1, Grammar for Level 2, Advanced Grammar for Level 3) are `lesson` tasks: one on every
+study day of Level 1, every 5th day of Level 2 and every 3rd day of Level 3 (`every` in
+`ibrahimAdel.ts`), placed by playlist order so new episodes don't move the scheduled ones. Each
+level's exit criteria include its playlist. They play in the page, and their progress is shared with
+the English hub's Grammar section. His accent course is the optional Accent tab, kept out of the plan
+(a test checks).
 
 **The word bank runs alongside.** A Level 1 week lists six units (`vocab`), and each of its days gets
 one as its second task, so the 24 units take the 24 days of Level 1: a month. Weeks without units

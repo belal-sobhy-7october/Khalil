@@ -12,6 +12,7 @@
  * (with 6 hours a day, up to two a day plus the power hours).
  */
 import type { LevelId, PlanDay, PlanLevel, PlanTask, PlanWeek, WeekContent } from './types';
+import { grammarCourseFor } from './ibrahimAdel';
 import { VIDEOS } from './videos';
 
 interface WeekSpec {
@@ -338,8 +339,27 @@ export function buildDays(weekId: string, c: WeekContent): PlanDay[] {
   return days;
 }
 
+/**
+ * Ibrahim Adel's grammar course for the level: one lesson on every `every`-th
+ * study day (every day in Level 1), just before the day's last task.
+ * Lessons are placed by their order in the playlist, so new ones added to
+ * the end of a playlist don't move the ones already scheduled.
+ */
+function addGrammarCourse(level: LevelId, weeks: PlanWeek[]): PlanWeek[] {
+  const course = grammarCourseFor(level);
+  if (!course) return weeks;
+  const days = weeks.flatMap((w) => w.days);
+  course.lessons.forEach((lesson, k) => {
+    const day = days[k * course.every];
+    if (!day) return;
+    const minutes = Math.max(5, Math.ceil(lesson.seconds / 60)) + 5;
+    day.tasks.splice(day.tasks.length - 1, 0, task(day.id, 'lesson', lesson.id, minutes, 'Explained in Egyptian Arabic: write down the rule and one example of your own.'));
+  });
+  return weeks;
+}
+
 function buildWeeks(level: 'L1' | 'L2' | 'L3'): PlanWeek[] {
-  return WEEKS[level].map((spec, i) => {
+  return addGrammarCourse(level, WEEKS[level].map((spec, i) => {
     const id = `${level}-W${i + 1}`;
     return {
       id,
@@ -352,7 +372,7 @@ function buildWeeks(level: 'L1' | 'L2' | 'L3'): PlanWeek[] {
       days: buildDays(id, spec.content),
       quizId: `${id}-QUIZ`,
     };
-  });
+  }));
 }
 
 function examDay(level: LevelId, title: string, extra: PlanTask[] = []): PlanDay {
@@ -401,7 +421,7 @@ export const LEVELS: PlanLevel[] = [
     name: 'Foundation',
     cefr: 'B1 → B1+',
     goal: 'Fix the basics recruiters punish: sounds, tenses, questions, numbers, and a clear voice note.',
-    exit: ['Level exam: 80% or more', 'Vocabulary: 90% on the word bank check (384 call center words)', 'Typing: 25 words per minute at 90% accuracy', 'A one-minute voice note with no long pauses'],
+    exit: ['Level exam: 80% or more', 'Vocabulary: 90% on the word bank check (384 call center words)', 'Grammar course: every lesson of Ibrahim Adel\'s Level 1', 'Typing: 25 words per minute at 90% accuracy', 'A one-minute voice note with no long pauses'],
     status: 'ready',
     weeks: buildWeeks('L1'),
     extraDays: [examDay('L1', 'Level 1 exam', [task('L1-EXAM', 'test', VOCAB_CHECK_ID, 15, 'The word bank: 90% or more means you know it.')])],
@@ -413,7 +433,7 @@ export const LEVELS: PlanLevel[] = [
     name: 'Customer Service Core',
     cefr: 'B1+ → B2',
     goal: 'Handle a whole call on any account, tech support first.',
-    exit: ['Level exam: 80% or more', 'A mock call of 70% or more on the QA rubric', 'Typing: 30 words per minute at 92% accuracy'],
+    exit: ['Level exam: 80% or more', 'A mock call of 70% or more on the QA rubric', 'Grammar course: every lesson of Ibrahim Adel\'s Level 2', 'Typing: 30 words per minute at 92% accuracy'],
     status: 'ready',
     weeks: buildWeeks('L2'),
     extraDays: [examDay('L2', 'Level 2 exam')],
@@ -425,7 +445,7 @@ export const LEVELS: PlanLevel[] = [
     name: 'Interview Bootcamp',
     cefr: 'B2 → B2+ · job-ready',
     goal: 'Pass every stage: the voice note, the HR call, the assessment and the operations interview.',
-    exit: ['The hiring simulation: 80% or more', 'Typing: 35 words per minute at 95% accuracy', 'EF SET: 55 or more', 'Start applying'],
+    exit: ['The hiring simulation: 80% or more', 'Grammar course: every lesson of Ibrahim Adel\'s Level 3', 'Typing: 35 words per minute at 95% accuracy', 'EF SET: 55 or more', 'Start applying'],
     status: 'ready',
     weeks: buildWeeks('L3'),
     extraDays: [examDay('L3', 'Level 3 exam: the hiring simulation')],

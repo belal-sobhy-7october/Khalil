@@ -9,6 +9,8 @@ import { CALL_CENTER_SECTION } from './library';
 import { DIAGNOSTIC, LEVEL_EXAMS, RETELL_STORIES, WRITING_TASKS } from './tests';
 import { DEBRIEF, HIRING_STAGES } from './resources';
 import { VOCAB_CHECK_ID } from './plan';
+import { GRAMMAR_COURSES, getGrammarLesson } from './ibrahimAdel';
+import { CALL_CENTER_ACCENT_SECTION } from './library';
 import { VOCAB_UNITS, VOCAB_WORDS } from './vocab';
 import type { PlanTask, TestItem } from './types';
 
@@ -145,6 +147,8 @@ describe('the plan', () => {
         return t.ref === 'efset';
       case 'vocab':
         return t.ref === 'due' || !!getVocabUnit(t.ref);
+      case 'lesson':
+        return !!getGrammarLesson(t.ref);
     }
   };
 
@@ -247,3 +251,26 @@ describe('the word bank', () => {
     expect(PLAN_DAYS.find((d) => d.day.id === 'L1-EXAM')?.day.tasks.some((t) => t.ref === VOCAB_CHECK_ID)).toBe(true);
   });
 });
+
+describe("Ibrahim Adel's courses", () => {
+  it('puts his three grammar playlists into Levels 1, 2 and 3, each lesson once', () => {
+    expect(GRAMMAR_COURSES.map((c) => c.level)).toEqual(['L1', 'L2', 'L3']);
+    for (const course of GRAMMAR_COURSES) {
+      expect(course.lessons.length, course.name).toBeGreaterThan(0);
+      const days = PLAN_DAYS.filter((d) => d.level.id === course.level && d.week);
+      const scheduled = days.flatMap(({ day }) => day.tasks.filter((t) => t.kind === 'lesson').map((t) => t.ref));
+      expect(scheduled).toEqual(course.lessons.slice(0, Math.ceil(days.length / course.every)).map((l) => l.id));
+    }
+    // Level 1: one lesson every study day.
+    expect(PLAN_DAYS.filter((d) => d.level.id === 'L1' && d.week).every(({ day }) => day.tasks.some((t) => t.kind === 'lesson'))).toBe(true);
+  });
+
+  it('keeps the accent course out of the plan', () => {
+    const accent = new Set(CALL_CENTER_ACCENT_SECTION.sources.flatMap((s) => s.groups.flatMap((g) => g.lessons.map((l) => l.id))));
+    expect(accent.size).toBeGreaterThan(20);
+    expect(CALL_CENTER_ACCENT_SECTION.sources.map((s) => s.groups.length)).toEqual([3]);
+    expect(PLAN_DAYS.flatMap(({ day }) => day.tasks).filter((t) => accent.has(t.ref))).toEqual([]);
+    expect(CALL_CENTER_SECTION.sources.map((s) => s.id)).toContain('ibrahim-adel-grammar');
+  });
+});
+

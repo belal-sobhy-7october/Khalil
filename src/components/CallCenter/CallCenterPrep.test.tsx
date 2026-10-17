@@ -69,6 +69,21 @@ describe('Call Center Prep', () => {
     expect(await screen.findByText('New words: Unit 1 · Call center basics')).toBeInTheDocument();
   });
 
+  it("puts Ibrahim Adel's grammar lesson in every Level 1 day", async () => {
+    kv.set('callcenter-tasks', { 'L0-D1:voice:intro': '2026-10-17', 'L0-D1:test:L0-DIAG': '2026-10-17', 'L0-D1:link:efset': '2026-10-17' });
+    render(<CallCenterPrep />);
+    await screen.findByRole('heading', { name: 'Day 1: Learn the week' });
+    expect(screen.getByText(/^Grammar course · Ibrahim Adel · \d+ min$/)).toBeInTheDocument();
+    expect(screen.getByText(/^Lesson 1 of 24:/)).toBeInTheDocument();
+  });
+
+  it('has an optional Accent tab outside the plan', () => {
+    render(<CallCenterPrep />);
+    fireEvent.click(screen.getByRole('tab', { name: 'Accent (extra)' }));
+    expect(screen.getByText('Extra, not part of the plan.')).toBeInTheDocument();
+    expect(screen.getAllByText(/Phonetics: Pronouncing Every Letter/).length).toBeGreaterThan(0);
+  });
+
   it('has a Vocab tab with the 24 units and their words', async () => {
     useAppStore.setState({ vocabularyItems: [] });
     render(<CallCenterPrep />);

@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
-  BarChart3, Briefcase, CalendarCheck, ClipboardCheck, Flame, Headphones, Library, Map as MapIcon, Mic, SpellCheck, Timer, Wrench,
+  AudioLines, BarChart3, Briefcase, CalendarCheck, ClipboardCheck, Flame, Headphones, Library, Map as MapIcon, Mic, SpellCheck, Timer, Wrench,
 } from 'lucide-react';
 import { LEVELS, PLAN_DAYS } from '../../data/callCenter';
-import { CALL_CENTER_SECTION } from '../../data/callCenter/library';
+import { CALL_CENTER_ACCENT_SECTION, CALL_CENTER_SECTION } from '../../data/callCenter/library';
 import { currentDayIndex, daysLeft, minutesOn, passedTest, planProgress, studyStreak } from '../../lib/callCenter/progress';
 import { vocabProgress } from '../../lib/callCenter/vocab';
 import { useAppStore } from '../../store/appStore';
@@ -23,7 +23,7 @@ import VocabView from './VocabView';
 import VoiceStudioView from './VoiceStudioView';
 import { ArabicNote } from './ui';
 
-type Tab = 'today' | 'roadmap' | 'vocab' | 'interview' | 'voice' | 'tests' | 'tracker' | 'library' | 'toolkit';
+type Tab = 'today' | 'roadmap' | 'vocab' | 'interview' | 'voice' | 'tests' | 'tracker' | 'library' | 'toolkit' | 'accent';
 
 const TABS: Array<{ id: Tab; label: string; icon: typeof Mic }> = [
   { id: 'today', label: 'Today', icon: CalendarCheck },
@@ -35,6 +35,7 @@ const TABS: Array<{ id: Tab; label: string; icon: typeof Mic }> = [
   { id: 'tracker', label: 'Job Tracker', icon: BarChart3 },
   { id: 'library', label: 'Library', icon: Library },
   { id: 'toolkit', label: 'Toolkit', icon: Wrench },
+  { id: 'accent', label: 'Accent (extra)', icon: AudioLines },
 ];
 
 const TAB_KEY = 'khalil-cc-tab';
@@ -124,7 +125,7 @@ function Prep() {
         </motion.div>
       </section>
 
-      <div className="flex gap-1 p-1 rounded-xl bg-ink/5 overflow-x-auto scrollbar-thin" role="tablist" aria-label="Call Center Prep">
+      <div className="flex gap-1 p-1 rounded-xl bg-ink/5 overflow-x-auto scrollbar-thin sm:flex-wrap sm:overflow-visible" role="tablist" aria-label="Call Center Prep">
         {TABS.map(({ id, label, icon: Icon }) => (
           <button
             key={id}
@@ -163,6 +164,18 @@ function Prep() {
           {tab === 'tracker' && <TrackerView onGoTab={choose} />}
           {tab === 'library' && <CourseSection section={CALL_CENTER_SECTION} loopPlayer />}
           {tab === 'toolkit' && <ToolkitView level={where.level.id} />}
+          {tab === 'accent' && (
+            <div className="space-y-3">
+              <div className="rounded-2xl border border-dashed border-border-subtle p-4 space-y-1">
+                <p className="text-sm text-ink">
+                  <span className="font-semibold">Extra, not part of the plan.</span> Ibrahim Adel's phonetics and American &amp; British accent course: watch it
+                  whenever you like. Nothing here is a daily task or counts toward a level.
+                </p>
+                <ArabicNote>ده قسم إضافي للأكسنت، مش إجباري ومش داخل في المهام اليومية ولا في الليفلات. اتفرج عليه وقت ما تحب، وتقدمك فيه بيتحفظ.</ArabicNote>
+              </div>
+              <CourseSection section={CALL_CENTER_ACCENT_SECTION} loopPlayer />
+            </div>
+          )}
         </>
       )}
     </div>

@@ -50,6 +50,8 @@ and their detailed plan is in `src/data/callCenter/ROADMAP.md`.
 - The word bank (`src/data/callCenter/vocab.ts`, 384 words, a unit a day in Level 1) goes into the
   Vocabulary flashcards, so its progress is the flashcards' mastery; every word has YouGlish and
   every passage a read-aloud bar (device voice or NaturalReader).
+- Ibrahim Adel's three grammar playlists are daily `lesson` tasks in Levels 1–3; his accent course is the
+  optional Accent tab and must stay out of the plan (`src/data/callCenter/ibrahimAdel.ts`).
 - The Library tab's playlists are in `src/data/callCenter/catalog.ts`;
   `node scripts/sync-courses.mjs callcenter` regenerates their episodes.
 
