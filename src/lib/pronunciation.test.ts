@@ -133,3 +133,46 @@ describe('spokenForm / youglishQuery', () => {
     expect(youglishQuery("don't")).toBe("don't");
   });
 });
+
+describe('the device voice offline', () => {
+  const voice = (name: string, lang: string, localService: boolean) => ({ name, lang, localService }) as SpeechSynthesisVoice;
+  const voices = [voice('Google US English', 'en-US', false), voice('Samantha', 'en_US', true), voice('Daniel', 'en-GB', true)];
+
+  it('picks a voice installed on the device when offline', async () => {
+    const { pickVoice } = await import('./pronunciation');
+    expect(pickVoice(voices, 'us', true)?.name).toBe('Google US English');
+    expect(pickVoice(voices, 'us', false)?.name).toBe('Samantha');
+    expect(pickVoice(voices, 'uk', false)?.name).toBe('Daniel');
+    // No installed voice for the accent: any installed English voice.
+    expect(pickVoice([voices[0], voices[2]], 'us', false)?.name).toBe('Daniel');
+  });
+
+  it('speaks right away offline instead of waiting on the dictionary', async () => {
+    const speak = vi.fn();
+    vi.stubGlobal('speechSynthesis', { cancel: vi.fn(), speak, getVoices: () => voices });
+    vi.stubGlobal(
+      'SpeechSynthesisUtterance',
+      class {
+        text: string;
+        constructor(text: string) {
+          this.text = text;
+        }
+      }
+    );
+    const onLine = vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
+    const fetchSpy = vi.fn();
+    vi.stubGlobal('fetch', fetchSpy);
+    try {
+      const { speakWord } = await import('./pronunciation');
+      await speakWord('verify', 'us');
+      expect(speak).toHaveBeenCalledTimes(1);
+      expect(speak.mock.calls[0][0]).toMatchObject({ text: 'verify', voice: { name: 'Samantha' } });
+      expect(fetchSpy).not.toHaveBeenCalled();
+    } finally {
+      onLine.mockRestore();
+      vi.unstubAllGlobals();
+      vi.stubGlobal('localStorage', localStorageMock);
+      vi.stubGlobal('console', { ...console, error: consoleErrorSpy });
+    }
+  });
+});

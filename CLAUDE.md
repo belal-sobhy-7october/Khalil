@@ -21,6 +21,10 @@ network at all):
 - Topic packs are bundled data, so they work offline. Don't move them to the network.
 - With no internet, `App.tsx` opens with the session saved on the device instead of waiting
   for supabase-js to fail refreshing the token.
+- 🔊 offline: `src/lib/savedVoices.ts` saves a topic's native-speaker recordings (from the free
+  dictionary) in Cache Storage when the owner taps "Save the voice for offline" in a topic
+  (`TopicVoices.tsx`). Words with no saved recording are read by the device's own voice;
+  `speakBrowser` picks a voice installed on the device when offline.
 - `scripts/e2e/offline.mjs` checks all of this against a production build.
 
 ## Checks

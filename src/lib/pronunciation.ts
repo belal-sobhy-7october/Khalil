@@ -5,7 +5,10 @@
  * https://youglish.com/terms
  */
 
+import { useSyncExternalStore } from 'react';
 import { lookupWord } from './dictionary';
+import { isOnline } from './offline';
+import { playSavedVoice, savedVoiceUrl } from './savedVoices';
 
 export type BrowserAccent = 'us' | 'uk';
 export type YouGlishAccent = 'us' | 'uk' | 'aus';
@@ -57,6 +60,44 @@ function loadVoices(): SpeechSynthesisVoice[] {
   return window.speechSynthesis.getVoices();
 }
 
+// ── The device's voice can't speak ────────────────────────────────────────
+// Set when the device has no English voice, or its voice failed (offline,
+// a voice that needs the internet stays silent). The Topic Library then
+// explains how to download an English voice to the device.
+
+let speechTrouble = false;
+const troubleListeners = new Set<() => void>();
+
+function reportSpeechTrouble() {
+  if (speechTrouble) return;
+  speechTrouble = true;
+  troubleListeners.forEach((l) => l());
+}
+
+function subscribeTrouble(onChange: () => void) {
+  troubleListeners.add(onChange);
+  return () => troubleListeners.delete(onChange);
+}
+
+export function useSpeechTrouble(): boolean {
+  return useSyncExternalStore(subscribeTrouble, () => speechTrouble, () => false);
+}
+
+const normLang = (lang: string) => lang.replace('_', '-').toLowerCase();
+
+/**
+ * The voice to read with. Offline, only a voice installed on the device
+ * (localService) can speak: Chrome's "Google US English" needs the internet.
+ */
+export function pickVoice(voices: SpeechSynthesisVoice[], accent: BrowserAccent, online: boolean): SpeechSynthesisVoice | undefined {
+  const lang = accent === 'uk' ? 'en-gb' : 'en-us';
+  const usable = online ? voices : voices.filter((v) => v.localService);
+  return (
+    usable.find((v) => normLang(v.lang).startsWith(lang)) ??
+    (online ? undefined : usable.find((v) => normLang(v.lang).startsWith('en')))
+  );
+}
+
 /**
  * Speak text using browser speech synthesis.
  * @param text - The text to speak
@@ -65,6 +106,7 @@ function loadVoices(): SpeechSynthesisVoice[] {
 export function speakBrowser(text: string, accent: BrowserAccent = 'us', rate = 0.9): void {
   if (!('speechSynthesis' in window)) {
     console.error('Speech synthesis not supported in this browser');
+    reportSpeechTrouble();
     return;
   }
 
@@ -73,16 +115,15 @@ export function speakBrowser(text: string, accent: BrowserAccent = 'us', rate = 
   const utterance = new SpeechSynthesisUtterance(text);
   utterance.rate = rate;
   utterance.pitch = 1;
+  utterance.lang = accent === 'uk' ? 'en-GB' : 'en-US';
 
   const voices = loadVoices();
-  const lang = accent === 'uk' ? 'en-GB' : 'en-US';
-  utterance.lang = lang;
-
-  // Try to get a voice matching the accent
-  const accentVoice = voices.find((voice) => voice.lang.includes(lang));
-  if (accentVoice) {
-    utterance.voice = accentVoice;
-  }
+  if (voices.length && !voices.some((v) => normLang(v.lang).startsWith('en'))) reportSpeechTrouble();
+  const voice = pickVoice(voices, accent, isOnline());
+  if (voice) utterance.voice = voice;
+  utterance.onerror = (e) => {
+    if (e.error !== 'interrupted' && e.error !== 'canceled') reportSpeechTrouble();
+  };
 
   window.speechSynthesis.speak(utterance);
 }
@@ -122,12 +163,17 @@ export function buildYouGlishUrl(word: string, accent: YouGlishAccent = 'us'): s
 }
 
 /**
- * Pronounce a word: a real native-speaker recording when one exists for the
- * accent (single words only), otherwise the browser's speech synthesis.
+ * Pronounce a word: a native-speaker recording saved on the device (see
+ * ./savedVoices.ts), else one from the dictionary when online (single words
+ * only), otherwise the browser's speech synthesis.
  */
 export async function speakWord(text: string, accent: BrowserAccent = 'us'): Promise<void> {
   const trimmed = spokenForm(text);
-  if (/^[a-zA-Z'-]+$/.test(trimmed)) {
+  const saved = savedVoiceUrl(trimmed, accent);
+  if (saved && (await playSavedVoice(saved))) return;
+  // Offline, speak at once: waiting on the dictionary would only delay the
+  // device voice (and Safari only lets sound play right after the tap).
+  if (isOnline() && /^[a-zA-Z'-]+$/.test(trimmed)) {
     // Don't keep the user waiting on a slow lookup: after 1.5s speak with
     // the browser voice instead (the lookup still lands in the cache).
     const entry = await Promise.race([

@@ -1,7 +1,8 @@
 // End-to-end check that Khalil works with no internet: opens the production
 // build once online (the service worker saves it), then stops the server and
 // cuts the network, and checks that the app still opens — signed in, even with
-// an expired token, and from the login page — and that the Topic Library works.
+// an expired token, and from the login page — and that the Topic Library works,
+// including 🔊 with a topic's voice saved on the device.
 //
 // Usage:
 //   VITE_SUPABASE_URL=http://localhost:54321 VITE_SUPABASE_ANON_KEY=fake npx vite build
@@ -44,6 +45,7 @@ const stopServer = (server) => {
   }
 };
 
+const DICT = 'https://api.dictionaryapi.dev';
 const expired = { ...session, expires_at: Math.floor(Date.now() / 1000) - 3600 };
 
 async function run() {
@@ -61,6 +63,14 @@ async function run() {
       supabaseReads.push(url.pathname);
       return backend.handle(route);
     }
+    // The free dictionary: every word has a US recording.
+    if (url.origin === DICT && url.pathname.startsWith('/api/')) {
+      const word = decodeURIComponent(url.pathname.split('/').pop());
+      const audio = `${DICT}/media/pronunciations/en/${word}-us.mp3`;
+      const body = [{ phonetics: [{ audio }], meanings: [{ partOfSpeech: 'verb', definitions: [{ definition: 'x', example: 'y' }] }] }];
+      return route.fulfill({ json: body, headers: { 'access-control-allow-origin': '*' } });
+    }
+    if (url.origin === DICT) return route.fulfill({ body: 'mp3', contentType: 'audio/mpeg', headers: { 'access-control-allow-origin': '*' } });
     return route.abort();
   });
   await context.addInitScript((s) => {
@@ -70,6 +80,14 @@ async function run() {
     localStorage.setItem('khalil-active-section', 'vocabulary');
     localStorage.setItem('khalil-language', 'ar');
   }, session);
+  // Record what 🔊 plays (the fake recordings aren't real audio).
+  await context.addInitScript(() => {
+    window.__played = [];
+    HTMLMediaElement.prototype.play = function () {
+      window.__played.push(this.src);
+      return Promise.resolve();
+    };
+  });
   const page = await context.newPage();
   page.on('pageerror', (e) => problems.push(`pageerror: ${e.message}`));
 
@@ -105,6 +123,7 @@ async function run() {
   check(await page.getByText('الكلمات المفتاحية').first().isVisible().catch(() => false), 'offline: lesson did not open');
   await page.getByRole('button', { name: 'علّم إنك ذاكرته' }).click();
   check(await page.evaluate(() => Object.keys(JSON.parse(localStorage.getItem('khalil-studied-topics') ?? '{}')).length === 1), 'offline: studied mark not saved');
+  check(await page.getByText('مفيش نت: 🔊').first().isVisible().catch(() => false), 'offline: lesson does not say 🔊 uses the device voice');
   await page.screenshot({ path: `${OUT}/offline-lesson.png` });
 
   // 4. An expired token offline still opens the app quickly (no 30s wait, no login page).
@@ -125,6 +144,25 @@ async function run() {
   check(!(await page.getByText('مفيش نت').count()), 'back online: offline banner still shown');
   check(supabaseReads.slice(before).some((p) => p.endsWith('/vocabulary_items')), 'back online: the data was not loaded');
   await page.screenshot({ path: `${OUT}/offline-back-online.png`, fullPage: true });
+
+  // 5b. Online, save a topic's voice; offline, 🔊 plays the saved recording.
+  await page.getByRole('button', { name: 'مكتبة المواضيع' }).first().click();
+  await page.waitForTimeout(600);
+  await packCards.first().click();
+  await page.getByRole('button', { name: 'احفظ الصوت للاستخدام من غير نت' }).click();
+  const voiceSaved = await page.getByText('الصوت متحفظ على الجهاز').first().waitFor({ timeout: 15000 }).then(() => true, () => false);
+  check(voiceSaved, 'voice: saving the topic voice did not finish');
+  await page.screenshot({ path: `${OUT}/voice-saved.png` });
+  networkUp = false;
+  await context.setOffline(true);
+  await page.waitForTimeout(300);
+  await page.getByRole('button', { name: 'نطق: patience' }).click();
+  await page.waitForTimeout(500);
+  const played = await page.evaluate(() => window.__played);
+  check(played.length === 1 && played[0].startsWith('blob:'), `voice: offline 🔊 did not play the saved recording (${JSON.stringify(played)})`);
+  await page.keyboard.press('Escape');
+  await context.setOffline(false);
+  networkUp = true;
 
   // 6. Never signed in on this device, offline: the login page offers the topics.
   stopServer(server);

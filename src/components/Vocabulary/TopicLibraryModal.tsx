@@ -7,9 +7,11 @@ import { TOPIC_PACKS, type PackGroup, type TopicPack } from '../../data/topicPac
 import { useDialog } from '../../lib/useDialog';
 import { useOnline } from '../../lib/offline';
 import { setTopicStudied, useStudiedTopics } from '../../lib/studiedTopics';
+import { useSavedVoices } from '../../lib/savedVoices';
 import YouGlishModal from './YouGlishModal';
 import TopicLesson from './TopicLesson';
 import UpgradeTopicsModal from './UpgradeTopicsModal';
+import TopicVoices from './TopicVoices';
 
 const NEW_GROUP = '__pack__';
 
@@ -28,6 +30,7 @@ export default function TopicLibraryModal({ onClose, onAdded }: TopicLibraryModa
   const signedIn = useAppStore((s) => !!s.session);
   const online = useOnline();
   const studied = useStudiedTopics();
+  const voices = useSavedVoices();
 
   const [selected, setSelected] = useState<TopicPack | null>(null);
   const [target, setTarget] = useState<string>(NEW_GROUP);
@@ -196,6 +199,11 @@ export default function TopicLibraryModal({ onClose, onAdded }: TopicLibraryModa
                       <div className="flex items-start justify-between gap-2 mb-1">
                         <span className="text-2xl">{pack.emoji}</span>
                         <span className="flex items-center gap-1">
+                          {voices[pack.id] && (
+                            <span className="p-0.5 rounded bg-ink/5 text-ink-light" title={t('vocabulary.library.voice.badge')} aria-label={t('vocabulary.library.voice.badge')}>
+                              <Volume2 size={11} />
+                            </span>
+                          )}
                           {studied[pack.id] && (
                             <span className="flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-green-500/10 text-green-700 dark:text-green-400" dir="auto">
                               <BookCheck size={11} /> {t('vocabulary.library.studied')}
@@ -230,6 +238,8 @@ export default function TopicLibraryModal({ onClose, onAdded }: TopicLibraryModa
             <TopicLesson
               pack={selected}
               words={
+                <>
+                <TopicVoices pack={selected} />
                 <ul className="divide-y divide-border-subtle border border-border-subtle rounded-xl overflow-hidden">
                   {selected.items.map((item) => {
                     const owned = existingWords.has(item.word.toLowerCase());
@@ -262,6 +272,7 @@ export default function TopicLibraryModal({ onClose, onAdded }: TopicLibraryModa
                     );
                   })}
                 </ul>
+                </>
               }
             />
           )}
