@@ -77,6 +77,13 @@ describe('Call Center Prep', () => {
     expect(screen.getByText(/^Lesson 1 of 24:/)).toBeInTheDocument();
   });
 
+  it('lets you save a new word from anywhere in the section', () => {
+    render(<CallCenterPrep />);
+    fireEvent.click(screen.getByRole('button', { name: 'New word' }));
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Call Center: My words' })).toBeInTheDocument();
+  });
+
   it('has an optional Accent tab outside the plan', () => {
     render(<CallCenterPrep />);
     fireEvent.click(screen.getByRole('tab', { name: 'Accent (extra)' }));

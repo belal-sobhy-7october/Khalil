@@ -164,6 +164,7 @@ export default function QuickAddModal({ onClose, defaultCategory }: { onClose: (
               className="px-3 py-1.5 bg-ink/5 border border-border-subtle rounded-lg text-ink focus:outline-none focus:border-clay-soft"
             >
               <option value="">{t('vocabulary.noCategory')}</option>
+              {defaultCategory && !vocabularyCategories.some((c) => c.name === defaultCategory) && <option value={defaultCategory}>{defaultCategory}</option>}
               {vocabularyCategories.map((c) => (
                 <option key={c.id} value={c.name}>{c.name}</option>
               ))}

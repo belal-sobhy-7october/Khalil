@@ -114,6 +114,12 @@ NaturalReader), then add the 16 words to the Vocabulary flashcards (category
 listening, gap-fill). From then on the flashcards' spaced repetition brings them back when due.
 A word counts as **known** at mastery level 3; the goal is 90% of the bank known by day 30.
 
+**Your own words.** "New word" (in the section's header, in the Vocab tab and inside every test) opens
+the Vocabulary section's quick add with the `Call Center: My words` group picked: a word met in a
+lesson, a video or a test is looked up, saved as a flashcard, and reviewed in the daily review
+(`vocab:due`) with the bank's words. They don't count toward the 90% goal (`myWordCards`, `reviewDue`
+in `src/lib/callCenter/vocab.ts`).
+
 **Task ids are where progress is saved** (`<day id>:<kind>:<ref>`, e.g. `L1-W1-D1:sound:p-b`).
 Changing a ref in a week the owner has already studied un-ticks that task, so only do it to fix
 something broken. Never rename a day or week id.

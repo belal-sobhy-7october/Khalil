@@ -9,6 +9,7 @@ import { TestItemView, type ItemResult } from './testItems';
 import { ProgressBar } from '../English/CourseVisuals';
 import { ArabicNote, Card, Pill, primaryBtn, secondaryBtn } from './ui';
 import { useSavedProgress } from './useSavedProgress';
+import { NewWordButton } from './activities/VocabActivity';
 
 const ITEM_LABEL: Record<TestItem['type'], string> = {
   mcq: 'Choose the answer',
@@ -182,9 +183,13 @@ export default function TestRunner({ testId, onClose, onFinish }: {
             {ITEM_LABEL[item.type]} <span className="text-ink-light font-normal tabular-nums">· {index + 1} / {test.items.length}</span>
           </div>
         </div>
-        <button type="button" onClick={onClose} aria-label="Close the test" className="p-2 rounded-lg text-ink-light hover:bg-ink/5">
-          <X size={18} />
-        </button>
+        <div className="flex items-center gap-1 shrink-0">
+          {/* A word you didn't know in a question: save it without leaving the test. */}
+          <NewWordButton />
+          <button type="button" onClick={onClose} aria-label="Close the test" className="p-2 rounded-lg text-ink-light hover:bg-ink/5">
+            <X size={18} />
+          </button>
+        </div>
       </div>
       <ProgressBar ratio={index / test.items.length} size="sm" label="Test progress" />
       {resumed && index === resumed.index && attemptNo === resumed.attemptNo && (

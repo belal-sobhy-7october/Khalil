@@ -3,13 +3,13 @@ import { ChevronDown, ClipboardCheck, MonitorPlay, Search } from 'lucide-react';
 import { VOCAB_UNITS, VOCAB_WORDS } from '../../data/callCenter';
 import { VOCAB_CHECK_ID } from '../../data/callCenter/plan';
 import { bestAttempt } from '../../lib/callCenter/progress';
-import { SPRINT_DAYS, VOCAB_TARGET, bankCards, sprintDay, unitStatus, unitsDueBy, vocabProgress, wordKey } from '../../lib/callCenter/vocab';
+import { SPRINT_DAYS, VOCAB_TARGET, bankCards, isKnown, myWordCards, sprintDay, unitStatus, unitsDueBy, vocabProgress, wordKey } from '../../lib/callCenter/vocab';
 import { useAppStore } from '../../store/appStore';
 import { getToday } from '../../store/dateHelpers';
 import { ProgressBar, ProgressRing } from '../English/CourseVisuals';
-import { VocabDue, VocabUnitStudy, YouGlishRun } from './activities/VocabActivity';
+import { MasteryDots, NewWordButton, VocabDue, VocabPractice, VocabUnitStudy, YouGlishRun } from './activities/VocabActivity';
 import { useCallCenter } from './CallCenterContext';
-import { ArabicNote, Card, Pill, primaryBtn } from './ui';
+import { ArabicNote, Card, Pill, primaryBtn, secondaryBtn } from './ui';
 
 function Stat({ value, label }: { value: string | number; label: string }) {
   return (
@@ -32,6 +32,63 @@ function sprintLine(day: number, unitsAdded: number, ratio: number): { text: str
   return behind > 0
     ? { text: `Day ${day} of ${SPRINT_DAYS} · ${behind} unit${behind === 1 ? '' : 's'} behind: do two today.`, tone: 'warn' }
     : { text: `Day ${day} of ${SPRINT_DAYS} · on track`, tone: 'good' };
+}
+
+/** Words you met yourself and saved with "New word": same flashcards, same daily review. */
+function MyWords() {
+  const items = useAppStore((s) => s.vocabularyItems);
+  const categories = useAppStore((s) => s.vocabularyCategories);
+  const mine = useMemo(() => myWordCards(items, categories).sort((a, b) => b.createdAt.localeCompare(a.createdAt)), [items, categories]);
+  const [practice, setPractice] = useState(false);
+  const [run, setRun] = useState<number | null>(null);
+  const words = mine.map((c) => c.word);
+  return (
+    <Card className="space-y-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <h3 className="font-semibold text-ink">My words</h3>
+          {mine.length > 0 && (
+            <Pill>
+              {mine.length} saved · {mine.filter(isKnown).length} known
+            </Pill>
+          )}
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <NewWordButton className={primaryBtn} label="Add words" />
+          {mine.length > 0 && (
+            <button type="button" onClick={() => setPractice(true)} className={secondaryBtn}>
+              Practice them
+            </button>
+          )}
+        </div>
+      </div>
+      <ArabicNote>
+        أي كلمة أو فعل أو جملة جديدة تقابلك في درس أو فيديو أو امتحان، دوس «New word» (فوق في القسم، أو جوه الامتحان). بتدخل نفس الفلاش كاردز وبترجعلك في المراجعة اليومية مع كلمات البنك.
+      </ArabicNote>
+      {mine.length > 0 ? (
+        <ul className="divide-y divide-border-subtle">
+          {mine.slice(0, 40).map((c, i) => (
+            <li key={c.id} className="flex items-start gap-2 py-2">
+              <div className="flex-1 min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="font-semibold text-ink">{c.word}</span>
+                  <MasteryDots level={c.masteryLevel} />
+                </div>
+                <p className="text-sm text-ink-light">{c.definition}</p>
+              </div>
+              <button type="button" onClick={() => setRun(i)} aria-label={`Hear "${c.word}" on YouGlish`} className="shrink-0 inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs bg-clay-soft/10 text-clay-soft-dark hover:bg-clay-soft/20">
+                <MonitorPlay size={13} /> YouGlish
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="text-sm text-ink-light">Nothing saved yet.</p>
+      )}
+      {run !== null && <YouGlishRun words={words} start={run} onClose={() => setRun(null)} />}
+      {practice && <VocabPractice ids={mine.map((c) => c.id)} onClose={() => setPractice(false)} />}
+    </Card>
+  );
 }
 
 /** The word bank: 384 call center words, a unit a day, 90% known in a month. */
@@ -85,6 +142,8 @@ export default function VocabView({ onRunTest }: { onRunTest: (testId: string) =
           {best ? <Pill tone={best.passed ? 'good' : 'neutral'}>Best: {best.percent}% · goal 90%</Pill> : <span className="text-xs text-ink-light">A new sample of the bank every time.</span>}
         </div>
       </Card>
+
+      <MyWords />
 
       <Card className="space-y-2">
         <h3 className="font-semibold text-ink">The 24 units</h3>

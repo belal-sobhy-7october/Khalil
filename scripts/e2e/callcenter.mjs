@@ -123,6 +123,20 @@ await flow('cc-flow-vocab', { local: { 'khalil-cc-tab': 'vocab' } }, async ({ pa
   check(await page.getByText('Day 1 of 30').count(), 'the month did not start');
 });
 
+// 6. A word met while studying, saved with "New word", lands in My words and the daily review.
+await flow('cc-flow-my-word', { local: { 'khalil-cc-tab': 'vocab' } }, async ({ page, backend, check, reload }) => {
+  await page.getByRole('button', { name: 'Add words' }).click();
+  await page.getByRole('dialog').locator('textarea').fill('troubleshooter');
+  await page.getByRole('button', { name: /^Continue/ }).click();
+  await page.getByRole('button', { name: 'Add 1 word' }).click();
+  await page.waitForTimeout(800);
+  check((backend.tables.vocabulary_items ?? []).some((r) => r.word === 'troubleshooter'), 'the word was not saved to the flashcards');
+  await page.keyboard.press('Escape');
+  await reload(true);
+  check(await page.getByText('troubleshooter', { exact: true }).count(), 'the word is not in My words after reload');
+  check(await page.getByText(/1 of your own/).count(), 'the word is not in the daily review');
+});
+
 await browser.close();
 if (problems.length) {
   console.log(problems.join('\n'));

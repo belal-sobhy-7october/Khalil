@@ -6,7 +6,7 @@
  */
 import { VOCAB_UNITS, VOCAB_WORDS, type VocabUnit } from '../../data/callCenter/vocab';
 import { buildReviewQueue, isDueForReview, isHardWord } from '../../store/vocabularyHard';
-import type { VocabularyItem } from '../../types';
+import type { VocabularyCategory, VocabularyItem } from '../../types';
 
 export const CC_VOCAB_KEY = 'callcenter-vocab';
 export const KNOWN_LEVEL = 3;
@@ -27,6 +27,15 @@ export const wordKey = (word: string) => word.trim().toLowerCase();
 
 const BANK = new Set(VOCAB_WORDS.map((w) => wordKey(w.word)));
 
+/** The flashcard group for words you meet yourself (in a lesson, a video, a test), added with "New word". */
+export const MY_WORDS_CATEGORY = 'Call Center: My words';
+
+/** Your own words: the flashcards in the My words group (bank words count with the bank). */
+export function myWordCards(items: VocabularyItem[], categories: VocabularyCategory[]): VocabularyItem[] {
+  const group = categories.find((c) => c.name.trim().toLowerCase() === MY_WORDS_CATEGORY.toLowerCase());
+  return group ? items.filter((i) => i.categoryId === group.id && !BANK.has(wordKey(i.word))) : [];
+}
+
 /** The flashcards that are bank words, by lower-cased word. */
 export function bankCards(items: VocabularyItem[]): Map<string, VocabularyItem> {
   return new Map(items.filter((i) => BANK.has(wordKey(i.word))).map((i) => [wordKey(i.word), i]));
@@ -44,17 +53,22 @@ export function unitStatus(unit: VocabUnit, cards: Map<string, VocabularyItem>) 
   };
 }
 
-export function vocabProgress(items: VocabularyItem[], now: Date = new Date()) {
+/** The bank's progress (the 90% goal), plus your own words for the daily review. */
+export function vocabProgress(items: VocabularyItem[], now: Date = new Date(), mine: VocabularyItem[] = []) {
   const cards = bankCards(items);
   const all = [...cards.values()];
   const known = all.filter(isKnown).length;
+  const due = (list: VocabularyItem[]) => list.filter((c) => isDueForReview(c, now));
   return {
     total: VOCAB_WORDS.length,
     added: all.length,
     known,
     ratio: known / VOCAB_WORDS.length,
-    due: buildReviewQueue(all.filter((c) => isDueForReview(c, now))).map((c) => c.id),
-    hard: all.filter(isHardWord),
+    due: buildReviewQueue(due(all)).map((c) => c.id),
+    hard: [...all, ...mine].filter(isHardWord),
+    mine: { total: mine.length, known: mine.filter(isKnown).length },
+    /** The daily review: the bank's due words and your own, hardest first. */
+    reviewDue: buildReviewQueue([...due(all), ...due(mine)]).map((c) => c.id),
     unitsAdded: VOCAB_UNITS.filter((u) => unitStatus(u, cards).added === u.words.length).length,
   };
 }

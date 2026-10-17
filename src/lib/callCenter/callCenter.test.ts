@@ -13,7 +13,7 @@ import { buildVocabCheck, buildWeeklyQuiz, chunk, estimateGrammarLevel, getTest,
 import { takesToPrune } from './recordings';
 import { VOCAB_UNITS, VOCAB_WORDS } from '../../data/callCenter';
 import type { VocabularyItem } from '../../types';
-import { bankCards, sprintDay, unitStatus, vocabProgress } from './vocab';
+import { MY_WORDS_CATEGORY, bankCards, myWordCards, sprintDay, unitStatus, vocabProgress } from './vocab';
 
 describe('grading', () => {
   it('compares words without punctuation, contractions or digits getting in the way', () => {
@@ -205,6 +205,21 @@ describe('the word bank', () => {
     expect(p.known).toBe(1);
     expect(p.due).toEqual(['id-queue']);
     expect(unitStatus(unit, bankCards(items))).toMatchObject({ added: 2, known: 1, total: 16 });
+  });
+
+  it('reviews your own words with the bank, without counting them in the 90% goal', () => {
+    const mine = { ...card('dispatch', 0), categoryId: 'my' };
+    const other = { ...card('holiday', 0), categoryId: 'other' };
+    const categories = [
+      { id: 'my', userId: 'u', name: MY_WORDS_CATEGORY, createdAt: '', updatedAt: '' },
+      { id: 'other', userId: 'u', name: 'Travel', createdAt: '', updatedAt: '' },
+    ] as never;
+    const own = myWordCards([mine, other, { ...card('agent', 1), categoryId: 'my' }], categories);
+    expect(own.map((c) => c.word)).toEqual(['dispatch']);
+    const p = vocabProgress([card('agent', 1), mine], new Date('2026-10-17T12:00:00Z'), own);
+    expect(p.reviewDue).toEqual(expect.arrayContaining(['id-agent', 'id-dispatch']));
+    expect(p.mine).toEqual({ total: 1, known: 0 });
+    expect(p.known).toBe(0);
   });
 
   it('counts the days of the month from the day it started', () => {

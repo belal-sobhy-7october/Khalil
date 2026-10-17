@@ -1,10 +1,11 @@
 import { Fragment, useMemo, useState } from 'react';
-import { BookPlus, Check, Layers, MonitorPlay } from 'lucide-react';
+import { BookPlus, Check, Layers, MonitorPlay, Plus } from 'lucide-react';
 import { getVocabUnit } from '../../../data/callCenter';
 import { vocabCategory, type VocabUnit } from '../../../data/callCenter/vocab';
-import { bankCards, isKnown, unitStatus, vocabProgress, wordKey } from '../../../lib/callCenter/vocab';
+import { MY_WORDS_CATEGORY, bankCards, isKnown, myWordCards, unitStatus, vocabProgress, wordKey } from '../../../lib/callCenter/vocab';
 import { useAppStore } from '../../../store/appStore';
 import FlashcardReview from '../../Vocabulary/FlashcardReview';
+import QuickAddModal from '../../Vocabulary/QuickAddModal';
 import ReviewModePicker, { type ReviewMode } from '../../Vocabulary/ReviewModePicker';
 import TypingPractice from '../../Vocabulary/TypingPractice';
 import YouGlishModal from '../../Vocabulary/YouGlishModal';
@@ -37,7 +38,24 @@ export function YouGlishRun({ words, start, onClose }: { words: string[]; start:
   );
 }
 
-function MasteryDots({ level }: { level: number }) {
+/**
+ * "New word": save a word you met (in a lesson, a video, a test) to your
+ * flashcards, in the My words group: looked up in the dictionary, then
+ * reviewed with the bank in the daily review.
+ */
+export function NewWordButton({ className = secondaryBtn, label = 'New word' }: { className?: string; label?: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button type="button" onClick={() => setOpen(true)} className={className} title="Save a word you just met to your flashcards">
+        <Plus size={13} /> {label}
+      </button>
+      {open && <QuickAddModal onClose={() => setOpen(false)} defaultCategory={MY_WORDS_CATEGORY} />}
+    </>
+  );
+}
+
+export function MasteryDots({ level }: { level: number }) {
   return (
     <span className="inline-flex gap-0.5" title={`Mastery ${level} of 5`} aria-label={`Mastery ${level} of 5`}>
       {[1, 2, 3, 4, 5].map((n) => (
@@ -186,20 +204,21 @@ export function VocabUnitStudy({ unit, onPracticed }: { unit: VocabUnit; onPract
 /** The daily review: the bank's words that are due, hardest first. */
 export function VocabDue({ onDone }: { onDone?: () => void }) {
   const items = useAppStore((s) => s.vocabularyItems);
-  const progress = useMemo(() => vocabProgress(items), [items]);
+  const categories = useAppStore((s) => s.vocabularyCategories);
+  const progress = useMemo(() => vocabProgress(items, new Date(), myWordCards(items, categories)), [items, categories]);
   const [practice, setPractice] = useState<string[] | null>(null);
   const [run, setRun] = useState<number | null>(null);
   const hardWords = progress.hard.slice(0, 12).map((c) => c.word);
 
-  if (!progress.added) {
+  if (!progress.added && !progress.mine.total) {
     return <p className="text-sm text-ink-light">No call center words in your flashcards yet: they start with Unit 1 on the first day of Level 1.</p>;
   }
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center gap-2">
-        {progress.due.length ? (
-          <button type="button" onClick={() => setPractice(progress.due)} className={primaryBtn}>
-            <Layers size={13} /> Review {progress.due.length} due word{progress.due.length === 1 ? '' : 's'}
+        {progress.reviewDue.length ? (
+          <button type="button" onClick={() => setPractice(progress.reviewDue)} className={primaryBtn}>
+            <Layers size={13} /> Review {progress.reviewDue.length} due word{progress.reviewDue.length === 1 ? '' : 's'}
           </button>
         ) : (
           <Pill tone="good">Nothing due today ✓</Pill>
@@ -210,7 +229,7 @@ export function VocabDue({ onDone }: { onDone?: () => void }) {
           </button>
         )}
         <span className="text-xs text-ink-light tabular-nums">
-          {progress.known} / {progress.total} known
+          {progress.known} / {progress.total} known{progress.mine.total ? ` · ${progress.mine.total} of your own` : ''}
         </span>
       </div>
       {hardWords.length > 0 && (

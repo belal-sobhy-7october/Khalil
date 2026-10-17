@@ -20,6 +20,7 @@ import TodayView from './TodayView';
 import ToolkitView from './ToolkitView';
 import TrackerView from './TrackerView';
 import VocabView from './VocabView';
+import { NewWordButton } from './activities/VocabActivity';
 import VoiceStudioView from './VoiceStudioView';
 import { ArabicNote } from './ui';
 
@@ -112,7 +113,10 @@ function Prep() {
                 {where.week ? ` · Week ${where.week.number}` : ''}
               </p>
             </div>
-            <Headphones size={28} className="hidden sm:block text-clay-soft/60 shrink-0" />
+            <div className="shrink-0 flex flex-col items-end gap-2">
+              <Headphones size={28} className="hidden sm:block text-clay-soft/60" />
+              <NewWordButton />
+            </div>
           </div>
           <ArabicNote>من «اترفضت في الريكورد» لـ «overqualified». كل يوم خطوة، وكل خطوة متسجلة هنا. يلا بينا 💪</ArabicNote>
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
