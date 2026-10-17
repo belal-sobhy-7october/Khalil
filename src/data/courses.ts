@@ -45,7 +45,8 @@ export interface CourseSource {
 }
 
 export interface CourseSection {
-  id: CourseSectionId;
+  /** An English hub section, or Call Center Prep's library. */
+  id: CourseSectionId | 'callcenter';
   name: string;
   icon: string;
   sources: CourseSource[];

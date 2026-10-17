@@ -28,6 +28,7 @@ export const translations = {
       life: 'My Life',
       bookmarks: 'Bookmarks',
       vocabulary: 'Learn English',
+      callCenter: 'Call Center Prep',
       focus: 'Focus (Pomodoro)',
       wird: 'Daily Wird',
       analytics: 'Analytics',
@@ -548,6 +549,7 @@ export const translations = {
           reading: 'After each story, read it aloud with the timer running, then retell it in your own words.',
           grammar: 'After each lesson, write 3 sentences of your own with the new rule.',
           shadowing: 'Loop one sentence with A–B at 0.75x, speak along with the speaker, then record yourself.',
+          callcenter: 'Watch role-play calls with a pen: write down every phrase you would steal, then say it out loud.',
         },
         celebrate: {
           playlist: 'Level complete! 🎉',
@@ -934,6 +936,7 @@ export const translations = {
       life: 'المتابعة',
       bookmarks: 'المراجع',
       vocabulary: 'تعلم الإنجليزية',
+      callCenter: 'التحضير لكول سنتر انجلش',
       focus: 'التركيز (بومودورو)',
       wird: 'الورد',
       analytics: 'التحليلات',
@@ -1453,6 +1456,7 @@ export const translations = {
           reading: 'بعد كل قصة اقراها بصوت عالي والعدّاد شغال، وبعدين احكيها بكلامك.',
           grammar: 'بعد كل درس اكتب 3 جمل من عندك بالقاعدة الجديدة.',
           shadowing: 'كرّر جملة واحدة بـ A–B على 0.75x، واتكلم مع المتحدث، وبعدين سجّل نفسك.',
+          callcenter: 'اتفرج على المكالمات ومعاك ورقة وقلم: اكتب كل جملة عاجباك، وقولها بصوت عالي.',
         },
         celebrate: {
           playlist: 'خلّصت المستوى! 🎉',

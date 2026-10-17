@@ -37,6 +37,19 @@ Reading, Grammar, Shadowing), named in English in both languages on the owner's 
 - Progress (`english-course-progress`) and watch positions (`english-course-positions`) are
   per-user `user_kv` values; lessons resume where they stopped and tick themselves near the end.
 
+## Call Center Prep (owner-only)
+
+A private section (`callcenter`): the owner's plan from B1 to C1 and an English call center job in
+Egypt. **Read `src/data/callCenter/README.md` before changing it**; Levels 4–5 are still to build,
+and their detailed plan is in `src/data/callCenter/ROADMAP.md`.
+
+- Only the owner's account sees it: `src/lib/callCenter/access.ts` compares a salted SHA-256 of the
+  signed-in email. The repo is public, so never write the owner's email anywhere. For screenshots
+  and E2E runs, build with `VITE_CALL_CENTER_PREVIEW=1` (never on the deployed site).
+- Progress is in `user_kv` (`callcenter-*` keys); voice recordings stay on the device (IndexedDB).
+- The Library tab's playlists are in `src/data/callCenter/catalog.ts`;
+  `node scripts/sync-courses.mjs callcenter` regenerates their episodes.
+
 ## Checks
 
 ```bash

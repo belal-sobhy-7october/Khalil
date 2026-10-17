@@ -32,7 +32,7 @@ const FILTERS: LessonFilter[] = ['all', 'remaining', 'done'];
 /** Save the watch position at most this often while a lesson plays (and always on pause). */
 const SAVE_EVERY_MS = 15_000;
 
-const sourceStorageKey = (sectionId: CourseSectionId) => `khalil-english-source:${sectionId}`;
+const sourceStorageKey = (sectionId: Section['id']) => `khalil-english-source:${sectionId}`;
 /** Milliseconds since `time` (called from player events, never while rendering). */
 const msSince = (time: number) => Date.now() - time;
 const groupDomId = (id: string) => `course-group-${id}`;
@@ -63,15 +63,17 @@ export interface LinksTarget {
  * choose from, and for the chosen one every lesson as a to-do list with
  * progress that moves while you watch or listen.
  */
-export default function CourseSection({ sectionId, loopPlayer = false, links }: {
-  sectionId: CourseSectionId;
+export default function CourseSection({ sectionId, section: sectionProp, loopPlayer = false, links }: {
+  sectionId?: CourseSectionId;
+  /** A section from outside the English hub (Call Center Prep's library). */
+  section?: Section;
   /** Show the shadowing loop controls (A–B) on videos. */
   loopPlayer?: boolean;
-  /** Where "Your own links" are kept for this section. */
-  links: LinksTarget;
+  /** Where "Your own links" are kept for this section (none: the list is hidden). */
+  links?: LinksTarget;
 }) {
   const { t } = useTranslation();
-  const section = getCourseSection(sectionId);
+  const section = sectionProp ?? getCourseSection(sectionId ?? 'pronunciation');
   const [progress, setProgress] = useKv<CourseProgress>(COURSE_PROGRESS_KEY, {});
   const [positions, setPositions] = useKv<WatchPositions>(COURSE_POSITIONS_KEY, {});
   /** Where the playing lesson is right now (saved to `positions` only now and then). */
@@ -183,7 +185,7 @@ function SourceView({
   live: { id: string; seconds: number } | null;
   setLive: (live: { id: string; seconds: number } | null) => void;
   loopPlayer: boolean;
-  links: LinksTarget;
+  links?: LinksTarget;
   podcastStatus: PodcastStatus;
   onRetry: () => void;
 }) {
@@ -635,7 +637,7 @@ function SourceView({
                 />
               </div>
             ))}
-            {source.kind === 'youtube' && (
+            {source.kind === 'youtube' && links && (
               <details className="group rounded-2xl border border-dashed border-border-subtle px-3 py-2">
                 <summary className="flex items-center gap-1.5 cursor-pointer text-xs text-ink-light hover:text-ink list-none">
                   <Link2 size={13} /> {t('english.courses.ownLinks')}
