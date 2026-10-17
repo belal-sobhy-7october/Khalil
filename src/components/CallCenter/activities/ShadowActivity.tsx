@@ -5,6 +5,7 @@ import type { Speaker } from '../../../data/callCenter/types';
 import { shadowLines, speakLines, ttsSupported } from '../../../lib/callCenter/voice';
 import VoiceRecorder from '../VoiceRecorder';
 import { ArabicNote, NaturalReaderButton, SpeakButton, secondaryBtn } from '../ui';
+import { useSavedProgress } from '../useSavedProgress';
 
 const SPEAKER_NAME: Record<Speaker, string> = {
   agent: 'Agent',
@@ -30,13 +31,14 @@ const RATES = [0.8, 0.95, 1.1];
  * Shadow a model call: hear it, then repeat each line in the pause after it,
  * copying the rhythm and the tone, and record yourself.
  */
-export default function ShadowActivity({ refId, onDone }: { refId: string; onDone: () => void }) {
+export default function ShadowActivity({ refId, onDone, progressKey = `shadow:${refId}` }: { refId: string; onDone: () => void; progressKey?: string }) {
   const script = getScript(refId);
   const [current, setCurrent] = useState(-1);
   const [mode, setMode] = useState<'idle' | 'listen' | 'shadow'>('idle');
   const [rate, setRate] = useState(0.95);
-  const [rounds, setRounds] = useState(0);
-  const roundsRef = useRef(0);
+  // Rounds done are saved, so two rounds can be split across visits.
+  const [rounds, setRounds] = useSavedProgress(progressKey, 0);
+  const roundsRef = useRef(rounds);
   const stopRef = useRef<(() => void) | null>(null);
 
   useEffect(() => () => stopRef.current?.(), []);

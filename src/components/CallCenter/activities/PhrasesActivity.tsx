@@ -4,12 +4,16 @@ import { getPhraseSet } from '../../../data/callCenter';
 import { useAddToFlashcards } from '../useFlashcards';
 import { speakLines } from '../../../lib/callCenter/voice';
 import { NaturalReaderButton, SpeakButton, primaryBtn, secondaryBtn } from '../ui';
+import { useSavedProgress } from '../useSavedProgress';
 
 /** A phrase set: listen, then practice saying each phrase from its use alone. */
-export default function PhrasesActivity({ refId, onDone }: { refId: string; onDone: () => void }) {
+export default function PhrasesActivity({ refId, onDone, progressKey = `phrases:${refId}` }: { refId: string; onDone: () => void; progressKey?: string }) {
   const set = getPhraseSet(refId);
-  const [practice, setPractice] = useState(false);
-  const [index, setIndex] = useState(0);
+  // Where you are in the practice round, saved so it resumes.
+  const [round, setRound, clearRound] = useSavedProgress<{ practice: boolean; index: number }>(progressKey, { practice: false, index: 0 });
+  const { practice, index } = round;
+  const setPractice = (on: boolean) => setRound((r) => ({ ...r, practice: on }));
+  const setIndex = (i: number) => setRound((r) => ({ ...r, index: i }));
   const [shown, setShown] = useState(false);
   const [playing, setPlaying] = useState<number>(-1);
   const [stopper, setStopper] = useState<(() => void) | null>(null);
@@ -38,8 +42,7 @@ export default function PhrasesActivity({ refId, onDone }: { refId: string; onDo
   const next = () => {
     setShown(false);
     if (index + 1 >= set.phrases.length) {
-      setPractice(false);
-      setIndex(0);
+      clearRound();
       onDone();
     } else setIndex(index + 1);
   };

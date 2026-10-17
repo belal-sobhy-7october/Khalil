@@ -17,6 +17,8 @@ export const CC_MISTAKES_KEY = 'callcenter-mistakes';
 export const CC_CALLS_KEY = 'callcenter-calls';
 export const CC_VOICE_KEY = 'callcenter-voice';
 export const CC_SETTINGS_KEY = 'callcenter-settings';
+/** Work in the middle of being done (a test, an exercise…), so leaving and coming back resumes it. */
+export const CC_PROGRESS_KEY = 'callcenter-progress';
 
 /** task id → the local date (YYYY-MM-DD) it was done. */
 export type TaskLog = Record<string, string>;

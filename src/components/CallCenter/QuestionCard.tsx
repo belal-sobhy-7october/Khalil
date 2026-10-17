@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import { getQuestion } from '../../data/callCenter';
 import { interviewQuestionPrompt } from '../../lib/callCenter/prompts';
@@ -20,6 +20,15 @@ export default function QuestionCard({ questionId, onDone, showQuestion = false 
   const { answers, saveAnswer } = useCallCenter();
   const [showModel, setShowModel] = useState(false);
   const [draft, setDraft] = useState<string | null>(null);
+  // Saved a moment after you stop typing (and when you leave), not only on blur.
+  const pending = useRef<{ timer: number; save: () => void } | null>(null);
+  const flush = () => {
+    if (!pending.current) return;
+    window.clearTimeout(pending.current.timer);
+    pending.current.save();
+    pending.current = null;
+  };
+  useEffect(() => () => flush(), []);
   if (!q) return <p className="text-sm text-ink-light">This question is missing.</p>;
   const mine = draft ?? answers[q.id]?.text ?? '';
 
@@ -58,9 +67,15 @@ export default function QuestionCard({ questionId, onDone, showQuestion = false 
           dir="ltr"
           rows={4}
           value={mine}
-          onChange={(e) => setDraft(e.target.value)}
+          onChange={(e) => {
+            const text = e.target.value;
+            setDraft(text);
+            if (pending.current) window.clearTimeout(pending.current.timer);
+            const save = () => saveAnswer(q.id, text);
+            pending.current = { save, timer: window.setTimeout(() => { pending.current = null; save(); }, 800) };
+          }}
           onBlur={() => {
-            if (draft !== null && draft !== (answers[q.id]?.text ?? '')) saveAnswer(q.id, draft);
+            flush();
             setDraft(null);
           }}
           placeholder="I'm a software developer from Cairo…"

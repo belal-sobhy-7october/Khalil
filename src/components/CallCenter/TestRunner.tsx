@@ -8,6 +8,7 @@ import { useCallCenter } from './CallCenterContext';
 import { TestItemView, type ItemResult } from './testItems';
 import { ProgressBar } from '../English/CourseVisuals';
 import { ArabicNote, Card, Pill, primaryBtn, secondaryBtn } from './ui';
+import { useSavedProgress } from './useSavedProgress';
 
 const ITEM_LABEL: Record<TestItem['type'], string> = {
   mcq: 'Choose the answer',
@@ -48,6 +49,15 @@ function summarize(items: TestItem[], results: Record<number, ItemResult>) {
   return { percent: total ? Math.round((got / total) * 100) : 0, skills };
 }
 
+/** A test you left in the middle: saved after every answer, so it resumes where you stopped. */
+export interface TestInProgress {
+  attemptNo: number;
+  index: number;
+  results: Record<number, ItemResult>;
+  /** The test's length when it started (a saved run of a test that has since changed is dropped). */
+  count: number;
+}
+
 /** Takes a test from start to finish, one item at a time, and saves the result. */
 export default function TestRunner({ testId, onClose, onFinish }: {
   testId: string;
@@ -56,14 +66,19 @@ export default function TestRunner({ testId, onClose, onFinish }: {
   onFinish?: (attempt: TestAttempt) => void;
 }) {
   const { tests, saveAttempt } = useCallCenter();
+  const [saved, setSaved, clearSaved] = useSavedProgress<TestInProgress | null>(`test:${testId}`, null);
+  // Pick up a run you left in the middle (unless the test has changed since).
+  const [resumed] = useState(() => (saved && saved.count === getTest(testId, saved.attemptNo)?.items.length ? saved : null));
   // Each attempt gets its own mix of questions; fixed once the test starts.
-  const [attemptNo, setAttemptNo] = useState(() => tests[testId]?.length ?? 0);
+  const [attemptNo, setAttemptNo] = useState(() => resumed?.attemptNo ?? tests[testId]?.length ?? 0);
   const test = useMemo(() => getTest(testId, attemptNo), [testId, attemptNo]);
-  const [index, setIndex] = useState(0);
-  const [results, setResults] = useState<Record<number, ItemResult>>({});
+  const [index, setIndex] = useState(() => resumed?.index ?? 0);
+  const [results, setResults] = useState<Record<number, ItemResult>>(() => resumed?.results ?? {});
   const [finished, setFinished] = useState<TestAttempt | null>(null);
 
   if (!test) return <Card>This test is missing.</Card>;
+  const keep = (nextIndex: number, nextResults: Record<number, ItemResult>) =>
+    setSaved({ attemptNo, index: nextIndex, results: nextResults, count: test.items.length });
   const item = test.items[index];
   const last = index === test.items.length - 1;
 
@@ -72,16 +87,21 @@ export default function TestRunner({ testId, onClose, onFinish }: {
     const attempt: TestAttempt = { date: getToday(), percent, passed: test.kind !== 'diagnostic' && percent >= test.pass, skills };
     const wrong = Object.values(all).flatMap((r) => (r.wrong ? [r.wrong] : []));
     saveAttempt(test.id, attempt, wrong);
+    clearSaved();
     setFinished(attempt);
     onFinish?.(attempt);
   };
 
   const next = (all = results) => {
     if (last) finish(all);
-    else setIndex((i) => i + 1);
+    else {
+      setIndex(index + 1);
+      keep(index + 1, all);
+    }
   };
 
   const restart = () => {
+    clearSaved();
     setAttemptNo((n) => n + 1);
     setIndex(0);
     setResults({});
@@ -167,13 +187,20 @@ export default function TestRunner({ testId, onClose, onFinish }: {
         </button>
       </div>
       <ProgressBar ratio={index / test.items.length} size="sm" label="Test progress" />
+      {resumed && index === resumed.index && attemptNo === resumed.attemptNo && (
+        <p className="text-xs text-sage-soft-dark">Picked up where you stopped: question {index + 1} of {test.items.length}. Your earlier answers are kept.</p>
+      )}
       <TestItemView
         key={`${attemptNo}:${index}`}
         item={item}
         result={result}
         seed={`${test.id}:${attemptNo}:${index}`}
         recordKey={`test:${test.id}:${index}`}
-        report={(r) => setResults((all) => ({ ...all, [index]: r }))}
+        report={(r) => {
+          const all = { ...results, [index]: r };
+          setResults(all);
+          keep(index, all);
+        }}
       />
       <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-border-subtle">
         <button

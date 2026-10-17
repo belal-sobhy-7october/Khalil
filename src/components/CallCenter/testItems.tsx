@@ -448,12 +448,12 @@ function WriteItem({ item, report }: { item: Extract<TestItem, { type: 'write' }
   );
 }
 
-function CallItem({ item, report }: { item: Extract<TestItem, { type: 'call' }>; report: Report }) {
+function CallItem({ item, report, recordKey }: { item: Extract<TestItem, { type: 'call' }>; report: Report; recordKey: string }) {
   const scenario = getScenario(item.scenarioId);
   return (
     <div className="space-y-3">
       <p className="text-base font-semibold text-ink">Mock call: {scenario?.title}</p>
-      <RoleplayActivity refId={item.scenarioId} onScore={(percent) => report({ points: (percent / 100) * 3, max: 3, skill: 'calls' })} />
+      <RoleplayActivity refId={item.scenarioId} progressKey={`call:${recordKey}`} onScore={(percent) => report({ points: (percent / 100) * 3, max: 3, skill: 'calls' })} />
     </div>
   );
 }
@@ -493,6 +493,6 @@ export function TestItemView({ item, result, report, seed, recordKey }: {
         />
       );
     case 'call':
-      return <CallItem item={item} report={report} />;
+      return <CallItem item={item} report={report} recordKey={recordKey} />;
   }
 }

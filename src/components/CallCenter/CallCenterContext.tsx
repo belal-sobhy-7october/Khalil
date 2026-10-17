@@ -7,7 +7,7 @@ import { useKv } from '../../lib/useKv';
 import { getToday } from '../../store/dateHelpers';
 import {
   CC_ANSWERS_KEY, CC_APPLICATIONS_KEY, CC_CALLS_KEY, CC_MISTAKES_KEY, CC_SETTINGS_KEY, CC_TASKS_KEY, CC_TESTS_KEY, CC_TYPING_KEY,
-  CC_VOICE_KEY, EMPTY_SETTINGS, addAttempt, newId, setTasks, type Application, type CallCenterSettings, type CallScore, type Mistake,
+  CC_PROGRESS_KEY, CC_VOICE_KEY, EMPTY_SETTINGS, addAttempt, newId, setTasks, type Application, type CallCenterSettings, type CallScore, type Mistake,
   type MyAnswer, type TaskLog, type TestAttempt, type TestLog, type TypingResult, type VoiceStat,
 } from '../../lib/callCenter/progress';
 import { CC_VOCAB_KEY, EMPTY_VOCAB_LOG, wordKey, type VocabLog } from '../../lib/callCenter/vocab';
@@ -29,6 +29,10 @@ interface CallCenterState {
   markHeard: (words: string[]) => void;
   /** Starts the month-long word bank sprint (once). */
   startVocab: () => void;
+  /** Half-done work by key (`test:L1-W1-QUIZ`, a task id…). */
+  inProgress: Record<string, unknown>;
+  /** Updates one key of `inProgress`; return undefined to drop it. */
+  saveProgress: (key: string, update: (prev: unknown) => unknown) => void;
   markTasks: (ids: string[], done: boolean) => void;
   saveAttempt: (testId: string, attempt: TestAttempt, wrong: Array<Omit<Mistake, 'id' | 'date'>>) => void;
   saveTyping: (result: Omit<TypingResult, 'date'>) => void;
@@ -53,6 +57,20 @@ export function CallCenterProvider({ children }: { children: ReactNode }) {
   const [voice, setVoice] = useKv<VoiceStat[]>(CC_VOICE_KEY, []);
   const [settings, setSettings] = useKv<CallCenterSettings>(CC_SETTINGS_KEY, EMPTY_SETTINGS);
   const [vocab, setVocab] = useKv<VocabLog>(CC_VOCAB_KEY, EMPTY_VOCAB_LOG);
+  const [inProgress, setInProgress] = useKv<Record<string, unknown>>(CC_PROGRESS_KEY, {});
+
+  const saveProgress = useCallback(
+    (key: string, update: (prev: unknown) => unknown) =>
+      setInProgress((all) => {
+        const value = update(all[key]);
+        if (value === all[key]) return all;
+        const next = { ...all };
+        if (value === undefined) delete next[key];
+        else next[key] = value;
+        return next;
+      }),
+    [setInProgress]
+  );
 
   const markHeard = useCallback(
     (words: string[]) =>
@@ -104,10 +122,10 @@ export function CallCenterProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo(
     () => ({
-      tasks, tests, typing, answers, applications, mistakes, calls, voice, settings, vocab, markHeard, startVocab,
+      tasks, tests, typing, answers, applications, mistakes, calls, voice, settings, vocab, markHeard, startVocab, inProgress, saveProgress,
       markTasks, saveAttempt, saveTyping, saveAnswer, saveCall, saveVoice, setApplications, setMistakes, setSettings,
     }),
-    [tasks, tests, typing, answers, applications, mistakes, calls, voice, settings, vocab, markHeard, startVocab, markTasks, saveAttempt, saveTyping, saveAnswer, saveCall, saveVoice, setApplications, setMistakes, setSettings]
+    [tasks, tests, typing, answers, applications, mistakes, calls, voice, settings, vocab, markHeard, startVocab, inProgress, saveProgress, markTasks, saveAttempt, saveTyping, saveAnswer, saveCall, saveVoice, setApplications, setMistakes, setSettings]
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

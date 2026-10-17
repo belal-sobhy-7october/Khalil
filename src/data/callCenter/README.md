@@ -168,6 +168,7 @@ Per-user `user_kv` values (through `useKv`, with a copy on the device, so they w
 | `callcenter-voice` | What's known about each recording (length, pauses, pace, rating); not the audio. |
 | `callcenter-settings` | EF SET scores. |
 | `callcenter-vocab` | When the word bank month started, and the words heard on YouGlish. |
+| `callcenter-progress` | Work left in the middle, by key: a test (`test:<id>`: attempt, question, answers so far), and per task the grammar answers, shadowing rounds, phrase practice position and a half-filled role-play rubric. Use `useSavedProgress(key, initial)` for anything new that takes more than one sitting. |
 
 - **The word bank's progress lives in the flashcards** (`vocabulary_items`), like every other word you study,
   so it shows in Learn English → Vocabulary too; `callcenter-vocab` only adds the start date and YouGlish.

@@ -17,6 +17,7 @@ import SoundActivity from './activities/SoundActivity';
 import VocabActivity from './activities/VocabActivity';
 import WatchActivity from './activities/WatchActivity';
 import QuestionCard from './QuestionCard';
+import type { TestInProgress } from './TestRunner';
 import TypingTest from './TypingTest';
 import VoiceRecorder from './VoiceRecorder';
 import { DoneToggle, Pill, SpeakButton, primaryBtn } from './ui';
@@ -63,13 +64,14 @@ function VoiceTask({ promptId, onDone }: { promptId: string; onDone: () => void 
 }
 
 function TestTask({ testId, onRun }: { testId: string; onRun: () => void }) {
-  const { tests } = useCallCenter();
+  const { tests, inProgress } = useCallCenter();
   const best = bestAttempt(tests[testId]);
   const test = getTest(testId);
+  const half = inProgress[`test:${testId}`] as TestInProgress | undefined;
   return (
     <div className="flex flex-wrap items-center gap-3">
       <button type="button" onClick={onRun} className={primaryBtn}>
-        {best ? 'Take it again' : 'Start'}
+        {half ? `Continue: question ${half.index + 1} of ${half.count}` : best ? 'Take it again' : 'Start'}
       </button>
       {test && <span className="text-xs text-ink-light">{test.items.length} items{test.kind !== 'diagnostic' ? ` · pass mark ${test.pass}%` : ''}</span>}
       {best && <Pill tone={best.passed ? 'good' : 'neutral'}>Best: {best.percent}%</Pill>}
@@ -100,13 +102,13 @@ export default function TaskCard({ task, level, done, open, onToggleOpen, onRunT
       case 'watch':
         return <WatchActivity refId={task.ref} onDone={markDone} />;
       case 'phrases':
-        return <PhrasesActivity refId={task.ref} onDone={markDone} />;
+        return <PhrasesActivity refId={task.ref} onDone={markDone} progressKey={task.id} />;
       case 'grammar':
-        return <GrammarActivity refId={task.ref} onDone={markDone} />;
+        return <GrammarActivity refId={task.ref} onDone={markDone} progressKey={task.id} />;
       case 'shadow':
-        return <ShadowActivity refId={task.ref} onDone={markDone} />;
+        return <ShadowActivity refId={task.ref} onDone={markDone} progressKey={task.id} />;
       case 'roleplay':
-        return <RoleplayActivity refId={task.ref} onDone={markDone} />;
+        return <RoleplayActivity refId={task.ref} onDone={markDone} progressKey={task.id} />;
       case 'interview':
         return <QuestionCard questionId={task.ref} onDone={markDone} />;
       case 'voice':

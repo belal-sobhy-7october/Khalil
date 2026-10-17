@@ -1,8 +1,8 @@
-import { useState } from 'react';
 import { RotateCcw } from 'lucide-react';
 import { getGrammar } from '../../../data/callCenter';
 import type { Choice } from '../../../data/callCenter/types';
 import { ArabicNote, ReadAloud, SpeakButton, secondaryBtn } from '../ui';
+import { useSavedProgress } from '../useSavedProgress';
 
 /** A multiple-choice question that shows right or wrong at once. */
 export function ChoiceQuestion({ item, chosen, onChoose, number }: {
@@ -41,9 +41,14 @@ export function ChoiceQuestion({ item, chosen, onChoose, number }: {
 }
 
 /** One grammar point: the rule with examples, then its exercises. */
-export default function GrammarActivity({ refId, onDone }: { refId: string; onDone: () => void }) {
+export default function GrammarActivity({ refId, onDone, progressKey = `grammar:${refId}` }: {
+  refId: string;
+  onDone: () => void;
+  /** Where the answers are saved (the task id in the plan, so each day has its own round). */
+  progressKey?: string;
+}) {
   const g = getGrammar(refId);
-  const [answers, setAnswers] = useState<Record<number, number>>({});
+  const [answers, setAnswers] = useSavedProgress<Record<number, number>>(progressKey, {});
   if (!g) return <p className="text-sm text-ink-light">This grammar point is missing.</p>;
   const answeredCount = Object.keys(answers).length;
   const right = g.exercises.filter((e, i) => answers[i] === e.answer).length;

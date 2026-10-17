@@ -4,11 +4,14 @@ import { VOCAB_CHECK_ID } from '../../data/callCenter/plan';
 import { DIAGNOSTIC, LEVEL_EXAMS } from '../../data/callCenter/tests';
 import { bestAttempt, bestTyping, efsetLevel, type TestAttempt } from '../../lib/callCenter/progress';
 import { useCallCenter } from './CallCenterContext';
+import type { TestInProgress } from './TestRunner';
 import { EfsetActivity } from './activities/SmallActivities';
 import { ArabicNote, Card, Pill, primaryBtn } from './ui';
 
 function TestRow({ id, title, attempts, pass, onRun }: { id: string; title: string; attempts?: TestAttempt[]; pass?: number; onRun: (id: string) => void }) {
+  const { inProgress } = useCallCenter();
   const best = bestAttempt(attempts);
+  const half = inProgress[`test:${id}`] as TestInProgress | undefined;
   return (
     <li className="flex flex-wrap items-center gap-2 py-2">
       <span className="flex-1 min-w-48 text-sm text-ink">{title}</span>
@@ -23,7 +26,7 @@ function TestRow({ id, title, attempts, pass, onRun }: { id: string; title: stri
         pass !== undefined && <span className="text-xs text-ink-light">pass mark {pass}%</span>
       )}
       <button type="button" onClick={() => onRun(id)} className={primaryBtn}>
-        {best ? 'Again' : 'Start'}
+        {half ? `Continue (${half.index + 1}/${half.count})` : best ? 'Again' : 'Start'}
       </button>
     </li>
   );

@@ -125,3 +125,54 @@ describe('Call Center Prep in the sidebar', () => {
     expect(screen.getByRole('button', { name: 'Call Center Prep' })).toBeInTheDocument();
   });
 });
+
+describe('Call Center Prep keeps your place', () => {
+  const diagnosticDone = { 'L0-D1:voice:intro': '2026-10-17', 'L0-D1:test:L0-DIAG': '2026-10-17', 'L0-D1:link:efset': '2026-10-17' };
+
+  it('resumes a test you left in the middle', async () => {
+    const first = render(<CallCenterPrep />);
+    fireEvent.click(screen.getByRole('tab', { name: 'Tests' }));
+    fireEvent.click(within(screen.getByText('Diagnostic test (where you start)').closest('li') as HTMLElement).getByRole('button', { name: 'Start' }));
+    fireEvent.click(screen.getByRole('button', { name: 'goes' }));
+    fireEvent.click(screen.getByRole('button', { name: /Next/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'sent' }));
+    first.unmount();
+
+    render(<CallCenterPrep />);
+    fireEvent.click(screen.getByRole('tab', { name: 'Tests' }));
+    const row = screen.getByText('Diagnostic test (where you start)').closest('li') as HTMLElement;
+    fireEvent.click(within(row).getByRole('button', { name: /Continue \(2\/\d+\)/ }));
+    expect(screen.getByText('I ___ the email yesterday.')).toBeInTheDocument();
+    expect(screen.getByText(/Picked up where you stopped: question 2/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Next/ })).toBeEnabled();
+  });
+
+  it('keeps the answers of a half-done grammar exercise', () => {
+    kv.set('callcenter-tasks', diagnosticDone);
+    const first = render(<CallCenterPrep />);
+    fireEvent.click(screen.getByRole('button', { name: /Present simple vs present continuous/ }));
+    fireEvent.click(screen.getAllByRole('button', { name: 'live' })[0]);
+    expect(screen.getByText('1 / 8 right')).toBeInTheDocument();
+    first.unmount();
+
+    render(<CallCenterPrep />);
+    fireEvent.click(screen.getByRole('button', { name: /Present simple vs present continuous/ }));
+    expect(screen.getByText('1 / 8 right')).toBeInTheDocument();
+  });
+
+  it('saves your interview answer while you type', async () => {
+    render(<CallCenterPrep />);
+    fireEvent.click(screen.getByRole('tab', { name: 'Interview' }));
+    fireEvent.click(screen.getByRole('button', { name: /Tell me about yourself\./ }));
+    fireEvent.change(screen.getByLabelText(/Your own answer/), { target: { value: "I'm a developer from Cairo." } });
+    await waitFor(() => expect((kv.get('callcenter-answers') as Record<string, { text: string }>)?.['tell-me-about-yourself']?.text).toBe("I'm a developer from Cairo."));
+  });
+
+  it('opens on the day you reached, with the next unfinished task open', async () => {
+    kv.set('callcenter-tasks', { ...diagnosticDone, 'L1-W1-D1:sound:p-b': '2026-10-17' });
+    render(<CallCenterPrep />);
+    expect(await screen.findByRole('heading', { name: 'Day 1: Learn the week' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /New words: Unit 1/ })).toHaveAttribute('aria-expanded', 'true');
+  });
+});
+

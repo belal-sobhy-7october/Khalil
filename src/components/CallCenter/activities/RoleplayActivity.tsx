@@ -1,10 +1,10 @@
-import { useState } from 'react';
 import { Save, Sparkles } from 'lucide-react';
 import { getScenario } from '../../../data/callCenter';
 import { CALL_RUBRIC, INTERVIEW_RUBRIC, rubricPercent, type RubricCriterion } from '../../../lib/callCenter/grading';
 import { roleplayPrompt } from '../../../lib/callCenter/prompts';
 import { useCallCenter } from '../CallCenterContext';
 import { AiPartnerButtons, ArabicNote, Pill, primaryBtn } from '../ui';
+import { useSavedProgress } from '../useSavedProgress';
 
 const LEVELS = [
   { value: 0, label: 'Missed' },
@@ -46,16 +46,19 @@ export function RubricScorer({ rubric, scores, onChange }: {
 }
 
 /** A role-play with an AI partner, then a QA score you save. */
-export default function RoleplayActivity({ refId, onDone, onScore }: {
+export default function RoleplayActivity({ refId, onDone, onScore, progressKey }: {
   refId: string;
+  /** Where the half-filled rubric is saved (the task id in the plan). */
+  progressKey?: string;
   onDone?: () => void;
   /** In a test: report the percent instead of only saving it. */
   onScore?: (percent: number) => void;
 }) {
   const scenario = getScenario(refId);
   const { calls, saveCall } = useCallCenter();
-  const [scores, setScores] = useState<Record<string, number>>({});
-  const [saved, setSaved] = useState(false);
+  // The rubric as you fill it in, saved until you save the score.
+  const [draft, setDraft, clearDraft] = useSavedProgress<{ scores: Record<string, number>; saved: boolean }>(progressKey ?? `roleplay:${refId}`, { scores: {}, saved: false });
+  const { scores, saved } = draft;
   if (!scenario) return <p className="text-sm text-ink-light">This role-play is missing.</p>;
   const rubric = scenario.role === 'candidate' ? INTERVIEW_RUBRIC : CALL_RUBRIC;
   const complete = rubric.every((c) => scores[c.id] !== undefined);
@@ -105,16 +108,21 @@ export default function RoleplayActivity({ refId, onDone, onScore }: {
 
       <div className="space-y-3">
         <div className="text-sm font-semibold text-ink">Your score</div>
-        <RubricScorer rubric={rubric} scores={scores} onChange={(s) => { setScores(s); setSaved(false); }} />
+        <RubricScorer rubric={rubric} scores={scores} onChange={(s) => setDraft({ scores: s, saved: false })} />
         <div className="flex flex-wrap items-center gap-3">
           <span className="text-lg font-bold tabular-nums text-ink">{percent}%</span>
           <button
             type="button"
             disabled={!complete || saved}
             onClick={() => {
-              if (onScore) onScore(percent);
-              else saveCall(scenario.id, percent);
-              setSaved(true);
+              // In a test the result is saved with the test; in the plan, with your calls.
+              if (onScore) {
+                onScore(percent);
+                clearDraft();
+              } else {
+                saveCall(scenario.id, percent);
+                setDraft({ scores, saved: true });
+              }
               onDone?.();
             }}
             className={`${primaryBtn} disabled:opacity-50`}
