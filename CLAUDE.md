@@ -61,3 +61,10 @@ npx tsc -b --noEmit
 npm test        # needs VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY set (any values)
 npm run build
 ```
+
+End to end (Playwright, against a fake Supabase), with a dev server on port 5173
+(`VITE_SUPABASE_URL=http://localhost:54321 VITE_SUPABASE_ANON_KEY=fake npx vite --port 5173`):
+`node scripts/e2e/smoke.mjs http://localhost:5173 <dir>` (every section, both languages and themes),
+`node scripts/e2e/flows.mjs …` (add, edit, delete, reload) and, with `VITE_CALL_CENTER_PREVIEW=1` on
+the dev server, `node scripts/e2e/callcenter.mjs …` (every tab, and progress kept after a reload).
+`scripts/e2e/offline.mjs` runs against a production build (see Offline).
