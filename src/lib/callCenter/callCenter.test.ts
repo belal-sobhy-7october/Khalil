@@ -9,8 +9,11 @@ import { roleplayPrompt } from './prompts';
 import {
   addAttempt, currentDayIndex, dayDone, efsetLevel, minutesOn, setTasks, studyStreak, type TaskLog,
 } from './progress';
-import { buildWeeklyQuiz, chunk, estimateGrammarLevel, getTest, itemWeight, seeded, shuffle } from './quiz';
+import { buildVocabCheck, buildWeeklyQuiz, chunk, estimateGrammarLevel, getTest, itemWeight, seeded, shuffle, vocabItems } from './quiz';
 import { takesToPrune } from './recordings';
+import { VOCAB_UNITS, VOCAB_WORDS } from '../../data/callCenter';
+import type { VocabularyItem } from '../../types';
+import { bankCards, sprintDay, unitStatus, vocabProgress } from './vocab';
 
 describe('grading', () => {
   it('compares words without punctuation, contractions or digits getting in the way', () => {
@@ -184,5 +187,50 @@ describe('access and prompts', () => {
     expect(roleplayPrompt(call)).toContain('Opening');
     expect(roleplayPrompt(interview)).toContain('end interview');
     expect(roleplayPrompt(interview)).toContain('Structure');
+  });
+});
+
+describe('the word bank', () => {
+  const card = (word: string, masteryLevel: number, lastReviewedAt?: string): VocabularyItem => ({
+    id: `id-${word}`, userId: 'u', word, type: 'word', definition: 'd', masteryLevel, reviewCount: 1, lapseCount: 0, correctStreak: masteryLevel,
+    isHard: false, lastReviewedAt, createdAt: '2026-10-01', updatedAt: '2026-10-01',
+  });
+
+  it('reads progress from the flashcards, whatever the case of the word', () => {
+    const unit = VOCAB_UNITS[0];
+    const items = [card('Agent', 3, '2026-10-16T10:00:00Z'), card('queue', 1, '2026-10-01T10:00:00Z'), card('not in the bank', 5)];
+    const p = vocabProgress(items, new Date('2026-10-17T12:00:00Z'));
+    expect(p.total).toBe(384);
+    expect(p.added).toBe(2);
+    expect(p.known).toBe(1);
+    expect(p.due).toEqual(['id-queue']);
+    expect(unitStatus(unit, bankCards(items))).toMatchObject({ added: 2, known: 1, total: 16 });
+  });
+
+  it('counts the days of the month from the day it started', () => {
+    expect(sprintDay(undefined, '2026-10-17')).toBe(0);
+    expect(sprintDay('2026-10-17', '2026-10-17')).toBe(1);
+    expect(sprintDay('2026-10-01', '2026-10-30')).toBe(30);
+  });
+
+  it('asks about a word with options of the same kind, one of them right', () => {
+    const items = vocabItems(VOCAB_WORDS, 30, seeded('v'));
+    expect(items).toHaveLength(30);
+    for (const item of items) {
+      if (item.type !== 'mcq') throw new Error('not a question');
+      expect(new Set(item.options).size).toBe(4);
+      const word = VOCAB_WORDS.find((w) => w.word === item.options[item.answer]);
+      expect(word).toBeDefined();
+      if (item.q.startsWith('Complete')) expect(item.q).toContain('_____');
+      else expect(item.q).toContain(word?.definition);
+    }
+  });
+
+  it('checks the bank with 40 questions and a 90% pass mark', () => {
+    const check = buildVocabCheck(0);
+    expect(check.items).toHaveLength(40);
+    expect(check.pass).toBe(90);
+    expect(getTest('VOCAB-CHECK', 1)?.items).not.toEqual(check.items);
+    expect(buildWeeklyQuiz(LEVELS[1].weeks[0], 0).items.filter((i) => i.skill === 'vocabulary' && i.type === 'mcq' && /means|Complete/.test(i.q)).length).toBeGreaterThanOrEqual(4);
   });
 });

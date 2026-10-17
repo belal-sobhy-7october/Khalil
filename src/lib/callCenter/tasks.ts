@@ -1,6 +1,6 @@
 /** Names of plan tasks, as the day's list shows them. */
 import {
-  VIDEOS, getGrammar, getPhraseSet, getQuestion, getScenario, getScript, getSound, getTypingText, getVoicePrompt,
+  VIDEOS, getGrammar, getVocabUnit, getPhraseSet, getQuestion, getScenario, getScript, getSound, getTypingText, getVoicePrompt,
 } from '../../data/callCenter';
 import type { PlanTask } from '../../data/callCenter/types';
 import { getTest } from './quiz';
@@ -31,5 +31,9 @@ export function taskTitle(task: PlanTask): string {
       return task.ref.endsWith('-mistakes') ? 'Review before the exam' : 'Weekly review';
     case 'link':
       return 'EF SET: the free English test';
+    case 'vocab': {
+      const unit = getVocabUnit(task.ref);
+      return unit ? `New words: Unit ${unit.number} · ${unit.title}` : 'Review your due call center words';
+    }
   }
 }

@@ -1,5 +1,6 @@
 import { Trash2 } from 'lucide-react';
 import { LEVELS } from '../../data/callCenter';
+import { VOCAB_CHECK_ID } from '../../data/callCenter/plan';
 import { DIAGNOSTIC, LEVEL_EXAMS } from '../../data/callCenter/tests';
 import { bestAttempt, bestTyping, efsetLevel, type TestAttempt } from '../../lib/callCenter/progress';
 import { useCallCenter } from './CallCenterContext';
@@ -42,6 +43,12 @@ export default function TestsView({ onRun }: { onRun: (testId: string) => void }
         <h3 className="font-semibold text-ink">Diagnostic</h3>
         <ul>
           <TestRow id={DIAGNOSTIC.id} title="Diagnostic test (where you start)" attempts={tests[DIAGNOSTIC.id]} onRun={onRun} />
+        </ul>
+      </Card>
+      <Card>
+        <h3 className="font-semibold text-ink">Vocabulary</h3>
+        <ul>
+          <TestRow id={VOCAB_CHECK_ID} title="Vocab check: 40 words from the 384-word bank (goal: 90%)" attempts={tests[VOCAB_CHECK_ID]} pass={90} onRun={onRun} />
         </ul>
       </Card>
       {LEVELS.filter((l) => l.status === 'ready' && l.weeks.length).map((level) => {

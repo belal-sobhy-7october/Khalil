@@ -8,8 +8,9 @@ import { SCRIPTS } from './scripts';
 import { SOUNDS } from './sounds';
 import { TYPING_TEXTS } from './typing';
 import { VIDEOS } from './videos';
+import { VOCAB_UNITS, VOCAB_WORDS, getVocabUnit } from './vocab';
 
-export { GRAMMAR, LEVELS, PHRASE_SETS, PLAN_DAYS, QUESTIONS, SCENARIOS, SCRIPTS, SOUNDS, TYPING_TEXTS, VIDEOS, VOICE_PROMPTS };
+export { GRAMMAR, LEVELS, PHRASE_SETS, PLAN_DAYS, QUESTIONS, SCENARIOS, SCRIPTS, SOUNDS, TYPING_TEXTS, VIDEOS, VOCAB_UNITS, VOCAB_WORDS, VOICE_PROMPTS, getVocabUnit };
 
 function byId<T extends { id: string }>(list: T[]): Map<string, T> {
   return new Map(list.map((x) => [x.id, x]));

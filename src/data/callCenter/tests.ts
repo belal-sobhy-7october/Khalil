@@ -74,7 +74,7 @@ export interface ExamConfig {
   title: string;
   pass: number;
   /** How many questions to draw from the level's lessons. */
-  draw: { grammar: number; phrases: number; dictation: number; repeat: number; build: number; listen: number };
+  draw: { grammar: number; phrases: number; dictation: number; repeat: number; build: number; listen: number; vocab: number };
   extra: TestItem[];
 }
 
@@ -84,7 +84,7 @@ export const LEVEL_EXAMS: ExamConfig[] = [
     level: 'L1',
     title: 'Level 1 exam: Foundation',
     pass: 80,
-    draw: { grammar: 10, phrases: 6, dictation: 4, repeat: 4, build: 3, listen: 2 },
+    draw: { grammar: 10, phrases: 6, dictation: 4, repeat: 4, build: 3, listen: 2, vocab: 8 },
     extra: [
       { type: 'speak', skill: 'speaking', prompt: 'Record your voice note: introduce yourself and say why you want a technical support job (60–90 seconds).', seconds: 90 },
       { type: 'speak', skill: 'speaking', prompt: 'Answer: What are your strengths? (45 seconds)', seconds: 45 },
@@ -96,7 +96,7 @@ export const LEVEL_EXAMS: ExamConfig[] = [
     level: 'L2',
     title: 'Level 2 exam: Customer Service Core',
     pass: 80,
-    draw: { grammar: 10, phrases: 8, dictation: 4, repeat: 4, build: 3, listen: 2 },
+    draw: { grammar: 10, phrases: 8, dictation: 4, repeat: 4, build: 3, listen: 2, vocab: 5 },
     extra: [
       { type: 'retell', skill: 'speaking', story: RETELL_STORIES[0].story, points: RETELL_STORIES[0].points },
       { type: 'write', skill: 'writing', prompt: WRITING_TASKS[0].prompt, model: WRITING_TASKS[0].model, checklist: WRITING_TASKS[0].checklist },
@@ -110,7 +110,7 @@ export const LEVEL_EXAMS: ExamConfig[] = [
     level: 'L3',
     title: 'Level 3 exam: the full hiring simulation',
     pass: 80,
-    draw: { grammar: 8, phrases: 6, dictation: 3, repeat: 6, build: 4, listen: 2 },
+    draw: { grammar: 8, phrases: 6, dictation: 3, repeat: 6, build: 4, listen: 2, vocab: 5 },
     extra: [
       { type: 'speak', skill: 'speaking', prompt: 'Stage 1 — the voice note: introduce yourself and say why you want this technical support job (60–120 seconds).', seconds: 120 },
       { type: 'speak', skill: 'speaking', prompt: "Stage 2 — HR: You're a programmer. Aren't you overqualified for this job? (60 seconds)", seconds: 60 },

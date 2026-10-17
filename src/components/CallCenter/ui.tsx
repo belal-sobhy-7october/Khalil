@@ -1,9 +1,9 @@
 /** Small building blocks shared by Call Center Prep's screens. */
-import { useState, type ReactNode } from 'react';
-import { Check, Copy, ExternalLink, Volume2, WifiOff } from 'lucide-react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { Check, Copy, ExternalLink, Square, Volume2, WifiOff } from 'lucide-react';
 import { useOnline } from '../../lib/offline';
 import { AI_PARTNERS, NATURAL_READERS_URL, copyText } from '../../lib/callCenter/prompts';
-import { speakText } from '../../lib/callCenter/voice';
+import { speakLines, speakText } from '../../lib/callCenter/voice';
 
 export function Card({ children, className = '' }: { children: ReactNode; className?: string }) {
   return <div className={`rounded-2xl border border-border-subtle bg-card p-4 sm:p-5 ${className}`}>{children}</div>;
@@ -101,6 +101,35 @@ export function NaturalReaderButton({ text }: { text: string }) {
       </button>
       {copied && <span className="text-[11px] text-sage-soft-dark">Copied: paste it there and press play.</span>}
     </span>
+  );
+}
+
+/**
+ * For a passage of a few lines: hear it now with the device's voice (works
+ * offline), or in NaturalReader's natural voices. YouGlish is for words; this
+ * is for texts.
+ */
+export function ReadAloud({ text }: { text: string }) {
+  const [playing, setPlaying] = useState(false);
+  const stopRef = useRef<(() => void) | null>(null);
+  useEffect(() => () => stopRef.current?.(), []);
+  const toggle = () => {
+    if (playing) {
+      stopRef.current?.();
+      setPlaying(false);
+      return;
+    }
+    setPlaying(true);
+    stopRef.current = speakLines([{ text }], { onLine: (i) => i === -1 && setPlaying(false) });
+  };
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <button type="button" onClick={toggle} className={secondaryBtn}>
+        {playing ? <Square size={13} /> : <Volume2 size={13} />} {playing ? 'Stop' : 'Listen (device voice)'}
+      </button>
+      <NaturalReaderButton text={text} />
+      <NeedsInternet />
+    </div>
   );
 }
 

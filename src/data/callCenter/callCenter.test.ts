@@ -1,13 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import {
   GRAMMAR, LEVELS, PHRASE_SETS, PLAN_DAYS, QUESTIONS, SCENARIOS, SCRIPTS, SOUNDS, TYPING_TEXTS, VIDEOS, VOICE_PROMPTS,
-  getGrammar, getPhraseSet, getQuestion, getScenario, getScript, getSound, getTypingText, getVoicePrompt, getWeek,
+  getGrammar, getPhraseSet, getQuestion, getScenario, getScript, getSound, getTypingText, getVocabUnit, getVoicePrompt, getWeek,
 } from '.';
 import { CALL_CENTER_LIBRARY } from './catalog';
 import { CALL_CENTER_EPISODES } from './episodes';
 import { CALL_CENTER_SECTION } from './library';
 import { DIAGNOSTIC, LEVEL_EXAMS, RETELL_STORIES, WRITING_TASKS } from './tests';
 import { DEBRIEF, HIRING_STAGES } from './resources';
+import { VOCAB_CHECK_ID } from './plan';
+import { VOCAB_UNITS, VOCAB_WORDS } from './vocab';
 import type { PlanTask, TestItem } from './types';
 
 const ARABIC = /[؀-ۿ]/;
@@ -136,11 +138,13 @@ describe('the plan', () => {
       case 'typing':
         return !!getTypingText(t.ref);
       case 'test':
-        return t.ref === DIAGNOSTIC.id || LEVEL_EXAMS.some((e) => e.id === t.ref) || !!getWeek(t.ref.replace(/-QUIZ$/, ''));
+        return t.ref === VOCAB_CHECK_ID || t.ref === DIAGNOSTIC.id || LEVEL_EXAMS.some((e) => e.id === t.ref) || !!getWeek(t.ref.replace(/-QUIZ$/, ''));
       case 'review':
         return !!getWeek(t.ref) || /^L\d-mistakes$/.test(t.ref);
       case 'link':
         return t.ref === 'efset';
+      case 'vocab':
+        return t.ref === 'due' || !!getVocabUnit(t.ref);
     }
   };
 
@@ -204,5 +208,42 @@ describe('tests and resources', () => {
       for (const p of source.playlists) expect(CALL_CENTER_EPISODES[p.id]?.length ?? 0, p.name).toBeGreaterThan(0);
     }
     expect(CALL_CENTER_SECTION.sources.every((s) => s.groups.every((g) => g.lessons.length > 0))).toBe(true);
+  });
+});
+
+describe('the word bank', () => {
+  it('has 24 units of 16 words, no word twice', () => {
+    expect(VOCAB_UNITS).toHaveLength(24);
+    for (const u of VOCAB_UNITS) expect(u.words, u.id).toHaveLength(16);
+    expect(VOCAB_WORDS).toHaveLength(384);
+    expect(unique(VOCAB_WORDS.map((w) => w.word.toLowerCase()))).toEqual([]);
+  });
+
+  it('gives every word a definition and a call center example, in English', () => {
+    for (const w of VOCAB_WORDS) {
+      expect(w.definition, w.word).toMatch(/[.)]$/);
+      expect(w.example.split(' ').length, w.word).toBeGreaterThanOrEqual(4);
+      expect(ARABIC.test(JSON.stringify(w)), w.word).toBe(false);
+    }
+  });
+
+  it('has a text for each unit that uses its words', () => {
+    for (const u of VOCAB_UNITS) {
+      // Allow "developed" for "develop", "tickets" for "ticket".
+      const used = u.words.filter((w) => new RegExp(`\\b${w.word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(s|es|d|ed|ing)?\\b`, 'i').test(u.text));
+      expect(used.length, u.id).toBeGreaterThanOrEqual(8);
+      expect(u.text.split(/[.!?] /).length, u.id).toBeGreaterThanOrEqual(4);
+    }
+  });
+
+  it('puts a unit on every Level 1 day, in order, and a review on the later days', () => {
+    const l1 = PLAN_DAYS.filter((d) => d.level.id === 'L1' && d.week).flatMap(({ day }) => day.tasks.filter((t) => t.kind === 'vocab').map((t) => t.ref));
+    expect(l1).toEqual(VOCAB_UNITS.map((u) => u.id));
+    for (const { day, week } of PLAN_DAYS.filter((d) => (d.level.id === 'L2' || d.level.id === 'L3') && d.week)) {
+      const n = Number(day.id.split('-D')[1]);
+      expect(day.tasks.some((t) => t.kind === 'vocab' && t.ref === 'due'), day.id).toBe(n <= 5);
+      expect(week?.content.vocab).toBeUndefined();
+    }
+    expect(PLAN_DAYS.find((d) => d.day.id === 'L1-EXAM')?.day.tasks.some((t) => t.ref === VOCAB_CHECK_ID)).toBe(true);
   });
 });

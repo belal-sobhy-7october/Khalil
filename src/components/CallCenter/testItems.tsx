@@ -13,7 +13,7 @@ import { ChoiceQuestion } from './activities/GrammarActivity';
 import RoleplayActivity from './activities/RoleplayActivity';
 import TypingTest from './TypingTest';
 import VoiceRecorder from './VoiceRecorder';
-import { AiPartnerButtons, primaryBtn, secondaryBtn } from './ui';
+import { AiPartnerButtons, ReadAloud, primaryBtn, secondaryBtn } from './ui';
 
 export interface ItemResult {
   points: number;
@@ -420,6 +420,7 @@ function WriteItem({ item, report }: { item: Extract<TestItem, { type: 'write' }
       ) : (
         <div className="space-y-3">
           <div className="rounded-xl bg-sage-soft/8 border border-sage-soft/30 p-3 text-sm text-ink">{item.model}</div>
+          <ReadAloud text={item.model} />
           <div className="text-sm font-medium text-ink">Does your reply have…</div>
           {item.checklist.map((c, i) => (
             <label key={c} className="flex items-start gap-2 text-sm text-ink">

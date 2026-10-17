@@ -36,6 +36,7 @@ const WEEKS: Record<'L1' | 'L2' | 'L3', WeekSpec[]> = {
         speaking: ['voice:intro', 'tell-me-about-yourself', 'free-time', 'describe-yourself', 'voice:intro'],
         videos: ['oWP9Riq-ZBg', '1AmS9h8g3E4', '4qiYg8MvsWc', 'r09MNxGHBvI', '4z-sDnrs-FA'],
         typing: ['t-intro-notes', 't-login-ticket'],
+        vocab: ['v01', 'v02', 'v03', 'v04', 'v05', 'v06'],
       },
     },
     {
@@ -51,6 +52,7 @@ const WEEKS: Record<'L1' | 'L2' | 'L3', WeekSpec[]> = {
         speaking: ['where-from', 'voice:details', 'what-studied', 'why-call-center', 'voice:intro'],
         videos: ['LnXUl2e2Np0', 'i3hd1rTVWWQ', 'bDTvkPMUF40', 'Co8fpooFWqY', 'yu6c89NUrKU'],
         typing: ['t-customer-details', 't-address-note'],
+        vocab: ['v07', 'v08', 'v09', 'v10', 'v11', 'v12'],
       },
     },
     {
@@ -66,6 +68,7 @@ const WEEKS: Record<'L1' | 'L2' | 'L3', WeekSpec[]> = {
         speaking: ['experience', 'programmer-why-support', 'solved-problem', 'why-leave-last-job', 'voice:why-tech-support'],
         videos: ['KN2jyw6D1ak', 'sj-dX3fZmq0', '45VicNg0aQI', 'mTJb7ne0Mbg', '4g2vrWF-mnU'],
         typing: ['t-experience-summary', 't-incident-note'],
+        vocab: ['v13', 'v14', 'v15', 'v16', 'v17', 'v18'],
       },
     },
     {
@@ -81,6 +84,7 @@ const WEEKS: Record<'L1' | 'L2' | 'L3', WeekSpec[]> = {
         speaking: ['good-customer-service', 'shifts', 'strengths', 'weakness', 'tell-me-about-yourself'],
         videos: ['QWBwCoecvkM', 'NzYxS_Xy0oM', 'MzhjD-XrYjg', '2e4jGjfnRQY', 'YqPOQLH_Evw'],
         typing: ['t-hold-note', 't-appointment-note'],
+        vocab: ['v19', 'v20', 'v21', 'v22', 'v23', 'v24'],
       },
     },
   ],
@@ -256,7 +260,7 @@ export function buildDays(weekId: string, c: WeekContent): PlanDay[] {
   const d = (n: number) => `${weekId}-D${n}`;
   const phrases3 = c.phraseSets[2] ?? c.phraseSets[0];
   const reviewSounds = c.sounds.join(',');
-  return [
+  const days: PlanDay[] = [
     {
       id: d(1),
       title: 'Learn the week',
@@ -325,6 +329,13 @@ export function buildDays(weekId: string, c: WeekContent): PlanDay[] {
       ],
     },
   ];
+  // The word bank: a new unit every day in Level 1 (the whole bank in a month), then a daily review of the due words.
+  days.forEach((day, i) => {
+    const unitId = c.vocab?.[i];
+    if (unitId) day.tasks.splice(1, 0, task(day.id, 'vocab', unitId, 20, 'Learn the 16 words: hear each one on YouGlish, then add them to your flashcards.'));
+    else if (i < 5) day.tasks.splice(1, 0, task(day.id, 'vocab', 'due', 10, 'Review the call center words that are due today.'));
+  });
+  return days;
 }
 
 function buildWeeks(level: 'L1' | 'L2' | 'L3'): PlanWeek[] {
@@ -344,17 +355,21 @@ function buildWeeks(level: 'L1' | 'L2' | 'L3'): PlanWeek[] {
   });
 }
 
-function examDay(level: LevelId, title: string): PlanDay {
+function examDay(level: LevelId, title: string, extra: PlanTask[] = []): PlanDay {
   const id = `${level}-EXAM`;
   return {
     id,
     title,
     tasks: [
       task(id, 'review', `${level}-mistakes`, 20, 'Go over your mistake log and your weakest recordings first.'),
+      ...extra,
       task(id, 'test', id, 60, 'Take it in one sitting, like the real thing. Pass mark: 80%.'),
     ],
   };
 }
+
+/** The word bank check: a sample of the 384 words; 90% means you know the bank. */
+export const VOCAB_CHECK_ID = 'VOCAB-CHECK';
 
 export const EFSET_URL = 'https://www.efset.org/ef-set-50/';
 
@@ -386,10 +401,10 @@ export const LEVELS: PlanLevel[] = [
     name: 'Foundation',
     cefr: 'B1 → B1+',
     goal: 'Fix the basics recruiters punish: sounds, tenses, questions, numbers, and a clear voice note.',
-    exit: ['Level exam: 80% or more', 'Typing: 25 words per minute at 90% accuracy', 'A one-minute voice note with no long pauses'],
+    exit: ['Level exam: 80% or more', 'Vocabulary: 90% on the word bank check (384 call center words)', 'Typing: 25 words per minute at 90% accuracy', 'A one-minute voice note with no long pauses'],
     status: 'ready',
     weeks: buildWeeks('L1'),
-    extraDays: [examDay('L1', 'Level 1 exam')],
+    extraDays: [examDay('L1', 'Level 1 exam', [task('L1-EXAM', 'test', VOCAB_CHECK_ID, 15, 'The word bank: 90% or more means you know it.')])],
     examId: 'L1-EXAM',
   },
   {

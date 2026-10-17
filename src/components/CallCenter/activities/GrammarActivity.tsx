@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { RotateCcw } from 'lucide-react';
 import { getGrammar } from '../../../data/callCenter';
 import type { Choice } from '../../../data/callCenter/types';
-import { ArabicNote, SpeakButton, secondaryBtn } from '../ui';
+import { ArabicNote, ReadAloud, SpeakButton, secondaryBtn } from '../ui';
 
 /** A multiple-choice question that shows right or wrong at once. */
 export function ChoiceQuestion({ item, chosen, onChoose, number }: {
@@ -68,6 +68,7 @@ export default function GrammarActivity({ refId, onDone }: { refId: string; onDo
           </div>
         ))}
       </div>
+      <ReadAloud text={g.points.map((p) => p.example).join(' ')} />
       <div className="rounded-xl border border-gold-soft/50 bg-gold-soft/10 p-3 text-sm text-ink">
         🚨 {g.tip}
         {g.tipAr && <ArabicNote className="mt-1">{g.tipAr}</ArabicNote>}

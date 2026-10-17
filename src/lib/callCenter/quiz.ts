@@ -3,7 +3,8 @@
  * taught, with the same item types as the real hiring tests. The questions
  * are picked with a seed, so a retake (a new attempt number) gets a fresh mix.
  */
-import { getGrammar, getPhraseSet, getQuestion, getScript, getVoicePrompt, LEVELS } from '../../data/callCenter';
+import { getGrammar, getPhraseSet, getQuestion, getScript, getVoicePrompt, LEVELS, VOCAB_WORDS } from '../../data/callCenter';
+import { VOCAB_CHECK_ID } from '../../data/callCenter/plan';
 import { DIAGNOSTIC, LEVEL_EXAMS, type ExamConfig } from '../../data/callCenter/tests';
 import type { LevelId, Phrase, PlanWeek, TestDef, TestItem } from '../../data/callCenter/types';
 
@@ -107,6 +108,30 @@ interface Pool {
   phrases: Phrase[];
   lines: string[];
   scripts: string[];
+  words: typeof VOCAB_WORDS;
+}
+
+const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+/** The example with the word blanked out, or null when the example bends the word ("froze" for "freeze"). */
+function blankOut(example: string, word: string): string | null {
+  const re = new RegExp(`\\b${escapeRe(word)}\\b`, 'i');
+  return re.test(example) ? example.replace(re, '_____') : null;
+}
+
+/** Word bank questions: the word for a definition, or the word that completes an example. */
+export function vocabItems(words: typeof VOCAB_WORDS, n: number, rand: () => number): TestItem[] {
+  return pick(words, n, rand).map((w, i): TestItem => {
+    // Distractors of the same kind, from the same unit when it has enough.
+    const sameKind = (list: typeof VOCAB_WORDS) => list.filter((x) => x.pos === w.pos && x.word !== w.word);
+    const unitPeers = sameKind(VOCAB_WORDS.filter((x) => x.unitId === w.unitId));
+    const peers = unitPeers.length >= 3 ? unitPeers : sameKind(VOCAB_WORDS);
+    const options = shuffle([w.word, ...pick(peers, 3, rand).map((x) => x.word)], rand);
+    const gap = i % 2 ? blankOut(w.example, w.word) : null;
+    return gap
+      ? { type: 'mcq', skill: 'vocabulary', q: `Complete the sentence: ${gap}`, options, answer: options.indexOf(w.word), why: w.definition }
+      : { type: 'mcq', skill: 'vocabulary', q: `Which word or phrase means: "${w.definition}"`, options, answer: options.indexOf(w.word), why: w.example };
+  });
 }
 
 function poolOf(weeks: PlanWeek[]): Pool {
@@ -114,6 +139,7 @@ function poolOf(weeks: PlanWeek[]): Pool {
   const phrases: Phrase[] = [];
   const lines: string[] = [];
   const scripts: string[] = [];
+  const units = new Set(weeks.flatMap((w) => w.content.vocab ?? []));
   for (const w of weeks) {
     for (const e of getGrammar(w.content.grammar)?.exercises ?? []) grammar.push({ type: 'mcq', skill: 'grammar', ...e });
     for (const id of w.content.phraseSets) phrases.push(...(getPhraseSet(id)?.phrases ?? []));
@@ -124,7 +150,9 @@ function poolOf(weeks: PlanWeek[]): Pool {
       for (const l of script.lines) lines.push(l.text);
     }
   }
-  return { grammar, phrases: [...new Map(phrases.map((p) => [p.text, p])).values()], lines: [...new Set(lines)], scripts };
+  // Weeks without units of their own keep testing the whole bank.
+  const words = units.size ? VOCAB_WORDS.filter((w) => units.has(w.unitId)) : VOCAB_WORDS;
+  return { grammar, phrases: [...new Map(phrases.map((p) => [p.text, p])).values()], lines: [...new Set(lines)], scripts, words };
 }
 
 /** "Which sentence would you use to…?" and better-vs-worse questions from the phrases studied. */
@@ -155,6 +183,7 @@ function drawItems(pool: Pool, draw: ExamConfig['draw'], rand: () => number): Te
     ...repeat.map((text): TestItem => ({ type: 'repeat', skill: 'speaking', text })),
     ...pick(buildable, draw.build, rand).map((t): TestItem => ({ type: 'build', skill: 'grammar', chunks: chunk(t) })),
     ...pick(pool.scripts, draw.listen, rand).map((scriptId): TestItem => ({ type: 'listen', skill: 'listening', scriptId })),
+    ...vocabItems(pool.words, draw.vocab, rand),
   ];
 }
 
@@ -178,7 +207,7 @@ export function buildWeeklyQuiz(week: PlanWeek, attempt = 0): TestDef {
     kind: 'weekly',
     pass: 80,
     items: [
-      ...drawItems(poolOf([week]), { grammar: 5, phrases: 5, dictation: 2, repeat: 2, build: 2, listen: 1 }, rand),
+      ...drawItems(poolOf([week]), { grammar: 5, phrases: 5, dictation: 2, repeat: 2, build: 2, listen: 1, vocab: 4 }, rand),
       ...(speaking ? [speaking] : []),
       { type: 'typing', skill: 'typing', textId: pick(week.content.typing, 1, rand)[0], ...target },
     ],
@@ -197,9 +226,21 @@ export function buildLevelExam(config: ExamConfig, attempt = 0): TestDef {
   };
 }
 
-/** Any test by id: the diagnostic, a weekly quiz (`L1-W2-QUIZ`) or a level exam (`L1-EXAM`). */
+/** The word bank check: 40 of the 384 words, a new sample every attempt. */
+export function buildVocabCheck(attempt = 0): TestDef {
+  return {
+    id: VOCAB_CHECK_ID,
+    title: 'Vocab check: the call center word bank',
+    kind: 'vocab',
+    pass: 90,
+    items: vocabItems(VOCAB_WORDS, 40, seeded(`${VOCAB_CHECK_ID}:${attempt}`)),
+  };
+}
+
+/** Any test by id: the diagnostic, a weekly quiz (`L1-W2-QUIZ`), a level exam (`L1-EXAM`) or the vocab check. */
 export function getTest(id: string, attempt = 0): TestDef | null {
   if (id === DIAGNOSTIC.id) return DIAGNOSTIC;
+  if (id === VOCAB_CHECK_ID) return buildVocabCheck(attempt);
   const exam = LEVEL_EXAMS.find((e) => e.id === id);
   if (exam) return buildLevelExam(exam, attempt);
   const week = LEVELS.flatMap((l) => l.weeks).find((w) => w.quizId === id);

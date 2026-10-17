@@ -1,14 +1,18 @@
-import { useState } from 'react';
-import { CheckCircle2, ChevronDown, Circle, Lock } from 'lucide-react';
-import { LEVELS, PLAN_DAYS } from '../../data/callCenter';
+import { useMemo, useState } from 'react';
+import { ArrowRight, CheckCircle2, ChevronDown, Circle, Lock, SpellCheck } from 'lucide-react';
+import { LEVELS, PLAN_DAYS, VOCAB_UNITS } from '../../data/callCenter';
+import { VOCAB_CHECK_ID } from '../../data/callCenter/plan';
 import type { PlanLevel } from '../../data/callCenter/types';
 import {
   bestAttempt, bestTyping, dayDone, latestEfset, levelProgress, passedTest, weekProgress,
 } from '../../lib/callCenter/progress';
 import { TYPING_TARGETS } from '../../lib/callCenter/quiz';
+import { SPRINT_DAYS, VOCAB_TARGET, bankCards, sprintDay, unitStatus, vocabProgress } from '../../lib/callCenter/vocab';
+import { useAppStore } from '../../store/appStore';
+import { getToday } from '../../store/dateHelpers';
 import { ProgressBar, ProgressRing } from '../English/CourseVisuals';
 import { useCallCenter } from './CallCenterContext';
-import { ArabicNote, Card, Pill } from './ui';
+import { ArabicNote, Card, Pill, secondaryBtn } from './ui';
 
 /** Each level's exit criteria, checked against what's saved. */
 function useExitChecks(level: PlanLevel): Array<{ text: string; ok: boolean | null }> {
@@ -31,6 +35,10 @@ function useExitChecks(level: PlanLevel): Array<{ text: string; ok: boolean | nu
       const need = Number(text.match(/(\d+)%/)?.[1] ?? 0);
       const best = calls.reduce((m, c) => Math.max(m, c.percent), 0);
       return { text: calls.length ? `${text} · best ${best}%` : text, ok: best >= need };
+    }
+    if (/^Vocabulary/.test(text)) {
+      const best = bestAttempt(tests[VOCAB_CHECK_ID]);
+      return { text: best ? `${text} · best ${best.percent}%` : text, ok: !!best?.passed };
     }
     if (/diagnostic test/i.test(text)) return { text, ok: !!tests['L0-DIAG']?.length };
     return { text, ok: null };
@@ -155,13 +163,53 @@ function LevelCard({ level, onOpenDay, defaultOpen }: { level: PlanLevel; onOpen
 }
 
 /** All levels: where you are, what's left, and what each level needs to pass. */
-export default function RoadmapView({ currentIndex, onOpenDay }: { currentIndex: number; onOpenDay: (index: number) => void }) {
+/** The word bank track that runs alongside Level 1: a unit a day, 90% known in a month. */
+function VocabTrack({ onOpen }: { onOpen: () => void }) {
+  const { vocab } = useCallCenter();
+  const items = useAppStore((s) => s.vocabularyItems);
+  const progress = useMemo(() => vocabProgress(items), [items]);
+  const cards = useMemo(() => bankCards(items), [items]);
+  const day = sprintDay(vocab.startedAt, getToday());
+  return (
+    <Card className="space-y-3">
+      <div className="flex items-center gap-4">
+        <ProgressRing ratio={Math.min(1, progress.ratio / VOCAB_TARGET)} size={56} stroke={5} label="Words known, out of the 90% goal">
+          <span className="text-sm font-bold text-ink tabular-nums">{Math.floor(progress.ratio * 100)}%</span>
+        </ProgressRing>
+        <div className="flex-1 min-w-0">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <SpellCheck size={14} className="text-clay-soft" />
+            <span className="text-xs text-ink-light">Alongside Level 1 · then a daily review</span>
+            {day > 0 && <Pill tone="accent">Day {Math.min(day, SPRINT_DAYS)} of {SPRINT_DAYS}</Pill>}
+          </div>
+          <h3 className="text-lg font-bold text-ink leading-tight">Vocabulary: the call center word bank</h3>
+          <p className="text-sm text-ink-light">
+            {progress.known} of {progress.total} words known · goal 90% in a month · a unit of 16 words every Level 1 day
+          </p>
+        </div>
+      </div>
+      <div className="grid grid-cols-12 gap-1" aria-label="Units: known, in flashcards, not started">
+        {VOCAB_UNITS.map((u) => {
+          const st = unitStatus(u, cards);
+          const tone = st.known === st.total ? 'bg-sage-soft' : st.added === st.total ? 'bg-gold-soft' : st.added ? 'bg-gold-soft/50' : 'bg-ink/10';
+          return <span key={u.id} title={`Unit ${u.number}: ${u.title} · ${st.known}/${st.total} known`} className={`h-2.5 rounded-sm ${tone}`} />;
+        })}
+      </div>
+      <button type="button" onClick={onOpen} className={secondaryBtn}>
+        Open Vocabulary <ArrowRight size={13} />
+      </button>
+    </Card>
+  );
+}
+
+export default function RoadmapView({ currentIndex, onOpenDay, onOpenVocab }: { currentIndex: number; onOpenDay: (index: number) => void; onOpenVocab: () => void }) {
   const currentLevel = PLAN_DAYS[currentIndex]?.level.id;
   return (
     <div className="space-y-3">
       <ArabicNote>
         الخطة: ليفل 0 تشخيص، 1 أساسيات، 2 مكالمات، 3 انترفيو (بعده تقدّم على الشغل). 4 و 5 للوصول لـ C1 و overqualified. كل ليفل في آخره امتحان، وكل أسبوع في آخره quiz.
       </ArabicNote>
+      <VocabTrack onOpen={onOpenVocab} />
       {LEVELS.map((level) => (
         <LevelCard key={level.id} level={level} onOpenDay={onOpenDay} defaultOpen={level.id === currentLevel} />
       ))}

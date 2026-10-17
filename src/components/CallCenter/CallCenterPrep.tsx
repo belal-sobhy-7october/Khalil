@@ -1,11 +1,13 @@
 import { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
-  BarChart3, Briefcase, CalendarCheck, ClipboardCheck, Flame, Headphones, Library, Map as MapIcon, Mic, Timer, Wrench,
+  BarChart3, Briefcase, CalendarCheck, ClipboardCheck, Flame, Headphones, Library, Map as MapIcon, Mic, SpellCheck, Timer, Wrench,
 } from 'lucide-react';
 import { LEVELS, PLAN_DAYS } from '../../data/callCenter';
 import { CALL_CENTER_SECTION } from '../../data/callCenter/library';
 import { currentDayIndex, daysLeft, minutesOn, passedTest, planProgress, studyStreak } from '../../lib/callCenter/progress';
+import { vocabProgress } from '../../lib/callCenter/vocab';
+import { useAppStore } from '../../store/appStore';
 import { getToday } from '../../store/dateHelpers';
 import CourseSection from '../English/CourseSection';
 import { ProgressRing } from '../English/CourseVisuals';
@@ -17,14 +19,16 @@ import TestsView from './TestsView';
 import TodayView from './TodayView';
 import ToolkitView from './ToolkitView';
 import TrackerView from './TrackerView';
+import VocabView from './VocabView';
 import VoiceStudioView from './VoiceStudioView';
 import { ArabicNote } from './ui';
 
-type Tab = 'today' | 'roadmap' | 'interview' | 'voice' | 'tests' | 'tracker' | 'library' | 'toolkit';
+type Tab = 'today' | 'roadmap' | 'vocab' | 'interview' | 'voice' | 'tests' | 'tracker' | 'library' | 'toolkit';
 
 const TABS: Array<{ id: Tab; label: string; icon: typeof Mic }> = [
   { id: 'today', label: 'Today', icon: CalendarCheck },
   { id: 'roadmap', label: 'Roadmap', icon: MapIcon },
+  { id: 'vocab', label: 'Vocab', icon: SpellCheck },
   { id: 'interview', label: 'Interview', icon: Briefcase },
   { id: 'voice', label: 'Voice Studio', icon: Mic },
   { id: 'tests', label: 'Tests', icon: ClipboardCheck },
@@ -73,6 +77,8 @@ function Prep() {
   const minutes = minutesOn(today, tasks);
   const where = PLAN_DAYS[currentIndex];
   const jobReady = passedTest(tests, 'L3-EXAM');
+  const vocabItems = useAppStore((s) => s.vocabularyItems);
+  const vocab = useMemo(() => vocabProgress(vocabItems), [vocabItems]);
 
   const choose = (next: Tab) => {
     setTab(next);
@@ -108,11 +114,12 @@ function Prep() {
             <Headphones size={28} className="hidden sm:block text-clay-soft/60 shrink-0" />
           </div>
           <ArabicNote>من «اترفضت في الريكورد» لـ «overqualified». كل يوم خطوة، وكل خطوة متسجلة هنا. يلا بينا 💪</ArabicNote>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
             <Stat icon={Flame} value={`${streak} day${streak === 1 ? '' : 's'}`} label="Streak" />
             <Stat icon={Timer} value={`${minutes} min`} label="Studied today" />
             <Stat icon={CalendarCheck} value={jobReady ? 'Job-ready ✓' : `${left}`} label={jobReady ? 'Level 3 passed' : 'Study days to job-ready'} />
             <Stat icon={ClipboardCheck} value={`${progress.done} / ${progress.total}`} label="Tasks done" />
+            <Stat icon={SpellCheck} value={`${Math.floor(vocab.ratio * 100)}%`} label="Words known · goal 90%" />
           </div>
         </motion.div>
       </section>
@@ -148,7 +155,8 @@ function Prep() {
               onGoTab={choose}
             />
           )}
-          {tab === 'roadmap' && <RoadmapView currentIndex={currentIndex} onOpenDay={openDay} />}
+          {tab === 'roadmap' && <RoadmapView currentIndex={currentIndex} onOpenDay={openDay} onOpenVocab={() => choose('vocab')} />}
+          {tab === 'vocab' && <VocabView onRunTest={(testId) => setRunning({ testId })} />}
           {tab === 'interview' && <InterviewView />}
           {tab === 'voice' && <VoiceStudioView />}
           {tab === 'tests' && <TestsView onRun={(testId) => setRunning({ testId })} />}

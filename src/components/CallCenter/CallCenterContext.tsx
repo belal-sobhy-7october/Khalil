@@ -10,6 +10,7 @@ import {
   CC_VOICE_KEY, EMPTY_SETTINGS, addAttempt, newId, setTasks, type Application, type CallCenterSettings, type CallScore, type Mistake,
   type MyAnswer, type TaskLog, type TestAttempt, type TestLog, type TypingResult, type VoiceStat,
 } from '../../lib/callCenter/progress';
+import { CC_VOCAB_KEY, EMPTY_VOCAB_LOG, wordKey, type VocabLog } from '../../lib/callCenter/vocab';
 
 type Setter<T> = (next: T | ((prev: T) => T)) => void;
 
@@ -23,6 +24,11 @@ interface CallCenterState {
   calls: CallScore[];
   voice: VoiceStat[];
   settings: CallCenterSettings;
+  vocab: VocabLog;
+  /** Notes that words were played on YouGlish. */
+  markHeard: (words: string[]) => void;
+  /** Starts the month-long word bank sprint (once). */
+  startVocab: () => void;
   markTasks: (ids: string[], done: boolean) => void;
   saveAttempt: (testId: string, attempt: TestAttempt, wrong: Array<Omit<Mistake, 'id' | 'date'>>) => void;
   saveTyping: (result: Omit<TypingResult, 'date'>) => void;
@@ -46,6 +52,19 @@ export function CallCenterProvider({ children }: { children: ReactNode }) {
   const [calls, setCalls] = useKv<CallScore[]>(CC_CALLS_KEY, []);
   const [voice, setVoice] = useKv<VoiceStat[]>(CC_VOICE_KEY, []);
   const [settings, setSettings] = useKv<CallCenterSettings>(CC_SETTINGS_KEY, EMPTY_SETTINGS);
+  const [vocab, setVocab] = useKv<VocabLog>(CC_VOCAB_KEY, EMPTY_VOCAB_LOG);
+
+  const markHeard = useCallback(
+    (words: string[]) =>
+      setVocab((log) => {
+        const fresh = words.map(wordKey).filter((w) => !log.heard?.[w]);
+        if (!fresh.length) return log;
+        const today = getToday();
+        return { ...log, heard: { ...log.heard, ...Object.fromEntries(fresh.map((w) => [w, today])) } };
+      }),
+    [setVocab]
+  );
+  const startVocab = useCallback(() => setVocab((log) => (log.startedAt ? log : { ...log, heard: log.heard ?? {}, startedAt: getToday() })), [setVocab]);
 
   const markTasks = useCallback((ids: string[], done: boolean) => setTaskLog((log) => setTasks(log, ids, done, getToday())), [setTaskLog]);
 
@@ -85,10 +104,10 @@ export function CallCenterProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo(
     () => ({
-      tasks, tests, typing, answers, applications, mistakes, calls, voice, settings,
+      tasks, tests, typing, answers, applications, mistakes, calls, voice, settings, vocab, markHeard, startVocab,
       markTasks, saveAttempt, saveTyping, saveAnswer, saveCall, saveVoice, setApplications, setMistakes, setSettings,
     }),
-    [tasks, tests, typing, answers, applications, mistakes, calls, voice, settings, markTasks, saveAttempt, saveTyping, saveAnswer, saveCall, saveVoice, setApplications, setMistakes, setSettings]
+    [tasks, tests, typing, answers, applications, mistakes, calls, voice, settings, vocab, markHeard, startVocab, markTasks, saveAttempt, saveTyping, saveAnswer, saveCall, saveVoice, setApplications, setMistakes, setSettings]
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

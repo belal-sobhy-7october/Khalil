@@ -9,6 +9,7 @@
 
 | Level | Name | CEFR | Weeks | Status |
 |---|---|---|---|---|
+| — | Vocabulary (word bank) | 384 words | alongside Level 1 | ✅ built: a unit a day, then a daily review |
 | 0 | Diagnostic | starting point | 1 day | ✅ built |
 | 1 | Foundation | B1 → B1+ | 4 | ✅ built |
 | 2 | Customer Service Core | B1+ → B2 | 6 | ✅ built |
@@ -214,6 +215,17 @@ premium mock call, a team-leader question, a written reply, typing at 45/97.
 - **Job Tracker:** apply to premium and US accounts; log every stage.
 
 ---
+
+## The word bank in Levels 4–5
+
+Level 1 teaches the 384-word call center bank (`vocab.ts`), and Levels 2–3 review it daily. For C1, add
+a second bank the same way: 12–16 units of advanced call center language, one a day in Level 4's
+first weeks (a `vocab` list on each week spec), with its own check. Topics to cover: diplomatic and
+formal words (accommodate, regrettably, at your earliest convenience), escalation and legal words
+(liability, regulator, formal complaint), retention and sales (retain, incentive, objection),
+advanced tech (latency, firmware, DNS, VPN, sync), idioms customers use (on the fritz, a long shot,
+the ball is in your court), and the team-leader words of Level 5 (calibration, attrition, ramp-up).
+Keep the same rules: one meaning per word, call center examples, a text per unit, no repeats.
 
 ## Ideas parked for later
 

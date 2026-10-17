@@ -5,7 +5,7 @@ import type { SoundTarget } from '../../../data/callCenter/types';
 import { useRecorder } from '../../../lib/useRecorder';
 import { speakText } from '../../../lib/callCenter/voice';
 import YouGlishModal from '../../Vocabulary/YouGlishModal';
-import { ArabicNote, NeedsInternet, SpeakButton, secondaryBtn } from '../ui';
+import { ArabicNote, NeedsInternet, ReadAloud, SpeakButton, secondaryBtn } from '../ui';
 
 function DrillLine({ text, onRecorded }: { text: string; onRecorded: () => void }) {
   const { recording, url, error, start, stop } = useRecorder();
@@ -95,6 +95,9 @@ function SoundCard({ sound, onRecorded }: { sound: SoundTarget; onRecorded: () =
             <DrillLine key={d} text={d} onRecorded={onRecorded} />
           ))}
         </ul>
+        <div className="mt-2">
+          <ReadAloud text={sound.drills.join(' ')} />
+        </div>
       </div>
       {glish && <YouGlishModal word={glish} onClose={() => setGlish(null)} />}
     </div>

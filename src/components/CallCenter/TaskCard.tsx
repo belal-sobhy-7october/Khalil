@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import {
-  AudioLines, BookOpen, Check, ChevronDown, ClipboardCheck, Headphones, Keyboard, Link2, MessageSquare, Mic, MonitorPlay, PenLine, Repeat, Users,
+  AudioLines, BookOpen, Check, ChevronDown, ClipboardCheck, Headphones, Keyboard, Link2, MessageSquare, Mic, MonitorPlay, PenLine, Repeat, SpellCheck, Users,
 } from 'lucide-react';
 import { getVoicePrompt } from '../../data/callCenter';
 import type { LevelId, PlanTask, TaskKind } from '../../data/callCenter/types';
@@ -14,6 +14,7 @@ import RoleplayActivity from './activities/RoleplayActivity';
 import ShadowActivity from './activities/ShadowActivity';
 import { EfsetActivity, ReviewActivity } from './activities/SmallActivities';
 import SoundActivity from './activities/SoundActivity';
+import VocabActivity from './activities/VocabActivity';
 import WatchActivity from './activities/WatchActivity';
 import QuestionCard from './QuestionCard';
 import TypingTest from './TypingTest';
@@ -33,6 +34,7 @@ const KIND: Record<TaskKind, { label: string; icon: typeof Mic }> = {
   test: { label: 'Test', icon: ClipboardCheck },
   review: { label: 'Review', icon: BookOpen },
   link: { label: 'Free test online', icon: Link2 },
+  vocab: { label: 'Vocabulary', icon: SpellCheck },
 };
 
 function VoiceTask({ promptId, onDone }: { promptId: string; onDone: () => void }) {
@@ -117,6 +119,8 @@ export default function TaskCard({ task, level, done, open, onToggleOpen, onRunT
         return <ReviewActivity refId={task.ref} onGoTab={onGoTab} />;
       case 'link':
         return <EfsetActivity onDone={markDone} />;
+      case 'vocab':
+        return <VocabActivity refId={task.ref} onDone={markDone} />;
     }
   };
 

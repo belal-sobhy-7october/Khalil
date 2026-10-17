@@ -63,6 +63,25 @@ describe('Call Center Prep', () => {
     expect(screen.getAllByText('P vs B').length).toBeGreaterThan(0);
   });
 
+  it('starts the word bank on the first day of Level 1', async () => {
+    kv.set('callcenter-tasks', { 'L0-D1:voice:intro': '2026-10-17', 'L0-D1:test:L0-DIAG': '2026-10-17', 'L0-D1:link:efset': '2026-10-17' });
+    render(<CallCenterPrep />);
+    expect(await screen.findByText('New words: Unit 1 · Call center basics')).toBeInTheDocument();
+  });
+
+  it('has a Vocab tab with the 24 units and their words', async () => {
+    useAppStore.setState({ vocabularyItems: [] });
+    render(<CallCenterPrep />);
+    fireEvent.click(screen.getByRole('tab', { name: 'Vocab' }));
+    expect(screen.getByRole('heading', { name: 'Call Center Vocabulary' })).toBeInTheDocument();
+    expect(screen.getByText('Phrasal verbs for calls')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Call center basics/ }));
+    expect(screen.getByText('A person whose job is to answer customers\' calls, chats or emails for a company.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Hear "agent" on YouGlish' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Add the 16 words to my flashcards/ })).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: /NaturalReader/ }).length).toBeGreaterThan(0);
+  });
+
   it('shows the levels on the roadmap, with 4 and 5 still to come', () => {
     render(<CallCenterPrep />);
     fireEvent.click(screen.getByRole('tab', { name: 'Roadmap' }));

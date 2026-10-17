@@ -163,7 +163,8 @@ export type TestItem =
 export interface TestDef {
   id: string;
   title: string;
-  kind: 'diagnostic' | 'weekly' | 'level';
+  /** `vocab`: the word bank check. */
+  kind: 'diagnostic' | 'weekly' | 'level' | 'vocab';
   /** Pass mark, percent. */
   pass: number;
   items: TestItem[];
@@ -181,7 +182,9 @@ export type TaskKind =
   | 'typing'
   | 'test'
   | 'review'
-  | 'link';
+  | 'link'
+  /** A unit of the word bank (`v01`…), or `due`: the bank's words due for review. */
+  | 'vocab';
 
 export interface PlanTask {
   /** Stable id progress is saved under: `<day id>:<kind>:<ref>`. */
@@ -218,6 +221,8 @@ export interface WeekContent {
   videos: string[];
   /** Two typing texts, alternating. */
   typing: string[];
+  /** Six word bank units, one a day (Level 1). Weeks without them review the due words on days 1–5. */
+  vocab?: string[];
 }
 
 export interface PlanWeek {
