@@ -835,6 +835,11 @@ export const translations = {
         saved: '{count} meanings updated.',
         saved_one: '1 meaning updated.',
       },
+      selection: {
+        label: 'Selected: {word}',
+        add: 'Add to my words',
+        title: 'Add a word',
+      },
       quickAdd: {
         open: 'Quick add',
         title: 'Quick add — many words at once',
@@ -1756,6 +1761,11 @@ export const translations = {
         saved: 'اتحدّث {count} معاني.',
         saved_one: 'اتحدّث معنى واحد.',
         saved_two: 'اتحدّث معنيين.',
+      },
+      selection: {
+        label: 'المحدد: {word}',
+        add: 'ضيفها لكلماتي',
+        title: 'ضيف كلمة',
       },
       quickAdd: {
         open: 'إضافة سريعة',

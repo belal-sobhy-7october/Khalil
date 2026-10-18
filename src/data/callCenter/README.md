@@ -119,7 +119,10 @@ practice text): say every word until speech recognition hears it, read the texts
 them, shadow a video, talk 10 minutes with an AI playing a customer. The daily review runs in rounds
 of 30 (`SESSION_SIZE`), hardest first, as the Vocabulary section's does.
 
-**Your own words.** "New word" (in the section's header, in the Vocab tab and inside every test) opens
+**Your own words.** Select a word or short phrase anywhere in the section (double-click it, or drag
+over it) and "Add to my words" pops up by it (`SelectionWordMenu`, app-wide; `data-vocab-group` on the
+section picks the group): the word is looked up and saved with the sentence it was in as its example.
+"New word" (in the section's header, in the Vocab tab and inside every test) opens
 the Vocabulary section's quick add with the `Call Center: My words` group picked: a word met in a
 lesson, a video or a test is looked up, saved as a flashcard, and reviewed in the daily review
 (`vocab:due`) with the bank's words. They don't count toward the 90% goal (`myWordCards`, `reviewDue`

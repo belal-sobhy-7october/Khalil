@@ -26,6 +26,7 @@ import BacklogTodo from './components/Todo/BacklogTodo';
 import PomodoroEngine from './components/Focus/PomodoroEngine';
 import FocusChip from './components/Focus/FocusChip';
 import OfflineBanner from './components/Common/OfflineBanner';
+import SelectionWordMenu from './components/Vocabulary/SelectionWordMenu';
 import { applyAppearance, useAppearance } from './lib/appearance';
 
 import { createStickyNote, createTodoNote } from './components/Canvas/noteFactories';
@@ -301,6 +302,7 @@ function App() {
           </div>
         )}
         <OfflineBanner />
+        <SelectionWordMenu />
         {activeSection === 'calendar' ? (
           <Suspense fallback={
             <div className="min-h-screen flex items-center justify-center">

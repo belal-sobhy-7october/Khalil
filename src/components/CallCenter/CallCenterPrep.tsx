@@ -6,7 +6,7 @@ import {
 import { LEVELS, PLAN_DAYS } from '../../data/callCenter';
 import { CALL_CENTER_ACCENT_SECTION, CALL_CENTER_SECTION } from '../../data/callCenter/library';
 import { currentDayIndex, daysLeft, minutesOn, passedTest, planProgress, studyStreak } from '../../lib/callCenter/progress';
-import { vocabProgress } from '../../lib/callCenter/vocab';
+import { MY_WORDS_CATEGORY, vocabProgress } from '../../lib/callCenter/vocab';
 import { useAppStore } from '../../store/appStore';
 import { getToday } from '../../store/dateHelpers';
 import CourseSection from '../English/CourseSection';
@@ -97,7 +97,7 @@ function Prep() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 space-y-5" dir="ltr" lang="en">
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 space-y-5" dir="ltr" lang="en" data-vocab-group={MY_WORDS_CATEGORY}>
       <section className="relative overflow-hidden rounded-3xl border border-border-subtle bg-linear-to-br from-clay-soft/12 via-gold-soft/8 to-sage-soft/12 p-5 sm:p-6">
         <span aria-hidden="true" className="pointer-events-none absolute -top-24 -end-20 w-72 h-72 rounded-full bg-gold-soft/20 blur-3xl" />
         <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }} className="relative space-y-4">

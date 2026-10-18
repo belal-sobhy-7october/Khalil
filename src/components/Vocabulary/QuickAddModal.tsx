@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { X, Loader2, Sparkles, Trash2, Check, AlertCircle, Volume2, PlayCircle } from 'lucide-react';
 import { useTranslation } from '../../i18n/useTranslation';
 import { useAppStore } from '../../store/appStore';
@@ -31,14 +31,46 @@ function guessType(word: string): VocabularyItemType {
   return word.includes(' ') ? 'phrase' : 'word';
 }
 
-export default function QuickAddModal({ onClose, defaultCategory }: { onClose: () => void; defaultCategory?: string }) {
+function parseRows(text: string): Row[] {
+  const seen = new Set<string>();
+  const parsed: Row[] = [];
+  text.split('\n').forEach((line, i) => {
+    const p = parseQuickLine(line);
+    if (!p) return;
+    const lower = p.word.toLowerCase();
+    if (seen.has(lower)) return;
+    seen.add(lower);
+    parsed.push({
+      key: i,
+      word: p.word,
+      type: guessType(p.word),
+      definition: p.definition,
+      example: p.example,
+      pronunciation: '',
+      status: p.definition ? 'manual' : 'pending',
+    });
+  });
+  return parsed;
+}
+
+/**
+ * `initial`: open straight on one word (text selected on a page), with the sentence
+ * it was in as its example; the dictionary fills in the rest.
+ */
+export default function QuickAddModal({ onClose, defaultCategory, initial }: {
+  onClose: () => void;
+  defaultCategory?: string;
+  initial?: { word: string; example?: string };
+}) {
   const { t, tn } = useTranslation();
   const vocabularyItems = useAppStore((s) => s.vocabularyItems);
   const vocabularyCategories = useAppStore((s) => s.vocabularyCategories);
   const importVocabularyItems = useAppStore((s) => s.importVocabularyItems);
 
-  const [text, setText] = useState('');
-  const [rows, setRows] = useState<Row[] | null>(null);
+  const [text, setText] = useState(initial?.word ?? '');
+  const [rows, setRows] = useState<Row[] | null>(() =>
+    initial ? parseRows(`${initial.word} | | ${(initial.example ?? '').replace(/\|/g, ' ')}`) : null
+  );
   const [group, setGroup] = useState<string>(defaultCategory ?? '');
   const [newGroupName, setNewGroupName] = useState('');
   const [saving, setSaving] = useState(false);
@@ -55,27 +87,7 @@ export default function QuickAddModal({ onClose, defaultCategory }: { onClose: (
   const updateRow = (key: number, patch: Partial<Row>) =>
     setRows((prev) => prev && prev.map((r) => (r.key === key ? { ...r, ...patch } : r)));
 
-  const handleContinue = () => {
-    const seen = new Set<string>();
-    const parsed: Row[] = [];
-    text.split('\n').forEach((line, i) => {
-      const p = parseQuickLine(line);
-      if (!p) return;
-      const lower = p.word.toLowerCase();
-      if (seen.has(lower)) return;
-      seen.add(lower);
-      parsed.push({
-        key: i,
-        word: p.word,
-        type: guessType(p.word),
-        definition: p.definition,
-        example: p.example,
-        pronunciation: '',
-        status: p.definition ? 'manual' : 'pending',
-      });
-    });
-    setRows(parsed);
-
+  const lookUp = (parsed: Row[]) => {
     // Fill in the blanks from the dictionary, row by row as answers arrive,
     // choosing the sense that fits the topic the words go into.
     const topic = vocabularyCategories.find((c) => c.name.toLowerCase() === categoryName.toLowerCase());
@@ -109,6 +121,19 @@ export default function QuickAddModal({ onClose, defaultCategory }: { onClose: (
       }
     );
   };
+
+  const handleContinue = () => {
+    const parsed = parseRows(text);
+    setRows(parsed);
+    lookUp(parsed);
+  };
+
+  // Opened on a word: look it up once.
+  const startRows = useRef(rows);
+  useEffect(() => {
+    if (initial && startRows.current) lookUp(startRows.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- once, on open
+  }, []);
 
   const readyRows = rows?.filter((r) => r.definition.trim() && !existingWords.has(r.word.toLowerCase())) ?? [];
   const pendingCount = rows?.filter((r) => r.status === 'pending').length ?? 0;
@@ -147,7 +172,7 @@ export default function QuickAddModal({ onClose, defaultCategory }: { onClose: (
         <div className="px-6 py-4 border-b border-border-subtle flex items-center justify-between">
           <h2 id={dialog.titleId} className="text-xl font-bold text-ink flex items-center gap-2">
             <Sparkles size={20} className="text-clay-soft" />
-            {t('vocabulary.quickAdd.title')}
+            {t(initial ? 'vocabulary.selection.title' : 'vocabulary.quickAdd.title')}
           </h2>
           <button onClick={onClose} disabled={saving} className="p-2 hover:bg-ink/5 rounded-lg transition-colors" aria-label={t('common.close')}>
             <X size={20} className="text-ink-light" />

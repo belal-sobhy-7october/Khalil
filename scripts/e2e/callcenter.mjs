@@ -146,6 +146,38 @@ await flow('cc-flow-my-word', { local: { 'khalil-cc-tab': 'vocab' } }, async ({ 
   check(await page.getByText(/1 of your own/).count(), 'the word is not in the daily review');
 });
 
+// 7. Select a word anywhere (double-click) → "Add to my words" saves it with the sentence it was in.
+await flow('cc-flow-select-word', { local: { 'khalil-cc-tab': 'vocab' } }, async ({ page, backend, check }) => {
+  await page.getByRole('button', { name: /Call center basics/ }).click();
+  const sentence = 'Headphones with a microphone that agents wear to take calls.';
+  await page.getByText(sentence, { exact: true }).scrollIntoViewIfNeeded();
+  const box = await page.getByText(sentence, { exact: true }).evaluate((el) => {
+    const node = el.firstChild;
+    const range = document.createRange();
+    const at = node.textContent.indexOf('microphone');
+    range.setStart(node, at);
+    range.setEnd(node, at + 'microphone'.length);
+    const r = range.getBoundingClientRect();
+    return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+  });
+  await page.mouse.dblclick(box.x, box.y);
+  const menu = page.getByRole('toolbar', { name: 'Selected: microphone' });
+  await menu.waitFor({ timeout: 3000 });
+  await page.screenshot({ path: `${OUT}/cc-flow-select-word-menu.png` });
+  await menu.getByRole('button', { name: /Add to my words/ }).click();
+  const dialog = page.getByRole('dialog');
+  check((await dialog.getByPlaceholder('Example sentence').inputValue()) === sentence, 'the sentence was not kept as the example');
+  check((await dialog.locator('select').first().inputValue()) === 'Call Center: My words', 'not added to My words');
+  // The dictionary may be out of reach here: give a meaning if it didn't.
+  await page.waitForTimeout(2500);
+  const meaning = dialog.getByPlaceholder(/Definition|Not found/);
+  if (!(await meaning.inputValue())) await meaning.fill('A device that picks up your voice.');
+  await page.screenshot({ path: `${OUT}/cc-flow-select-word-add.png` });
+  await dialog.getByRole('button', { name: 'Add 1 word' }).click();
+  await page.waitForTimeout(800);
+  check((backend.tables.vocabulary_items ?? []).some((r) => r.word === 'microphone' && r.example_sentence === sentence), 'the word was not saved with its sentence');
+});
+
 await browser.close();
 if (problems.length) {
   console.log(problems.join('\n'));

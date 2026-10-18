@@ -47,6 +47,8 @@ and their detailed plan is in `src/data/callCenter/ROADMAP.md`.
   signed-in email. The repo is public, so never write the owner's email anywhere. For screenshots
   and E2E runs, build with `VITE_CALL_CENTER_PREVIEW=1` (never on the deployed site).
 - Progress is in `user_kv` (`callcenter-*` keys); voice recordings stay on the device (IndexedDB).
+- Selecting English text anywhere in the app shows "Add to my words" (`SelectionWordMenu`, mounted in
+  `App.tsx`); an element's `data-vocab-group` picks the flashcard group (the section uses My words).
 - The word bank (`src/data/callCenter/vocab.ts`, 384 words, a unit a day in Level 1) goes into the
   Vocabulary flashcards, so its progress is the flashcards' mastery; every word has YouGlish and
   every passage a read-aloud bar (device voice or NaturalReader).
