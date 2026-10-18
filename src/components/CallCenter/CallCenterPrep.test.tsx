@@ -3,6 +3,8 @@ import { act, fireEvent, render, screen, waitFor, within } from '@testing-librar
 import { useAppStore } from '../../store/appStore';
 import CallCenterPrep from './CallCenterPrep';
 import Sidebar from '../Layout/Sidebar';
+import { VOCAB_UNITS, vocabCategory } from '../../data/callCenter/vocab';
+import type { VocabularyCategory, VocabularyItem } from '../../types';
 
 vi.mock('../../lib/supabase', async () => {
   const mod = await import('../../test/mockSupabase');
@@ -18,6 +20,10 @@ vi.mock('../../lib/userKv', () => ({
     return true;
   }),
 }));
+vi.mock('../../lib/topicChallenge', async (orig) => {
+  const mod = await orig<typeof import('../../lib/topicChallenge')>();
+  return { ...mod, loadChallenge: vi.fn(async () => mod.EMPTY_CHALLENGE), saveChallenge: vi.fn() };
+});
 vi.mock('../English/LoopPlayer', () => ({ default: () => <div data-testid="loop-player" /> }));
 // jsdom runs no animation frames, so exit animations would never finish: leave at once.
 vi.mock('framer-motion', async (importOriginal) => ({
@@ -25,6 +31,11 @@ vi.mock('framer-motion', async (importOriginal) => ({
   AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
+const category = (id: string, name: string): VocabularyCategory => ({ id, userId: 'u1', name, createdAt: '', updatedAt: '' });
+const card = (id: string, word: string, categoryId: string): VocabularyItem => ({
+  id, userId: 'u1', word, type: 'word', definition: 'd', categoryId,
+  masteryLevel: 0, reviewCount: 0, lapseCount: 0, correctStreak: 0, isHard: false, createdAt: '2026-10-01', updatedAt: '',
+});
 const session = (email: string) => ({ user: { id: 'u1', email } }) as never;
 
 beforeEach(() => {
@@ -102,6 +113,40 @@ describe('Call Center Prep', () => {
     expect(screen.getByRole('button', { name: 'Hear "agent" on YouGlish' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Add the 16 words to my flashcards/ })).toBeInTheDocument();
     expect(screen.getAllByRole('button', { name: /NaturalReader/ }).length).toBeGreaterThan(0);
+  });
+
+  it('gives a unit the Vocabulary section\'s tools once its words are in the flashcards', async () => {
+    const unit1 = VOCAB_UNITS[0];
+    const cat = category('c1', vocabCategory(unit1));
+    useAppStore.setState({ vocabularyCategories: [cat], vocabularyItems: unit1.words.map((w, i) => card(`v${i}`, w.word, cat.id)) });
+    render(<CallCenterPrep />);
+    fireEvent.click(screen.getByRole('tab', { name: 'Vocab' }));
+    fireEvent.click(screen.getByRole('button', { name: /Call center basics/ }));
+    expect(screen.getByRole('button', { name: 'Mark "agent" as hard' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: '4 · Use them: the unit challenge' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Start the challenge/ }));
+    // The unit's own text is the first one to read aloud and record.
+    fireEvent.click(await screen.findByRole('tab', { name: /Listen & repeat/ }));
+    expect(within(screen.getByRole('dialog')).getByText(unit1.text)).toBeInTheDocument();
+  });
+
+  it('reviews due words in rounds of 30, hardest first', () => {
+    const cat = category('c1', vocabCategory(VOCAB_UNITS[0]));
+    const words = VOCAB_UNITS.slice(0, 3).flatMap((u) => u.words);
+    useAppStore.setState({ vocabularyCategories: [cat], vocabularyItems: words.map((w, i) => card(`v${i}`, w.word, cat.id)) });
+    render(<CallCenterPrep />);
+    fireEvent.click(screen.getByRole('tab', { name: 'Vocab' }));
+    expect(screen.getByRole('button', { name: `Review 30 of ${words.length} due words` })).toBeInTheDocument();
+  });
+
+  it('lets you fix, flag and check your own words', () => {
+    const mine = category('m', 'Call Center: My words');
+    useAppStore.setState({ vocabularyCategories: [mine], vocabularyItems: [card('w1', 'troubleshooter', mine.id)] });
+    render(<CallCenterPrep />);
+    fireEvent.click(screen.getByRole('tab', { name: 'Vocab' }));
+    expect(screen.getByRole('heading', { name: 'troubleshooter' })).toBeInTheDocument();
+    expect(screen.getByTitle('Edit')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Check meanings/ })).toBeInTheDocument();
   });
 
   it('shows the levels on the roadmap, with 4 and 5 still to come', () => {

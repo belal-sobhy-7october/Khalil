@@ -121,6 +121,15 @@ await flow('cc-flow-vocab', { local: { 'khalil-cc-tab': 'vocab' } }, async ({ pa
   check(await page.getByText('16 in flashcards').count(), 'unit words not in the flashcards after reload');
   check(await page.getByText('YouGlish: 1 / 16').count(), 'YouGlish word heard lost after reload');
   check(await page.getByText('Day 1 of 30').count(), 'the month did not start');
+  // The Vocabulary section's tools: flag a word hard, and the unit challenge with the unit's text.
+  await page.getByRole('button', { name: 'Mark "queue" as hard' }).click();
+  await page.waitForTimeout(500);
+  check(await page.getByRole('button', { name: '"queue" is marked hard: unmark it' }).count(), 'could not flag a word hard');
+  await page.getByRole('button', { name: /Start the challenge/ }).click();
+  await page.getByRole('tab', { name: /Listen & repeat/ }).click();
+  check(await page.getByRole('dialog').getByText(/I work as an agent on the floor/).count(), 'the challenge does not practice the unit text');
+  await page.screenshot({ path: `${OUT}/cc-flow-vocab-challenge.png`, fullPage: true });
+  await page.keyboard.press('Escape');
 });
 
 // 6. A word met while studying, saved with "New word", lands in My words and the daily review.

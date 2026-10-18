@@ -113,12 +113,18 @@ NaturalReader), then add the 16 words to the Vocabulary flashcards (category
 `Call Center Vocab NN: title`) and practice them with the Vocabulary section's own modes (cards,
 listening, gap-fill). From then on the flashcards' spaced repetition brings them back when due.
 A word counts as **known** at mastery level 3; the goal is 90% of the bank known by day 30.
+Once the words are in, each one can be flagged hard (it comes back every day), and the unit opens
+the Vocabulary section's topic challenge (`TopicChallenge`, given the unit's text as its first
+practice text): say every word until speech recognition hears it, read the texts aloud and record
+them, shadow a video, talk 10 minutes with an AI playing a customer. The daily review runs in rounds
+of 30 (`SESSION_SIZE`), hardest first, as the Vocabulary section's does.
 
 **Your own words.** "New word" (in the section's header, in the Vocab tab and inside every test) opens
 the Vocabulary section's quick add with the `Call Center: My words` group picked: a word met in a
 lesson, a video or a test is looked up, saved as a flashcard, and reviewed in the daily review
 (`vocab:due`) with the bank's words. They don't count toward the 90% goal (`myWordCards`, `reviewDue`
-in `src/lib/callCenter/vocab.ts`).
+in `src/lib/callCenter/vocab.ts`). My words are shown with the Vocabulary section's cards (hear, flag hard,
+edit, delete) and its "Check meanings" (the dictionary sense that fits the group's other words).
 
 **Task ids are where progress is saved** (`<day id>:<kind>:<ref>`, e.g. `L1-W1-D1:sound:p-b`).
 Changing a ref in a week the owner has already studied un-ticks that task, so only do it to fix

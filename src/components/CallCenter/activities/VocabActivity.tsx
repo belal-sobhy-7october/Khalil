@@ -1,12 +1,15 @@
 import { Fragment, useMemo, useState } from 'react';
-import { BookPlus, Check, Layers, MonitorPlay, Plus } from 'lucide-react';
+import { BookPlus, Check, Flame, Layers, MonitorPlay, Plus, Trophy } from 'lucide-react';
 import { getVocabUnit } from '../../../data/callCenter';
 import { vocabCategory, type VocabUnit } from '../../../data/callCenter/vocab';
+import type { VocabularyItem } from '../../../types';
 import { MY_WORDS_CATEGORY, bankCards, isKnown, myWordCards, unitStatus, vocabProgress, wordKey } from '../../../lib/callCenter/vocab';
 import { useAppStore } from '../../../store/appStore';
+import { SESSION_SIZE, isHardWord } from '../../../store/vocabularyHard';
 import FlashcardReview from '../../Vocabulary/FlashcardReview';
 import QuickAddModal from '../../Vocabulary/QuickAddModal';
 import ReviewModePicker, { type ReviewMode } from '../../Vocabulary/ReviewModePicker';
+import TopicChallenge from '../../Vocabulary/TopicChallenge';
 import TypingPractice from '../../Vocabulary/TypingPractice';
 import YouGlishModal from '../../Vocabulary/YouGlishModal';
 import { useCallCenter } from '../CallCenterContext';
@@ -79,15 +82,36 @@ function Highlighted({ text, words }: { text: string; words: string[] }) {
   );
 }
 
-/** One unit of the word bank: hear the words, read them in a text, put them in the flashcards and practice. */
+/** Flag a word as hard (or not): hard words come back every day, first in the review. */
+function HardToggle({ card }: { card: VocabularyItem }) {
+  const updateVocabularyItem = useAppStore((s) => s.updateVocabularyItem);
+  const hard = isHardWord(card);
+  return (
+    <button
+      type="button"
+      onClick={() => void updateVocabularyItem(card.id, { isHard: !card.isHard })}
+      aria-pressed={!!card.isHard}
+      aria-label={card.isHard ? `"${card.word}" is marked hard: unmark it` : `Mark "${card.word}" as hard`}
+      title={card.isHard ? 'Marked hard: comes back every day. Click to unmark.' : hard ? 'Hard (you missed it): comes back every day' : 'Mark as hard: it comes back every day'}
+      className={`shrink-0 p-1.5 rounded-lg transition-colors ${hard ? 'text-red-500 bg-red-500/10' : 'text-ink-lighter hover:text-red-500 hover:bg-red-500/10'}`}
+    >
+      <Flame size={14} />
+    </button>
+  );
+}
+
+/** One unit of the word bank: hear the words, read them in a text, put them in the flashcards, practice, then use them. */
 export function VocabUnitStudy({ unit, onPracticed }: { unit: VocabUnit; onPracticed?: () => void }) {
   const { vocab, markHeard, startVocab } = useCallCenter();
   const items = useAppStore((s) => s.vocabularyItems);
+  const categories = useAppStore((s) => s.vocabularyCategories);
   const importVocabularyItems = useAppStore((s) => s.importVocabularyItems);
   const cards = useMemo(() => bankCards(items), [items]);
   const status = unitStatus(unit, cards);
+  const category = categories.find((c) => c.name.trim().toLowerCase() === vocabCategory(unit).toLowerCase());
   const [run, setRun] = useState<number | null>(null);
   const [practice, setPractice] = useState(false);
+  const [challenge, setChallenge] = useState(false);
   const [adding, setAdding] = useState<'idle' | 'adding' | 'failed'>('idle');
   const words = unit.words.map((w) => w.word);
   const heard = words.filter((w) => vocab.heard?.[wordKey(w)]).length;
@@ -139,6 +163,7 @@ export function VocabUnitStudy({ unit, onPracticed }: { unit: VocabUnit; onPract
                   <p className="text-sm text-ink">{w.definition}</p>
                   <p className="text-xs text-ink-light italic">{w.example}</p>
                 </div>
+                {card && <HardToggle card={card} />}
                 <SpeakButton text={`${w.word}. ${w.example}`} />
                 <button
                   type="button"
@@ -187,7 +212,20 @@ export function VocabUnitStudy({ unit, onPracticed }: { unit: VocabUnit; onPract
         </p>
       </section>
 
+      {status.added > 0 && category && (
+        <section className="space-y-2">
+          <h4 className="text-sm font-semibold text-ink">4 · Use them: the unit challenge</h4>
+          <p className="text-xs text-ink-light">
+            Say every word into the mic until it's recognized, read the unit's text aloud and record yourself, shadow a video, then talk 10 minutes with an AI playing a customer.
+          </p>
+          <button type="button" onClick={() => setChallenge(true)} className={secondaryBtn}>
+            <Trophy size={13} /> Start the challenge
+          </button>
+        </section>
+      )}
+
       {run !== null && <YouGlishRun words={words} start={run} onClose={() => setRun(null)} />}
+      {challenge && category && <TopicChallenge category={category} paragraph={unit.text} onClose={() => setChallenge(false)} />}
       {practice && (
         <VocabPractice
           ids={status.ids}
@@ -209,6 +247,9 @@ export function VocabDue({ onDone }: { onDone?: () => void }) {
   const [practice, setPractice] = useState<string[] | null>(null);
   const [run, setRun] = useState<number | null>(null);
   const hardWords = progress.hard.slice(0, 12).map((c) => c.word);
+  // Rounds of 30, hardest first, like the Vocabulary section's review; the rest stay due for the next round.
+  const round = progress.reviewDue.slice(0, SESSION_SIZE);
+  const due = progress.reviewDue.length;
 
   if (!progress.added && !progress.mine.total) {
     return <p className="text-sm text-ink-light">No call center words in your flashcards yet: they start with Unit 1 on the first day of Level 1.</p>;
@@ -216,9 +257,9 @@ export function VocabDue({ onDone }: { onDone?: () => void }) {
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center gap-2">
-        {progress.reviewDue.length ? (
-          <button type="button" onClick={() => setPractice(progress.reviewDue)} className={primaryBtn}>
-            <Layers size={13} /> Review {progress.reviewDue.length} due word{progress.reviewDue.length === 1 ? '' : 's'}
+        {due ? (
+          <button type="button" onClick={() => setPractice(round)} className={primaryBtn}>
+            <Layers size={13} /> {due > round.length ? `Review ${round.length} of ${due} due words` : `Review ${due} due word${due === 1 ? '' : 's'}`}
           </button>
         ) : (
           <Pill tone="good">Nothing due today ✓</Pill>

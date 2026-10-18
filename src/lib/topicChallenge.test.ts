@@ -14,6 +14,10 @@ describe('buildPracticeTexts', () => {
     expect(texts[0]).toMatch(/I graduated in 2023/);
   });
 
+  it('puts a given paragraph first instead of the pack\'s', () => {
+    expect(buildPracticeTexts('Call Center Interview', [], 'Our own text.')[0]).toBe('Our own text.');
+  });
+
   it('stitches example sentences into paragraphs and skips Arabic ones', () => {
     const items = Array.from({ length: 7 }, (_, i) => item(`${i}`, `w${i}`, `Sentence number ${i}`));
     items.push(item('ar', 'x', 'جملة عربية'));
