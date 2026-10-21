@@ -57,6 +57,13 @@ and their detailed plan is in `src/data/callCenter/ROADMAP.md`.
 - The Library tab's playlists are in `src/data/callCenter/catalog.ts`;
   `node scripts/sync-courses.mjs callcenter` regenerates their episodes.
 
+## Sales Prep (owner-only)
+
+A private section (`sales`): learning sales from zero, in Egyptian Arabic first (Levels 1–2) and then in
+English (Level 3), with a daily plan where Today shows only one day. **Read `src/data/sales/README.md`
+before changing it.** It uses the Call Center access check (same owner, same preview flag); progress is
+in `user_kv` (`sales-*` keys). Listening tasks link searches unless a video id is confirmed.
+
 ## Checks
 
 ```bash
@@ -70,5 +77,6 @@ End to end (Playwright, against a fake Supabase), with a dev server on port 5173
 (`VITE_SUPABASE_URL=http://localhost:54321 VITE_SUPABASE_ANON_KEY=fake npx vite --port 5173`):
 `node scripts/e2e/smoke.mjs http://localhost:5173 <dir>` (every section, both languages and themes),
 `node scripts/e2e/flows.mjs …` (add, edit, delete, reload) and, with `VITE_CALL_CENTER_PREVIEW=1` on
-the dev server, `node scripts/e2e/callcenter.mjs …` (every tab, and progress kept after a reload).
+the dev server, `node scripts/e2e/callcenter.mjs …` (every tab, and progress kept after a reload) and
+`node scripts/e2e/sales.mjs …` (the same for Sales Prep).
 `scripts/e2e/offline.mjs` runs against a production build (see Offline).

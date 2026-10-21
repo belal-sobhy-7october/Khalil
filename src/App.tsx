@@ -39,6 +39,7 @@ const NotesPanel = lazy(() => import('./components/Layout/NotesPanel'));
 const Calendar = lazy(() => import('./components/Calendar/Calendar'));
 const EnglishHub = lazy(() => import('./components/English/EnglishHub'));
 const CallCenterPrep = lazy(() => import('./components/CallCenter/CallCenterPrep'));
+const SalesPrep = lazy(() => import('./components/Sales/SalesPrep'));
 const FocusSection = lazy(() => import('./components/Focus/FocusSection'));
 const WirdSection = lazy(() => import('./components/Wird/WirdSection'));
 const AnalyticsSection = lazy(() => import('./components/Analytics/AnalyticsSection'));
@@ -277,7 +278,7 @@ function App() {
       <DashboardLayout
         activeSection={activeSection}
         onSectionChange={handleSectionChange}
-        allowFullWidth={['calendar', 'bookmarks', 'vocabulary', 'callcenter', 'focus', 'wird', 'analytics', 'settings'].includes(activeSection)}
+        allowFullWidth={['calendar', 'bookmarks', 'vocabulary', 'callcenter', 'sales', 'focus', 'wird', 'analytics', 'settings'].includes(activeSection)}
         notesSlot={
           <Suspense fallback={null}>
             <NotesPanel
@@ -336,14 +337,14 @@ function App() {
             {activeSection === 'analytics' && <AnalyticsSection onNavigate={handleSectionChange} />}
             {activeSection === 'settings' && <SettingsSection />}
           </Suspense>
-        ) : activeSection === 'callcenter' && callCenterAccess !== false ? (
+        ) : (activeSection === 'callcenter' || activeSection === 'sales') && callCenterAccess !== false ? (
           <Suspense fallback={
             <div className="min-h-screen flex items-center justify-center">
               <div className="w-8 h-8 border-2 border-clay-soft border-t-transparent rounded-full animate-spin" />
             </div>
           }>
             {callCenterAccess ? (
-              <CallCenterPrep />
+              activeSection === 'sales' ? <SalesPrep /> : <CallCenterPrep />
             ) : (
               <div className="min-h-screen flex items-center justify-center">
                 <div className="w-8 h-8 border-2 border-clay-soft border-t-transparent rounded-full animate-spin" />
