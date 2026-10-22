@@ -1,11 +1,12 @@
 import { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { BookOpen, CalendarCheck, ClipboardCheck, Flame, Library, Map as MapIcon, NotebookPen, Timer, TrendingUp } from 'lucide-react';
-import { READING_ORDER } from '../../data/sales/knowledge';
+import { BookOpen, CalendarCheck, ClipboardCheck, Flame, Library, Map as MapIcon, NotebookPen, Smartphone, Timer, TrendingUp } from 'lucide-react';
+import { ALL_CHAPTERS } from '../../data/sales/knowledge';
 import { LEVELS, PLAN_DAYS } from '../../data/sales/plan';
 import { currentDayIndex, daysDone, daysLeft, minutesOn, planProgress, studyStreak } from '../../lib/sales/progress';
 import { getToday } from '../../store/dateHelpers';
 import { ProgressRing } from '../English/CourseVisuals';
+import ExtraView from './ExtraView';
 import KnowledgeView from './KnowledgeView';
 import LibraryView from './LibraryView';
 import NotebookView from './NotebookView';
@@ -14,7 +15,7 @@ import { SalesProvider, useSales } from './SalesContext';
 import TodayView from './TodayView';
 import { ArabicNote } from './ui';
 
-type Tab = 'today' | 'knowledge' | 'roadmap' | 'notebook' | 'library';
+type Tab = 'today' | 'knowledge' | 'roadmap' | 'notebook' | 'library' | 'extra';
 
 const TABS: Array<{ id: Tab; label: string; icon: typeof Flame }> = [
   { id: 'today', label: 'النهارده', icon: CalendarCheck },
@@ -22,6 +23,7 @@ const TABS: Array<{ id: Tab; label: string; icon: typeof Flame }> = [
   { id: 'roadmap', label: 'الخريطة', icon: MapIcon },
   { id: 'notebook', label: 'الدفتر والتقدم', icon: NotebookPen },
   { id: 'library', label: 'المكتبة', icon: Library },
+  { id: 'extra', label: 'إضافي: الأجهزة', icon: Smartphone },
 ];
 
 const TAB_KEY = 'khalil-sales-tab';
@@ -84,7 +86,7 @@ function Prep() {
             </ProgressRing>
             <div className="flex-1 min-w-0">
               <h1 className="text-2xl font-bold text-ink leading-tight">تعلّم السيلز</h1>
-              <p className="text-sm text-ink-light">من الصفر لبيع الأجهزة الإلكترونية: بالعربي الأول، وبعدين بالإنجليزي، ومعاهم معرفة تنفعك في أي شغل</p>
+              <p className="text-sm text-ink-light">سيلز وماركتينج وتفاوض من الصفر: معرفة تنفعك في أي شغل، بالعربي الأول وبعدين بالإنجليزي</p>
               <p className="mt-1 text-xs text-clay-soft-dark font-medium">
                 دلوقتي: المستوى {where.level.number} · {where.level.name}
                 {where.week ? ` · الأسبوع ${where.week.number}` : ''}
@@ -98,7 +100,7 @@ function Prep() {
             <Stat icon={Timer} value={`${minutesOn(today, tasks)} دقيقة`} label="النهارده" />
             <Stat icon={CalendarCheck} value={`${daysDone(tasks)} / ${daysDone(tasks) + daysLeft(tasks)}`} label="أيام خلصت" />
             <Stat icon={ClipboardCheck} value={`${progress.done} / ${progress.total}`} label="مهام خلصت" />
-            <Stat icon={BookOpen} value={`${READING_ORDER.filter((id) => knowledge[id]).length} / ${READING_ORDER.length}`} label="فصول المعرفة" />
+            <Stat icon={BookOpen} value={`${ALL_CHAPTERS.filter((c) => knowledge[c.id]).length} / ${ALL_CHAPTERS.length}`} label="فصول المعرفة" />
           </div>
         </motion.div>
       </section>
@@ -125,6 +127,7 @@ function Prep() {
       {tab === 'roadmap' && <RoadmapView currentIndex={currentIndex} onOpenDay={openDay} />}
       {tab === 'notebook' && <NotebookView />}
       {tab === 'library' && <LibraryView />}
+      {tab === 'extra' && <ExtraView />}
     </div>
   );
 }

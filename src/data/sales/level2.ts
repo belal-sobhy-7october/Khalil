@@ -178,6 +178,7 @@ export const LEVEL2_WEEKS: SalesWeekSpec[] = [
           steps: ['قلت اسمك وشركتك من غير لف', 'طلبت مساعدتها', 'سألتها عن تعبها هي في الحجوزات', 'خدت معلومة (وقت، اسم، ميعاد)', 'شكرتها باسمها'],
         },
       ],
+      knowledge: ['k-mkt-what', 'k-mkt-stp', 'k-mkt-funnel', 'k-mkt-value-prop'],
       mission: {
         id: 'build-a-list',
         title: 'اعمل أول قائمة عملاء',
@@ -355,6 +356,7 @@ export const LEVEL2_WEEKS: SalesWeekSpec[] = [
           steps: ['سألت عن النتايج بأسئلة مفتوحة', 'خليته يقول القيمة بكلامه', 'طلبت ترشيح محدد', 'سهّلت عليه (رسالة جاهزة يبعتها)', 'شكرته'],
         },
       ],
+      knowledge: ['k-mkt-4ps', 'k-mkt-digital', 'k-mkt-brand', 'k-mkt-pricing'],
       mission: {
         id: 'my-pipeline-sheet',
         title: 'اعمل الـ Pipeline بتاعك',
@@ -534,6 +536,7 @@ export const LEVEL2_WEEKS: SalesWeekSpec[] = [
           steps: ['سألت عن استخدامها', 'قلت الحقيقة إن الكبيرة مش محتاجاها', 'رشحت الأنسب', 'طمّنتها إنها تقدر تكبّر بعدين', 'سبت انطباع يخليها ترجعلك'],
         },
       ],
+      knowledge: ['k-neg-what', 'k-neg-interests', 'k-neg-batna', 'k-neg-zopa', 'k-neg-anchoring'],
       mission: {
         id: 'negotiate-something',
         title: 'اتفاوض على حاجة حقيقية',
@@ -715,6 +718,7 @@ export const LEVEL2_WEEKS: SalesWeekSpec[] = [
           steps: ['شكرته وحددت الوقت', 'عرّفت نفسك في 30 ثانية', 'سألت 3 أسئلة ذكية', 'طلبت خطوة صغيرة', 'خلصت في الوقت'],
         },
       ],
+      knowledge: ['k-neg-concessions', 'k-neg-voss', 'k-neg-pie'],
       mission: {
         id: 'apply-five',
         title: 'قدّم على 5 وظايف (أو جهّز للتقديم)',

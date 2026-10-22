@@ -59,9 +59,10 @@ and their detailed plan is in `src/data/callCenter/ROADMAP.md`.
 
 ## Sales Prep (owner-only)
 
-A private section (`sales`): learning sales from zero in Egyptian Arabic (Levels 1–2), then selling electronics,
-the owner's job (Level 3), then the same skills in English (Level 4), with a daily plan where Today shows only
-one day, plus a Knowledge tab (sales, negotiation, marketing, psychology; a chapter a day). **Read `src/data/sales/README.md`
+A private section (`sales`): sales, marketing and negotiation from zero, as knowledge for any job. Four
+Knowledge books (sales, psychology, marketing, negotiation) are daily tasks in Levels 1–2 (Egyptian Arabic),
+then Level 3 is the same skills in English; Today shows only one day. Selling electronics (the owner's current
+job, learned inside the company) is an Extra tab outside the plan. **Read `src/data/sales/README.md`
 before changing it.** It uses the Call Center access check (same owner, same preview flag); progress is
 in `user_kv` (`sales-*` keys). Listening tasks link searches unless a video id is confirmed.
 

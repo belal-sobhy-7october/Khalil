@@ -1,7 +1,8 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import { BookOpen, Check, ChevronDown, ClipboardCheck, GraduationCap, Headphones, Map as MapIcon, Mic, NotebookPen, PenLine, SpellCheck, Users } from 'lucide-react';
+import { BookOpen, Check, ChevronDown, ClipboardCheck, GraduationCap, Headphones, Library, Map as MapIcon, Mic, NotebookPen, PenLine, SpellCheck, Users } from 'lucide-react';
 import type { Lang, SalesTask, SalesTaskKind } from '../../data/sales/types';
 import { taskTitle } from '../../lib/sales/tasks';
+import { KnowledgeTask } from './KnowledgeView';
 import { useSales } from './SalesContext';
 import LessonActivity from './activities/LessonActivity';
 import ListenActivity from './activities/ListenActivity';
@@ -22,6 +23,7 @@ const KIND: Record<SalesTaskKind, { ar: string; en: string; icon: typeof Mic }> 
   words: { ar: 'كلمات', en: 'Words', icon: SpellCheck },
   review: { ar: 'مراجعة', en: 'Review', icon: BookOpen },
   quiz: { ar: 'كويز', en: 'Quiz', icon: ClipboardCheck },
+  knowledge: { ar: 'فصل معرفة', en: 'Knowledge', icon: Library },
 };
 
 /** One task of the day: a header you tick, and the activity itself when opened. */
@@ -62,6 +64,8 @@ export default function TaskCard({ task, lang, done, open, onToggleOpen }: {
         return <ReviewActivity {...props} />;
       case 'quiz':
         return <QuizActivity quizId={task.ref} onDone={markDone} />;
+      case 'knowledge':
+        return <KnowledgeTask chapterId={task.ref} onDone={markDone} />;
     }
   };
 

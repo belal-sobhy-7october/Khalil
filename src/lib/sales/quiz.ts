@@ -1,4 +1,5 @@
 /** The sales quizzes: weekly, level exams and the first-day check, built from the lessons. */
+import { getChapter } from '../../data/sales/knowledge';
 import { DIAGNOSTIC_ID, LEVELS, getLevel, getWeek } from '../../data/sales/plan';
 import type { Lang, SalesChoice, SalesWeek, SalesWord } from '../../data/sales/types';
 
@@ -48,6 +49,7 @@ export function wordQuestions(words: SalesWord[], rand: () => number): SalesChoi
 
 const weekQuestions = (week: SalesWeek, rand: () => number) => [
   ...week.content.lessons.flatMap((l) => l.check),
+  ...(week.content.knowledge ?? []).flatMap((id) => getChapter(id)?.chapter.check ?? []),
   ...(week.content.words ? wordQuestions(week.content.words, rand) : []),
 ];
 

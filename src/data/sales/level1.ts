@@ -186,6 +186,7 @@ export const LEVEL1_WEEKS: SalesWeekSpec[] = [
           steps: ['سألت عن هدفها', 'سألت ليه مكملتش قبل كده', 'ربطت العرض بالسبب ده', 'كنت صادق ومبالغتش', 'اقترحت خطوة جاية واضحة (حصة تجربة)'],
         },
       ],
+      knowledge: ['k-sales-exchange', 'k-sales-why-buy', 'k-sales-trust'],
       mission: {
         id: 'watch-two-sellers',
         title: 'اتفرج على بياعين حقيقيين',
@@ -392,6 +393,7 @@ export const LEVEL1_WEEKS: SalesWeekSpec[] = [
           steps: ['احترمت وقتها وقلت هتاخد قد إيه', 'سألت عن طريقة الحجز الحالية', 'وصلت لتأثير الغياب على الدخل', 'سألت سؤال قيمة الحل', 'حجزت ديمو بميعاد'],
         },
       ],
+      knowledge: ['k-sales-questions', 'k-sales-journey', 'k-psy-two-systems'],
       mission: {
         id: 'three-open-questions',
         title: 'تلات أسئلة مفتوحة',
@@ -578,6 +580,7 @@ export const LEVEL1_WEEKS: SalesWeekSpec[] = [
           steps: ['قلت pitch قصير ختمته بسؤال', 'سألت عن وقت الزحمة', 'عرضت 3 مميزات بس', 'استخدمت قصة عميل شبهه', 'طلبت تجربة مجانية أسبوع'],
         },
       ],
+      knowledge: ['k-psy-choice', 'k-psy-social-proof', 'k-psy-framing'],
       mission: {
         id: 'sell-something-real',
         title: 'بيع حاجة حقيقية (أو اقنع بفكرة)',
@@ -778,6 +781,7 @@ export const LEVEL1_WEEKS: SalesWeekSpec[] = [
           steps: ['سألت عن العرض التاني بهدوء', 'وضحت قيمة زيارات الطوارئ بموقف حقيقي', 'استخدمت summary close', 'حددت ميعاد متابعة لو اتأجل', 'كتبت رسالة متابعة فيها قيمة'],
         },
       ],
+      knowledge: ['k-sales-risk', 'k-psy-loss-aversion', 'k-psy-reciprocity', 'k-sales-everyone-sells'],
       mission: {
         id: 'ask-a-real-seller',
         title: 'كلم بياع حقيقي',

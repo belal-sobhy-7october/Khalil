@@ -1,47 +1,13 @@
 import { useMemo, useState } from 'react';
-import { ArrowLeft, ArrowRight, BookOpen, CheckCircle2, ChevronDown, Flame, PartyPopper } from 'lucide-react';
-import { READING_ORDER, getChapter } from '../../data/sales/knowledge';
+import { ArrowLeft, ArrowRight, Flame, PartyPopper } from 'lucide-react';
 import { PLAN_DAYS } from '../../data/sales/plan';
-import { dayDone, dayRatio, minutesOn, todaysChapter } from '../../lib/sales/progress';
+import { dayDone, dayRatio, minutesOn } from '../../lib/sales/progress';
 import { getToday } from '../../store/dateHelpers';
 import { ProgressBar } from '../English/CourseVisuals';
 import { useSales } from './SalesContext';
-import { ChapterReader } from './KnowledgeView';
 import TaskCard from './TaskCard';
 import { ArabicNote, Card, LangBlock, Pill } from './ui';
 import { primaryBtn } from '../CallCenter/ui';
-
-/** Today's knowledge chapter: one a day, apart from the day's tasks. */
-function TodayChapter() {
-  const { knowledge } = useSales();
-  const today = getToday();
-  const chapter = todaysChapter(knowledge, today);
-  const [open, setOpen] = useState(false);
-  const found = chapter ? getChapter(chapter.id) : undefined;
-  if (!chapter || !found) return null;
-  const readCount = READING_ORDER.filter((id) => knowledge[id]).length;
-  return (
-    <div className={`rounded-2xl border transition-colors ${chapter.done ? 'border-sage-soft/40 bg-sage-soft/5' : 'border-gold-soft/50 bg-gold-soft/8'}`}>
-      <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open} className="w-full flex items-center gap-3 p-3 sm:p-4 text-start">
-        <span className={`shrink-0 w-9 h-9 rounded-xl flex items-center justify-center ${chapter.done ? 'bg-sage-soft/15 text-sage-soft-dark' : 'bg-gold-soft/20 text-clay-soft'}`}>
-          {chapter.done ? <CheckCircle2 size={17} /> : <BookOpen size={17} />}
-        </span>
-        <span className="flex-1 min-w-0">
-          <span className="block text-[11px] text-ink-light">
-            معرفة النهارده · {found.book.title} · حوالي 10 دقايق · {readCount} / {READING_ORDER.length}
-          </span>
-          <span className="block text-sm font-semibold text-ink leading-snug">{found.chapter.title}</span>
-        </span>
-        <ChevronDown size={16} className={`shrink-0 text-ink-light transition-transform ${open ? 'rotate-180' : ''}`} />
-      </button>
-      {open && (
-        <div className="px-3 sm:px-4 pb-4 pt-3 border-t border-border-subtle">
-          <ChapterReader id={found.chapter.id} onRead={() => setOpen(false)} />
-        </div>
-      )}
-    </div>
-  );
-}
 
 /** The day to study: only its tasks and its progress. The rest of the plan lives in the roadmap. */
 export default function TodayView({ dayIndex, currentIndex, onSelectDay }: {
@@ -117,8 +83,6 @@ export default function TodayView({ dayIndex, currentIndex, onSelectDay }: {
           </button>
         )}
       </Card>
-
-      {dayIndex === currentIndex && <TodayChapter />}
 
       {done && (
         <Card className="flex flex-col sm:flex-row sm:items-center gap-3 border-sage-soft/50 bg-sage-soft/8">

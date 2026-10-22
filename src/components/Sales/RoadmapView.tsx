@@ -1,36 +1,34 @@
 import { useState } from 'react';
 import { CheckCircle2, ChevronDown, Circle, Lock } from 'lucide-react';
 import { LEVELS, PLAN_DAYS } from '../../data/sales/plan';
-import type { SalesLevel } from '../../data/sales/types';
+import type { SalesLevel, SalesTask, SalesTaskKind } from '../../data/sales/types';
 import { bestAttempt, bestRoleplay, dayDone, levelProgress, passedQuiz, weekProgress } from '../../lib/sales/progress';
 import { ProgressBar, ProgressRing } from '../English/CourseVisuals';
 import { useSales } from './SalesContext';
 import { ArabicNote, Card, LangBlock, Pill } from './ui';
 
-/** Each level's exit criteria, checked against what's saved. */
+/** Each level's exit criteria, checked against what's saved (recognized by their wording). */
 function useExitChecks(level: SalesLevel): Array<{ text: string; ok: boolean | null }> {
   const { tasks, quizzes, calls } = useSales();
   const exam = level.examId ? bestAttempt(quizzes[level.examId]) : null;
   const examDay = level.extraDays.find((d) => d.id === level.examId);
   const examRoleplay = examDay?.tasks.find((t) => t.kind === 'roleplay')?.ref;
-  const missions = level.weeks.flatMap((w) => w.days.flatMap((d) => d.tasks.filter((t) => t.kind === 'mission')));
-  const words = level.weeks.flatMap((w) => w.days.flatMap((d) => d.tasks.filter((t) => t.kind === 'words')));
+  const ofKind = (kind: SalesTaskKind) => level.weeks.flatMap((w) => w.days.flatMap((d) => d.tasks.filter((t) => t.kind === kind)));
   const bestLabel = level.lang === 'en' ? 'best' : 'أحسن نتيجة';
-  return level.exit.map((text, i) => {
+  const count = (text: string, list: SalesTask[]) => {
+    const n = list.filter((t) => tasks[t.id]).length;
+    return { text: `${text} · ${n} / ${list.length}`, ok: list.length > 0 && n === list.length };
+  };
+  return level.exit.map((text) => {
     if (level.id === 'S0') return { text, ok: !!quizzes['S0-DIAG']?.length };
-    if (i === 0) return { text: exam ? `${text} · ${bestLabel} ${exam.percent}%` : text, ok: !!exam?.passed };
-    if (i === 1 && examRoleplay) {
+    if (/امتحان المستوى|Level exam/.test(text)) return { text: exam ? `${text} · ${bestLabel} ${exam.percent}%` : text, ok: !!exam?.passed };
+    if (/رول بلاي|role-play/i.test(text) && examRoleplay) {
       const best = bestRoleplay(calls, examRoleplay);
       return { text: best !== null ? `${text} · ${bestLabel} ${best}%` : text, ok: best !== null && best >= 80 };
     }
-    if (i === 2) {
-      const n = missions.filter((t) => tasks[t.id]).length;
-      return { text: `${text} · ${n} / ${missions.length}`, ok: missions.length > 0 && n === missions.length };
-    }
-    if (i === 3 && words.length) {
-      const n = words.filter((t) => tasks[t.id]).length;
-      return { text: `${text} · ${n} / ${words.length}`, ok: n === words.length };
-    }
+    if (/المهمات|missions/.test(text)) return count(text, ofKind('mission'));
+    if (/flashcards/.test(text)) return count(text, ofKind('words'));
+    if (/المعرفة/.test(text)) return count(text, ofKind('knowledge'));
     return { text, ok: null };
   });
 }
@@ -165,7 +163,7 @@ export default function RoadmapView({ currentIndex, onOpenDay }: { currentIndex:
   return (
     <div className="space-y-3">
       <ArabicNote>
-        الخطة كلها هنا لو حبيت تبص، بس مش محتاج تشيل همها: افتح «النهارده» وخلاص. المستوى 1 أساسيات بالعربي، 2 السوق والشغلانة بالعربي، 3 بيع الأجهزة الإلكترونية (شغلك)، 4 نفس المهارات بالإنجليزي. كل أسبوع آخره كويز، وكل مستوى آخره امتحان ورول بلاي كامل.
+        الخطة كلها هنا لو حبيت تبص، بس مش محتاج تشيل همها: افتح «النهارده» وخلاص. الأساس هو المعرفة: المستوى 1 أساسيات السيلز وعلم نفس القرار، والمستوى 2 السوق والماركتينج والتفاوض، الاتنين بالعربي. والمستوى 3 نفس المهارات بالإنجليزي. بيع الأجهزة في تبويب «إضافي» برا الخطة. كل أسبوع آخره كويز، وكل مستوى آخره امتحان ورول بلاي كامل.
       </ArabicNote>
       {LEVELS.map((level) => (
         <LevelCard key={level.id} level={level} onOpenDay={onOpenDay} defaultOpen={level.id === currentLevel} />

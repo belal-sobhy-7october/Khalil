@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { READING_ORDER, getChapter } from '../../data/sales/knowledge';
+import { ALL_CHAPTERS } from '../../data/sales/knowledge';
 import { PLAN_DAYS, getDrill, getListen, getMission, getRoleplay } from '../../data/sales/plan';
 import { JOURNAL_PROMPTS } from '../../data/sales/start';
 import type { SalesTask } from '../../data/sales/types';
@@ -61,10 +61,10 @@ export default function NotebookView() {
     [notes]
   );
 
-  const fromKnowledge = READING_ORDER.filter((id) => notes[`knowledge:${id}`]?.text.trim()).map((id) => ({
-    id,
-    chapter: getChapter(id)!.chapter,
-    text: notes[`knowledge:${id}`].text,
+  const fromKnowledge = ALL_CHAPTERS.filter((c) => notes[`knowledge:${c.id}`]?.text.trim()).map((c) => ({
+    id: c.id,
+    chapter: c,
+    text: notes[`knowledge:${c.id}`].text,
   }));
 
   return (

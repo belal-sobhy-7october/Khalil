@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { BookOpen, BookmarkPlus, Eye } from 'lucide-react';
+import { getChapter } from '../../../data/sales/knowledge';
 import { getDrill, getLevel, getMission, getWeek } from '../../../data/sales/plan';
 import { JOURNAL_PROMPTS } from '../../../data/sales/start';
 import type { Lang } from '../../../data/sales/types';
@@ -152,6 +153,7 @@ export function ReviewActivity({ refId, lang, onDone }: { refId: string; lang: L
   const level = week ? null : getLevel(refId);
   const weeks = week ? [week] : level?.weeks ?? [];
   const lessons = weeks.flatMap((w) => w.content.lessons);
+  const chapters = weeks.flatMap((w) => w.content.knowledge ?? []).flatMap((id) => getChapter(id)?.chapter ?? []);
   const quizIds = [...weeks.map((w) => w.quizId), ...(level?.examId ? [level.examId] : [])];
   const missed = new Map<string, string>();
   for (const id of quizIds) for (const a of quizzes[id] ?? []) for (const m of a.missed) missed.set(m.q, m.right);
@@ -170,6 +172,19 @@ export function ReviewActivity({ refId, lang, onDone }: { refId: string; lang: L
           </li>
         ))}
       </ul>
+      {chapters.length > 0 && (
+        <div className="space-y-1.5">
+          <div className="text-xs font-semibold text-ink-light">فصول المعرفة</div>
+          <ul className="space-y-1.5">
+            {chapters.map((c) => (
+              <li key={c.id} className="rounded-xl border border-border-subtle px-3 py-2">
+                <div className="text-sm font-semibold text-ink">{c.title}</div>
+                <p className="text-sm text-ink-light">{c.idea}</p>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
       {missed.size > 0 && (
         <div className="space-y-1.5">
           <div className="text-xs font-semibold text-ink-light">{pick(lang, `أسئلة غلطت فيها (${missed.size})`, `Questions you missed (${missed.size})`)}</div>

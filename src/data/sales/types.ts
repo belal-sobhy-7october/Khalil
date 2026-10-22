@@ -7,7 +7,7 @@
  * Adding or changing content? Read ./README.md first.
  */
 
-export type SalesLevelId = 'S0' | 'S1' | 'S2' | 'S3' | 'S4';
+export type SalesLevelId = 'S0' | 'S1' | 'S2' | 'S3';
 
 /** The language a piece of content is written in. */
 export type Lang = 'ar' | 'en';
@@ -132,7 +132,9 @@ export type SalesTaskKind =
   | 'journal'
   | 'words'
   | 'review'
-  | 'quiz';
+  | 'quiz'
+  /** A chapter of the Knowledge books (`k-…`). */
+  | 'knowledge';
 
 export interface SalesTask {
   /** Stable id progress is saved under: `<day id>:<kind>:<ref>`. */
@@ -166,6 +168,8 @@ export interface SalesWeekContent {
   speaking: SpeakPrompt[];
   /** Twelve English words (Level 3 weeks): day 1, reviewed on the quiz day. */
   words?: SalesWord[];
+  /** Knowledge chapters (`k-…`), one a study day from day 1; their checks join the weekly quiz. */
+  knowledge?: string[];
 }
 
 export interface SalesWeekSpec {

@@ -1,8 +1,9 @@
 /**
  * The Knowledge tab: four short books of real ideas (sales, negotiation,
  * marketing, the psychology of decisions), each chapter with where it comes
- * from and how to use it in life and in any job. Today shows one chapter a
- * day (READING_ORDER), apart from the day's tasks.
+ * from and how to use it in life and in any job. The plan gives a chapter a
+ * study day in Levels 1–2 (each week's `knowledge`), and the tab lets you
+ * read any chapter any time.
  */
 import type { KnowledgeBook, KnowledgeChapter } from './types';
 
@@ -565,10 +566,5 @@ const byId = new Map(KNOWLEDGE.flatMap((b) => b.chapters.map((c) => [c.id, { cha
 
 export const getChapter = (id: string): { chapter: KnowledgeChapter; book: KnowledgeBook } | undefined => byId.get(id);
 
-/** One chapter a day, the books taken in turn, so each day has something different. */
-export const READING_ORDER: string[] = (() => {
-  const order: string[] = [];
-  const longest = Math.max(...KNOWLEDGE.map((b) => b.chapters.length));
-  for (let i = 0; i < longest; i++) for (const b of KNOWLEDGE) if (b.chapters[i]) order.push(b.chapters[i].id);
-  return order;
-})();
+/** Every chapter, book by book. */
+export const ALL_CHAPTERS: KnowledgeChapter[] = KNOWLEDGE.flatMap((b) => b.chapters);

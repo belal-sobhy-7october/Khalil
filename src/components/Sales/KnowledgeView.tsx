@@ -72,6 +72,25 @@ export function ChapterReader({ id, onRead }: { id: string; onRead?: () => void 
   );
 }
 
+/** A chapter as a task of the day: read it to tick the task. */
+export function KnowledgeTask({ chapterId, onDone }: { chapterId: string; onDone: () => void }) {
+  const { knowledge } = useSales();
+  const readBefore = !!knowledge[chapterId];
+  return (
+    <div className="space-y-3">
+      {readBefore && (
+        <div className="flex flex-wrap items-center gap-2">
+          <ArabicNote>قريت الفصل ده قبل كده من تبويب «المعرفة». راجعه بسرعة وجاوب الأسئلة.</ArabicNote>
+          <button type="button" onClick={onDone} className={secondaryBtn}>
+            <CheckCircle2 size={13} /> راجعته
+          </button>
+        </div>
+      )}
+      <ChapterReader id={chapterId} onRead={onDone} />
+    </div>
+  );
+}
+
 function BookCard({ book, onOpen }: { book: KnowledgeBook; onOpen: (id: string) => void }) {
   const { knowledge } = useSales();
   const done = book.chapters.filter((c) => knowledge[c.id]).length;
@@ -120,7 +139,7 @@ export default function KnowledgeView() {
   return (
     <div className="space-y-3">
       <ArabicNote>
-        معرفة حقيقية مش حفظ: أفكار من كتب وأبحاث معروفة، متشرحة ببساطة، ومعاها إزاي تستخدمها في حياتك وفي أي شغل. كل يوم هتلاقي فصل واحد في «النهارده»، وتقدر تقرا أي فصل هنا وقت ما تحب.
+        معرفة حقيقية مش حفظ: أفكار من كتب وأبحاث معروفة، متشرحة ببساطة، ومعاها إزاي تستخدمها في حياتك وفي أي شغل. الخطة بتديك فصل في أغلب أيام المستوى 1 و 2 (وأسئلته في الكويز)، وتقدر تقرا أي فصل هنا وقت ما تحب.
       </ArabicNote>
       <div className="grid gap-3 lg:grid-cols-2">
         {KNOWLEDGE.map((b) => (

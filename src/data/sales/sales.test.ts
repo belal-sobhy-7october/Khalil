@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { ALL_LESSONS, DIAGNOSTIC_ID, LEVELS, PLAN_DAYS, getDrill, getLesson, getListen, getMission, getRoleplay, getSpeak, getWeek } from './plan';
+import { ALL_LESSONS, DIAGNOSTIC_ID, EXTRA_LESSONS, EXTRA_WEEKS, LEVELS, PLAN_DAYS, getDrill, getLesson, getListen, getMission, getRoleplay, getSpeak, getWeek } from './plan';
 import { SALES_SOURCES } from './sources';
-import { KNOWLEDGE, READING_ORDER, getChapter } from './knowledge';
+import { ALL_CHAPTERS, KNOWLEDGE, getChapter } from './knowledge';
 import { EXAM_ROLEPLAYS, EXAM_SPEAKING, JOURNAL_PROMPTS } from './start';
 import type { SalesChoice } from './types';
 import { buildQuiz } from '../../lib/sales/quiz';
@@ -19,20 +19,24 @@ function validChoice(c: SalesChoice) {
 }
 
 describe('Sales Prep content', () => {
-  it('builds a start day and four ready levels of four weeks', () => {
+  it('builds a start day and three ready levels of four weeks: Arabic first, then English', () => {
     expect(LEVELS.map((l) => [l.id, l.status, l.weeks.length])).toEqual([
       ['S0', 'ready', 0],
       ['S1', 'ready', 4],
       ['S2', 'ready', 4],
       ['S3', 'ready', 4],
-      ['S4', 'ready', 4],
     ]);
-    // Arabic first (with electronics, the owner's job, as Level 3), then English.
-    expect(LEVELS.map((l) => l.lang)).toEqual(['ar', 'ar', 'ar', 'ar', 'en']);
-    expect(LEVELS[3].name).toBe('بيع الأجهزة الإلكترونية');
+    expect(LEVELS.map((l) => l.lang)).toEqual(['ar', 'ar', 'ar', 'en']);
     for (const l of LEVELS) for (const w of l.weeks) expect(w.lang, w.id).toBe(l.lang);
     expect(PLAN_DAYS[0].day.id).toBe('S0-D1');
-    expect(PLAN_DAYS.length).toBe(1 + 16 * 6 + 4);
+    expect(PLAN_DAYS.length).toBe(1 + 12 * 6 + 3);
+  });
+
+  it('keeps selling electronics outside the plan, as an extra', () => {
+    expect(EXTRA_WEEKS).toHaveLength(4);
+    const planLessons = new Set(PLAN_DAYS.flatMap((d) => d.day.tasks.filter((t) => t.kind === 'lesson').map((t) => t.ref)));
+    for (const l of EXTRA_LESSONS) expect(planLessons.has(l.id), l.id).toBe(false);
+    for (const w of EXTRA_WEEKS) expect(w.lang, w.id).toBe('ar');
   });
 
   it('gives every week what its six days need', () => {
@@ -47,12 +51,13 @@ describe('Sales Prep content', () => {
   });
 
   it('has unique ids in every kind of content, and unique day and task ids', () => {
-    expect(unique(ALL_LESSONS.map((l) => l.id))).toEqual([]);
-    expect(unique(content.flatMap((c) => c.listens.map((x) => x.id)))).toEqual([]);
-    expect(unique(content.flatMap((c) => c.drills.map((x) => x.id)))).toEqual([]);
-    expect(unique([...content.flatMap((c) => c.roleplays.map((x) => x.id)), ...EXAM_ROLEPLAYS.map((r) => r.id)])).toEqual([]);
-    expect(unique(content.map((c) => c.mission.id))).toEqual([]);
-    expect(unique([...content.flatMap((c) => c.speaking.map((x) => x.id)), ...EXAM_SPEAKING.map((s) => s.id)])).toEqual([]);
+    const all = [...content, ...EXTRA_WEEKS.map((w) => w.content)];
+    expect(unique([...ALL_LESSONS, ...EXTRA_LESSONS].map((l) => l.id))).toEqual([]);
+    expect(unique(all.flatMap((c) => c.listens.map((x) => x.id)))).toEqual([]);
+    expect(unique(all.flatMap((c) => c.drills.map((x) => x.id)))).toEqual([]);
+    expect(unique([...all.flatMap((c) => c.roleplays.map((x) => x.id)), ...EXAM_ROLEPLAYS.map((r) => r.id)])).toEqual([]);
+    expect(unique(all.map((c) => c.mission.id))).toEqual([]);
+    expect(unique([...all.flatMap((c) => c.speaking.map((x) => x.id)), ...EXAM_SPEAKING.map((s) => s.id)])).toEqual([]);
     expect(unique(PLAN_DAYS.map((d) => d.day.id))).toEqual([]);
     expect(unique(PLAN_DAYS.flatMap((d) => d.day.tasks.map((t) => t.id)))).toEqual([]);
     expect(unique(weeks.flatMap((w) => w.content.words?.map((x) => x.word) ?? []))).toEqual([]);
@@ -73,6 +78,7 @@ describe('Sales Prep content', () => {
           review: () => getWeek(t.ref) ?? LEVELS.find((l) => l.id === t.ref),
           quiz: () => buildQuiz(t.ref),
           journal: () => (/^d[1-5]$|^start$|^exam$/.test(t.ref) ? t.ref : undefined),
+          knowledge: () => getChapter(t.ref),
         }[t.kind]();
         expect(found, t.id).toBeTruthy();
       }
@@ -88,7 +94,7 @@ describe('Sales Prep content', () => {
   });
 
   it('has lessons with a few points, mistakes and valid checks', () => {
-    for (const l of ALL_LESSONS) {
+    for (const l of [...ALL_LESSONS, ...EXTRA_LESSONS]) {
       expect(l.points.length, l.id).toBeGreaterThanOrEqual(3);
       expect(l.points.length, l.id).toBeLessThanOrEqual(5);
       expect(l.mistakes.length, l.id).toBeGreaterThanOrEqual(1);
@@ -192,8 +198,17 @@ describe('Sales Prep knowledge', () => {
     }
   });
 
-  it('reads every chapter once, the books in turn', () => {
-    expect([...READING_ORDER].sort()).toEqual(chapters.map((c) => c.id).sort());
-    expect(READING_ORDER.slice(0, 4).map((id) => getChapter(id)!.book.id)).toEqual(['sales', 'negotiation', 'marketing', 'psychology']);
+  it('puts every chapter in the plan once: sales and psychology in Level 1, marketing and negotiation in Level 2', () => {
+    const inLevel = (id: string) => PLAN_DAYS.filter((d) => d.level.id === id).flatMap((d) => d.day.tasks.filter((t) => t.kind === 'knowledge').map((t) => t.ref));
+    const all = [...inLevel('S1'), ...inLevel('S2'), ...inLevel('S3')];
+    expect(unique(all)).toEqual([]);
+    expect([...all].sort()).toEqual(ALL_CHAPTERS.map((c) => c.id).sort());
+    expect(new Set(inLevel('S1').map((id) => getChapter(id)!.book.id))).toEqual(new Set(['sales', 'psychology']));
+    expect(new Set(inLevel('S2').map((id) => getChapter(id)!.book.id))).toEqual(new Set(['marketing', 'negotiation']));
+  });
+
+  it('asks the chapters\' questions in the weekly quiz', () => {
+    const quiz = buildQuiz('S2-W1-QUIZ', 3)!.questions.map((q) => q.q);
+    for (const id of getWeek('S2-W1')!.content.knowledge!) for (const c of getChapter(id)!.chapter.check) expect(quiz, id).toContain(c.q);
   });
 });

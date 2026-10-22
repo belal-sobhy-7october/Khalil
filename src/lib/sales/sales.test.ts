@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { LEVELS, PLAN_DAYS, getWeek } from '../../data/sales/plan';
-import { currentDayIndex, dayDone, daysDone, daysLeft, journalCount, levelProgress, minutesOn, planProgress, setTasks, todaysChapter, type TaskLog } from './progress';
-import { READING_ORDER } from '../../data/sales/knowledge';
+import { currentDayIndex, dayDone, daysDone, daysLeft, journalCount, levelProgress, minutesOn, planProgress, setTasks, type TaskLog } from './progress';
+import { getChapter } from '../../data/sales/knowledge';
 import { buildQuiz, seeded, shuffleOptions, wordQuestions } from './quiz';
 import { roleplayPrompt } from './prompts';
 import { taskTitle } from './tasks';
@@ -22,7 +22,7 @@ describe('Sales Prep progress', () => {
 
   it('stays on the last ready day once everything is done', () => {
     const all = doneDays(PLAN_DAYS.length);
-    expect(PLAN_DAYS[currentDayIndex(all)].day.id).toBe('S4-EXAM');
+    expect(PLAN_DAYS[currentDayIndex(all)].day.id).toBe('S3-EXAM');
     expect(daysLeft(all)).toBe(0);
     expect(daysDone(all)).toBe(PLAN_DAYS.length);
     expect(planProgress(LEVELS, all).ratio).toBe(1);
@@ -52,7 +52,7 @@ describe('Sales Prep quizzes', () => {
   });
 
   it('asks every word of an English week, with its definition as the answer', () => {
-    const words = getWeek('S4-W1')!.content.words!;
+    const words = getWeek('S3-W1')!.content.words!;
     const qs = wordQuestions(words, seeded(3));
     expect(qs).toHaveLength(12);
     qs.forEach((q, i) => expect(q.options[q.answer]).toBe(words[i].definition));
@@ -60,9 +60,10 @@ describe('Sales Prep quizzes', () => {
 
   it('builds the weekly quiz from the week, and a new exam sample each attempt', () => {
     const quiz = buildQuiz('S1-W2-QUIZ', 1)!;
-    const checks = getWeek('S1-W2')!.content.lessons.flatMap((l) => l.check);
+    const week = getWeek('S1-W2')!;
+    const checks = [...week.content.lessons.flatMap((l) => l.check), ...week.content.knowledge!.flatMap((id) => getChapter(id)!.chapter.check)];
     expect(quiz.questions).toHaveLength(checks.length);
-    expect(buildQuiz('S4-W1-QUIZ', 1)!.questions.length).toBe(getWeek('S4-W1')!.content.lessons.flatMap((l) => l.check).length + 12);
+    expect(buildQuiz('S3-W1-QUIZ', 1)!.questions.length).toBe(getWeek('S3-W1')!.content.lessons.flatMap((l) => l.check).length + 12);
     const a = buildQuiz('S1-EXAM', 1)!.questions.map((q) => q.q);
     const b = buildQuiz('S1-EXAM', 2)!.questions.map((q) => q.q);
     expect(a).toHaveLength(25);
@@ -71,11 +72,11 @@ describe('Sales Prep quizzes', () => {
   });
 
   it('names tasks and writes role-play prompts in the week language', () => {
-    const t = PLAN_DAYS.find((d) => d.day.id === 'S4-W1-D1')!.day.tasks.find((x) => x.kind === 'words')!;
+    const t = PLAN_DAYS.find((d) => d.day.id === 'S3-W1-D1')!.day.tasks.find((x) => x.kind === 'words')!;
     expect(taskTitle(t, 'en')).toBe('12 sales words for your flashcards');
     const rp = getWeek('S1-W1')!.content.roleplays[0];
     expect(roleplayPrompt(rp, 'ar')).toContain(rp.youSell);
-    expect(roleplayPrompt(getWeek('S4-W1')!.content.roleplays[0], 'en')).toMatch(/^Let's do a sales role-play/);
+    expect(roleplayPrompt(getWeek('S3-W1')!.content.roleplays[0], 'en')).toMatch(/^Let's do a sales role-play/);
   });
 });
 
@@ -83,16 +84,5 @@ describe('Sales Prep recordings', () => {
   it('keeps them apart from Call Center Prep', async () => {
     const { salesPromptKey } = await import('./recordings');
     expect(salesPromptKey('baseline-pitch')).toBe('sales:baseline-pitch');
-  });
-});
-
-describe("Sales Prep: today's knowledge chapter", () => {
-  it('gives the next unread chapter, keeps today\'s once read, and ends when all are read', () => {
-    expect(todaysChapter({}, '2026-10-22')).toEqual({ id: READING_ORDER[0], done: false });
-    const yesterday = { [READING_ORDER[0]]: '2026-10-21' };
-    expect(todaysChapter(yesterday, '2026-10-22')).toEqual({ id: READING_ORDER[1], done: false });
-    const today = { ...yesterday, [READING_ORDER[1]]: '2026-10-22' };
-    expect(todaysChapter(today, '2026-10-22')).toEqual({ id: READING_ORDER[1], done: true });
-    expect(todaysChapter(Object.fromEntries(READING_ORDER.map((id) => [id, '2026-10-01'])), '2026-10-22')).toBeNull();
   });
 });
