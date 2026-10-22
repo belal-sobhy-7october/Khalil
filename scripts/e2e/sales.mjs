@@ -16,7 +16,7 @@ const OUT = process.argv[3] ?? './shots';
 fs.mkdirSync(OUT, { recursive: true });
 const browser = await chromium.launch(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {});
 const phone = { width: 390, height: 844 };
-const TABS = ['today', 'roadmap', 'notebook', 'library'];
+const TABS = ['today', 'knowledge', 'roadmap', 'notebook', 'library'];
 const HEADING = 'تعلّم السيلز';
 
 /** Marks every task up to (and including) a day as done on the device, read from the dev server's plan, and reloads. */
@@ -50,7 +50,8 @@ for (const tab of TABS) {
 // A Level 1 day and a Level 3 (English) day, with a task open.
 for (const [name, dayId, opts] of [
   ['sales-day-s1-roleplay', 'S1-W1-D1', { theme: 'light' }],
-  ['sales-day-s3-english', 'S2-EXAM', { theme: 'dark', viewport: phone }],
+  ['sales-day-s3-electronics', 'S2-EXAM', { theme: 'light', viewport: phone }],
+  ['sales-day-s4-english', 'S3-EXAM', { theme: 'dark', viewport: phone }],
 ]) {
   const { page, context } = await openApp(browser, BASE, name, { section: 'sales', language: 'ar', ...opts });
   await page.getByRole('heading', { name: HEADING }).waitFor({ timeout: 15000 });
@@ -96,7 +97,17 @@ await flow('sales-flow-tick-and-note', {}, async ({ page, check, reload }) => {
   check(await page.getByText('عاوز أبدأ تيلي سيلز وبعدين SDR').count(), 'notebook line lost after reload');
 });
 
-// 3. An answer to a listening question is kept.
+// 3. Today's knowledge chapter, once read, is kept.
+await flow('sales-flow-knowledge', {}, async ({ page, check, reload }) => {
+  await page.getByText('البيع تبادل قيمة').click();
+  await page.getByRole('button', { name: /خلصت الفصل/ }).click();
+  await page.waitForTimeout(600);
+  await reload();
+  await page.getByRole('tab', { name: 'المعرفة' }).click();
+  check(await page.getByRole('heading', { name: 'السيلز بجد' }).locator('..').getByText('1 / 7').count(), 'read chapter lost after reload');
+});
+
+// 4. An answer to a listening question is kept.
 await flow('sales-flow-listen-note', {}, async ({ page, check, reload }) => {
   await doneThrough(page, 'S0-D1');
   await page.getByText('السيلز هو واحد مبيبعش! كل ما تريد معرفته عن مجال المبيعات').click();

@@ -6,6 +6,7 @@
 import { LEVEL1_WEEKS } from './level1';
 import { LEVEL2_WEEKS } from './level2';
 import { LEVEL3_WEEKS } from './level3';
+import { LEVEL4_WEEKS } from './level4';
 import { BASELINE_SPEAK, EXAM_ROLEPLAYS, EXAM_SPEAKING, START_LESSON } from './start';
 import type {
   Drill, ListenItem, Mission, SalesDay, SalesLesson, SalesLevel, SalesLevelId, SalesRoleplay, SalesTask, SalesTaskKind, SalesWeek, SalesWeekSpec, SpeakPrompt,
@@ -54,7 +55,10 @@ function buildWeeks(level: SalesLevelId, specs: SalesWeekSpec[]): SalesWeek[] {
 }
 
 /** The last day of a level: review, the full role-play, the speaking task and the exam. */
-function examDay(level: SalesLevelId, title: string, roleplay: string, speak: string): SalesDay {
+function examDay(level: SalesLevelId, title: string): SalesDay {
+  const key = level.toLowerCase();
+  const roleplay = EXAM_ROLEPLAYS.find((r) => r.id.startsWith(`exam-${key}-`))!.id;
+  const speak = EXAM_SPEAKING.find((s) => s.id.startsWith(`exam-${key}-`))!.id;
   const id = `${level}-EXAM`;
   return {
     id,
@@ -95,7 +99,7 @@ export const LEVELS: SalesLevel[] = [
     exit: ['امتحان المستوى 80% أو أكتر', 'رول بلاي الامتحان 80% أو أكتر في التقييم', 'المهمات الأربعة في الحياة الحقيقية'],
     status: 'ready',
     weeks: buildWeeks('S1', LEVEL1_WEEKS),
-    extraDays: [examDay('S1', 'امتحان المستوى 1', EXAM_ROLEPLAYS[0].id, EXAM_SPEAKING[0].id)],
+    extraDays: [examDay('S1', 'امتحان المستوى 1')],
     examId: 'S1-EXAM',
   },
   {
@@ -107,37 +111,32 @@ export const LEVELS: SalesLevel[] = [
     exit: ['امتحان المستوى 80% أو أكتر', 'رول بلاي الامتحان 80% أو أكتر في التقييم', 'المهمات الأربعة في الحياة الحقيقية'],
     status: 'ready',
     weeks: buildWeeks('S2', LEVEL2_WEEKS),
-    extraDays: [examDay('S2', 'امتحان المستوى 2', EXAM_ROLEPLAYS[1].id, EXAM_SPEAKING[1].id)],
+    extraDays: [examDay('S2', 'امتحان المستوى 2')],
     examId: 'S2-EXAM',
   },
   {
     id: 'S3',
     number: 3,
-    name: 'Sales in English',
-    lang: 'en',
-    goal: 'The same skills in English: the words, discovery, pitch and objections, closing, and the English sales interview.',
-    exit: ['Level exam 80% or more', 'Exam role-play 80% or more on the checklist', 'The four real-life missions', "The week's words in your flashcards"],
+    name: 'بيع الأجهزة الإلكترونية',
+    lang: 'ar',
+    goal: 'شغلك: تعرف الأجهزة وتترجم المواصفات لفوايد، تبيع في المحل، تكمّل البيعة بالإكسسوار والتقسيط والضمان، وتعرف أرقامك.',
+    exit: ['امتحان المستوى 80% أو أكتر', 'رول بلاي الامتحان 80% أو أكتر في التقييم', 'المهمات الأربعة في الحياة الحقيقية'],
     status: 'ready',
     weeks: buildWeeks('S3', LEVEL3_WEEKS),
-    extraDays: [examDay('S3', 'Level 3 exam', EXAM_ROLEPLAYS[2].id, EXAM_SPEAKING[2].id)],
+    extraDays: [examDay('S3', 'امتحان المستوى 3')],
     examId: 'S3-EXAM',
   },
   {
     id: 'S4',
     number: 4,
-    name: 'التخصص',
-    lang: 'ar',
-    goal: 'بعد ما تبدأ الشغل أو قبله بشوية: تختار مجال وتتعمق فيه.',
-    exit: ['تختار مسار واحد وتخلص أسابيعه'],
-    status: 'planned',
-    weeks: [],
-    extraDays: [],
-    outline: [
-      { title: 'B2B وSaaS (SDR بالإنجليزي)', focus: 'إيميلات باردة، لينكدإن، مكالمات لشركات برا، وأدوات CRM.' },
-      { title: 'بيع العقارات في مصر', focus: 'الكمبوندات، الأقساط، زيارات الموقع، والمتابعة الطويلة.' },
-      { title: 'التيلي سيلز والريتيل المتقدم', focus: 'مكالمات أكتر في وقت أقل، الـ upsell، والـ cross-sell.' },
-      { title: 'أول 90 يوم والترقية', focus: 'أرقامك، الـ feedback، وإزاي تبقى Senior أو Team Lead.' },
-    ],
+    name: 'Sales in English',
+    lang: 'en',
+    goal: 'The same skills in English: the words, discovery, pitch and objections, closing, and the English sales interview.',
+    exit: ['Level exam 80% or more', 'Exam role-play 80% or more on the checklist', 'The four real-life missions', "The week's words in your flashcards"],
+    status: 'ready',
+    weeks: buildWeeks('S4', LEVEL4_WEEKS),
+    extraDays: [examDay('S4', 'Level 4 exam')],
+    examId: 'S4-EXAM',
   },
 ];
 

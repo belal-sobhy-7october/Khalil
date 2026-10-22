@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { ALL_LESSONS, DIAGNOSTIC_ID, LEVELS, PLAN_DAYS, getDrill, getLesson, getListen, getMission, getRoleplay, getSpeak, getWeek } from './plan';
 import { SALES_SOURCES } from './sources';
+import { KNOWLEDGE, READING_ORDER, getChapter } from './knowledge';
 import { EXAM_ROLEPLAYS, EXAM_SPEAKING, JOURNAL_PROMPTS } from './start';
 import type { SalesChoice } from './types';
 import { buildQuiz } from '../../lib/sales/quiz';
@@ -18,18 +19,20 @@ function validChoice(c: SalesChoice) {
 }
 
 describe('Sales Prep content', () => {
-  it('builds three ready levels of four weeks, a start day and a planned level', () => {
+  it('builds a start day and four ready levels of four weeks', () => {
     expect(LEVELS.map((l) => [l.id, l.status, l.weeks.length])).toEqual([
       ['S0', 'ready', 0],
       ['S1', 'ready', 4],
       ['S2', 'ready', 4],
       ['S3', 'ready', 4],
-      ['S4', 'planned', 0],
+      ['S4', 'ready', 4],
     ]);
-    // Arabic first, then English.
-    expect(LEVELS.filter((l) => l.status === 'ready').map((l) => l.lang)).toEqual(['ar', 'ar', 'ar', 'en']);
+    // Arabic first (with electronics, the owner's job, as Level 3), then English.
+    expect(LEVELS.map((l) => l.lang)).toEqual(['ar', 'ar', 'ar', 'ar', 'en']);
+    expect(LEVELS[3].name).toBe('بيع الأجهزة الإلكترونية');
+    for (const l of LEVELS) for (const w of l.weeks) expect(w.lang, w.id).toBe(l.lang);
     expect(PLAN_DAYS[0].day.id).toBe('S0-D1');
-    expect(PLAN_DAYS.length).toBe(1 + 12 * 6 + 3);
+    expect(PLAN_DAYS.length).toBe(1 + 16 * 6 + 4);
   });
 
   it('gives every week what its six days need', () => {
@@ -143,6 +146,12 @@ describe('Sales Prep content', () => {
     expect(JOURNAL_PROMPTS.en).toHaveLength(5);
   });
 
+  it('compares the exam recordings with a speaking prompt that exists', () => {
+    const compared = EXAM_SPEAKING.filter((s) => s.compareWith);
+    expect(compared.length).toBeGreaterThan(0);
+    for (const s of compared) expect(getSpeak(s.compareWith!), s.id).toBeTruthy();
+  });
+
   it('builds every quiz in the plan', () => {
     const quizIds = PLAN_DAYS.flatMap((d) => d.day.tasks.filter((t) => t.kind === 'quiz').map((t) => t.ref));
     expect(quizIds).toContain(DIAGNOSTIC_ID);
@@ -162,5 +171,29 @@ describe('Sales Prep content', () => {
       expect(ARABIC.test(s.whyAr), s.id).toBe(true);
     }
     expect(SALES_SOURCES.some((s) => s.lang === 'ar' && s.start)).toBe(true);
+  });
+});
+
+describe('Sales Prep knowledge', () => {
+  const chapters = KNOWLEDGE.flatMap((b) => b.chapters);
+
+  it('has four books of real, sourced chapters', () => {
+    expect(KNOWLEDGE.map((b) => b.id)).toEqual(['sales', 'negotiation', 'marketing', 'psychology']);
+    expect(unique(chapters.map((c) => c.id))).toEqual([]);
+    for (const c of chapters) {
+      expect(ARABIC.test(c.idea), c.id).toBe(true);
+      expect(c.sections.length, c.id).toBeGreaterThanOrEqual(3);
+      expect(c.sections.length, c.id).toBeLessThanOrEqual(5);
+      expect(c.inLife.length, c.id).toBeGreaterThan(30);
+      expect(c.tryIt.length, c.id).toBeGreaterThan(15);
+      expect(c.source.length, c.id).toBeGreaterThan(10);
+      expect(c.check.length, c.id).toBe(2);
+      c.check.forEach(validChoice);
+    }
+  });
+
+  it('reads every chapter once, the books in turn', () => {
+    expect([...READING_ORDER].sort()).toEqual(chapters.map((c) => c.id).sort());
+    expect(READING_ORDER.slice(0, 4).map((id) => getChapter(id)!.book.id)).toEqual(['sales', 'negotiation', 'marketing', 'psychology']);
   });
 });

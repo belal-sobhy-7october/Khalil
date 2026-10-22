@@ -3,6 +3,7 @@
  * localStorage, so it works offline).
  */
 import { PLAN_DAYS } from '../../data/sales/plan';
+import { READING_ORDER } from '../../data/sales/knowledge';
 import type { SalesDay, SalesLevel, SalesWeek } from '../../data/sales/types';
 
 export { setTasks, studyStreak, type TaskLog } from '../callCenter/progress';
@@ -13,6 +14,11 @@ export const SALES_TESTS_KEY = 'sales-tests';
 /** Everything typed: notebook lines, answers to listening questions, drills, mission notes. */
 export const SALES_NOTES_KEY = 'sales-notes';
 export const SALES_CALLS_KEY = 'sales-calls';
+/** Knowledge chapters read: chapter id → the date. */
+export const SALES_KNOWLEDGE_KEY = 'sales-knowledge';
+
+/** chapter id → the local date (YYYY-MM-DD) it was read. */
+export type ReadLog = Record<string, string>;
 
 export interface QuizAttempt {
   date: string;
@@ -94,3 +100,14 @@ export const bestRoleplay = (scores: RoleplayScore[], roleplayId: string) =>
 
 /** How many notebook lines (journal tasks) have something written. */
 export const journalCount = (notes: NoteLog) => Object.keys(notes).filter((k) => k.includes(':journal:') && notes[k].text.trim()).length;
+
+/**
+ * Today's knowledge chapter: the one read today (one a day keeps the focus on
+ * today), or else the next unread one in READING_ORDER; null once all are read.
+ */
+export function todaysChapter(read: ReadLog, today: string): { id: string; done: boolean } | null {
+  const readToday = READING_ORDER.filter((id) => read[id] === today);
+  if (readToday.length) return { id: readToday[readToday.length - 1], done: true };
+  const next = READING_ORDER.find((id) => !read[id]);
+  return next ? { id: next, done: false } : null;
+}

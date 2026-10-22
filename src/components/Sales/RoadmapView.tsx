@@ -35,6 +35,11 @@ function useExitChecks(level: SalesLevel): Array<{ text: string; ok: boolean | n
   });
 }
 
+const levelLanguage = (level: SalesLevel) => {
+  const langs = new Set([level.lang, ...level.weeks.map((w) => w.lang)]);
+  return langs.size > 1 ? 'عربي وإنجليزي' : level.lang === 'en' ? 'بالإنجليزي' : 'بالعربي';
+};
+
 function LevelCard({ level, onOpenDay, defaultOpen }: { level: SalesLevel; onOpenDay: (index: number) => void; defaultOpen: boolean }) {
   const { tasks, quizzes } = useSales();
   const [open, setOpen] = useState(defaultOpen);
@@ -54,7 +59,7 @@ function LevelCard({ level, onOpenDay, defaultOpen }: { level: SalesLevel; onOpe
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-1.5">
             <span className="text-xs text-ink-light">المستوى {level.number}</span>
-            <Pill tone="accent">{level.lang === 'en' ? 'بالإنجليزي' : 'بالعربي'}</Pill>
+            <Pill tone="accent">{levelLanguage(level)}</Pill>
             {planned && <Pill>بعدين</Pill>}
             {locked && (
               <Pill>
@@ -86,7 +91,7 @@ function LevelCard({ level, onOpenDay, defaultOpen }: { level: SalesLevel; onOpe
 
           {planned && level.outline && (
             <div className="space-y-2">
-              <ArabicNote>ده المستوى اللي بعد الخطة: لما تخلص المستوى 3 (أو تبدأ شغل)، اختار مسار وقول لـ Claude «ابدأ المستوى 4» وهيبنيه زي اللي قبله.</ArabicNote>
+              <ArabicNote>المستوى ده لسه متبنيش: دي خطوطه العريضة.</ArabicNote>
               <ol className="space-y-1.5">
                 {level.outline.map((w) => (
                   <li key={w.title} className="text-sm">
@@ -160,7 +165,7 @@ export default function RoadmapView({ currentIndex, onOpenDay }: { currentIndex:
   return (
     <div className="space-y-3">
       <ArabicNote>
-        الخطة كلها هنا لو حبيت تبص، بس مش محتاج تشيل همها: افتح «النهارده» وخلاص. المستوى 1 أساسيات بالعربي، 2 السوق والشغلانة بالعربي، 3 نفس المهارات بالإنجليزي. كل أسبوع آخره كويز، وكل مستوى آخره امتحان ورول بلاي كامل.
+        الخطة كلها هنا لو حبيت تبص، بس مش محتاج تشيل همها: افتح «النهارده» وخلاص. المستوى 1 أساسيات بالعربي، 2 السوق والشغلانة بالعربي، 3 بيع الأجهزة الإلكترونية (شغلك)، 4 نفس المهارات بالإنجليزي. كل أسبوع آخره كويز، وكل مستوى آخره امتحان ورول بلاي كامل.
       </ArabicNote>
       {LEVELS.map((level) => (
         <LevelCard key={level.id} level={level} onOpenDay={onOpenDay} defaultOpen={level.id === currentLevel} />

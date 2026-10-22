@@ -1,7 +1,8 @@
 # Sales Prep (تعلّم السيلز)
 
-> **ملخص بالعربي:** قسم خاص بصاحب التطبيق: يتعلم سيلز من الصفر، بالعربي الأول (المستوى 1 و 2) وبعدين
-> بالإنجليزي (المستوى 3)، لحد أول شغلانة سيلز. مقسوم مستويات ← أسابيع ← أيام ← مهام، وتبويب «النهارده»
+> **ملخص بالعربي:** قسم خاص بصاحب التطبيق: يتعلم سيلز من الصفر، بالعربي الأول (المستوى 1 و 2، وبعدهم
+> المستوى 3 بيع الأجهزة الإلكترونية لأنه شغله) وبعدين بالإنجليزي (المستوى 4). وجنب الخطة تبويب «المعرفة»:
+> 4 كتب صغيرة (السيلز، التفاوض، الماركتينج، علم نفس القرار)، فصل واحد كل يوم. مقسوم مستويات ← أسابيع ← أيام ← مهام، وتبويب «النهارده»
 > بيعرض يوم واحد بس (حوالي ساعة). كل المحتوى جوه الكود فبيشتغل من غير نت، ما عدا الفيديوهات والبودكاست والـ AI.
 
 Read this before adding a week, a level or any content.
@@ -13,8 +14,9 @@ only think about today, with the whole roadmap, data and progress kept for them.
 
 | Tab | What's there |
 |---|---|
-| النهارده (Today) | The day to study, only its tasks (about an hour), and tomorrow's title. |
-| الخريطة (Roadmap) | Levels 0–4 with progress, exit criteria, weeks and days. Level 4 is planned (an outline). |
+| النهارده (Today) | The day to study, only its tasks (about an hour), today's knowledge chapter, and tomorrow's title. |
+| المعرفة (Knowledge) | Four short books (`knowledge.ts`): sales, negotiation, marketing, the psychology of decisions. |
+| الخريطة (Roadmap) | Levels 0–4 with progress, exit criteria, weeks and days. |
 | الدفتر والتقدم (Notebook) | Minutes over the last two weeks, quiz and role-play results, and everything written in the plan. |
 | المكتبة (Library) | Free podcasts, channels, courses and books, Arabic first (`sources.ts`). |
 
@@ -27,11 +29,12 @@ the same owner, the same rules (never write the owner's email anywhere).
 | Path | What |
 |---|---|
 | `types.ts` | Content and plan types. |
-| `level1.ts` · `level2.ts` · `level3.ts` | The weeks of each level (`SalesWeekSpec`): lessons, listening, drills, role-plays, a mission, speaking, and (Level 3) words. |
-| `start.ts` | The first day's lesson and recording, the exam role-plays and speaking tasks, the notebook prompts. |
+| `level1.ts` … `level4.ts` | The weeks of each level (`SalesWeekSpec`: lessons, listening, drills, role-plays, a mission, speaking, and words in English weeks): 1 basics, 2 the market and the job, 3 selling electronics, 4 English. |
+| `knowledge.ts` | The Knowledge books, `getChapter` and `READING_ORDER` (the books in turn). |
+| `start.ts` | The first day's lesson and recording, the exam role-plays and speaking tasks (`compareWith` plays the day-one recording beside the new one), the notebook prompts. |
 | `plan.ts` | `LEVELS`, the day template (`buildDays`), `PLAN_DAYS` and the `getX(id)` lookups. |
 | `sources.ts` · `links.ts` | The Library, and link helpers. |
-| `src/lib/sales/` | `progress.ts` (saved data, plan progress), `quiz.ts` (quizzes from the lessons), `prompts.ts` (AI prompts), `tasks.ts` (task titles), `text.ts`. |
+| `src/lib/sales/` | `progress.ts` (saved data, plan progress), `recordings.ts` (takes on the device), `quiz.ts` (quizzes from the lessons), `prompts.ts` (AI prompts), `tasks.ts` (task titles), `text.ts`. |
 | `src/components/Sales/` | `SalesPrep.tsx` (shell and tabs), one view per tab, `TaskCard.tsx` and `activities/` (one per task kind). |
 
 ## 3. The plan
@@ -39,8 +42,10 @@ the same owner, the same rules (never write the owner's email anywhere).
 Levels → weeks → days → tasks. Days are study days, not dates: Today shows the first unfinished day.
 
 - **Level 0**: one day: the "start here" lesson, a "before" recording (sell me this pen), the first-day check, a notebook line.
-- **Levels 1–3**: four weeks each, then an exam day (`S1-EXAM`…): review, a full role-play, a speaking task, the exam, a notebook line.
-- **Level 4**: `status: 'planned'` with an `outline` (specialization tracks). Build it like the others when asked.
+- **Levels 1–4**: four weeks each, then an exam day (`S1-EXAM`…): review, a full role-play, a speaking task, the exam, a notebook line.
+- **Level 3 is selling electronics** (the owner's job): devices and specs as benefits, the store, accessories/installments/warranty, store numbers, WhatsApp and after-sales. **Level 4** is the same skills in English.
+- Each week has its own `lang`, so a level could mix languages (none does for now).
+- A level with `status: 'planned'` and an `outline` shows as "later" in the roadmap (none for now).
 
 Every week has the same six days (`buildDays`), so a week needs exactly **5 lessons, 3 listens, 2 drills,
 2 role-plays, 1 mission, 3 speaking prompts** (and **12 words** in English weeks):
@@ -61,7 +66,7 @@ order un-ticks tasks the owner already did, so only do it to fix something broke
 
 ## 4. Content rules
 
-- **Levels 1–2 are Egyptian Arabic**, simple and friendly, for a beginner. **Level 3 is simple English**
+- **Levels 1–3 are Egyptian Arabic**, simple and friendly, for a beginner. **Level 4 is simple English**
   (American spelling), with Arabic only in `noteAr` (weeks and lessons), the words' `ar`, and drills that
   give Arabic lines to translate (a test checks).
 - **Lessons**: one idea; a one-line `summary`, 3–5 `points`, an optional short `example`, beginner
@@ -72,6 +77,11 @@ order un-ticks tasks the owner already did, so only do it to fix something broke
   known); otherwise link a YouTube or Spotify search for the topic (`ytSearch`, `spotifySearch`), so a
   removed video never breaks a day. Each listen has 2+ questions answered in the notebook.
 - **Ethics**: sell by helping; no fake scarcity or lies, in lessons, models and role-plays.
+- **Electronics facts** (Level 3) stay general and safe: rules of thumb are labeled approximate (TV size, AC
+  horsepower), no prices or offers that go stale, and no real store names in role-plays.
+- **Knowledge chapters**: one real idea, 3–5 sections, an example, `inLife` (life and any job), `tryIt`, a
+  `source` (book, author or study: never invent one), and 2 checks. Keep them Egyptian Arabic with the
+  English term in the text where it helps. New chapters join `READING_ORDER` by themselves.
 
 ## 5. Tests and quizzes
 
@@ -91,9 +101,10 @@ Per-user `user_kv` values (through `useKv`, with a copy on the device):
 | `sales-tests` | Quiz id → attempts (percent, passed, missed questions), the last 20. |
 | `sales-notes` | Everything written: the notebook (`<task id>`), and answers (`<task id>#<n>`) to listening questions, drills and missions. |
 | `sales-calls` | Role-plays scored with their checklist. |
+| `sales-knowledge` | Knowledge chapters read: chapter id → date. Today shows the chapter read today, else the next unread. Notes on a chapter's "try it" are in `sales-notes` as `knowledge:<chapter id>`. |
 
-Level 3 words go into the Vocabulary flashcards (`Sales English N: <week title>`). Recordings stay in the
-page (download to keep). The tab is in `localStorage` (`khalil-sales-tab`). Videos, podcasts, searches
+English weeks' words go into the Vocabulary flashcards (`Sales English N: <week title>`). Recordings stay on
+the device, in Call Center Prep's IndexedDB store with a `sales:` prompt prefix (the first take and the latest five). The tab is in `localStorage` (`khalil-sales-tab`). Videos, podcasts, searches
 and the AI partners need the internet; everything else is bundled.
 
 ## 7. Checks

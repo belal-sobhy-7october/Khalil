@@ -10,14 +10,15 @@ export const START_LESSON: SalesLesson = {
   summary: 'كل يوم ساعة لساعة ونص: درس صغير، حاجة تسمعها، تمرين، كلام بصوت عالي، وسطرين في دفترك. كل حاجة متسجلة هنا.',
   points: [
     { title: 'ركّز على النهارده بس', text: 'افتح تبويب «النهارده» وخلّص مهامه. الخطة كلها في «الخريطة» لو حبيت تبص، بس مش محتاج تشيل همها.' },
-    { title: 'عربي الأول، وبعدين إنجليزي', text: 'المستوى 1 و 2 بالعربي (الأساسيات، وبعدين السوق والشغلانة). المستوى 3 نفس المهارات بالإنجليزي.' },
+    { title: 'عربي الأول، وبعدين إنجليزي', text: 'المستوى 1 و 2 بالعربي (الأساسيات، وبعدين السوق والشغلانة). المستوى 3 بيع الأجهزة الإلكترونية، شغلك. والمستوى 4 نفس المهارات بالإنجليزي.' },
     { title: 'كل أسبوع ليه شكل ثابت', text: '5 أيام تعلم وتمرين، ويوم سادس مراجعة وكويز. في آخر كل مستوى امتحان ورول بلاي كامل.' },
+    { title: 'وكل يوم فصل معرفة', text: 'فوق مهام النهارده هتلاقي فصل واحد من «المعرفة»: أفكار حقيقية في السيلز والتفاوض والماركتينج وعلم نفس القرار، تنفعك في الحياة وفي أي شغل. 10 دقايق.' },
     { title: 'السيلز بيتعلم بالكلام', text: 'القراية لوحدها مش هتعملك بياع. الرول بلاي مع الـ AI والمهمات في الحياة الحقيقية هي اللي بتفرق، فمتسيبهاش.' },
   ],
   mistakes: ['تقرا الدروس وتفوّت الرول بلاي والكلام بصوت عالي.', 'تحاول تخلص أسبوع في يوم وتتحرق.'],
   check: [
     { q: 'إيه أكتر حاجة بتعملك بياع؟', options: ['قراية دروس كتير', 'التمرين بالكلام والرول بلاي والمهمات', 'حفظ التعريفات', 'مشاهدة فيديوهات بس'], answer: 1 },
-    { q: 'المستوى التالت بأنهي لغة؟', options: ['عربي', 'إنجليزي', 'الاتنين بالنص', 'فرنساوي'], answer: 1 },
+    { q: 'المستوى الرابع بأنهي لغة؟', options: ['عربي', 'إنجليزي', 'الاتنين بالنص', 'فرنساوي'], answer: 1 },
   ],
 };
 
@@ -69,8 +70,8 @@ export const EXAM_ROLEPLAYS: SalesRoleplay[] = [
     twist: 'في النص تقول: «ابعتلي العرض على الواتساب وخلاص».',
   },
   {
-    id: 'exam-s3-english-sale',
-    title: 'Level 3 exam: a full sales call in English',
+    id: 'exam-s4-english-sale',
+    title: 'Level 4 exam: a full sales call in English',
     youSell: 'ClinicPro, online booking and reminders for clinics, $150 a month.',
     persona: 'James, owner of a physiotherapy clinic in Manchester. Polite, busy, a bit skeptical, normal-speed British English.',
     situation: 'About 6 no-shows a week. He thinks software is expensive and that his receptionist manages fine.',
@@ -87,6 +88,24 @@ export const EXAM_ROLEPLAYS: SalesRoleplay[] = [
     ],
     twist: 'He asks you to repeat something because of your accent: stay calm and slow down.',
   },
+  {
+    id: 'exam-s3-electronics-sale',
+    title: 'امتحان المستوى 3: بيعة لابتوب كاملة في المحل',
+    youSell: 'لابتوبات وإكسسوارات وضمان ممتد وتقسيط في «تك زون».',
+    persona: 'أب 48 سنة جاي يشتري لابتوب لابنه اللي داخل هندسة. مش فاهم في المواصفات، وفاتح على موبايله سعر أونلاين أرخص.',
+    situation: 'الابن محتاج برامج رسم هندسي. ميزانية الأب على القد ويفضل التقسيط. العرض الأونلاين نسخة مستوردة ضمانها قصير.',
+    goal: 'بيعة كاملة: ترحيب، أسئلة الاحتياج، 2 أو 3 اختيارات بفوايد مفهومة، رد على «أونلاين أرخص»، تقسيط واضح، إكسسوار واحد مناسب، وقفل.',
+    steps: [
+      'ترحيب من غير «أي خدمة؟»',
+      'سألت عن البرامج والاستخدام والميزانية',
+      'عرضت 2 أو 3 بس بفوايد مش أرقام',
+      'رديت على «أونلاين أرخص» من غير هجوم',
+      'شرحت التقسيط والإجمالي بوضوح',
+      'عرضت إكسسوار واحد مربوط بكلامه',
+      'طلبت القرار بوضوح وسكت',
+    ],
+    twist: 'في الآخر يقول: «طب لو تديني الشنطة هدية أمضي دلوقتي».',
+  },
 ];
 
 /** A speaking task for each level exam. */
@@ -97,6 +116,7 @@ export const EXAM_SPEAKING: SpeakPrompt[] = [
     prompt: 'نفس تسجيل أول يوم: بيعلي القلم ده في دقيقة. المرة دي بأسئلة الأول، وفوايد، وقفل. وبعدين اسمع تسجيل أول يوم.',
     seconds: 60,
     structure: ['سؤالين', 'فايدتين مربوطين', 'سؤال قفل'],
+    compareWith: 'baseline-pitch',
   },
   {
     id: 'exam-s2-my-numbers-pitch',
@@ -106,11 +126,19 @@ export const EXAM_SPEAKING: SpeakPrompt[] = [
     structure: ['مين انت', 'اتعلمت إيه بالأرقام', 'مثال من رول بلاي أو مهمة', 'ليه تنفع'],
   },
   {
-    id: 'exam-s3-english-pitch',
+    id: 'exam-s4-english-pitch',
     title: 'Your English pitch and story',
     prompt: 'In English: your 30-second product pitch, then answer "Why should we hire you for this SDR role?" in one minute.',
     seconds: 90,
     structure: ['The pitch (30 seconds)', 'Why you (STAR story)', 'Close: what you will bring in your first 90 days'],
+  },
+  {
+    id: 'exam-s3-device-pitch',
+    title: 'بيع جهاز في دقيقة (وقارن بأول يوم)',
+    prompt: 'اختار جهاز من المحل وبيعه لعميل في دقيقة: أسئلة الأول، وفوايد بكلام بسيط، وقفل. وبعدين اسمع تسجيل أول يوم «بيعلي القلم ده» وشوف الفرق.',
+    seconds: 60,
+    structure: ['سؤالين عن الاستخدام', '3 فوايد من غير أرقام كتير', 'سؤال قفل'],
+    compareWith: 'baseline-pitch',
   },
 ];
 

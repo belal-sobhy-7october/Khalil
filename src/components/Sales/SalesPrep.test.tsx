@@ -109,11 +109,32 @@ describe('Sales Prep', () => {
     expect(screen.getByRole('heading', { name: 'أنواع شغل السيلز في مصر' })).toBeInTheDocument();
   });
 
-  it('switches to English for Level 3', () => {
-    kv.set('sales-tasks', doneThrough('S2-EXAM'));
+  it('switches to English for Level 4', () => {
+    kv.set('sales-tasks', doneThrough('S3-EXAM'));
     render(<SalesPrep />);
     expect(screen.getByRole('heading', { name: 'The words every sales team uses' })).toBeInTheDocument();
     expect(screen.getByText('12 sales words for your flashcards')).toBeInTheDocument();
+  });
+});
+
+describe('Sales Prep: electronics and knowledge', () => {
+  it('teaches selling electronics as Level 3, in Arabic', () => {
+    kv.set('sales-tasks', doneThrough('S2-EXAM'));
+    render(<SalesPrep />);
+    expect(screen.getByRole('heading', { name: 'الموبايلات: إيه اللي بيفرق بجد' })).toBeInTheDocument();
+    expect(screen.getByText('ترجم المواصفة لفايدة')).toBeInTheDocument();
+  });
+
+  it("shows one knowledge chapter today and saves it once read", () => {
+    render(<SalesPrep />);
+    fireEvent.click(screen.getByText('البيع تبادل قيمة'));
+    fireEvent.click(screen.getByRole('button', { name: /خلصت الفصل/ }));
+    expect((kv.get('sales-knowledge') as Record<string, string>)['k-sales-exchange']).toBeTruthy();
+    // Today stays on the chapter read today (one a day).
+    expect(screen.getByText('البيع تبادل قيمة')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('tab', { name: 'المعرفة' }));
+    expect(screen.getByRole('heading', { name: 'التفاوض' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'الماركتينج' })).toBeInTheDocument();
   });
 });
 

@@ -1,14 +1,45 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Download, Mic, Square } from 'lucide-react';
 import { getSpeak } from '../../../data/sales/plan';
 import type { Lang } from '../../../data/sales/types';
+import type { Take } from '../../../lib/callCenter/recordings';
 import { speakFeedbackPrompt } from '../../../lib/sales/prompts';
+import { listSalesTakes, saveSalesTake } from '../../../lib/sales/recordings';
 import { useRecorder } from '../../../lib/useRecorder';
+import { useAppStore } from '../../../store/appStore';
 import { AiButtons, SpeakButton } from '../ui';
 import { primaryBtn, secondaryBtn } from '../../CallCenter/ui';
 import { pick } from '../../../lib/sales/text';
 
 const clock = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+
+/** The takes saved on this device for a prompt, oldest first; `version` reloads them. */
+function useTakes(speakId: string | undefined, version: number): Take[] {
+  const userId = useAppStore((st) => st.session?.user?.id);
+  const [takes, setTakes] = useState<Take[]>([]);
+  useEffect(() => {
+    if (!userId || !speakId) return;
+    let alive = true;
+    void listSalesTakes(userId, speakId).then((list) => alive && setTakes(list));
+    return () => {
+      alive = false;
+    };
+  }, [userId, speakId, version]);
+  return takes;
+}
+
+function TakePlayer({ take, label, lang }: { take: Take; label: string; lang: Lang }) {
+  const src = useMemo(() => URL.createObjectURL(take.blob), [take.blob]);
+  useEffect(() => () => URL.revokeObjectURL(src), [src]);
+  return (
+    <div className="space-y-0.5">
+      <div className="text-[11px] text-ink-light">
+        {label} · {new Date(take.createdAt).toLocaleDateString(lang === 'en' ? 'en-GB' : 'ar-EG')}
+      </div>
+      <audio src={src} controls className="w-full max-w-md" />
+    </div>
+  );
+}
 
 /** Say it out loud and record it (on the device only), with a timer against the target length. */
 export default function SpeakActivity({ refId, lang, onDone }: { refId: string; lang: Lang; onDone: () => void }) {
@@ -17,6 +48,16 @@ export default function SpeakActivity({ refId, lang, onDone }: { refId: string; 
   const [seconds, setSeconds] = useState(0);
   const [took, setTook] = useState<number | null>(null);
   const startedAt = useRef(0);
+  const userId = useAppStore((st) => st.session?.user?.id);
+  const [version, setVersion] = useState(0);
+  const takes = useTakes(s?.id, version);
+  const before = useTakes(s?.compareWith, 0)[0];
+
+  // A finished recording is saved on the device (the first take and the latest five).
+  useEffect(() => {
+    if (!url || !userId || !s) return;
+    void saveSalesTake(userId, s.id, url).then(() => setVersion((v) => v + 1));
+  }, [url, userId, s]);
 
   useEffect(() => {
     if (!recording) return;
@@ -69,7 +110,15 @@ export default function SpeakActivity({ refId, lang, onDone }: { refId: string; 
               <Download size={13} /> {pick(lang, 'نزّل التسجيل', 'Download')}
             </a>
           </div>
-          <p className="text-[11px] text-ink-light">{pick(lang, 'التسجيل بيفضل على جهازك ومش بيتحفظ هنا. نزّله لو عاوز تقارن بعدين.', 'The recording stays on your device and is not saved here. Download it to compare later.')}</p>
+          <p className="text-[11px] text-ink-light">{pick(lang, 'التسجيل بيتحفظ على جهازك بس (أول مرة وآخر 5 مرات)، مش في الحساب.', 'Saved on this device only (your first take and the latest five), not in your account.')}</p>
+        </div>
+      )}
+      {(before || takes.length > 0) && !recording && (
+        <div className="space-y-2 rounded-xl border border-border-subtle p-3">
+          <div className="text-xs font-semibold text-ink-light">{pick(lang, 'تسجيلاتك على الجهاز ده', 'Your recordings on this device')}</div>
+          {before && <TakePlayer take={before} label={pick(lang, 'تسجيل أول يوم (قبل)', 'Your day-one recording (before)')} lang={lang} />}
+          {takes[0] && <TakePlayer take={takes[0]} label={pick(lang, 'أول مرة هنا', 'First take')} lang={lang} />}
+          {takes.length > 1 && <TakePlayer take={takes[takes.length - 1]} label={pick(lang, 'آخر مرة', 'Latest take')} lang={lang} />}
         </div>
       )}
       {s.model && (

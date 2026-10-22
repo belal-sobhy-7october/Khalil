@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { READING_ORDER, getChapter } from '../../data/sales/knowledge';
 import { PLAN_DAYS, getDrill, getListen, getMission, getRoleplay } from '../../data/sales/plan';
 import { JOURNAL_PROMPTS } from '../../data/sales/start';
 import type { SalesTask } from '../../data/sales/types';
@@ -59,6 +60,12 @@ export default function NotebookView() {
       }).filter((d) => d.entries.length),
     [notes]
   );
+
+  const fromKnowledge = READING_ORDER.filter((id) => notes[`knowledge:${id}`]?.text.trim()).map((id) => ({
+    id,
+    chapter: getChapter(id)!.chapter,
+    text: notes[`knowledge:${id}`].text,
+  }));
 
   return (
     <div className="space-y-4">
@@ -123,7 +130,22 @@ export default function NotebookView() {
       <Card className="space-y-3">
         <h3 className="font-semibold text-ink">دفترك</h3>
         <ArabicNote>كل اللي كتبته في الخطة: سطور الدفتر، إجاباتك على الأسئلة، والتمارين. ارجعله قبل أي انترفيو.</ArabicNote>
-        {written.length === 0 && <ArabicNote>لسه فاضي. أول سطر في أول يوم.</ArabicNote>}
+        {written.length === 0 && !fromKnowledge.length && <ArabicNote>لسه فاضي. أول سطر في أول يوم.</ArabicNote>}
+        {fromKnowledge.length > 0 && (
+          <div className="rounded-xl border border-border-subtle p-3 space-y-2">
+            <div className="text-sm font-semibold text-ink">من المعرفة</div>
+            {fromKnowledge.map((k) => (
+              <div key={k.id} className="space-y-0.5">
+                <div className="text-xs text-ink-light">
+                  {k.chapter.title}: {k.chapter.tryIt}
+                </div>
+                <p className="text-sm text-ink whitespace-pre-line" dir="auto">
+                  {k.text}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
         <div className="space-y-3">
           {[...written].reverse().map(({ day, lang, entries }) => (
             <LangBlock key={day.id} lang={lang} className="rounded-xl border border-border-subtle p-3 space-y-2">

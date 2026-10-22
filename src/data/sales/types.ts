@@ -108,6 +108,8 @@ export interface SpeakPrompt {
   structure: string[];
   /** A model to read after your own try. */
   model?: string;
+  /** Another prompt whose first recording to play next to this one (the "before"). */
+  compareWith?: string;
 }
 
 /** An English sales word for the flashcards (Level 3). */
@@ -218,4 +220,31 @@ export interface SalesSource {
   whyAr: string;
   /** Beginner-friendly: start with these. */
   start?: boolean;
+}
+
+/** A chapter of the Knowledge tab: a real idea from sales, negotiation, marketing or psychology. */
+export interface KnowledgeChapter {
+  id: string;
+  title: string;
+  /** The idea in one sentence. */
+  idea: string;
+  /** The explanation, a few short sections. */
+  sections: Array<{ title: string; text: string }>;
+  /** A short story or case that shows it. */
+  example?: string;
+  /** How to use it outside work, and in any job. */
+  inLife: string;
+  /** A small thing to try today. */
+  tryIt: string;
+  /** Where the idea comes from (a book, an author, a study). */
+  source: string;
+  check: SalesChoice[];
+}
+
+export interface KnowledgeBook {
+  id: 'sales' | 'negotiation' | 'marketing' | 'psychology';
+  title: string;
+  /** What the book gives you, in one or two sentences. */
+  intro: string;
+  chapters: KnowledgeChapter[];
 }
