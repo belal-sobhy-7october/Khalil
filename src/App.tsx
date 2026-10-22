@@ -38,6 +38,7 @@ const FocusSection = lazy(() => import('./components/Focus/FocusSection'));
 const WirdSection = lazy(() => import('./components/Wird/WirdSection'));
 const AnalyticsSection = lazy(() => import('./components/Analytics/AnalyticsSection'));
 const SettingsSection = lazy(() => import('./components/Settings/SettingsSection'));
+const LearningPathSection = lazy(() => import('./components/LearningPath/LearningPathSection'));
 
 function App() {
   const language = useAppStore((s) => s.language);
@@ -218,7 +219,7 @@ function App() {
       <DashboardLayout
         activeSection={activeSection}
         onSectionChange={handleSectionChange}
-        allowFullWidth={['calendar', 'bookmarks', 'vocabulary', 'focus', 'wird', 'analytics', 'settings'].includes(activeSection)}
+        allowFullWidth={['calendar', 'bookmarks', 'vocabulary', 'path', 'focus', 'wird', 'analytics', 'settings'].includes(activeSection)}
         notesSlot={
           <Suspense fallback={null}>
             <NotesPanel
@@ -264,12 +265,13 @@ function App() {
           }>
             <BookmarksVault />
           </Suspense>
-        ) : ['focus', 'wird', 'analytics', 'settings'].includes(activeSection) ? (
+        ) : ['path', 'focus', 'wird', 'analytics', 'settings'].includes(activeSection) ? (
           <Suspense fallback={
             <div className="min-h-screen flex items-center justify-center">
               <div className="w-8 h-8 border-2 border-clay-soft border-t-transparent rounded-full animate-spin" />
             </div>
           }>
+            {activeSection === 'path' && <LearningPathSection />}
             {activeSection === 'focus' && <FocusSection />}
             {activeSection === 'wird' && <WirdSection />}
             {activeSection === 'analytics' && <AnalyticsSection onNavigate={handleSectionChange} />}

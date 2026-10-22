@@ -9,6 +9,7 @@ import {
   Moon,
   BarChart3,
   Settings,
+  Route,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from '../../i18n/useTranslation';
@@ -43,6 +44,7 @@ export default function Sidebar({
     { id: 'life', label: t('nav.life'), icon: <Heart size={18} /> },
     { id: 'bookmarks', label: t('nav.bookmarks'), icon: <Bookmark size={18} /> },
     { id: 'vocabulary', label: t('nav.vocabulary'), icon: <BookOpen size={18} /> },
+    { id: 'path', label: t('nav.path'), icon: <Route size={18} /> },
     { id: 'focus', label: t('nav.focus'), icon: <Timer size={18} /> },
     { id: 'wird', label: t('nav.wird'), icon: <Moon size={18} /> },
     { id: 'analytics', label: t('nav.analytics'), icon: <BarChart3 size={18} /> },

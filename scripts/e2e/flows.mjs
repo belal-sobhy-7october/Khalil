@@ -348,6 +348,42 @@ await flow('bookmarks-add', { section: 'bookmarks' }, async ({ page, backend, ch
   check(await visible(page.getByText('E2E Link')), 'bookmark missing after reload');
 });
 
+// ---------------------------------------------------------------- learning path
+await flow('learning-path', { section: 'path' }, async ({ page, backend, check, reload }) => {
+  const saved = () => backend.tables.user_kv?.find((r) => r.key === 'learning-path')?.value;
+  const wordsBefore = JSON.stringify(backend.tables.vocabulary_items ?? []);
+  await page.getByRole('button', { name: 'Start day 1' }).click();
+  await page.waitForTimeout(400);
+  check(saved()?.startedAt === today, `path start not saved: ${JSON.stringify(saved())}`);
+  check(await visible(page.getByRole('heading', { level: 2, name: /Day 1/ })), 'day 1 not shown after starting');
+  // Tick every task of day 1.
+  const toggles = page.getByRole('button', { name: /^Mark as complete:/ });
+  const total = await toggles.count();
+  check(total >= 4, `day 1 has ${total} tasks`);
+  for (let i = 0; i < total; i++) {
+    await toggles.first().click();
+    await page.waitForTimeout(150);
+  }
+  check(await visible(page.getByRole('status').filter({ hasText: 'Day 1 done' })), 'day-done banner not shown');
+  check(Object.keys(saved()?.done ?? {}).filter((k) => k.startsWith('1:')).length === total, 'ticked tasks not saved');
+  // Write a note on day 2 and reload: progress and the note stay.
+  await page.getByRole('button', { name: 'Start day 2' }).click();
+  await page.getByRole('button', { name: /^Grammar:/ }).click();
+  await page.getByPlaceholder(/Write here/).fill('If I were you, I would talk to her.');
+  await page.waitForTimeout(1200);
+  check(Object.values(saved()?.notes ?? {}).includes('If I were you, I would talk to her.'), 'note not saved');
+  await reload();
+  check(await visible(page.getByRole('heading', { level: 2, name: /Day 1/ })), 'after reload the day finished today should stay open');
+  check(await visible(page.getByText('1/90', { exact: true })), 'days-done count lost after reload');
+  await page.getByRole('button', { name: 'Start day 2' }).click();
+  await page.getByRole('button', { name: /^Grammar:/ }).click();
+  check((await page.getByPlaceholder(/Write here/).inputValue()) === 'If I were you, I would talk to her.', 'note lost after reload');
+  // Roadmap: jump to the final test day.
+  await page.getByRole('button', { name: /^Day 89 — / }).click();
+  check(await visible(page.getByText('Final speaking test')), 'roadmap day 89 does not show the final test');
+  check(JSON.stringify(backend.tables.vocabulary_items ?? []) === wordsBefore, 'the learning path changed the word list');
+});
+
 // ---------------------------------------------------------------- navigation
 await flow('account-menu-settings', { section: 'todo' }, async ({ page, check }) => {
   const trigger = page.getByRole('button', { name: 'Account menu' });
