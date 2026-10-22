@@ -6,7 +6,7 @@
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { X, Loader2, ExternalLink } from 'lucide-react';
+import { X, Loader2, ExternalLink, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useTranslation } from '../../i18n/useTranslation';
 import { buildYouGlishUrl, type YouGlishAccent, youglishQuery } from '../../lib/pronunciation';
 import { useDialog } from '../../lib/useDialog';
@@ -41,6 +41,8 @@ type WidgetState = 'loading' | 'loaded' | 'error' | 'no-results';
 interface YouGlishModalProps {
   word: string;
   onClose: () => void;
+  /** Step through a list of words without closing (the widget re-searches on each). */
+  nav?: { index: number; total: number; onPrev: () => void; onNext: () => void };
 }
 
 const SCRIPT_SRC = 'https://youglish.com/public/emb/widget.js';
@@ -68,7 +70,7 @@ function loadYouGlishApi(): Promise<void> {
   return apiPromise;
 }
 
-export default function YouGlishModal({ word, onClose }: YouGlishModalProps) {
+export default function YouGlishModal({ word, onClose, nav }: YouGlishModalProps) {
   // "résumé / CV" finds nothing on YouGlish; search "resume".
   const query = youglishQuery(word);
   const { t } = useTranslation();
@@ -236,6 +238,33 @@ export default function YouGlishModal({ word, onClose }: YouGlishModalProps) {
             </div>
           )}
         </div>
+
+        {nav && (
+          <div className="px-6 py-3 border-t border-border-subtle flex items-center justify-between gap-3" dir="ltr">
+            <button
+              onClick={nav.onPrev}
+              disabled={nav.index === 0}
+              aria-label="Previous word"
+              className="p-2 rounded-lg bg-ink/5 text-ink hover:bg-ink/10 disabled:opacity-30"
+            >
+              <ChevronLeft size={18} />
+            </button>
+            <div className="text-center min-w-0">
+              <div className="font-semibold text-ink truncate">{word}</div>
+              <div className="text-xs text-ink-light tabular-nums">
+                {nav.index + 1} / {nav.total}
+              </div>
+            </div>
+            <button
+              onClick={nav.onNext}
+              disabled={nav.index === nav.total - 1}
+              aria-label="Next word"
+              className="p-2 rounded-lg bg-clay-soft text-white hover:bg-clay-soft-dark disabled:opacity-30"
+            >
+              <ChevronRight size={18} />
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

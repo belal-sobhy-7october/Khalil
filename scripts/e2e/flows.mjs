@@ -382,6 +382,11 @@ await flow('learning-path', { section: 'path' }, async ({ page, backend, check, 
   await page.getByRole('button', { name: /^Day 89 — / }).click();
   check(await visible(page.getByText('Final speaking test')), 'roadmap day 89 does not show the final test');
   check(JSON.stringify(backend.tables.vocabulary_items ?? []) === wordsBefore, 'the learning path changed the word list');
+  // The accent task leads to the English hub's Pronunciation & Accent section.
+  await page.getByRole('button', { name: /^Day 1 — / }).click();
+  await page.locator('[data-task="accent"] [aria-expanded]').click();
+  await page.getByRole('button', { name: 'Open Pronunciation & Accent' }).click();
+  check(await visible(page.getByRole('tab', { name: 'Pronunciation & Accent', selected: true })), 'accent link did not open Pronunciation & Accent');
 });
 
 // ---------------------------------------------------------------- navigation

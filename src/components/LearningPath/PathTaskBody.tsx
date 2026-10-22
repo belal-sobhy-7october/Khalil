@@ -4,7 +4,8 @@ import { useTranslation } from '../../i18n/useTranslation';
 import { getPronunciationPrefs, speakBrowser, speakWord } from '../../lib/pronunciation';
 import { buildAiPrompt } from '../../lib/topicChallenge';
 import { packById, type PathTask } from '../../lib/learningPath';
-import { LISTENING_TIME, Z_AMERICAN_ENGLISH, channelSearchUrl, STUDY_SOURCES } from '../../data/englishStudy';
+import type { CourseSectionId } from '../../data/courseCatalog';
+import { LISTENING_TIME, STUDY_SOURCES } from '../../data/englishStudy';
 import type { PackItem } from '../../data/topicPacks';
 import { GrammarCard, QuestionList, SpeakingTask } from '../Vocabulary/TopicLesson';
 import YouGlishModal from '../Vocabulary/YouGlishModal';
@@ -24,8 +25,8 @@ async function copyText(text: string): Promise<boolean> {
   }
 }
 
-/** Opens a tab of the English section (reading, shadowing…) without touching any data. */
-function openEnglishTab(tab: 'reading' | 'shadowing' | 'accent') {
+/** Opens a section of the English hub (Reading, Shadowing…) without touching any data. */
+function openEnglishTab(tab: CourseSectionId) {
   try {
     localStorage.setItem('khalil-english-tab', tab);
   } catch {
@@ -211,7 +212,7 @@ export default function PathTaskBody({ task, note, onNote }: { task: PathTask; n
       body = pack && <ParagraphPlayer text={pack.paragraph} />;
       break;
     case 'reading': {
-      const book = STUDY_SOURCES.find((s) => s.section === 'reading');
+      const book = STUDY_SOURCES.find((s) => s.id === 'reading-listening-book');
       body = (
         <>
           <div className="flex flex-wrap gap-2">
@@ -249,7 +250,7 @@ export default function PathTaskBody({ task, note, onNote }: { task: PathTask; n
                 </span>
               ))}
             </div>
-            <LinkButton href={channelSearchUrl(Z_AMERICAN_ENGLISH, `${a.sound.examples[0]} sound`)}>{t('path.open.lesson')}</LinkButton>
+            <LinkButton onClick={() => openEnglishTab('pronunciation')}>{t('path.open.pronunciationTab')}</LinkButton>
           </div>
         );
       } else if (a?.kind === 'feature') {
@@ -263,7 +264,7 @@ export default function PathTaskBody({ task, note, onNote }: { task: PathTask; n
                 </button>
               ))}
             </div>
-            <LinkButton href={channelSearchUrl(Z_AMERICAN_ENGLISH, a.feature.title)}>{t('path.open.lesson')}</LinkButton>
+            <LinkButton onClick={() => openEnglishTab('pronunciation')}>{t('path.open.pronunciationTab')}</LinkButton>
           </div>
         );
       }

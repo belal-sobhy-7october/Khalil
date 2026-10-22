@@ -97,7 +97,8 @@ function PracticeTextCard({ index, text, done, onToggleDone, accent }: {
   );
 }
 
-export default function TopicChallenge({ category, onClose }: { category: VocabularyCategory; onClose: () => void }) {
+/** `paragraph`: the topic's own text, practiced first (the Call Center units bring theirs). */
+export default function TopicChallenge({ category, paragraph, onClose }: { category: VocabularyCategory; paragraph?: string; onClose: () => void }) {
   const { t } = useTranslation();
   const userId = useAppStore((s) => s.session?.user?.id);
   const vocabularyItems = useAppStore((s) => s.vocabularyItems);
@@ -139,7 +140,7 @@ export default function TopicChallenge({ category, onClose }: { category: Vocabu
     [userId, category.id]
   );
 
-  const generatedTexts = useMemo(() => buildPracticeTexts(category.name, items), [category.name, items]);
+  const generatedTexts = useMemo(() => buildPracticeTexts(category.name, items, paragraph), [category.name, items, paragraph]);
   const texts = data?.customTexts?.length ? data.customTexts : generatedTexts;
   const status = data ? stepStatus(data, items, texts) : null;
   const allDone = !!status && status.words && status.listen && status.shadow && status.talk;

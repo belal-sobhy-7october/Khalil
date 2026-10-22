@@ -1,0 +1,11 @@
+/* Blocks the script marks as Arabic read and align right to left; code stays left to right. */
+[data-rtl-fix='rtl'] {
+  direction: rtl !important;
+  text-align: right !important;
+  unicode-bidi: isolate;
+}
+[data-rtl-fix='rtl'] pre,
+[data-rtl-fix='rtl'] code {
+  direction: ltr !important;
+  text-align: left !important;
+}

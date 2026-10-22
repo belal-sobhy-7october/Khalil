@@ -1,10 +1,12 @@
 import { useMemo, useState } from 'react';
-import { X, ArrowLeft, ArrowRight, Volume2, Check, Loader2, Library, PlayCircle, Search, RefreshCw } from 'lucide-react';
+import { X, ArrowLeft, ArrowRight, Volume2, Check, Loader2, Library, PlayCircle, Search, RefreshCw, WifiOff, BookCheck } from 'lucide-react';
 import { useTranslation } from '../../i18n/useTranslation';
 import { useAppStore } from '../../store/appStore';
 import { speakWord, getPronunciationPrefs } from '../../lib/pronunciation';
 import { TOPIC_PACKS, type PackGroup, type TopicPack } from '../../data/topicPacks';
 import { useDialog } from '../../lib/useDialog';
+import { useOnline } from '../../lib/offline';
+import { setTopicStudied, useStudiedTopics } from '../../lib/studiedTopics';
 import YouGlishModal from './YouGlishModal';
 import TopicLesson from './TopicLesson';
 import UpgradeTopicsModal from './UpgradeTopicsModal';
@@ -23,6 +25,9 @@ export default function TopicLibraryModal({ onClose, onAdded }: TopicLibraryModa
   const vocabularyItems = useAppStore((s) => s.vocabularyItems);
   const vocabularyCategories = useAppStore((s) => s.vocabularyCategories);
   const importVocabularyItems = useAppStore((s) => s.importVocabularyItems);
+  const signedIn = useAppStore((s) => !!s.session);
+  const online = useOnline();
+  const studied = useStudiedTopics();
 
   const [selected, setSelected] = useState<TopicPack | null>(null);
   const [target, setTarget] = useState<string>(NEW_GROUP);
@@ -70,12 +75,14 @@ export default function TopicLibraryModal({ onClose, onAdded }: TopicLibraryModa
   const [query, setQuery] = useState('');
   const [group, setGroup] = useState<PackGroup | 'all'>('all');
   const [onlyNew, setOnlyNew] = useState(false);
+  const [onlyStudied, setOnlyStudied] = useState(false);
   // Matches the topic's title/description or any of its words.
   const q = query.trim().toLowerCase();
   const visiblePacks = TOPIC_PACKS.filter(
     (pack) =>
       (group === 'all' || pack.group === group) &&
       (!onlyNew || newCountOf(pack) > 0) &&
+      (!onlyStudied || !!studied[pack.id]) &&
       (!q || `${pack.title} ${pack.description}`.toLowerCase().includes(q) || pack.items.some((item) => item.word.toLowerCase().includes(q)))
   );
   const dialog = useDialog(() => !adding && onClose());
@@ -124,7 +131,7 @@ export default function TopicLibraryModal({ onClose, onAdded }: TopicLibraryModa
             <>
               <div className="flex flex-wrap items-start gap-3 mb-4">
                 <p className="flex-1 min-w-[14rem] text-sm text-ink-light">{t('vocabulary.library.subtitle')}</p>
-                {vocabularyCategories.length > 0 && (
+                {vocabularyCategories.length > 0 && online && (
                   <button
                     onClick={() => setShowUpgrade(true)}
                     className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg border border-border-subtle text-ink hover:bg-ink/5"
@@ -163,6 +170,13 @@ export default function TopicLibraryModal({ onClose, onAdded }: TopicLibraryModa
                   >
                     {t('vocabulary.library.notAdded')}
                   </button>
+                  <button
+                    onClick={() => setOnlyStudied((v) => !v)}
+                    aria-pressed={onlyStudied}
+                    className={`px-3 py-1.5 rounded-full text-xs ${onlyStudied ? 'bg-ink text-card' : 'bg-ink/5 text-ink-light hover:text-ink'}`}
+                  >
+                    {t('vocabulary.library.studiedFilter')}
+                  </button>
                 </div>
               </div>
               {visiblePacks.length === 0 && <p className="text-sm text-ink-light py-8 text-center">{t('vocabulary.library.noMatch')}</p>}
@@ -182,6 +196,11 @@ export default function TopicLibraryModal({ onClose, onAdded }: TopicLibraryModa
                       <div className="flex items-start justify-between gap-2 mb-1">
                         <span className="text-2xl">{pack.emoji}</span>
                         <span className="flex items-center gap-1">
+                          {studied[pack.id] && (
+                            <span className="flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-green-500/10 text-green-700 dark:text-green-400" dir="auto">
+                              <BookCheck size={11} /> {t('vocabulary.library.studied')}
+                            </span>
+                          )}
                           {pack.fromCourse && (
                             <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-clay-soft/15 text-clay-soft" dir="auto">{t('vocabulary.library.fromCourse')}</span>
                           )}
@@ -227,9 +246,10 @@ export default function TopicLibraryModal({ onClose, onAdded }: TopicLibraryModa
                           </button>
                           <button
                             onClick={() => setYouglishWord(item.word)}
-                            className="p-1 hover:bg-ink/5 rounded transition-colors"
+                            disabled={!online}
+                            className="p-1 hover:bg-ink/5 rounded transition-colors disabled:opacity-30 disabled:hover:bg-transparent"
                             aria-label={`YouGlish: ${item.word}`}
-                            title={t('vocabulary.pronounceYouGlish')}
+                            title={online ? t('vocabulary.pronounceYouGlish') : t('offline.needsInternet')}
                           >
                             <PlayCircle size={14} className="text-ink-light" />
                           </button>
@@ -249,7 +269,24 @@ export default function TopicLibraryModal({ onClose, onAdded }: TopicLibraryModa
 
         {selected && (
           <div className="px-6 py-4 border-t border-border-subtle flex flex-wrap items-center gap-3">
-            {result ? (
+            <button
+              onClick={() => setTopicStudied(selected.id, !studied[selected.id])}
+              aria-pressed={!!studied[selected.id]}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm border transition-colors ${
+                studied[selected.id]
+                  ? 'border-green-500/40 bg-green-500/10 text-green-700 dark:text-green-400'
+                  : 'border-border-subtle text-ink hover:bg-ink/5'
+              }`}
+            >
+              <BookCheck size={16} />
+              {t(studied[selected.id] ? 'vocabulary.library.studied' : 'vocabulary.library.markStudied')}
+            </button>
+            {!signedIn ? null : !online && !result ? (
+              <p className="flex-1 min-w-[14rem] flex items-center gap-1.5 text-xs text-ink-light">
+                <WifiOff size={14} className="shrink-0" />
+                {t('offline.addLater')}
+              </p>
+            ) : result ? (
               <>
                 <p className="flex-1 text-sm text-ink">
                   {t('vocabulary.library.added')

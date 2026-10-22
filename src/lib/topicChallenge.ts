@@ -44,14 +44,14 @@ export function findPackForTopic(topicName: string) {
 }
 
 /**
- * Up to three practice texts: the pack's written paragraph (if the topic came
- * from the library), then paragraphs stitched from the topic's own example
- * sentences, about five sentences each.
+ * Up to three practice texts: the topic's written paragraph (`paragraph`, or
+ * the pack's if the topic came from the library), then paragraphs stitched
+ * from the topic's own example sentences, about five sentences each.
  */
-export function buildPracticeTexts(topicName: string, items: VocabularyItem[]): string[] {
+export function buildPracticeTexts(topicName: string, items: VocabularyItem[], paragraph?: string): string[] {
   const texts: string[] = [];
-  const pack = findPackForTopic(topicName);
-  if (pack?.paragraph) texts.push(pack.paragraph);
+  const written = paragraph ?? findPackForTopic(topicName)?.paragraph;
+  if (written) texts.push(written);
 
   const sentences = items
     .map((i) => i.exampleSentence?.trim())

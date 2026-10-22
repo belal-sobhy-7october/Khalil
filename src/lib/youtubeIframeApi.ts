@@ -21,7 +21,11 @@ interface YTNamespace {
       videoId?: string;
       host?: string;
       playerVars?: Record<string, string | number>;
-      events?: { onReady?: () => void; onError?: (e: { data: number }) => void };
+      events?: {
+        onReady?: () => void;
+        onError?: (e: { data: number }) => void;
+        onStateChange?: (e: { data: number }) => void;
+      };
     }
   ) => YTPlayer;
 }

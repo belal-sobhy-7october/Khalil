@@ -13,6 +13,8 @@ import {
 } from '@floating-ui/react';
 import { supabase } from './lib/supabase';
 import { claimLocalData } from './lib/localOwner';
+import { isOnline, readStoredSession } from './lib/offline';
+import { useCallCenterAccess } from './lib/callCenter/access';
 import { useAppStore } from './store/appStore';
 import { useTranslation } from './i18n/useTranslation';
 import LoginPage from './components/Auth/LoginPage';
@@ -23,6 +25,8 @@ import WeeklyTodo from './components/Todo/WeeklyTodo';
 import BacklogTodo from './components/Todo/BacklogTodo';
 import PomodoroEngine from './components/Focus/PomodoroEngine';
 import FocusChip from './components/Focus/FocusChip';
+import OfflineBanner from './components/Common/OfflineBanner';
+import SelectionWordMenu from './components/Vocabulary/SelectionWordMenu';
 import { applyAppearance, useAppearance } from './lib/appearance';
 
 import { createStickyNote, createTodoNote } from './components/Canvas/noteFactories';
@@ -34,6 +38,8 @@ const BookmarksVault = lazy(() => import('./components/Bookmarks/BookmarksVault'
 const NotesPanel = lazy(() => import('./components/Layout/NotesPanel'));
 const Calendar = lazy(() => import('./components/Calendar/Calendar'));
 const EnglishHub = lazy(() => import('./components/English/EnglishHub'));
+const CallCenterPrep = lazy(() => import('./components/CallCenter/CallCenterPrep'));
+const SalesPrep = lazy(() => import('./components/Sales/SalesPrep'));
 const FocusSection = lazy(() => import('./components/Focus/FocusSection'));
 const WirdSection = lazy(() => import('./components/Wird/WirdSection'));
 const AnalyticsSection = lazy(() => import('./components/Analytics/AnalyticsSection'));
@@ -69,6 +75,8 @@ function App() {
   const appError = useAppStore((s) => s.error);
   const clearAppError = useAppStore((s) => s.clearError);
   const [menuOpen, setMenuOpen] = useState(false);
+  // Only the owner's account has Call Center Prep; null while that's being checked.
+  const callCenterAccess = useCallCenterAccess();
 
   const { refs, floatingStyles, context } = useFloating({
     placement: isRTL ? 'left-start' : 'right-start',
@@ -150,6 +158,8 @@ function App() {
   useEffect(() => {
     let dataLoaded = false;
     let sessionResolved = false;
+    // Showing the session saved on this device while there is no internet.
+    let usingStored = false;
 
     // Another account's local copy must not show or upload: clear it and start fresh.
     const switchedAccount = (session: Session | null) => {
@@ -158,31 +168,81 @@ function App() {
       return true;
     };
 
+    const loadData = () => {
+      if (dataLoaded) return;
+      // Nothing can be fetched offline; the data loads once the connection is back.
+      if (!isOnline()) {
+        useAppStore.setState({ isLoading: false });
+        return;
+      }
+      dataLoaded = true;
+      loadUserData().finally(() => {
+        // Nothing came back (e.g. Wi-Fi with no internet): try again on the
+        // next sign of a connection (a token refresh or the "online" event).
+        if (useAppStore.getState().error) dataLoaded = false;
+        useAppStore.setState({ isLoading: false });
+      });
+    };
+
+    const showSession = (session: Session | null) => {
+      if (switchedAccount(session)) return;
+      setSession(session);
+      if (session) loadData();
+      else useAppStore.setState({ isLoading: false });
+    };
+
+    // With no internet, supabase-js retries refreshing an expired token for
+    // ~30s and then reports no session, which would show the login page. The
+    // session saved on this device still belongs to this user: open with it.
+    const showStoredSession = () => {
+      if (sessionResolved || usingStored) return;
+      const stored = readStoredSession();
+      if (!stored) return;
+      usingStored = true;
+      showSession(stored);
+    };
+    if (!isOnline()) showStoredSession();
+    const slowTimer = setTimeout(showStoredSession, 5000);
+
     supabase.auth.getSession().then(({ data: { session } }) => {
+      clearTimeout(slowTimer);
       sessionResolved = true;
-      if (switchedAccount(session)) return;
-      setSession(session);
-      if (session) {
-        dataLoaded = true;
-        loadUserData().finally(() => useAppStore.setState({ isLoading: false }));
-      } else {
-        useAppStore.setState({ isLoading: false });
+      // A refresh that failed for lack of network keeps the saved session
+      // (a rejected one is removed), so it is still signed in.
+      const stored = session ? null : readStoredSession();
+      if (stored) {
+        if (!usingStored) {
+          usingStored = true;
+          showSession(stored);
+        }
+        return;
       }
+      usingStored = false;
+      showSession(session);
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (!sessionResolved) return;
-      if (switchedAccount(session)) return;
-      setSession(session);
-      if (session && !dataLoaded) {
-        dataLoaded = true;
-        loadUserData().finally(() => useAppStore.setState({ isLoading: false }));
-      } else if (!session) {
-        useAppStore.setState({ isLoading: false });
-      }
+      if (!session && usingStored && event !== 'SIGNED_OUT') return;
+      if (session) usingStored = false;
+      showSession(session);
     });
 
-    return () => subscription.unsubscribe();
+    // Back online: refreshing the saved session also loads the data.
+    const onOnline = () => {
+      void supabase.auth.getSession().then(({ data: { session } }) => {
+        if (!session) return;
+        usingStored = false;
+        showSession(session);
+      });
+    };
+    window.addEventListener('online', onOnline);
+
+    return () => {
+      clearTimeout(slowTimer);
+      subscription.unsubscribe();
+      window.removeEventListener('online', onOnline);
+    };
   }, [loadUserData, setSession]);
 
   const handleSectionChange = useCallback((section: string) => {
@@ -219,7 +279,7 @@ function App() {
       <DashboardLayout
         activeSection={activeSection}
         onSectionChange={handleSectionChange}
-        allowFullWidth={['calendar', 'bookmarks', 'vocabulary', 'path', 'focus', 'wird', 'analytics', 'settings'].includes(activeSection)}
+        allowFullWidth={['calendar', 'bookmarks', 'vocabulary', 'path', 'callcenter', 'sales', 'focus', 'wird', 'analytics', 'settings'].includes(activeSection)}
         notesSlot={
           <Suspense fallback={null}>
             <NotesPanel
@@ -243,6 +303,8 @@ function App() {
             </div>
           </div>
         )}
+        <OfflineBanner />
+        <SelectionWordMenu />
         {activeSection === 'calendar' ? (
           <Suspense fallback={
             <div className="min-h-screen flex items-center justify-center">
@@ -276,6 +338,20 @@ function App() {
             {activeSection === 'wird' && <WirdSection />}
             {activeSection === 'analytics' && <AnalyticsSection onNavigate={handleSectionChange} />}
             {activeSection === 'settings' && <SettingsSection />}
+          </Suspense>
+        ) : (activeSection === 'callcenter' || activeSection === 'sales') && callCenterAccess !== false ? (
+          <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center">
+              <div className="w-8 h-8 border-2 border-clay-soft border-t-transparent rounded-full animate-spin" />
+            </div>
+          }>
+            {callCenterAccess ? (
+              activeSection === 'sales' ? <SalesPrep /> : <CallCenterPrep />
+            ) : (
+              <div className="min-h-screen flex items-center justify-center">
+                <div className="w-8 h-8 border-2 border-clay-soft border-t-transparent rounded-full animate-spin" />
+              </div>
+            )}
           </Suspense>
         ) : activeSection === 'vocabulary' ? (
           <Suspense fallback={

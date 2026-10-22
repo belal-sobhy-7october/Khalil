@@ -10,10 +10,13 @@ import {
   BarChart3,
   Settings,
   Route,
+  Headset,
+  TrendingUp,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from '../../i18n/useTranslation';
 import { supabase } from '../../lib/supabase';
+import { useCallCenterAccess } from '../../lib/callCenter/access';
 
 interface NavItem {
   id: string;
@@ -33,6 +36,7 @@ export default function Sidebar({
   onToggle: () => void;
 }) {
   const { t, isRTL } = useTranslation();
+  const callCenter = useCallCenterAccess();
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -45,6 +49,10 @@ export default function Sidebar({
     { id: 'bookmarks', label: t('nav.bookmarks'), icon: <Bookmark size={18} /> },
     { id: 'vocabulary', label: t('nav.vocabulary'), icon: <BookOpen size={18} /> },
     { id: 'path', label: t('nav.path'), icon: <Route size={18} /> },
+    // Only the owner's account sees Call Center Prep (see lib/callCenter/access.ts).
+    ...(callCenter ? [{ id: 'callcenter', label: t('nav.callCenter'), icon: <Headset size={18} /> }] : []),
+    // Sales Prep is owner-only too, behind the same check.
+    ...(callCenter ? [{ id: 'sales', label: t('nav.sales'), icon: <TrendingUp size={18} /> }] : []),
     { id: 'focus', label: t('nav.focus'), icon: <Timer size={18} /> },
     { id: 'wird', label: t('nav.wird'), icon: <Moon size={18} /> },
     { id: 'analytics', label: t('nav.analytics'), icon: <BarChart3 size={18} /> },

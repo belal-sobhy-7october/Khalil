@@ -1,0 +1,14 @@
+{
+  "manifest_version": 3,
+  "name": "Arabic RTL fix for Claude",
+  "version": "1.0.0",
+  "description": "Shows mixed Arabic and English text on claude.ai in the right direction: every paragraph, list item, heading or table that is mostly Arabic reads right to left.",
+  "content_scripts": [
+    {
+      "matches": ["https://claude.ai/*"],
+      "js": ["content.js"],
+      "css": ["content.css"],
+      "run_at": "document_idle"
+    }
+  ]
+}

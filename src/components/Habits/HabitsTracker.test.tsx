@@ -30,9 +30,13 @@ beforeEach(() => {
 describe('HabitsTracker grid', () => {
   it('renders day columns in calendar order, oldest first and today last', () => {
     render(<HabitsTracker />);
-    const cells = screen.getAllByRole('button', { name: new RegExp(`^Study — `) });
-    expect(cells[cells.length - 1]).toHaveAccessibleName(`Study — ${today}`);
-    expect(cells[cells.length - 2]).toHaveAccessibleName(`Study — ${addDaysToDateString(today, -1)}`);
+    const cells = () => screen.getAllByRole('button', { name: new RegExp(`^Study — `) });
+    expect(cells().at(-1)).toHaveAccessibleName(`Study — ${today}`);
+    // On the first day of the week (Saturday) yesterday is the last day of the previous one.
+    const firstDayOfWeek = cells().length === 1;
+    if (firstDayOfWeek) fireEvent.click(screen.getByRole('button', { name: 'Previous period' }));
+    const yesterday = cells().at(firstDayOfWeek ? -1 : -2);
+    expect(yesterday).toHaveAccessibleName(`Study — ${addDaysToDateString(today, -1)}`);
   });
 
   it('shows the whole current period, upcoming days included but not clickable', () => {
