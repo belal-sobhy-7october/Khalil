@@ -4,8 +4,8 @@
 // question) and checks it's all still there after a reload with the device
 // copy wiped, so it must come back from the account.
 //
-// Usage (the section is owner-only, so the dev server needs the preview flag):
-//   VITE_CALL_CENTER_PREVIEW=1 VITE_SUPABASE_URL=http://localhost:54321 VITE_SUPABASE_ANON_KEY=fake npx vite --port 5173
+// Usage:
+//   VITE_SUPABASE_URL=http://localhost:54321 VITE_SUPABASE_ANON_KEY=fake npx vite --port 5173
 //   node scripts/e2e/sales.mjs http://localhost:5173 ./e2e-shots
 import { chromium } from 'playwright';
 import fs from 'node:fs';

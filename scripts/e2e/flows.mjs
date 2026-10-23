@@ -451,7 +451,7 @@ await flow('review-nudge', { section: 'todo' }, async ({ page, backend, check, r
   await reload();
   const nudge = page.getByTestId('review-nudge');
   check(await visible(nudge), 'no review reminder on the day page');
-  check(await page.locator('aside nav button', { hasText: 'Learn English' }).locator('[title="Words due: 1"]').count(), 'no due badge in the sidebar');
+  check(await page.locator('aside nav button', { hasText: 'Learn Languages' }).locator('[title="Words due: 1"]').count(), 'no due badge in the sidebar');
   await nudge.getByRole('button', { name: 'Review' }).click();
   // Straight into the flashcards: 4 new words and the 1 due for review.
   check(await visible(page.getByRole('button', { name: 'Show answer' })), 'the reminder did not open the review');
@@ -478,6 +478,36 @@ await flow('mobile-nav', { section: 'todo', viewport: { width: 390, height: 844 
   check(await visible(page.getByRole('button', { name: new RegExp(`^Fajr ${today}:`) })), 'mobile nav did not open wird');
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
   check(overflow <= 2, `overflow ${overflow}px`);
+});
+
+await flow('learn-hubs', { section: 'todo' }, async ({ page, check, reload }) => {
+  const nav = (name) => page.locator('aside nav button', { hasText: name });
+  // On a wide screen the sidebar stays open over the page after a click: close it with its backdrop.
+  const open = async (name) => {
+    await page.getByRole('button', { name: 'Toggle sidebar' }).click();
+    await nav(name).click();
+    await page.mouse.click(1000, 450);
+    await page.waitForTimeout(600);
+  };
+  check(!(await nav('Call Center Prep').count()) && !(await nav('Learn English').count()), 'old sections still in the sidebar');
+  // Learn Skills → Call Center Prep (open to every account), and back.
+  await open('Learn Skills');
+  check(await visible(page.getByRole('heading', { name: 'Learn Skills' })), 'Learn Skills did not open');
+  check((await page.getByRole('region', { name: /Coming soon/ }).getByRole('listitem').count()) === 24, 'not 24 skills coming soon');
+  await page.getByRole('button', { name: /Call Center Prep/ }).click();
+  check(await visible(page.getByRole('heading', { name: 'Call Center English Prep' })), 'Call Center Prep did not open');
+  check(/border-clay-soft/.test((await nav('Learn Skills').getAttribute('class')) ?? ''), 'Learn Skills not marked in the sidebar');
+  await reload();
+  check(await visible(page.getByRole('heading', { name: 'Call Center English Prep' })), 'Call Center Prep not kept after reload');
+  await page.getByRole('navigation', { name: 'Where you are' }).getByRole('button', { name: 'Learn Skills' }).click();
+  await page.getByRole('button', { name: /Sales Prep/ }).click();
+  check(await visible(page.getByRole('heading', { name: 'تعلّم السيلز' })), 'Sales Prep did not open');
+  // Learn Languages → English.
+  await open('Learn Languages');
+  check((await page.getByRole('region', { name: /Coming soon/ }).getByRole('listitem').count()) === 10, 'not 10 languages coming soon');
+  await page.getByRole('button', { name: /English/ }).first().click();
+  check(await visible(page.getByRole('tab', { name: 'Vocabulary' })), 'English did not open');
+  check(await visible(page.getByRole('navigation', { name: 'Where you are' }).getByRole('button', { name: 'Learn Languages' })), 'no way back to Learn Languages');
 });
 
 await browser.close();

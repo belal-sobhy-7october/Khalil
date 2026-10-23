@@ -25,11 +25,11 @@ async function visit(browser, name, opts, interact) {
 }
 
 const browser = await chromium.launch(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {});
-const sections = ['todo', 'calendar', 'life', 'bookmarks', 'vocabulary', 'focus', 'wird', 'analytics', 'settings'];
+const sections = ['todo', 'calendar', 'life', 'bookmarks', 'languages', 'skills', 'vocabulary', 'focus', 'wird', 'analytics', 'settings'];
 for (const s of sections) await visit(browser, `ar-light-${s}`, { section: s });
 for (const tab of ['path', 'vocabulary', 'pronunciation', 'listening', 'reading', 'grammar', 'shadowing']) await visit(browser, `ar-light-english-${tab}`, { section: 'vocabulary', englishTab: tab });
 await visit(browser, 'en-dark-english-path', { section: 'vocabulary', englishTab: 'path', theme: 'dark', language: 'en' });
-for (const s of ['focus', 'wird', 'analytics', 'settings']) await visit(browser, `en-dark-${s}`, { section: s, theme: 'dark', language: 'en' });
+for (const s of ['languages', 'skills', 'focus', 'wird', 'analytics', 'settings']) await visit(browser, `en-dark-${s}`, { section: s, theme: 'dark', language: 'en' });
 const themes = [['downtown', 'dark'], ['pink', 'light'], ['andalusian', 'light'], ['autumn', 'dark'], ['black', 'dark'], ['wood', 'light'], ['pine', 'dark'], ['velvet', 'dark'], ['copper', 'light']];
 for (const [a, m] of themes) await visit(browser, `theme-${a}-${m}`, { section: 'analytics', theme: m, appearance: a });
 for (const [a, m] of themes.slice(0, 5)) await visit(browser, `theme-${a}-${m}-todo`, { section: 'todo', theme: m, appearance: a });
@@ -75,7 +75,7 @@ await visit(browser, 'mobile-wird', { section: 'wird', viewport: { width: 390, h
   if (overflow > 2) problems.push(`[mobile-wird] horizontal overflow ${overflow}px`);
 });
 
-for (const s of ['focus', 'settings', 'todo']) await visit(browser, `mobile-${s}`, { section: s, viewport: { width: 390, height: 844 } });
+for (const s of ['focus', 'settings', 'todo', 'languages', 'skills']) await visit(browser, `mobile-${s}`, { section: s, viewport: { width: 390, height: 844 } });
 await visit(browser, 'mobile-english-shadowing', { section: 'vocabulary', englishTab: 'shadowing', viewport: { width: 390, height: 844 } });
 await browser.close();
 console.log(problems.length ? problems.join('\n') : 'NO PROBLEMS FOUND');

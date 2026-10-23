@@ -11,7 +11,7 @@ export function useAddToFlashcards() {
       items.map((p) => ({ word: p.text, type: 'phrase' as const, definition: `Use it to ${p.use}.`, exampleSentence: p.text })),
       { duplicateMode: 'skip', categoryForAll: category }
     );
-    setStatus(r.inserted ? `Added ${r.inserted} to your flashcards (Learn English → Vocabulary).` : 'Already in your flashcards.');
+    setStatus(r.inserted ? `Added ${r.inserted} to your flashcards (Learn Languages → English → Vocabulary).` : 'Already in your flashcards.');
   };
   return { add, status };
 }

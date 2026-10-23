@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { LEVELS, PLAN_DAYS, getPhraseSet, getScenario } from '../../data/callCenter';
 import { analyzeSamples, wordsPerMinute } from './audio';
-import { canOpenCallCenter, emailHash } from './access';
 import {
   CALL_RUBRIC, accuracyPoints, normalizeWords, rubricPercent, speakingPercent, typingPoints, typingStats, wordAccuracy,
 } from './grading';
@@ -167,17 +166,7 @@ describe('voice recordings', () => {
   });
 });
 
-describe('access and prompts', () => {
-  it('hashes emails the same way whatever the case or spaces', async () => {
-    expect(await emailHash(' Someone@Example.com ')).toBe(await emailHash('someone@example.com'));
-    expect(await emailHash('someone@example.com')).toMatch(/^[0-9a-f]{64}$/);
-  });
-
-  it("doesn't open the section for other accounts", async () => {
-    expect(await canOpenCallCenter('someone@example.com')).toBe(false);
-    expect(await canOpenCallCenter(null)).toBe(false);
-  });
-
+describe('prompts', () => {
   it('writes a role-play prompt with the persona and the matching rubric', () => {
     const call = getScenario('r-no-internet-elderly');
     const interview = getScenario('r-hr-screening');

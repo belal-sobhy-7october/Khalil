@@ -110,7 +110,7 @@ export function WordsActivity({ refId, onDone }: { refId: string; onDone: () => 
       words.map((w) => ({ word: w.word, type: w.word.includes(' ') ? ('phrase' as const) : ('word' as const), definition: w.definition, exampleSentence: w.example })),
       { duplicateMode: 'skip', categoryForAll: wordsCategory(week) }
     );
-    setStatus(r.inserted ? `Added ${r.inserted} words to your flashcards (Learn English → Vocabulary).` : 'Already in your flashcards.');
+    setStatus(r.inserted ? `Added ${r.inserted} words to your flashcards (Learn Languages → English → Vocabulary).` : 'Already in your flashcards.');
     onDone();
   };
   return (

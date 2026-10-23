@@ -14,7 +14,6 @@ import {
 import { supabase } from './lib/supabase';
 import { claimLocalData } from './lib/localOwner';
 import { isOnline, readStoredSession } from './lib/offline';
-import { useCallCenterAccess } from './lib/callCenter/access';
 import { useAppStore } from './store/appStore';
 import { useTranslation } from './i18n/useTranslation';
 import LoginPage from './components/Auth/LoginPage';
@@ -28,6 +27,7 @@ import FocusChip from './components/Focus/FocusChip';
 import ReviewReminders from './components/Vocabulary/ReviewReminders';
 import ReviewNudge from './components/Vocabulary/ReviewNudge';
 import OfflineBanner from './components/Common/OfflineBanner';
+import { HubCrumb } from './components/Learn/ui';
 import SelectionWordMenu from './components/Vocabulary/SelectionWordMenu';
 import { applyAppearance, useAppearance } from './lib/appearance';
 
@@ -42,6 +42,8 @@ const Calendar = lazy(() => import('./components/Calendar/Calendar'));
 const EnglishHub = lazy(() => import('./components/English/EnglishHub'));
 const CallCenterPrep = lazy(() => import('./components/CallCenter/CallCenterPrep'));
 const SalesPrep = lazy(() => import('./components/Sales/SalesPrep'));
+const LanguagesHub = lazy(() => import('./components/Learn/LanguagesHub'));
+const SkillsHub = lazy(() => import('./components/Learn/SkillsHub'));
 const FocusSection = lazy(() => import('./components/Focus/FocusSection'));
 const WirdSection = lazy(() => import('./components/Wird/WirdSection'));
 const AnalyticsSection = lazy(() => import('./components/Analytics/AnalyticsSection'));
@@ -81,8 +83,6 @@ function App() {
   const appError = useAppStore((s) => s.error);
   const clearAppError = useAppStore((s) => s.clearError);
   const [menuOpen, setMenuOpen] = useState(false);
-  // Only the owner's account has Call Center Prep; null while that's being checked.
-  const callCenterAccess = useCallCenterAccess();
 
   const { refs, floatingStyles, context } = useFloating({
     placement: isRTL ? 'left-start' : 'right-start',
@@ -285,7 +285,7 @@ function App() {
       <DashboardLayout
         activeSection={activeSection}
         onSectionChange={handleSectionChange}
-        allowFullWidth={['calendar', 'bookmarks', 'vocabulary', 'callcenter', 'sales', 'focus', 'wird', 'analytics', 'settings'].includes(activeSection)}
+        allowFullWidth={['calendar', 'bookmarks', 'languages', 'skills', 'vocabulary', 'callcenter', 'sales', 'focus', 'wird', 'analytics', 'settings'].includes(activeSection)}
         notesSlot={
           <Suspense fallback={null}>
             <NotesPanel
@@ -344,18 +344,19 @@ function App() {
             {activeSection === 'analytics' && <AnalyticsSection onNavigate={handleSectionChange} />}
             {activeSection === 'settings' && <SettingsSection />}
           </Suspense>
-        ) : (activeSection === 'callcenter' || activeSection === 'sales') && callCenterAccess !== false ? (
+        ) : ['languages', 'skills', 'callcenter', 'sales'].includes(activeSection) ? (
           <Suspense fallback={
             <div className="min-h-screen flex items-center justify-center">
               <div className="w-8 h-8 border-2 border-clay-soft border-t-transparent rounded-full animate-spin" />
             </div>
           }>
-            {callCenterAccess ? (
-              activeSection === 'sales' ? <SalesPrep /> : <CallCenterPrep />
-            ) : (
-              <div className="min-h-screen flex items-center justify-center">
-                <div className="w-8 h-8 border-2 border-clay-soft border-t-transparent rounded-full animate-spin" />
-              </div>
+            {activeSection === 'languages' && <LanguagesHub onNavigate={handleSectionChange} />}
+            {activeSection === 'skills' && <SkillsHub onNavigate={handleSectionChange} />}
+            {(activeSection === 'callcenter' || activeSection === 'sales') && (
+              <>
+                <HubCrumb section={activeSection} onNavigate={handleSectionChange} />
+                {activeSection === 'sales' ? <SalesPrep /> : <CallCenterPrep />}
+              </>
             )}
           </Suspense>
         ) : activeSection === 'vocabulary' ? (
@@ -367,6 +368,7 @@ function App() {
               </div>
             </div>
           }>
+            <HubCrumb section="vocabulary" onNavigate={handleSectionChange} />
             <EnglishHub />
           </Suspense>
         ) : (
