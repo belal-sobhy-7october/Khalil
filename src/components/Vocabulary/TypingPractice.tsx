@@ -5,6 +5,8 @@ import { useAppStore } from '../../store/appStore';
 import { speakBrowser, speakWord, getPronunciationPrefs } from '../../lib/pronunciation';
 import { buildGap, gradeAnswer, type Grade } from '../../lib/practice';
 import { buildDueQueue } from '../../store/vocabularyHard';
+import { gradeOptions, type SrsGrade } from '../../lib/srs';
+import { useSrsSettings } from '../../lib/useSrsSettings';
 
 export type TypingMode = 'listen' | 'gap';
 
@@ -18,10 +20,11 @@ export default function TypingPractice({ mode, initialItemIds, onClose }: Typing
   const { t } = useTranslation();
   const vocabularyItems = useAppStore((s) => s.vocabularyItems);
   const submitVocabularyReview = useAppStore((s) => s.submitVocabularyReview);
+  const [settings] = useSrsSettings();
   const accent = getPronunciationPrefs().accent;
 
   const [queue, setQueue] = useState<string[]>(() =>
-    initialItemIds && initialItemIds.length > 0 ? initialItemIds : buildDueQueue(vocabularyItems).map((i) => i.id)
+    initialItemIds && initialItemIds.length > 0 ? initialItemIds : buildDueQueue(vocabularyItems, new Date(), settings).map((i) => i.id)
   );
   const [index, setIndex] = useState(0);
   const [answer, setAnswer] = useState('');
@@ -51,7 +54,10 @@ export default function TypingPractice({ mode, initialItemIds, onClose }: Typing
     const g = gradeAnswer(given, expected);
     setGrade(g);
     setResults((r) => ({ ...r, [item.id]: g }));
-    void submitVocabularyReview(item.id, g === 'wrong' ? 'incorrect' : 'correct', Date.now() - startRef.current);
+    // The spaced-repetition grade: right = Good, a typo or right with the hint = Hard, wrong = Again.
+    const srsGrade: SrsGrade = g === 'wrong' ? 1 : g === 'close' || showHint ? 2 : 3;
+    const next = gradeOptions(item, new Date(), settings)[srsGrade].card;
+    void submitVocabularyReview(item.id, g === 'wrong' ? 'incorrect' : 'correct', Date.now() - startRef.current, next);
     if (mode === 'gap' || g !== 'correct') void speakWord(item.word, accent);
   };
 

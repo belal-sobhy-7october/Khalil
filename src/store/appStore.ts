@@ -2,7 +2,9 @@ import { create } from 'zustand';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import { getToday, getWeekStart, stepCalendarDate } from './dateHelpers';
-import { isHardWord, applyReviewResult, isDueForReview } from './vocabularyHard';
+import { isHardWord, applyReviewResult } from './vocabularyHard';
+import { DEFAULT_SRS_SETTINGS, cardOf, gradeItem, isDue, masteryOf } from '../lib/srs';
+import { deleteSrsCard, fetchSrsCards, mergeSrs, readLocalSrs, saveSrsCard, writeLocalSrs } from '../lib/srsSync';
 import type {
   Language,
   Priority,
@@ -27,6 +29,7 @@ import type {
   VocabularyItemType,
   VocabularyReview,
   VocabularyReviewResult,
+  SrsCard,
 } from '../types';
 
 interface AppStore {
@@ -142,8 +145,14 @@ interface AppStore {
   addVocabularyItem: (item: Omit<VocabularyItem, 'id' | 'userId' | 'createdAt' | 'updatedAt' | 'reviewCount' | 'lastReviewedAt' | 'lapseCount' | 'correctStreak' | 'isHard'>) => Promise<void>;
   updateVocabularyItem: (id: string, data: Partial<VocabularyItem>) => Promise<void>;
   deleteVocabularyItem: (id: string) => Promise<void>;
-  submitVocabularyReview: (itemId: string, result: VocabularyReview['result'], timeTaken?: number) => Promise<void>;
-  getVocabularyStats: () => { total: number; mastered: number; needReview: number; hard: number };
+  /**
+   * Records a review. `srs` is the word's next spaced-repetition state, as the
+   * grade the learner picked (lib/srs.ts gradeOptions); without it a correct
+   * answer counts as Good and a wrong one as Again.
+   */
+  submitVocabularyReview: (itemId: string, result: VocabularyReview['result'], timeTaken?: number, srs?: SrsCard) => Promise<void>;
+  /** `needReview`: words due now (learning steps and reviews); `newWords`: never studied. */
+  getVocabularyStats: () => { total: number; mastered: number; needReview: number; newWords: number; hard: number };
   importVocabularyItems: (items: Array<{
     word: string;
     type: VocabularyItemType;
@@ -399,10 +408,16 @@ export const useAppStore = create<AppStore>()((set, get) => ({
 
       let notesStickyData: Record<string, unknown>[] = [];
       let notesTodoData: Record<string, unknown>[] = [];
-      const [sRes, tRes] = await Promise.all([
+      const [sRes, tRes, srsRemote] = await Promise.all([
         supabaseCall(supabase.from('sticky_notes').select('*').eq('user_id', userId).order('sort_order'), 'load sticky_notes'),
         supabaseCall(supabase.from('todo_notes').select('*').eq('user_id', userId).order('sort_order'), 'load todo_notes'),
+        fetchSrsCards(userId),
       ]);
+      // The words' spaced-repetition states: the newer of the server's and this device's copy.
+      const srs = mergeSrs(srsRemote, readLocalSrs());
+      writeLocalSrs(srs.cards);
+      const vocabularyItems = (vocabularyItemsRows || []).map(mapVocabularyItem).map((item) => (srs.cards[item.id] ? { ...item, srs: srs.cards[item.id] } : item));
+      for (const itemId of srs.toSend) if (vocabularyItems.some((i) => i.id === itemId)) void saveSrsCard(userId, itemId, srs.cards[itemId]);
       if (sRes.success) notesStickyData = (sRes.data || []) as Record<string, unknown>[];
       if (tRes.success) notesTodoData = (tRes.data || []) as Record<string, unknown>[];
 
@@ -438,7 +453,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
         dailyMoods: (dailyMoodsRows || []).map(mapDailyMood),
         calendarEvents: (calendarEventsRows || []).map(mapCalendarEvent),
         vocabularyCategories: (vocabularyCategoriesRows || []).map(mapVocabularyCategory),
-        vocabularyItems: (vocabularyItemsRows || []).map(mapVocabularyItem),
+        vocabularyItems,
         vocabularyReviews: [],
         currentDate: getToday(),
         viewMode: 'week',
@@ -1742,8 +1757,10 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       return;
     }
     set((s) => ({ vocabularyItems: s.vocabularyItems.filter((i) => i.id !== id) }));
+    const userId = get().session?.user?.id;
+    if (userId) void deleteSrsCard(userId, id);
   },
-  submitVocabularyReview: async (itemId, result, timeTaken) => {
+  submitVocabularyReview: async (itemId, result, timeTaken, srsCard) => {
     const userId = get().session?.user?.id;
     if (!userId) return;
     const id = generateId();
@@ -1756,17 +1773,17 @@ export const useAppStore = create<AppStore>()((set, get) => ({
 
     // Apply review result using pure function
     const updatedItem = applyReviewResult(item, result, item.isHard);
-    // For 'skipped', masteryLevel doesn't change
-    const newMasteryLevel = result === 'correct' 
-      ? Math.min(item.masteryLevel + 1, 5) 
-      : result === 'incorrect' 
-        ? Math.max(item.masteryLevel - 1, 0)
-        : item.masteryLevel;
+    // The next spaced-repetition state (a skipped word keeps its schedule);
+    // mastery 0–5 follows from it for the stars and "known" counts.
+    const srs = result === 'skipped'
+      ? item.srs
+      : srsCard ?? gradeItem(item, result === 'correct' ? 3 : 1, new Date(now), DEFAULT_SRS_SETTINGS);
+    const newMasteryLevel = srs ? masteryOf(srs) : item.masteryLevel;
 
     // Optimistic update
     set((s) => ({
       vocabularyReviews: [...s.vocabularyReviews, { id, vocabularyItemId: itemId, userId, result, timeTaken, reviewedAt: now }],
-      vocabularyItems: s.vocabularyItems.map((i) => (i.id === itemId ? { ...i, ...updatedItem, masteryLevel: newMasteryLevel, reviewCount: i.reviewCount + 1, lastReviewedAt: now } : i)),
+      vocabularyItems: s.vocabularyItems.map((i) => (i.id === itemId ? { ...i, ...updatedItem, srs, masteryLevel: newMasteryLevel, reviewCount: i.reviewCount + 1, lastReviewedAt: now } : i)),
     }));
 
     // Persist to DB
@@ -1808,15 +1825,19 @@ export const useAppStore = create<AppStore>()((set, get) => ({
         vocabularyItems: s.vocabularyItems.map((i) => (i.id === itemId ? previousItem : i)),
         error: 'errors.updateVocabularyItem',
       }));
+      return;
     }
+    if (srs && srs !== item.srs) void saveSrsCard(userId, itemId, srs);
   },
   getVocabularyStats: () => {
     const items = get().vocabularyItems;
+    const now = new Date();
     const total = items.length;
     const mastered = items.filter((i) => i.masteryLevel >= 4).length;
-    const needReview = items.filter((i) => isDueForReview(i)).length;
+    const needReview = items.filter((i) => isDue(cardOf(i), now)).length;
+    const newWords = items.filter((i) => cardOf(i).state === 0).length;
     const hard = items.filter(isHardWord).length;
-    return { total, mastered, needReview, hard };
+    return { total, mastered, needReview, newWords, hard };
   },
   importVocabularyItems: async (items, options) => {
     const userId = get().session?.user?.id;

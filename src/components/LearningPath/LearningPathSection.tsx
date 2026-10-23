@@ -2,13 +2,18 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Check, ChevronDown, ChevronLeft, ChevronRight, Clock, Flame, Route, RotateCcw, Trophy, Target, CalendarDays } from 'lucide-react';
 import { useTranslation } from '../../i18n/useTranslation';
 import { useKv } from '../../lib/useKv';
-import { getToday } from '../../store/dateHelpers';
+import { useAppStore } from '../../store/appStore';
+import { getToday, localDateString } from '../../store/dateHelpers';
 import {
   EMPTY_PATH_STATE, PATH_KV_KEY, PATH_LENGTH, PATH_PHASES, SKILLS,
-  buildPath, currentDay, dayProgress, isDayDone, packById, pathStats, scheduledDay, taskKey,
-  type PathDay, type PathState, type PathTask,
+  buildPath, currentDay, dayProgress, doneByHub, isDayDone, packById, pathStats, scheduledDay, taskKey,
+  type HubToday, type PathDay, type PathState, type PathTask,
 } from '../../lib/learningPath';
-import PathTaskBody from './PathTaskBody';
+import { getCourseSection } from '../../data/courses';
+import { COURSE_PROGRESS_KEY, type CourseProgress } from '../../lib/courseProgress';
+import { lessonsDoneOn } from '../../lib/hubLessons';
+import { useDueSummary } from '../../lib/useDueSummary';
+import PathTaskBody, { type HubTab } from './PathTaskBody';
 
 const NOTE_SAVE_DELAY = 800;
 
@@ -82,6 +87,7 @@ function Intro({ onStart }: { onStart: () => void }) {
 function taskTitle(task: PathTask, t: (k: string) => string) {
   const pack = packById(task.packId);
   let title = t(`path.task.${task.kind}.title`);
+  if (task.section) title = title.replace('{section}', getCourseSection(task.section).name);
   if (task.words) title = title.replace('{from}', String(task.words[0] + 1)).replace('{to}', String(task.words[1]));
   if (pack) title = title.replace('{topic}', pack.title).replace('{title}', pack.grammar.title);
   else if (task.packIds) title = title.replace('{topic}', task.packIds.map((id) => packById(id)?.emoji ?? '').join(' '));
@@ -89,7 +95,7 @@ function taskTitle(task: PathTask, t: (k: string) => string) {
   return title;
 }
 
-function TaskRow({ day, task, done, open, note, onToggle, onOpen, onNote }: {
+function TaskRow({ day, task, done, open, note, onToggle, onOpen, onNote, progress, doneLesson, onOpenTab, onComplete }: {
   day: number;
   task: PathTask;
   done: boolean;
@@ -98,6 +104,10 @@ function TaskRow({ day, task, done, open, note, onToggle, onOpen, onNote }: {
   onToggle: () => void;
   onOpen: () => void;
   onNote: (v: string) => void;
+  progress: CourseProgress;
+  doneLesson?: string;
+  onOpenTab: (tab: HubTab) => void;
+  onComplete: () => void;
 }) {
   const { t } = useTranslation();
   const title = taskTitle(task, t);
@@ -128,8 +138,8 @@ function TaskRow({ day, task, done, open, note, onToggle, onOpen, onNote }: {
       </div>
       {open && (
         <div id={bodyId} className="px-3 pb-4 ps-12 space-y-3">
-          <p className="text-sm text-ink-light">{t(`path.task.${task.kind}.hint`)}</p>
-          <PathTaskBody task={task} note={note} onNote={onNote} />
+          <p className="text-sm text-ink-light">{t(`path.task.${task.kind}.hint`).replace('{section}', task.section ? getCourseSection(task.section).name : '')}</p>
+          <PathTaskBody task={task} note={note} onNote={onNote} progress={progress} doneLesson={doneLesson} onOpenTab={onOpenTab} onComplete={onComplete} />
           {!done && (
             <button onClick={onToggle} className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg bg-clay-soft text-white hover:bg-clay-soft-dark">
               <Check size={14} /> {t('path.markDone')}
@@ -141,12 +151,43 @@ function TaskRow({ day, task, done, open, note, onToggle, onOpen, onNote }: {
   );
 }
 
-export default function LearningPathSection() {
+/** The 90-day path, a tab of the English hub; `onOpenTab` switches to another of its sections. */
+export default function LearningPathSection({ onOpenTab }: { onOpenTab: (tab: HubTab) => void }) {
   const { t, tn, isRTL } = useTranslation();
   const [state, setState] = useKv<PathState>(PATH_KV_KEY, EMPTY_PATH_STATE);
   const path = useMemo(() => buildPath(), []);
   const today = getToday();
   const current = currentDay(path, state);
+
+  // What the hub did today: lessons finished in its sections, and the flashcards cleared.
+  const [courseProgress] = useKv<CourseProgress>(COURSE_PROGRESS_KEY, {});
+  const vocabularyItems = useAppStore((s) => s.vocabularyItems);
+  const { due } = useDueSummary();
+  const hub = useMemo<HubToday>(() => {
+    const reviewedToday = vocabularyItems.some((i) => !!i.srs?.last_review && localDateString(new Date(i.srs.last_review)) === today);
+    return { lessons: lessonsDoneOn(courseProgress, today), reviewCleared: reviewedToday && due === 0 };
+  }, [courseProgress, today, vocabularyItems, due]);
+
+  // ...counts on the day you're working on.
+  const startedAtNow = state.startedAt;
+  useEffect(() => {
+    if (!startedAtNow) return;
+    const day = path[current - 1];
+    // A day finished today stays today's work: the next one counts nothing until you start it.
+    const previous = path[current - 2];
+    if (previous && isDayDone(previous, state) && finishedOn(previous, state) === today && !dayProgress(day, state).done) return;
+    if (!doneByHub(day, state, hub).length) return;
+    setState((s) => {
+      const additions = doneByHub(day, s, hub);
+      const done = { ...s.done };
+      const lessons = { ...(s.lessons ?? {}) };
+      for (const a of additions) {
+        done[a.key] = today;
+        if (a.lesson) lessons[a.key] = a.lesson;
+      }
+      return { ...s, done, lessons };
+    });
+  }, [startedAtNow, path, current, state, hub, today, setState]);
   const [selected, setSelected] = useState(() => openingDay(path, state, today));
   const [openTask, setOpenTask] = useState<string | null>(null);
 
@@ -196,11 +237,26 @@ export default function LearningPathSection() {
     const wasDone = !!state.done[key];
     setState((s) => {
       const done = { ...s.done };
-      if (done[key]) delete done[key];
-      else done[key] = today;
-      return { ...s, done };
+      const lessons = { ...(s.lessons ?? {}) };
+      if (done[key]) {
+        delete done[key];
+        delete lessons[key];
+      } else {
+        done[key] = today;
+        // A lesson finished today in that section is this task's, so it can't tick another day too.
+        if (task.kind === 'course' && task.section) {
+          const claimed = new Set(Object.values(lessons));
+          const lesson = (hub.lessons[task.section] ?? []).find((id) => !claimed.has(id));
+          if (lesson) lessons[key] = lesson;
+        }
+      }
+      return { ...s, done, lessons };
     });
     if (!wasDone) setOpenTask(day.tasks.find((x) => x.id !== task.id && !state.done[taskKey(day.day, x.id)])?.id ?? '');
+  };
+
+  const complete = (task: PathTask) => {
+    if (!state.done[taskKey(day.day, task.id)]) toggle(task);
   };
 
   const goTo = (n: number) => {
@@ -323,6 +379,10 @@ export default function LearningPathSection() {
                   onToggle={() => toggle(task)}
                   onOpen={() => setOpenTask(shownTask === task.id ? '' : task.id)}
                   onNote={(v) => setNote(key, v)}
+                  progress={courseProgress}
+                  doneLesson={state.lessons?.[key]}
+                  onOpenTab={onOpenTab}
+                  onComplete={() => complete(task)}
                 />
               );
             })}

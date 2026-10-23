@@ -25,6 +25,8 @@ import WeeklyTodo from './components/Todo/WeeklyTodo';
 import BacklogTodo from './components/Todo/BacklogTodo';
 import PomodoroEngine from './components/Focus/PomodoroEngine';
 import FocusChip from './components/Focus/FocusChip';
+import ReviewReminders from './components/Vocabulary/ReviewReminders';
+import ReviewNudge from './components/Vocabulary/ReviewNudge';
 import OfflineBanner from './components/Common/OfflineBanner';
 import SelectionWordMenu from './components/Vocabulary/SelectionWordMenu';
 import { applyAppearance, useAppearance } from './lib/appearance';
@@ -44,7 +46,6 @@ const FocusSection = lazy(() => import('./components/Focus/FocusSection'));
 const WirdSection = lazy(() => import('./components/Wird/WirdSection'));
 const AnalyticsSection = lazy(() => import('./components/Analytics/AnalyticsSection'));
 const SettingsSection = lazy(() => import('./components/Settings/SettingsSection'));
-const LearningPathSection = lazy(() => import('./components/LearningPath/LearningPathSection'));
 
 function App() {
   const language = useAppStore((s) => s.language);
@@ -57,6 +58,11 @@ function App() {
   const [activeSection, setActiveSection] = useState(() => {
     if (typeof window !== 'undefined') {
       const stored = localStorage.getItem('khalil-active-section');
+      // The learning path moved into the English hub.
+      if (stored === 'path') {
+        localStorage.setItem('khalil-english-tab', 'path');
+        return 'vocabulary';
+      }
       if (stored) return stored;
     }
     return 'todo';
@@ -279,7 +285,7 @@ function App() {
       <DashboardLayout
         activeSection={activeSection}
         onSectionChange={handleSectionChange}
-        allowFullWidth={['calendar', 'bookmarks', 'vocabulary', 'path', 'callcenter', 'sales', 'focus', 'wird', 'analytics', 'settings'].includes(activeSection)}
+        allowFullWidth={['calendar', 'bookmarks', 'vocabulary', 'callcenter', 'sales', 'focus', 'wird', 'analytics', 'settings'].includes(activeSection)}
         notesSlot={
           <Suspense fallback={null}>
             <NotesPanel
@@ -327,13 +333,12 @@ function App() {
           }>
             <BookmarksVault />
           </Suspense>
-        ) : ['path', 'focus', 'wird', 'analytics', 'settings'].includes(activeSection) ? (
+        ) : ['focus', 'wird', 'analytics', 'settings'].includes(activeSection) ? (
           <Suspense fallback={
             <div className="min-h-screen flex items-center justify-center">
               <div className="w-8 h-8 border-2 border-clay-soft border-t-transparent rounded-full animate-spin" />
             </div>
           }>
-            {activeSection === 'path' && <LearningPathSection />}
             {activeSection === 'focus' && <FocusSection />}
             {activeSection === 'wird' && <WirdSection />}
             {activeSection === 'analytics' && <AnalyticsSection onNavigate={handleSectionChange} />}
@@ -369,6 +374,7 @@ function App() {
             <div className={`space-y-8 canvas-area max-w-[1800px] mx-auto`} style={{ position: 'relative' }}>
               <div>
                 <DailyFocus />
+                <ReviewNudge />
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
@@ -415,6 +421,7 @@ function App() {
       </DashboardLayout>
 
       <PomodoroEngine />
+      <ReviewReminders />
       {activeSection !== 'focus' && <FocusChip onOpen={() => handleSectionChange('focus')} />}
 
       <div

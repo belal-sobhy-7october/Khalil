@@ -1,20 +1,25 @@
 /**
- * A 90-day English learning path (B2 → C1), separate from everything else:
- * it only reads the topic lessons and accent material, and keeps its own
- * progress under one user_kv key — it never touches the word list.
+ * A 90-day English learning path (B2 → C1) inside the English hub, built from
+ * what the hub already has: each day reviews your flashcards (spaced
+ * repetition), studies a topic lesson from the Topic Library, and takes the
+ * next lesson of the hub's own courses (Listening, Reading, Grammar,
+ * Pronunciation & Accent, Shadowing). Lessons you finish in those sections
+ * count here. The path's own progress is one user_kv value; words reach your
+ * flashcards only when you add them.
  *
  * Shape: three 4-week phases of six topics, then a final week.
  *   Each topic takes four study days:
- *     A  words 1–6, warm-up, your own sentences
- *     B  words 7–12 and the grammar point
- *     C  listen & repeat, reading, shadowing
- *     D  speaking: discussion, one-minute task, AI conversation
- *   Every 7th day is a review day; days 85–90 review everything and end with
- *   a final speaking test compared with the recording made on day 1.
- *   An accent drill runs through the study days (sounds, then accent features).
+ *     A  warm-up, words 1–6, your own sentences, a Listening lesson
+ *     B  words 7–12, the grammar point, a Grammar lesson, an accent drill
+ *     C  a Reading lesson, listen & repeat, a Shadowing lesson, an accent drill
+ *     D  discussion, one-minute task, AI conversation, a Pronunciation lesson
+ *   Every day starts with the flashcard review; every 7th day is a review day;
+ *   days 85–90 review everything and end with a final speaking test compared
+ *   with the recording made on day 1.
  */
 import { TOPIC_PACKS, type TopicPack } from '../data/topicPacks';
 import { ACCENT_FEATURES, CONSONANTS, VOWELS, type AccentFeature, type SoundEntry } from '../data/englishStudy';
+import type { CourseSectionId } from '../data/courseCatalog';
 import { addDaysToDateString, daysBetweenDateStrings } from '../store/dateHelpers';
 
 export const PATH_LENGTH = 90;
@@ -24,7 +29,7 @@ export type Skill = 'vocab' | 'grammar' | 'reading' | 'listening' | 'shadowing' 
 export const SKILLS: Skill[] = ['vocab', 'grammar', 'reading', 'listening', 'shadowing', 'speaking', 'accent', 'review', 'writing'];
 
 export type TaskKind =
-  | 'baseline' | 'warmUp' | 'words' | 'sentences' | 'grammar' | 'paragraph' | 'reading' | 'shadowing' | 'accent'
+  | 'baseline' | 'review' | 'warmUp' | 'words' | 'sentences' | 'grammar' | 'paragraph' | 'course' | 'accent'
   | 'check' | 'discussion' | 'speakingTask' | 'aiTalk' | 'weeklyWriting' | 'replay' | 'reRecord' | 'mockTalk' | 'finalTest' | 'reflection';
 
 export type AccentItem =
@@ -39,11 +44,13 @@ export interface PathTask {
   minutes: number;
   /** The topic the task is about. */
   packId?: string;
-  /** Half-open range of the topic's words, for "words" and "check". */
+  /** Half-open range of the topic's words, for "words" and "sentences". */
   words?: [number, number];
   /** Topics whose words a "check" or "replay" covers. */
   packIds?: string[];
   accent?: AccentItem;
+  /** The English hub section a "course" task takes its next lesson from. */
+  section?: CourseSectionId;
 }
 
 export type DayKind = 'words' | 'grammar' | 'input' | 'speak' | 'review' | 'final';
@@ -67,6 +74,15 @@ export const PATH_PHASES: string[][] = [
 
 const STUDY_DAYS_PER_TOPIC = 4;
 
+/** The skill each hub section trains. */
+export const SECTION_SKILL: Record<CourseSectionId, Skill> = {
+  listening: 'listening',
+  reading: 'reading',
+  grammar: 'grammar',
+  pronunciation: 'accent',
+  shadowing: 'shadowing',
+};
+
 export function packById(id: string | undefined): TopicPack | undefined {
   return id ? TOPIC_PACKS.find((p) => p.id === id) : undefined;
 }
@@ -88,6 +104,9 @@ function accentSequence(): AccentItem[] {
 
 const half = (pack: TopicPack) => Math.ceil(pack.items.length / 2);
 
+const review = (minutes = 10): PathTask => ({ id: 'review', kind: 'review', skill: 'review', minutes });
+const course = (section: CourseSectionId, minutes: number): PathTask => ({ id: `lesson-${section}`, kind: 'course', skill: SECTION_SKILL[section], minutes, section });
+
 export function buildPath(): PathDay[] {
   const topics = PATH_PHASES.flat();
   const accents = accentSequence();
@@ -107,7 +126,7 @@ export function buildPath(): PathDay[] {
       days.push({
         day, week, phase, kind: 'review',
         tasks: [
-          { id: 'check', kind: 'check', skill: 'review', minutes: 10, packIds },
+          review(15),
           { id: 'writing', kind: 'weeklyWriting', skill: 'writing', minutes: 20, packIds },
           { id: 'replay', kind: 'replay', skill: 'listening', minutes: 15, packIds },
           { id: 'rerecord', kind: 'reRecord', skill: 'speaking', minutes: 10, packIds },
@@ -127,60 +146,66 @@ export function buildPath(): PathDay[] {
       kind = 'words';
       tasks = [
         ...(day === 1 ? [{ id: 'baseline', kind: 'baseline' as const, skill: 'speaking' as const, minutes: 5 }] : []),
+        review(),
         { id: 'warmup', kind: 'warmUp', skill: 'speaking', minutes: 5, packId },
-        { id: 'words-1', kind: 'words', skill: 'vocab', minutes: 20, packId, words: [0, half(pack)] },
+        { id: 'words-1', kind: 'words', skill: 'vocab', minutes: 15, packId, words: [0, half(pack)] },
         { id: 'sentences-1', kind: 'sentences', skill: 'writing', minutes: 10, packId, words: [0, half(pack)] },
-        { id: 'accent', kind: 'accent', skill: 'accent', minutes: 10, accent: nextAccent() },
-        ...(topicIndex > 0 ? [{ id: 'check-prev', kind: 'check' as const, skill: 'review' as const, minutes: 5, packIds: [topics[topicIndex - 1]] }] : []),
+        course('listening', 15),
       ];
     } else if (step === 1) {
       kind = 'grammar';
       tasks = [
-        { id: 'words-2', kind: 'words', skill: 'vocab', minutes: 20, packId, words: [half(pack), n] },
-        { id: 'grammar', kind: 'grammar', skill: 'grammar', minutes: 20, packId },
-        { id: 'accent', kind: 'accent', skill: 'accent', minutes: 10, accent: nextAccent() },
-        { id: 'check', kind: 'check', skill: 'review', minutes: 5, packId, words: [0, half(pack)] },
+        review(),
+        { id: 'words-2', kind: 'words', skill: 'vocab', minutes: 15, packId, words: [half(pack), n] },
+        { id: 'grammar', kind: 'grammar', skill: 'grammar', minutes: 10, packId },
+        course('grammar', 15),
+        { id: 'accent', kind: 'accent', skill: 'accent', minutes: 5, accent: nextAccent() },
       ];
     } else if (step === 2) {
       kind = 'input';
       tasks = [
-        { id: 'paragraph', kind: 'paragraph', skill: 'listening', minutes: 15, packId },
-        { id: 'reading', kind: 'reading', skill: 'reading', minutes: 20, packId },
-        { id: 'shadowing', kind: 'shadowing', skill: 'shadowing', minutes: 15, packId },
-        { id: 'accent', kind: 'accent', skill: 'accent', minutes: 10, accent: nextAccent() },
+        review(),
+        course('reading', 20),
+        { id: 'paragraph', kind: 'paragraph', skill: 'listening', minutes: 10, packId },
+        course('shadowing', 15),
+        { id: 'accent', kind: 'accent', skill: 'accent', minutes: 5, accent: nextAccent() },
       ];
     } else {
       kind = 'speak';
       tasks = [
+        review(),
         { id: 'discussion', kind: 'discussion', skill: 'speaking', minutes: 15, packId },
         { id: 'task', kind: 'speakingTask', skill: 'speaking', minutes: 10, packId },
         { id: 'ai', kind: 'aiTalk', skill: 'speaking', minutes: 10, packId },
-        { id: 'check', kind: 'check', skill: 'review', minutes: 5, packId, words: [0, n] },
+        course('pronunciation', 15),
       ];
     }
     days.push({ day, week, phase, kind, packId, tasks });
   }
 
-  // Final week: review each phase, then the final speaking test.
+  // Final week: review each phase's words, then the final speaking test.
   const final = (day: number, tasks: PathTask[]): PathDay => ({ day, week: 13, phase: 4, kind: 'final', tasks });
   days.push(
     final(85, [
-      { id: 'check', kind: 'check', skill: 'review', minutes: 20, packIds: PATH_PHASES[0] },
+      review(15),
+      { id: 'check', kind: 'check', skill: 'review', minutes: 15, packIds: PATH_PHASES[0] },
       { id: 'accent', kind: 'accent', skill: 'accent', minutes: 10, accent: { kind: 'feature', feature: ACCENT_FEATURES[0] } },
       { id: 'rerecord', kind: 'reRecord', skill: 'speaking', minutes: 10, packIds: PATH_PHASES[0] },
     ]),
     final(86, [
-      { id: 'check', kind: 'check', skill: 'review', minutes: 20, packIds: PATH_PHASES[1] },
+      review(15),
+      { id: 'check', kind: 'check', skill: 'review', minutes: 15, packIds: PATH_PHASES[1] },
       { id: 'writing', kind: 'weeklyWriting', skill: 'writing', minutes: 20, packIds: PATH_PHASES[1] },
     ]),
     final(87, [
-      { id: 'check', kind: 'check', skill: 'review', minutes: 20, packIds: PATH_PHASES[2] },
+      review(15),
+      { id: 'check', kind: 'check', skill: 'review', minutes: 15, packIds: PATH_PHASES[2] },
       { id: 'replay', kind: 'replay', skill: 'listening', minutes: 15, packIds: PATH_PHASES[2] },
-      { id: 'shadowing', kind: 'shadowing', skill: 'shadowing', minutes: 15 },
+      course('shadowing', 15),
     ]),
-    final(88, [{ id: 'mock', kind: 'mockTalk', skill: 'speaking', minutes: 20, packIds: [PATH_PHASES[0][1], PATH_PHASES[1][4], PATH_PHASES[2][3]] }]),
-    final(89, [{ id: 'final', kind: 'finalTest', skill: 'speaking', minutes: 15, packIds: [PATH_PHASES[0][2], PATH_PHASES[1][3], PATH_PHASES[2][4]] }]),
-    final(90, [{ id: 'reflection', kind: 'reflection', skill: 'writing', minutes: 15 }]),
+    final(88, [{ id: 'mock', kind: 'mockTalk', skill: 'speaking', minutes: 20, packIds: [PATH_PHASES[0][1], PATH_PHASES[1][4], PATH_PHASES[2][3]] }, review()]),
+    final(89, [{ id: 'final', kind: 'finalTest', skill: 'speaking', minutes: 15, packIds: [PATH_PHASES[0][2], PATH_PHASES[1][3], PATH_PHASES[2][4]] }, review()]),
+    final(90, [{ id: 'reflection', kind: 'reflection', skill: 'writing', minutes: 15 }, review()]),
   );
   return days;
 }
@@ -194,6 +219,8 @@ export interface PathState {
   done: Record<string, string>;
   /** `${day}:${taskId}` → what the user wrote (sentences, paragraphs, reflections). */
   notes: Record<string, string>;
+  /** `${day}:${taskId}` of a course task → the hub lesson that did it. */
+  lessons?: Record<string, string>;
 }
 
 export const EMPTY_PATH_STATE: PathState = { startedAt: null, done: {}, notes: {} };
@@ -206,6 +233,37 @@ export function dayProgress(day: PathDay, state: PathState): { done: number; tot
 }
 
 export const isDayDone = (day: PathDay, state: PathState) => day.tasks.every((t) => state.done[taskKey(day.day, t.id)]);
+
+/** What the English hub shows was done today. */
+export interface HubToday {
+  /** Lessons finished today in each section. */
+  lessons: Partial<Record<CourseSectionId, string[]>>;
+  /** You reviewed flashcards today and nothing is due any more. */
+  reviewCleared: boolean;
+}
+
+/**
+ * Tasks of `day` the hub has already done today: a course task whose section
+ * had a lesson finished today (each lesson counts for one task only), and the
+ * review once today's flashcards are cleared.
+ */
+export function doneByHub(day: PathDay, state: PathState, hub: HubToday): Array<{ key: string; lesson?: string }> {
+  const claimed = new Set(Object.values(state.lessons ?? {}));
+  const out: Array<{ key: string; lesson?: string }> = [];
+  for (const task of day.tasks) {
+    const key = taskKey(day.day, task.id);
+    if (state.done[key]) continue;
+    if (task.kind === 'review' && hub.reviewCleared) out.push({ key });
+    if (task.kind === 'course' && task.section) {
+      const lesson = (hub.lessons[task.section] ?? []).find((id) => !claimed.has(id));
+      if (lesson) {
+        claimed.add(lesson);
+        out.push({ key, lesson });
+      }
+    }
+  }
+  return out;
+}
 
 /** The day to work on: the first one not fully done (the last day once everything is done). */
 export function currentDay(path: PathDay[], state: PathState): number {

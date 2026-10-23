@@ -38,7 +38,7 @@ describe('TypingPractice', () => {
     fireEvent.change(input, { target: { value: 'negotiated' } });
     fireEvent.keyDown(input, { key: 'Enter' });
     expect(screen.getByText('Correct!')).toBeInTheDocument();
-    expect(submitVocabularyReview).toHaveBeenCalledWith('a', 'correct', expect.any(Number));
+    expect(submitVocabularyReview).toHaveBeenCalledWith('a', 'correct', expect.any(Number), expect.objectContaining({ state: 1, learning_steps: 1 })); // Good: the 10-minute step
 
     // Next word has no example: falls back to its definition.
     fireEvent.keyDown(input, { key: 'Enter' });
@@ -51,7 +51,7 @@ describe('TypingPractice', () => {
     fireEvent.change(input, { target: { value: 'return' } });
     fireEvent.keyDown(input, { key: 'Enter' });
     expect(screen.getByText('refund')).toBeInTheDocument();
-    expect(submitVocabularyReview).toHaveBeenCalledWith('b', 'incorrect', expect.any(Number));
+    expect(submitVocabularyReview).toHaveBeenCalledWith('b', 'incorrect', expect.any(Number), expect.objectContaining({ state: 1, learning_steps: 0 })); // Again
     fireEvent.keyDown(input, { key: 'Enter' });
     expect(screen.getByText('0 / 1')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Practise the 1 missed again/ })).toBeInTheDocument();

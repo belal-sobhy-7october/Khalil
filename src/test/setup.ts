@@ -13,3 +13,8 @@ if (typeof window !== 'undefined' && !window.matchMedia) {
     dispatchEvent: () => false,
   }) as unknown as MediaQueryList;
 }
+
+// jsdom logs "Not implemented" for scrolling; the hub scrolls to the top when a tab opens.
+if (typeof window !== 'undefined') {
+  window.scrollTo = () => {};
+}

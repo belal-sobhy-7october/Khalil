@@ -178,6 +178,30 @@ export interface VocabularyItem {
   lastReviewedAt?: string;
   createdAt: string;
   updatedAt: string;
+  /** Spaced-repetition memory state (see lib/srs.ts); absent until the word is reviewed with it. */
+  srs?: SrsCard;
+}
+
+/**
+ * One word's memory state for the FSRS scheduler (lib/srs.ts), saved per word
+ * in user_kv. Field names follow ts-fsrs; dates are ISO strings.
+ */
+export interface SrsCard {
+  due: string;
+  /** Days until the chance of remembering falls to 90%. */
+  stability: number;
+  /** 1 (easy) – 10 (hard). */
+  difficulty: number;
+  scheduled_days: number;
+  learning_steps: number;
+  reps: number;
+  /** Times forgotten after being learned. */
+  lapses: number;
+  /** 0 new, 1 learning, 2 review, 3 relearning. */
+  state: 0 | 1 | 2 | 3;
+  last_review?: string;
+  /** Local date (YYYY-MM-DD) of the first review: new words count against that day's limit. */
+  introduced?: string;
 }
 
 export type VocabularyReviewResult = 'correct' | 'incorrect' | 'skipped';

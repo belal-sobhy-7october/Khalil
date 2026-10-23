@@ -55,37 +55,37 @@ describe('TopicLibraryModal', () => {
   it('adds a whole pack into a topic named after it', async () => {
     const onAdded = vi.fn();
     render(<TopicLibraryModal onClose={() => {}} onAdded={onAdded} />);
-    fireEvent.click(screen.getByText('Call Center Interview'));
+    fireEvent.click(screen.getByText('Job Interview'));
     expectNoRawKeys();
-    const pack = TOPIC_PACKS.find((p) => p.id === 'call-center-interview')!;
+    const pack = TOPIC_PACKS.find((p) => p.id === 'job-interview')!;
     fireEvent.click(screen.getByRole('button', { name: `Add ${pack.items.length} items` }));
     await waitFor(() => expect(importVocabularyItems).toHaveBeenCalled());
     const [items, options] = importVocabularyItems.mock.calls[0] as unknown as [unknown[], { categoryForAll: string }];
     expect(items).toHaveLength(pack.items.length);
-    expect(options.categoryForAll).toBe('Call Center Interview');
-    await waitFor(() => expect(onAdded).toHaveBeenCalledWith('Call Center Interview'));
+    expect(options.categoryForAll).toBe('Job Interview');
+    await waitFor(() => expect(onAdded).toHaveBeenCalledWith('Job Interview'));
   });
 
   it('studies a lesson offline: no add controls, YouGlish off, marks it studied', () => {
     Object.defineProperty(navigator, 'onLine', { configurable: true, get: () => false });
     render(<TopicLibraryModal onClose={() => {}} />);
-    fireEvent.click(screen.getByText('Call Center Interview'));
+    fireEvent.click(screen.getByText('Job Interview'));
     expect(screen.queryByRole('button', { name: /^Add \d+ items$/ })).not.toBeInTheDocument();
     expect(screen.getByText(/Adding words to your list needs internet/)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'YouGlish: patience' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'YouGlish: strength' })).toBeDisabled();
     fireEvent.click(screen.getByRole('button', { name: 'Mark as studied' }));
-    expect(JSON.parse(localStorage.getItem('khalil-studied-topics') ?? '{}')).toHaveProperty('call-center-interview');
+    expect(JSON.parse(localStorage.getItem('khalil-studied-topics') ?? '{}')).toHaveProperty('job-interview');
     // Back in the list, the card shows it and the "Studied" filter keeps only it.
     fireEvent.click(screen.getByRole('button', { name: 'Back' }));
     fireEvent.click(screen.getByRole('button', { name: 'Studied' }));
-    expect(screen.getByText('Call Center Interview')).toBeInTheDocument();
-    expect(screen.queryByText('Job Interview')).not.toBeInTheDocument();
+    expect(screen.getByText('Job Interview')).toBeInTheDocument();
+    expect(screen.queryByText('Small Talk')).not.toBeInTheDocument();
   });
 
   it('hides the add controls when nobody is signed in (studying from the login page)', () => {
     useAppStore.setState({ session: null });
     render(<TopicLibraryModal onClose={() => {}} />);
-    fireEvent.click(screen.getByText('Call Center Interview'));
+    fireEvent.click(screen.getByText('Job Interview'));
     expect(screen.queryByRole('button', { name: /^Add \d+ items$/ })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Mark as studied' })).toBeInTheDocument();
   });
@@ -106,7 +106,8 @@ describe('TopicLibraryModal', () => {
   it.each(['en', 'ar'] as const)('opens a pack as a full lesson (%s)', (language) => {
     useAppStore.setState({ language });
     render(<TopicLibraryModal onClose={() => {}} />);
-    expect(screen.getAllByText(language === 'en' ? 'Your course' : 'من الكورس بتاعك')).toHaveLength(8);
+    // Khalil is for everyone: no lesson is labelled as someone's own course.
+    expect(screen.queryByText(/Your course|الكورس بتاعك/)).not.toBeInTheDocument();
     fireEvent.click(screen.getByText('Artificial Intelligence'));
     const pack = TOPIC_PACKS.find((p) => p.id === 'artificial-intelligence')!;
     expect(screen.getByText(pack.warmUp[0])).toBeInTheDocument();

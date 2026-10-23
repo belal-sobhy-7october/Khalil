@@ -86,11 +86,30 @@ describe('EnglishHub', () => {
     useAppStore.setState({ language });
     render(<EnglishHub />);
     const tabs = screen.getAllByRole('tab').map((t) => t.textContent);
-    expect(tabs.slice(0, 6)).toEqual(['Vocabulary', 'Pronunciation & Accent', 'Listening', 'Reading', 'Grammar', 'Shadowing']);
-    for (const name of tabs.slice(1, 6)) {
+    expect(tabs.slice(0, 7)).toEqual(['Learning Path', 'Vocabulary', 'Pronunciation & Accent', 'Listening', 'Reading', 'Grammar', 'Shadowing']);
+    for (const name of tabs.slice(2, 7)) {
       openTab(name!);
       noRawKeys();
     }
+  });
+
+  it('opens on the learning path, which opens the section a task takes its lesson from', async () => {
+    render(<EnglishHub />);
+    expect(screen.getByRole('tab', { name: 'Learning Path' })).toHaveAttribute('aria-selected', 'true');
+    fireEvent.click(await screen.findByRole('button', { name: 'Start day 1' }));
+    fireEvent.click(screen.getByText('Listening: the next lesson'));
+    fireEvent.click(screen.getByRole('button', { name: 'Open Listening' }));
+    expect(screen.getByRole('tab', { name: 'Listening' })).toHaveAttribute('aria-selected', 'true');
+    expect(localStorage.getItem('khalil-english-tab')).toBe('listening');
+  });
+
+  it('switches tab when another part of the app asks (a review reminder)', () => {
+    render(<EnglishHub />);
+    act(() => {
+      window.dispatchEvent(new CustomEvent('khalil:english-tab', { detail: 'vocabulary' }));
+    });
+    expect(screen.getByRole('tab', { name: 'Vocabulary' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByText('vocabulary section')).toBeInTheDocument();
   });
 
   it('opens the old Accent tab as Pronunciation & Accent', () => {

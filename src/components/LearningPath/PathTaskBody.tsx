@@ -1,14 +1,21 @@
 import { useMemo, useState } from 'react';
-import { Volume2, PlayCircle, Copy, Check, ExternalLink, Eye, Play } from 'lucide-react';
+import { Volume2, PlayCircle, Copy, Check, ExternalLink, Play, Brain, Plus, Loader2, MonitorPlay } from 'lucide-react';
 import { useTranslation } from '../../i18n/useTranslation';
+import { useAppStore } from '../../store/appStore';
 import { getPronunciationPrefs, speakBrowser, speakWord } from '../../lib/pronunciation';
 import { buildAiPrompt } from '../../lib/topicChallenge';
 import { packById, type PathTask } from '../../lib/learningPath';
-import type { CourseSectionId } from '../../data/courseCatalog';
-import { LISTENING_TIME, STUDY_SOURCES } from '../../data/englishStudy';
+import { getCourseSection, type CourseSectionId } from '../../data/courses';
+import { clockLength, type CourseProgress } from '../../lib/courseProgress';
+import { lessonById, nextHubLesson } from '../../lib/hubLessons';
+import { useDueSummary, useMinuteClock } from '../../lib/useDueSummary';
+import { useWaitLabel } from '../../lib/useWaitLabel';
 import type { PackItem } from '../../data/topicPacks';
 import { GrammarCard, QuestionList, SpeakingTask } from '../Vocabulary/TopicLesson';
 import YouGlishModal from '../Vocabulary/YouGlishModal';
+import FlashcardReview from '../Vocabulary/FlashcardReview';
+
+export type HubTab = 'vocabulary' | CourseSectionId;
 
 const AI_PARTNERS = [
   { name: 'Talkpal', url: 'https://app.talkpal.ai/' },
@@ -25,18 +32,10 @@ async function copyText(text: string): Promise<boolean> {
   }
 }
 
-/** Opens a section of the English hub (Reading, Shadowing…) without touching any data. */
-function openEnglishTab(tab: CourseSectionId) {
-  try {
-    localStorage.setItem('khalil-english-tab', tab);
-  } catch {
-    // the section opens on its last tab
-  }
-  window.dispatchEvent(new CustomEvent('khalil:navigate', { detail: 'vocabulary' }));
-}
+const key = (w: string) => w.trim().toLowerCase();
 
-function LinkButton({ href, children, onClick }: { href?: string; children: React.ReactNode; onClick?: () => void }) {
-  const cls = 'inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg bg-ink/5 text-ink hover:bg-ink/10';
+function LinkButton({ href, children, onClick, primary = false }: { href?: string; children: React.ReactNode; onClick?: () => void; primary?: boolean }) {
+  const cls = `inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg ${primary ? 'bg-clay-soft text-white hover:bg-clay-soft-dark' : 'bg-ink/5 text-ink hover:bg-ink/10'}`;
   return href ? (
     <a href={href} target="_blank" rel="noopener noreferrer" className={cls} onClick={onClick}>
       <ExternalLink size={13} /> {children}
@@ -67,47 +66,117 @@ function WordRow({ item, onYouGlish }: { item: PackItem; onYouGlish: (w: string)
   );
 }
 
-/** One card at a time: say the meaning, reveal it, mark it. Nothing is saved to the word list. */
-function QuickCheck({ items }: { items: PackItem[] }) {
+/** Puts a topic's words into the flashcards (as the Topic Library does), so the review brings them back. */
+function AddToFlashcards({ topic, words }: { topic: string; words: PackItem[] }) {
   const { t } = useTranslation();
-  const [index, setIndex] = useState(0);
-  const [revealed, setRevealed] = useState(false);
-  const [known, setKnown] = useState(0);
-  if (!items.length) return null;
-  if (index >= items.length) {
+  const vocabularyItems = useAppStore((s) => s.vocabularyItems);
+  const importVocabularyItems = useAppStore((s) => s.importVocabularyItems);
+  const [busy, setBusy] = useState(false);
+  const [added, setAdded] = useState<number | null>(null);
+  const owned = useMemo(() => new Set(vocabularyItems.map((i) => key(i.word))), [vocabularyItems]);
+  const missing = words.filter((w) => !owned.has(key(w.word)));
+
+  if (!missing.length) {
     return (
-      <div className="flex items-center gap-3 text-sm text-ink" dir="auto">
-        <span>{t('path.check.result').replace('{k}', String(known)).replace('{n}', String(items.length))}</span>
-        <button onClick={() => { setIndex(0); setKnown(0); setRevealed(false); }} className="text-clay-soft hover:underline">{t('path.check.again')}</button>
-      </div>
+      <p className="text-xs text-green-700 dark:text-green-400 flex items-center gap-1.5" dir="auto">
+        <Check size={13} /> {added ? t('path.words.added').replace('{n}', String(added)) : t('path.words.inList')}
+      </p>
     );
   }
-  const item = items[index];
-  const next = (knew: boolean) => {
-    if (knew) setKnown((k) => k + 1);
-    setRevealed(false);
-    setIndex((i) => i + 1);
+  const add = async () => {
+    setBusy(true);
+    const result = await importVocabularyItems(
+      missing.map((w) => ({ word: w.word, type: w.type, definition: w.definition, exampleSentence: w.example, masteryLevel: 0 })),
+      { duplicateMode: 'skip', categoryForAll: topic }
+    );
+    setAdded(result.inserted);
+    setBusy(false);
   };
   return (
-    <div className="rounded-xl border border-border-subtle p-4 space-y-3">
-      <div className="flex items-center justify-between text-xs text-ink-lighter">
-        <span className="tabular-nums">{index + 1} / {items.length}</span>
+    <LinkButton primary onClick={() => void add()}>
+      {busy ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
+      {t('path.words.add').replace('{count}', String(missing.length))}
+    </LinkButton>
+  );
+}
+
+/** Today's flashcards, from Vocabulary: the review opens right here and ticks the task when it ends. */
+function ReviewTask({ onComplete }: { onComplete: () => void }) {
+  const { t } = useTranslation();
+  const waitLabel = useWaitLabel();
+  const summary = useDueSummary();
+  const now = useMinuteClock();
+  const [open, setOpen] = useState(false);
+  const total = summary.due + summary.newToday;
+  return (
+    <div className="space-y-2">
+      <div className="flex flex-wrap items-center gap-3 text-sm text-ink">
+        <span className="flex items-center gap-1.5"><Brain size={15} className="text-clay-soft" /> <b className="tabular-nums">{summary.due}</b> {t('vocabulary.srs.dueNow')}</span>
+        {summary.newToday > 0 && <span className="text-sky-600 dark:text-sky-400">{t('vocabulary.srs.newToday').replace('{count}', String(summary.newToday))}</span>}
+        {summary.hardDue > 0 && <span className="text-red-600 dark:text-red-400">{t('vocabulary.srs.notifyHard').replace('{count}', String(summary.hardDue))}</span>}
       </div>
-      <div className="text-lg font-semibold text-ink">{item.word}</div>
-      {revealed ? (
-        <>
-          <div className="text-sm text-ink">{item.definition}</div>
-          <div className="text-xs italic text-ink-light">{item.example}</div>
-          <div className="flex gap-2" dir="auto">
-            <button onClick={() => next(true)} className="px-3 py-1.5 text-sm rounded-lg bg-green-600 text-white">{t('path.check.knew')}</button>
-            <button onClick={() => next(false)} className="px-3 py-1.5 text-sm rounded-lg bg-ink/10 text-ink">{t('path.check.notYet')}</button>
-          </div>
-        </>
+      {total ? (
+        <LinkButton primary onClick={() => setOpen(true)}>{t('path.review.start').replace('{count}', String(total))}</LinkButton>
       ) : (
-        <button onClick={() => setRevealed(true)} className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg bg-clay-soft text-white" dir="auto">
-          <Eye size={14} /> {t('path.check.reveal')}
-        </button>
+        <p className="text-xs text-ink-light">
+          {t('path.review.clear')}
+          {summary.nextAt && ` ${t('vocabulary.srs.nextAt').replace('{t}', waitLabel(Date.parse(summary.nextAt) - now.getTime()))}`}
+        </p>
       )}
+      {open && <FlashcardReview onClose={() => setOpen(false)} onFinished={onComplete} />}
+    </div>
+  );
+}
+
+/** The next lesson of a hub section, from the source you picked there; finishing it there ticks the task. */
+function CourseTask({ section, progress, doneLesson, onOpenTab }: { section: CourseSectionId; progress: CourseProgress; doneLesson?: string; onOpenTab: (tab: HubTab) => void }) {
+  const { t } = useTranslation();
+  const name = getCourseSection(section).name;
+  const next = nextHubLesson(section, progress);
+  const done = doneLesson ? lessonById(doneLesson) : null;
+  return (
+    <div className="space-y-2">
+      {done ? (
+        <p className="text-sm text-green-700 dark:text-green-400 flex items-center gap-1.5" dir="auto">
+          <Check size={14} /> {t('path.course.doneWith').replace('{title}', done.title)}
+        </p>
+      ) : next?.lesson ? (
+        <div className="flex items-start gap-2 rounded-lg bg-ink/3 border border-border-subtle p-3">
+          <MonitorPlay size={16} className="text-clay-soft shrink-0 mt-0.5" />
+          <div className="min-w-0">
+            <div className="text-[11px] text-ink-lighter" dir="ltr">{next.source.name}</div>
+            <div className="text-sm font-medium text-ink" dir="auto">{next.lesson.title}</div>
+            {next.lesson.seconds > 0 && <div className="text-xs text-ink-light tabular-nums" dir="ltr">{clockLength(next.lesson.seconds)}</div>}
+          </div>
+        </div>
+      ) : (
+        <p className="text-xs text-ink-light" dir="auto">
+          {next && next.source.groups.some((g) => g.lessons.length)
+            ? t('path.course.none').replace('{source}', next.source.name).replace('{section}', name)
+            : t('path.course.pick').replace('{section}', name)}
+        </p>
+      )}
+      <LinkButton primary={!done} onClick={() => onOpenTab(section)}>{t('path.course.open').replace('{section}', name)}</LinkButton>
+    </div>
+  );
+}
+
+/** The flashcards of some topics' words, whatever their schedule (phase reviews in the final week). */
+function TopicWordsReview({ packIds }: { packIds: string[] }) {
+  const { t } = useTranslation();
+  const vocabularyItems = useAppStore((s) => s.vocabularyItems);
+  const [open, setOpen] = useState(false);
+  const words = useMemo(() => packIds.flatMap((id) => packById(id)?.items ?? []), [packIds]);
+  const ids = useMemo(() => {
+    const wanted = new Set(words.map((w) => key(w.word)));
+    return vocabularyItems.filter((i) => wanted.has(key(i.word))).map((i) => i.id);
+  }, [words, vocabularyItems]);
+  const missing = words.length - ids.length;
+  return (
+    <div className="space-y-2">
+      {ids.length > 0 && <LinkButton primary onClick={() => setOpen(true)}>{t('path.check.start').replace('{count}', String(ids.length))}</LinkButton>}
+      {missing > 0 && <p className="text-xs text-ink-light" dir="auto">{t('path.check.missing').replace('{count}', String(missing))}</p>}
+      {open && <FlashcardReview initialItemIds={ids} onClose={() => setOpen(false)} />}
     </div>
   );
 }
@@ -167,29 +236,41 @@ function ParagraphPlayer({ text }: { text: string }) {
   );
 }
 
-/** The content of one task: what to study and the tools for it. */
-export default function PathTaskBody({ task, note, onNote }: { task: PathTask; note: string; onNote: (v: string) => void }) {
+/** The content of one task: what to study and the tools for it, taken from the English hub. */
+export default function PathTaskBody({ task, note, onNote, progress, doneLesson, onOpenTab, onComplete }: {
+  task: PathTask;
+  note: string;
+  onNote: (v: string) => void;
+  /** The hub's lesson progress (english-course-progress). */
+  progress: CourseProgress;
+  /** The hub lesson that did this course task, once done. */
+  doneLesson?: string;
+  onOpenTab: (tab: HubTab) => void;
+  /** Ticks the task (e.g. when its review session ends). */
+  onComplete: () => void;
+}) {
   const { t } = useTranslation();
   const [youglish, setYouglish] = useState<string | null>(null);
   const pack = packById(task.packId);
   const accent = getPronunciationPrefs().accent;
-  const checkItems = useMemo(() => {
-    if (task.packIds) return task.packIds.flatMap((id) => packById(id)?.items ?? []);
-    if (pack && task.words) return pack.items.slice(task.words[0], task.words[1]);
-    return [];
-  }, [task, pack]);
   const topics = (task.packIds ?? []).map((id) => packById(id)).filter((p): p is NonNullable<typeof p> => !!p);
 
   let body: React.ReactNode = null;
   switch (task.kind) {
+    case 'review':
+      body = <ReviewTask onComplete={onComplete} />;
+      break;
     case 'warmUp':
       body = pack && <QuestionList questions={pack.warmUp} />;
       break;
     case 'words':
       body = pack && task.words && (
-        <ul className="divide-y divide-border-subtle" dir="ltr">
-          {pack.items.slice(task.words[0], task.words[1]).map((item) => <WordRow key={item.word} item={item} onYouGlish={setYouglish} />)}
-        </ul>
+        <>
+          <ul className="divide-y divide-border-subtle" dir="ltr">
+            {pack.items.slice(task.words[0], task.words[1]).map((item) => <WordRow key={item.word} item={item} onYouGlish={setYouglish} />)}
+          </ul>
+          <AddToFlashcards topic={pack.title} words={pack.items.slice(task.words[0], task.words[1])} />
+        </>
       );
       break;
     case 'sentences':
@@ -211,26 +292,8 @@ export default function PathTaskBody({ task, note, onNote }: { task: PathTask; n
     case 'paragraph':
       body = pack && <ParagraphPlayer text={pack.paragraph} />;
       break;
-    case 'reading': {
-      const book = STUDY_SOURCES.find((s) => s.id === 'reading-listening-book');
-      body = (
-        <>
-          <div className="flex flex-wrap gap-2">
-            <LinkButton onClick={() => openEnglishTab('reading')}>{t('path.open.readingTab')}</LinkButton>
-            {book && <LinkButton href={book.url}>{book.name}</LinkButton>}
-          </div>
-          <Notes value={note} onChange={onNote} rows={3} />
-        </>
-      );
-      break;
-    }
-    case 'shadowing':
-      body = (
-        <div className="flex flex-wrap gap-2">
-          <LinkButton onClick={() => openEnglishTab('shadowing')}>{t('path.open.shadowingTab')}</LinkButton>
-          <LinkButton href={`${LISTENING_TIME}/playlists`}>Listening Time</LinkButton>
-        </div>
-      );
+    case 'course':
+      body = task.section && <CourseTask section={task.section} progress={progress} doneLesson={doneLesson} onOpenTab={onOpenTab} />;
       break;
     case 'accent': {
       const a = task.accent;
@@ -250,7 +313,7 @@ export default function PathTaskBody({ task, note, onNote }: { task: PathTask; n
                 </span>
               ))}
             </div>
-            <LinkButton onClick={() => openEnglishTab('pronunciation')}>{t('path.open.pronunciationTab')}</LinkButton>
+            <LinkButton onClick={() => onOpenTab('pronunciation')}>{t('path.open.pronunciationTab')}</LinkButton>
           </div>
         );
       } else if (a?.kind === 'feature') {
@@ -264,14 +327,14 @@ export default function PathTaskBody({ task, note, onNote }: { task: PathTask; n
                 </button>
               ))}
             </div>
-            <LinkButton onClick={() => openEnglishTab('pronunciation')}>{t('path.open.pronunciationTab')}</LinkButton>
+            <LinkButton onClick={() => onOpenTab('pronunciation')}>{t('path.open.pronunciationTab')}</LinkButton>
           </div>
         );
       }
       break;
     }
     case 'check':
-      body = <div dir="ltr"><QuickCheck items={checkItems} /></div>;
+      body = <TopicWordsReview packIds={task.packIds ?? []} />;
       break;
     case 'discussion':
       body = pack && <div dir="ltr"><QuestionList questions={pack.discussion} /></div>;

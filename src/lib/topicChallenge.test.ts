@@ -10,12 +10,12 @@ const item = (id: string, word: string, exampleSentence?: string): VocabularyIte
 
 describe('buildPracticeTexts', () => {
   it('uses the pack paragraph first for library topics', () => {
-    const texts = buildPracticeTexts('Call Center Interview', []);
-    expect(texts[0]).toMatch(/I graduated in 2023/);
+    const texts = buildPracticeTexts('Job Interview', []);
+    expect(texts[0]).toMatch(/My greatest strength is that I'm proactive/);
   });
 
   it('puts a given paragraph first instead of the pack\'s', () => {
-    expect(buildPracticeTexts('Call Center Interview', [], 'Our own text.')[0]).toBe('Our own text.');
+    expect(buildPracticeTexts('Job Interview', [], 'Our own text.')[0]).toBe('Our own text.');
   });
 
   it('stitches example sentences into paragraphs and skips Arabic ones', () => {

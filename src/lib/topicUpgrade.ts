@@ -49,7 +49,6 @@ const SUBJECTS: Array<[RegExp, string]> = [
   [/shop|spend|money|buy|تسوق|فلوس/i, 'shop-smart'],
   [/educat|learn|study|school|university|تعليم|دراس|مذاكر/i, 'smart-learning'],
   [/interview|مقابل|انترفيو/i, 'job-interview'],
-  [/call ?cent|customer|كول ?سنتر/i, 'call-center-on-the-call'],
   [/\bwork\b|office|job|career|شغل|عمل/i, 'work-and-office'],
   [/habit|routine|عادات|روتين/i, 'habitual-change'],
   [/\bai\b|artificial|technolog|ذكاء/i, 'artificial-intelligence'],
@@ -89,7 +88,12 @@ const SUBJECTS: Array<[RegExp, string]> = [
   [/happi|success|سعاد|نجاح/i, 'happiness-and-success'],
 ];
 
+// Call center topics (from Call Center Prep) have no lesson in the general
+// library — "Call Center Interview" must not turn into "Job Interview".
+const CALL_CENTER = /call ?cent|كول ?سنتر/i;
+
 export function lessonForTopicName(name: string): TopicPack | undefined {
+  if (CALL_CENTER.test(name)) return undefined;
   const exact = TOPIC_PACKS.find((p) => key(p.title) === key(name));
   if (exact) return exact;
   const replaced = LEGACY_REPLACED_BY[name];

@@ -9,19 +9,21 @@ import {
   Moon,
   BarChart3,
   Settings,
-  Route,
   Headset,
   TrendingUp,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from '../../i18n/useTranslation';
 import { supabase } from '../../lib/supabase';
+import { useDueSummary } from '../../lib/useDueSummary';
 import { useCallCenterAccess } from '../../lib/callCenter/access';
 
 interface NavItem {
   id: string;
   label: string;
   icon: React.ReactNode;
+  /** A count shown on the item (words due for review). */
+  badge?: { count: number; label: string };
 }
 
 export default function Sidebar({
@@ -37,6 +39,7 @@ export default function Sidebar({
 }) {
   const { t, isRTL } = useTranslation();
   const callCenter = useCallCenterAccess();
+  const { due } = useDueSummary();
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -47,8 +50,12 @@ export default function Sidebar({
     { id: 'calendar', label: t('nav.calendar'), icon: <Calendar size={18} /> },
     { id: 'life', label: t('nav.life'), icon: <Heart size={18} /> },
     { id: 'bookmarks', label: t('nav.bookmarks'), icon: <Bookmark size={18} /> },
-    { id: 'vocabulary', label: t('nav.vocabulary'), icon: <BookOpen size={18} /> },
-    { id: 'path', label: t('nav.path'), icon: <Route size={18} /> },
+    {
+      id: 'vocabulary',
+      label: t('nav.vocabulary'),
+      icon: <BookOpen size={18} />,
+      badge: due ? { count: due, label: t('vocabulary.srs.badge').replace('{count}', String(due)) } : undefined,
+    },
     // Only the owner's account sees Call Center Prep (see lib/callCenter/access.ts).
     ...(callCenter ? [{ id: 'callcenter', label: t('nav.callCenter'), icon: <Headset size={18} /> }] : []),
     // Sales Prep is owner-only too, behind the same check.
@@ -99,7 +106,12 @@ export default function Sidebar({
               }`}
             >
               {item.icon}
-              <span>{item.label}</span>
+              <span className="flex-1 text-start">{item.label}</span>
+              {item.badge && (
+                <span className="min-w-5 h-5 px-1.5 rounded-full bg-clay-soft text-white text-[11px] font-semibold flex items-center justify-center tabular-nums" title={item.badge.label} aria-label={item.badge.label}>
+                  {item.badge.count > 99 ? '99+' : item.badge.count}
+                </span>
+              )}
             </button>
           ))}
         </nav>

@@ -1,305 +1,151 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import type { VocabularyItem, VocabularyCategory } from '../../types';
+import { fireEvent, render, screen, within } from '@testing-library/react';
+import type { SrsCard, VocabularyCategory, VocabularyItem } from '../../types';
 import { useAppStore } from '../../store/appStore';
+import { saveKv } from '../../lib/userKv';
+import { OWN_SENTENCES_KEY, newCard } from '../../lib/srs';
 import FlashcardReview from './FlashcardReview';
 
 vi.mock('../../lib/supabase', async () => {
   const mod = await import('../../test/mockSupabase');
   return { supabase: mod.mockSupabase };
 });
+vi.mock('../../lib/userKv', () => ({
+  readLocalKv: (_k: string, f: unknown) => f,
+  loadKv: vi.fn(async (_u: string, _k: string, f: unknown) => f),
+  saveKv: vi.fn(async () => true),
+}));
+vi.mock('./YouGlishModal', () => ({ default: () => <div>youglish</div> }));
 
-const vocabularyItems: VocabularyItem[] = [
-  {
-    id: 'v1',
-    userId: 'user1',
-    word: 'hello',
-    type: 'word',
-    definition: 'A greeting',
-    exampleSentence: 'Hello, world!',
-    pronunciation: 'huh-LOH',
-    categoryId: 'c1',
-    masteryLevel: 1,
-    reviewCount: 0,
-    lapseCount: 0,
-    correctStreak: 0,
-    isHard: false,
-    createdAt: '2024-01-01',
-    updatedAt: '2024-01-01',
-  },
-  {
-    id: 'v2',
-    userId: 'user1',
-    word: 'world',
-    type: 'word',
-    definition: 'The earth',
-    exampleSentence: 'Hello, world!',
-    pronunciation: 'wurld',
-    categoryId: 'c1',
-    masteryLevel: 2,
-    reviewCount: 0,
-    lapseCount: 0,
-    correctStreak: 0,
-    isHard: false,
-    createdAt: '2024-01-01',
-    updatedAt: '2024-01-01',
-  },
-  {
-    id: 'v3',
-    userId: 'user1',
-    word: 'test',
-    type: 'word',
-    definition: 'A trial',
-    exampleSentence: 'This is a test.',
-    pronunciation: 'test',
-    categoryId: 'c1',
-    masteryLevel: 1,
-    reviewCount: 0,
-    lapseCount: 0,
-    correctStreak: 0,
-    isHard: false,
-    createdAt: '2024-01-01',
-    updatedAt: '2024-01-01',
-  },
-];
+const word = (id: string, w: string, definition: string, over: Partial<VocabularyItem> = {}): VocabularyItem => ({
+  id, userId: 'user1', word: w, type: 'word', definition, exampleSentence: `${w} in a sentence.`, categoryId: 'c1',
+  masteryLevel: 0, reviewCount: 0, lapseCount: 0, correctStreak: 0, isHard: false,
+  createdAt: `2024-01-0${id.slice(-1)}`, updatedAt: '2024-01-01', ...over,
+});
 
-const vocabularyCategories: VocabularyCategory[] = [
-  {
-    id: 'c1',
-    userId: 'user1',
-    name: 'General',
-    color: '#ff0000',
-    icon: 'book',
-    createdAt: '2024-01-01',
-    updatedAt: '2024-01-01',
-  },
-];
+const categories: VocabularyCategory[] = [{ id: 'c1', userId: 'user1', name: 'General', createdAt: '', updatedAt: '' }];
+const submitVocabularyReview = vi.fn(async (itemId: string, _result: string, _time?: number, srs?: SrsCard) => {
+  // Apply the state like the store does, so learning steps come back.
+  useAppStore.setState((s) => ({ vocabularyItems: s.vocabularyItems.map((i) => (i.id === itemId ? { ...i, srs } : i)) }));
+});
 
-const submitVocabularyReview = vi.fn().mockResolvedValue(undefined);
-const onClose = vi.fn();
+function setup(items: VocabularyItem[], props: Partial<Parameters<typeof FlashcardReview>[0]> = {}) {
+  useAppStore.setState({ vocabularyItems: items, vocabularyCategories: categories, submitVocabularyReview } as never);
+  const onClose = vi.fn();
+  render(<FlashcardReview onClose={onClose} {...props} />);
+  return { onClose };
+}
+
+const showAnswer = () => fireEvent.click(screen.getByRole('button', { name: /Show answer/ }));
+const gradeButton = (name: string) => screen.getByRole('button', { name: new RegExp(`^${name}`) });
 
 beforeEach(() => {
-  submitVocabularyReview.mockReset();
-  submitVocabularyReview.mockResolvedValue(undefined);
-  onClose.mockReset();
-  useAppStore.setState({
-    language: 'en',
-    vocabularyItems: [...vocabularyItems],
-    vocabularyCategories: [...vocabularyCategories],
-    submitVocabularyReview,
-  });
+  localStorage.clear();
+  vi.clearAllMocks();
+  useAppStore.setState({ language: 'en', session: { user: { id: 'user1' } } as never });
 });
 
 describe('FlashcardReview', () => {
-  it('correct answer advances to the next word without showing the definition', async () => {
-    render(<FlashcardReview onClose={onClose} />);
-
-    // Should show first word in question phase (hello - masteryLevel 1, id v1)
-    expect(screen.getByText('hello')).toBeInTheDocument();
+  it('shows the word, then the answer with four grades and when each brings it back', () => {
+    setup([word('v1', 'hello', 'A greeting')]);
+    expect(screen.getByRole('heading', { name: 'hello' })).toBeInTheDocument();
     expect(screen.queryByText('A greeting')).not.toBeInTheDocument();
-
-    // Click correct button (use role to avoid matching hint text)
-    const correctButton = screen.getAllByRole('button').find((btn) => btn.textContent?.includes('I know it') && !btn.textContent?.includes('→'));
-    if (!correctButton) throw new Error('Correct button not found');
-    fireEvent.click(correctButton);
-
-    // Should submit review
-    expect(submitVocabularyReview).toHaveBeenCalledWith('v1', 'correct', expect.any(Number));
-
-    // Wait for auto-advance (300ms delay)
-    await waitFor(
-      () => {
-        // Should show second word (test - masteryLevel 1, id v3), not definition
-        expect(screen.getByText('test')).toBeInTheDocument();
-        expect(screen.queryByText('A greeting')).not.toBeInTheDocument();
-      },
-      { timeout: 500 }
-    );
+    showAnswer();
+    expect(screen.getByText('A greeting')).toBeInTheDocument();
+    expect(screen.getByText('hello in a sentence.')).toBeInTheDocument();
+    expect(screen.getByTestId('srs-wait-1')).toHaveTextContent('1m');
+    expect(screen.getByTestId('srs-wait-2')).toHaveTextContent('6m');
+    expect(screen.getByTestId('srs-wait-3')).toHaveTextContent('10m');
+    expect(screen.getByTestId('srs-wait-4')).toHaveTextContent(/\d+d/);
   });
 
-  it('incorrect answer shows the definition and only advances after Next', async () => {
-    render(<FlashcardReview onClose={onClose} />);
-
-    // Should show first word in question phase
-    expect(screen.getByText('hello')).toBeInTheDocument();
-    expect(screen.queryByText('A greeting')).not.toBeInTheDocument();
-
-    // Click incorrect button (use role to avoid matching hint text)
-    const incorrectButton = screen.getAllByRole('button').find((btn) => btn.textContent?.includes("I don't know it") && !btn.textContent?.includes('←'));
-    if (!incorrectButton) throw new Error('Incorrect button not found');
-    fireEvent.click(incorrectButton);
-
-    // Should submit review
-    expect(submitVocabularyReview).toHaveBeenCalledWith('v1', 'incorrect', expect.any(Number));
-
-    // Should now show definition (answer phase) - word is not shown in answer phase
-    await waitFor(() => {
-      expect(screen.getByText('A greeting')).toBeInTheDocument();
-      expect(screen.getByText('Hello, world!')).toBeInTheDocument();
-      expect(screen.getByText('huh-LOH')).toBeInTheDocument();
-    });
-
-    // Click Next button
-    const nextButton = screen.getAllByRole('button').find((btn) => btn.textContent?.includes('Next'));
-    if (!nextButton) throw new Error('Next button not found');
-    fireEvent.click(nextButton);
-
-    // Should advance to next word (test - masteryLevel 1, id v3)
-    await waitFor(() => {
-      expect(screen.getByText('test')).toBeInTheDocument();
-      expect(screen.queryByText('A greeting')).not.toBeInTheDocument();
-    });
+  it('grading sends the previewed state, and learning steps come back in the same session', () => {
+    const onFinished = vi.fn();
+    setup([word('v1', 'hello', 'A greeting'), word('v2', 'world', 'The earth')], { onFinished });
+    showAnswer();
+    fireEvent.click(gradeButton('Good'));
+    expect(submitVocabularyReview).toHaveBeenLastCalledWith('v1', 'correct', expect.any(Number), expect.objectContaining({ state: 1 }));
+    expect(screen.getByRole('heading', { name: 'world' })).toBeInTheDocument();
+    showAnswer();
+    fireEvent.click(gradeButton('Good'));
+    // Nothing else left: the 10-minute step is shown now (learn ahead), then the word graduates.
+    expect(screen.getByRole('heading', { name: 'hello' })).toBeInTheDocument();
+    showAnswer();
+    expect(screen.getByTestId('srs-wait-3')).toHaveTextContent(/\d+d/);
+    fireEvent.click(gradeButton('Good'));
+    expect(screen.getByRole('heading', { name: 'world' })).toBeInTheDocument();
+    showAnswer();
+    fireEvent.click(gradeButton('Easy'));
+    expect(screen.getByText('Review Complete')).toBeInTheDocument();
+    expect(screen.getByTestId('srs-summary')).toHaveTextContent('4 reviewed · remembered 100%');
+    expect(onFinished).toHaveBeenCalledTimes(1);
+    expect(onFinished).toHaveBeenCalledWith(4);
   });
 
-  it('queue stays stable when a correct answer pushes an item masteryLevel above 2', async () => {
-    render(<FlashcardReview onClose={onClose} />);
-
-    // Mock the store update to simulate mastery level increase
-    submitVocabularyReview.mockImplementation(async (itemId, result) => {
-      if (result === 'correct') {
-        // Simulate store updating mastery level
-        useAppStore.setState((state) => ({
-          vocabularyItems: state.vocabularyItems.map((item) =>
-            item.id === itemId ? { ...item, masteryLevel: 3 } : item
-          ),
-        }));
-      }
-    });
-
-    // Click correct on first word (mastery goes from 1 to 3)
-    const correctButton = screen.getAllByRole('button').find((btn) => btn.textContent?.includes('I know it') && !btn.textContent?.includes('→'));
-    if (!correctButton) throw new Error('Correct button not found');
-    fireEvent.click(correctButton);
-
-    // Wait for auto-advance
-    await waitFor(
-      () => {
-        // Should show second word (test), not skip to third
-        expect(screen.getByText('test')).toBeInTheDocument();
-      },
-      { timeout: 500 }
-    );
-
-    // Verify the queue didn't skip - we should see all 3 words in order
-    expect(screen.getByText('test')).toBeInTheDocument();
-    expect(screen.queryByText('world')).not.toBeInTheDocument();
+  it('a forgotten word is listed once at the end and can be reviewed again', () => {
+    const onReviewMissed = vi.fn();
+    const { onClose } = setup([word('v1', 'hello', 'A greeting')], { onReviewMissed });
+    showAnswer();
+    fireEvent.click(gradeButton('Again'));
+    expect(submitVocabularyReview).toHaveBeenLastCalledWith('v1', 'incorrect', expect.any(Number), expect.any(Object));
+    // Back after a minute, in the same session.
+    showAnswer();
+    fireEvent.click(gradeButton('Again'));
+    showAnswer();
+    fireEvent.click(gradeButton('Good'));
+    showAnswer();
+    fireEvent.click(gradeButton('Good'));
+    expect(screen.getByText('Missed Words')).toBeInTheDocument();
+    expect(screen.getAllByText('hello')).toHaveLength(1);
+    fireEvent.click(screen.getByRole('button', { name: 'Review missed words again' }));
+    expect(onReviewMissed).toHaveBeenCalledWith(['v1']);
+    // The caller starts the new session; closing here would cancel it.
+    expect(onClose).not.toHaveBeenCalled();
   });
 
-  it('summary shows correct numbers', async () => {
-    render(<FlashcardReview onClose={onClose} />);
-
-    // Answer first word correctly (hello)
-    const correctButton1 = screen.getAllByRole('button').find((btn) => btn.textContent?.includes('I know it') && !btn.textContent?.includes('→'));
-    if (!correctButton1) throw new Error('Correct button not found');
-    fireEvent.click(correctButton1);
-    await waitFor(() => {
-      expect(screen.getByText('test')).toBeInTheDocument();
-    }, { timeout: 500 });
-
-    // Answer second word incorrectly (test) - this will re-ask it later
-    const incorrectButton = screen.getAllByRole('button').find((btn) => btn.textContent?.includes("I don't know it") && !btn.textContent?.includes('←'));
-    if (!incorrectButton) throw new Error('Incorrect button not found');
-    fireEvent.click(incorrectButton);
-    await waitFor(() => {
-      expect(screen.getByText('A trial')).toBeInTheDocument();
-    });
-
-    // Click next
-    const nextButton1 = screen.getAllByRole('button').find((btn) => btn.textContent?.includes('Next'));
-    if (!nextButton1) throw new Error('Next button not found');
-    fireEvent.click(nextButton1);
-    await waitFor(() => {
-      expect(screen.getByText('world')).toBeInTheDocument();
-    });
-
-    // Answer third word correctly (world)
-    const correctButton2 = screen.getAllByRole('button').find((btn) => btn.textContent?.includes('I know it') && !btn.textContent?.includes('→'));
-    if (!correctButton2) throw new Error('Correct button not found');
-    fireEvent.click(correctButton2);
-    await waitFor(() => {
-      // Should show re-asked test card (4th card)
-      expect(screen.getByText('test')).toBeInTheDocument();
-    }, { timeout: 500 });
-
-    // Answer re-asked test card correctly
-    const correctButton3 = screen.getAllByRole('button').find((btn) => btn.textContent?.includes('I know it') && !btn.textContent?.includes('→'));
-    if (!correctButton3) throw new Error('Correct button not found');
-    fireEvent.click(correctButton3);
-    await waitFor(() => {
-      // Should show summary
-      expect(screen.getByText(/Review Complete/i)).toBeInTheDocument();
-    }, { timeout: 500 });
-
-    // Check summary stats: 3 correct (hello, world, test re-ask), 1 incorrect (test first try)
-    expect(screen.getByText(/Correct: 3/i)).toBeInTheDocument();
-    expect(screen.getByText(/Incorrect: 1/i)).toBeInTheDocument();
-    expect(screen.getByText(/Accuracy: 75%/i)).toBeInTheDocument();
-
-    // Should show missed words (only test from first incorrect)
-    expect(screen.getAllByText(/Missed Words/i)).toHaveLength(2);
-    expect(screen.getByText('test')).toBeInTheDocument();
-    expect(screen.getByText('A trial')).toBeInTheDocument();
-  });
-
-  it('lists a word missed twice only once', async () => {
-    render(<FlashcardReview onClose={onClose} />);
-    const button = (text: string) => {
-      const b = screen.getAllByRole('button').find((btn) => btn.textContent?.includes(text) && !/[←→]/.test(btn.textContent ?? ''));
-      if (!b) throw new Error(`${text} button not found`);
-      return b;
-    };
-    fireEvent.click(button('I know it')); // hello
-    await waitFor(() => expect(screen.getByText('test')).toBeInTheDocument());
-    fireEvent.click(button("I don't know it")); // test
-    await waitFor(() => expect(screen.getByText('A trial')).toBeInTheDocument());
-    fireEvent.click(button('Next'));
-    await waitFor(() => expect(screen.getByText('world')).toBeInTheDocument());
-    fireEvent.click(button('I know it')); // world
-    await waitFor(() => expect(screen.getByText('test')).toBeInTheDocument());
-    fireEvent.click(button("I don't know it")); // test again
-    await waitFor(() => expect(screen.getByText('A trial')).toBeInTheDocument());
-    fireEvent.click(button('Next'));
-    await waitFor(() => expect(screen.getByText(/Review Complete/i)).toBeInTheDocument());
-    expect(screen.getByText(/Incorrect: 2/i)).toBeInTheDocument();
-    expect(screen.getAllByText('test')).toHaveLength(1);
-  });
-
-  it('shows empty state when there are no words are due for review', () => {
-    useAppStore.setState({
-      vocabularyItems: vocabularyItems.map((item) => ({ ...item, masteryLevel: 5, lapseCount: 0, correctStreak: 0, isHard: false, lastReviewedAt: new Date().toISOString() })),
-    });
-
-    render(<FlashcardReview onClose={onClose} />);
-
-    expect(screen.getByText(/No words to review/i)).toBeInTheDocument();
-    expect(screen.getByText(/All caught up/i)).toBeInTheDocument();
-  });
-
-  it('keyboard shortcuts work for correct/incorrect/next/close', async () => {
-    render(<FlashcardReview onClose={onClose} />);
-
-    // ArrowRight or 1 for correct
-    fireEvent.keyDown(window, { key: 'ArrowRight' });
-    expect(submitVocabularyReview).toHaveBeenCalledWith('v1', 'correct', expect.any(Number));
-
-    await waitFor(() => {
-      expect(screen.getByText('test')).toBeInTheDocument();
-    }, { timeout: 500 });
-
-    // ArrowLeft or 2 for incorrect
-    fireEvent.keyDown(window, { key: 'ArrowLeft' });
-    await waitFor(() => {
-      expect(screen.getByText('A trial')).toBeInTheDocument();
-    });
-
-    // Enter for next
+  it('keyboard: Space shows the answer, 1–4 grade, Space again = Good', () => {
+    setup([word('v1', 'hello', 'A greeting'), word('v2', 'world', 'The earth')]);
+    fireEvent.keyDown(window, { key: ' ' });
+    expect(screen.getByText('A greeting')).toBeInTheDocument();
+    fireEvent.keyDown(window, { key: '4' });
+    expect(submitVocabularyReview).toHaveBeenLastCalledWith('v1', 'correct', expect.any(Number), expect.objectContaining({ state: 2 }));
     fireEvent.keyDown(window, { key: 'Enter' });
-    await waitFor(() => {
-      expect(screen.getByText('world')).toBeInTheDocument();
-    });
+    fireEvent.keyDown(window, { key: ' ' });
+    expect(submitVocabularyReview).toHaveBeenCalledTimes(2);
+    expect(submitVocabularyReview.mock.calls[1][0]).toBe('v2');
+  });
 
-    // Escape for close
-    fireEvent.keyDown(window, { key: 'Escape' });
-    expect(onClose).toHaveBeenCalled();
+  it('nothing due: says so and when the next words come back', () => {
+    const later: SrsCard = { ...newCard(new Date()), state: 2, stability: 5, reps: 3, scheduled_days: 3, last_review: new Date().toISOString(), due: new Date(Date.now() + 3 * 86400000).toISOString() };
+    setup([word('v1', 'hello', 'A greeting', { srs: later, reviewCount: 3, lastReviewedAt: new Date().toISOString() })]);
+    expect(screen.getByText('All caught up!')).toBeInTheDocument();
+    expect(screen.getByText(/Next words come back in 3d/)).toBeInTheDocument();
+  });
+
+  it('hard words get a "make it stick" step: your own sentence is saved apart from the word', () => {
+    setup([word('v1', 'hello', 'A greeting', { isHard: true })]);
+    expect(screen.getByText('Hard')).toBeInTheDocument();
+    showAnswer();
+    const panel = screen.getByText('Make it stick').closest('div')!.parentElement as HTMLElement;
+    fireEvent.change(within(panel).getByRole('textbox', { name: 'Your sentence' }), { target: { value: 'I say hello to my neighbour every morning.' } });
+    fireEvent.click(within(panel).getByRole('button', { name: /Save/ }));
+    expect(saveKv).toHaveBeenCalledWith('user1', OWN_SENTENCES_KEY, { v1: 'I say hello to my neighbour every morning.' });
+    expect(screen.getByText('I say hello to my neighbour every morning.')).toBeInTheDocument();
+    // The word itself is not changed.
+    expect(useAppStore.getState().vocabularyItems[0].exampleSentence).toBe('hello in a sentence.');
+  });
+
+  it('a new day limit: only the daily number of new words is in the session', () => {
+    const many = Array.from({ length: 25 }, (_, i) => word(`n${String(i).padStart(2, '0')}`, `w${i}`, `d${i}`, { createdAt: `2024-01-${String(i + 1).padStart(2, '0')}` }));
+    setup(many);
+    expect(within(screen.getByTestId('srs-left')).getAllByText('20')).toHaveLength(1);
+  });
+
+  it('speaks Arabic units on the buttons', () => {
+    useAppStore.setState({ language: 'ar' });
+    setup([word('v1', 'hello', 'A greeting')]);
+    fireEvent.click(screen.getByRole('button', { name: /اظهر الإجابة/ }));
+    expect(screen.getByTestId('srs-wait-3')).toHaveTextContent('10 د');
+    expect(screen.getByRole('button', { name: /^افتكرتها/ })).toBeInTheDocument();
   });
 });

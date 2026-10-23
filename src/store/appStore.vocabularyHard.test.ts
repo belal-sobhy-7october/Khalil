@@ -4,6 +4,7 @@ import { useAppStore } from './appStore';
 import type { Session } from '@supabase/supabase-js';
 import type { VocabularyItem } from '../types';
 import { mockSupabase } from '../test/mockSupabase';
+import { masteryOf, newCard } from '../lib/srs';
 
 // Mock Supabase
 vi.mock('../lib/supabase', async () => {
@@ -37,6 +38,11 @@ function createVocabularyReviewsQuery(resolve: { data: unknown[] | null; error: 
   };
 }
 
+function createUserKvQuery() {
+  return { upsert: vi.fn().mockResolvedValue({ data: null, error: null }) };
+}
+let userKv = createUserKvQuery();
+
 function createVocabularyItemsQuery(resolve: { data: unknown[] | null; error: unknown }) {
   return {
     update: vi.fn().mockReturnThis(),
@@ -47,9 +53,11 @@ function createVocabularyItemsQuery(resolve: { data: unknown[] | null; error: un
 
 beforeEach(() => {
   vi.clearAllMocks();
-  
+  userKv = createUserKvQuery();
+
   // Default successful responses
   mockSupabase.from.mockImplementation((table: string) => {
+    if (table === 'user_kv') return userKv;
     if (table === 'vocabulary_reviews') {
       return createVocabularyReviewsQuery({ data: [{ id: 'review-1' }], error: null });
     }
@@ -69,9 +77,10 @@ beforeEach(() => {
 });
 
 describe('submitVocabularyReview', () => {
-  it('updates counters correctly on correct answer', async () => {
+  it('a correct answer on a new word starts its learning steps and saves its schedule', async () => {
     const { submitVocabularyReview } = useAppStore.getState();
-    
+    const before = Date.now();
+
     await act(async () => {
       await submitVocabularyReview('vocab-1', 'correct', 1000);
     });
@@ -80,7 +89,11 @@ describe('submitVocabularyReview', () => {
     const item = state.vocabularyItems.find((i) => i.id === 'vocab-1');
     
     expect(item).toBeDefined();
-    expect(item!.masteryLevel).toBe(2); // 1 + 1
+    // Counted as Good: back in 10 minutes, still learning.
+    expect(item!.srs?.state).toBe(1);
+    expect(Date.parse(item!.srs!.due) - before).toBeGreaterThanOrEqual(10 * 60_000 - 1000);
+    expect(item!.masteryLevel).toBe(1);
+    expect(userKv.upsert).toHaveBeenCalledWith(expect.objectContaining({ key: 'srs:vocab-1', value: item!.srs }), { onConflict: 'user_id,key' });
     expect(item!.reviewCount).toBe(1);
     expect(item!.lapseCount).toBe(0);
     expect(item!.correctStreak).toBe(1);
@@ -99,7 +112,9 @@ describe('submitVocabularyReview', () => {
     const item = state.vocabularyItems.find((i) => i.id === 'vocab-1');
     
     expect(item).toBeDefined();
-    expect(item!.masteryLevel).toBe(0); // max(1 - 1, 0)
+    // Counted as Again: back in a minute.
+    expect(item!.masteryLevel).toBe(0);
+    expect(Date.parse(item!.srs!.due) - Date.now()).toBeLessThanOrEqual(60_000);
     expect(item!.reviewCount).toBe(1);
     expect(item!.lapseCount).toBe(1);
     expect(item!.correctStreak).toBe(0);
@@ -128,8 +143,10 @@ describe('submitVocabularyReview', () => {
   });
 
   it('increments correctStreak on consecutive correct answers', async () => {
+    // Reviewed three days ago under the old schedule (level 2: every 3 days), due again now.
+    const lastReviewedAt = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
     useAppStore.setState({
-      vocabularyItems: [createMockVocabularyItem({ correctStreak: 2, masteryLevel: 2 })],
+      vocabularyItems: [createMockVocabularyItem({ correctStreak: 2, masteryLevel: 2, reviewCount: 4, lastReviewedAt })],
     });
 
     const { submitVocabularyReview } = useAppStore.getState();
@@ -142,8 +159,22 @@ describe('submitVocabularyReview', () => {
     const item = state.vocabularyItems.find((i) => i.id === 'vocab-1');
     
     expect(item!.correctStreak).toBe(3);
-    expect(item!.masteryLevel).toBe(3); // 2 + 1
+    // Remembered after three days: it now lasts longer.
+    expect(item!.srs!.stability).toBeGreaterThan(3);
+    expect(item!.masteryLevel).toBeGreaterThanOrEqual(3);
     expect(item!.isHard).toBe(false); // auto-cleared since correctStreak >= 3
+  });
+
+  it('uses the grade the learner picked as is', async () => {
+    const picked = { ...newCard(new Date()), state: 2 as const, stability: 12, difficulty: 4, scheduled_days: 12, reps: 1, due: new Date(Date.now() + 12 * 86400000).toISOString(), last_review: new Date().toISOString() };
+
+    await act(async () => {
+      await useAppStore.getState().submitVocabularyReview('vocab-1', 'correct', 1000, picked);
+    });
+
+    const item = useAppStore.getState().vocabularyItems.find((i) => i.id === 'vocab-1')!;
+    expect(item.srs).toBe(picked);
+    expect(item.masteryLevel).toBe(masteryOf(picked));
   });
 
   it('rolls back local state on review insert failure', async () => {
@@ -213,6 +244,8 @@ describe('submitVocabularyReview', () => {
     const item = state.vocabularyItems.find((i) => i.id === 'vocab-1');
     
     expect(item!.masteryLevel).toBe(1); // unchanged
+    expect(item!.srs).toBeUndefined(); // schedule unchanged
+    expect(userKv.upsert).not.toHaveBeenCalled();
     expect(item!.reviewCount).toBe(1); // still increments
     expect(item!.lastResult).toBe('skipped');
     expect(item!.correctStreak).toBe(0); // unchanged

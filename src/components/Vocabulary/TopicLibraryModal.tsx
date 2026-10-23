@@ -201,9 +201,6 @@ export default function TopicLibraryModal({ onClose, onAdded }: TopicLibraryModa
                               <BookCheck size={11} /> {t('vocabulary.library.studied')}
                             </span>
                           )}
-                          {pack.fromCourse && (
-                            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-clay-soft/15 text-clay-soft" dir="auto">{t('vocabulary.library.fromCourse')}</span>
-                          )}
                           <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-ink/5 text-ink-light">{pack.level}</span>
                         </span>
                       </div>

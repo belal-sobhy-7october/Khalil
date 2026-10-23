@@ -49,6 +49,25 @@ self.addEventListener('fetch', (event) => {
   // Everything else (Supabase, dictionaries, YouTube…) goes to the network as usual.
 });
 
+// A notification click (e.g. "time to review your words") focuses Khalil, or
+// opens it, and tells it what to show.
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const open = event.notification.data?.open;
+  event.waitUntil(
+    (async () => {
+      const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+      const client = windows.find((c) => new URL(c.url).origin === self.location.origin);
+      if (client) {
+        await client.focus();
+        if (open) client.postMessage({ type: 'khalil:open', open });
+        return;
+      }
+      await self.clients.openWindow(open ? `/?open=${encodeURIComponent(open)}` : '/');
+    })()
+  );
+});
+
 /** The page itself: fresh from the network when online, the saved copy otherwise. */
 async function page(request) {
   try {

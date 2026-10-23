@@ -68,13 +68,24 @@ in `user_kv` (`sales-*` keys). Listening tasks link searches unless a video id i
 
 ## Learning Path (مسار التعلم)
 
-A 90-day English roadmap (`path`), open to every account and separate from Call Center Prep.
-`src/lib/learningPath.ts` builds the days from the topic lessons (`PATH_PHASES`: 18 topics, all eight
-course lessons plus ten others, four study days each, a review every 7th day, a final week) and the accent
-data in `englishStudy.ts`; it only reads them and never writes the word list. Progress and notes are one
-`user_kv` value (`learning-path`) keyed `day:taskId`, so once people have started, don't move tasks between
-days or reuse task ids: add new material as new ids. Task links open English hub sections by id
-(`pronunciation`, `reading`, `shadowing`). `flows.mjs` has a `learning-path` flow.
+A 90-day English roadmap, open to every account: the first tab of the English hub (`path`; the old
+`path` section redirects there). `src/lib/learningPath.ts` builds the days from the topic lessons
+(`PATH_PHASES`: 18 topics, four study days each, a review every 7th day, a final week) and from the hub:
+every day starts with the flashcard review, and `course` tasks take the next lesson of a hub section
+(`src/lib/hubLessons.ts`); a lesson finished there today ticks the task (`doneByHub`). Words reach the
+flashcards only through the "Add to my flashcards" button. Progress and notes are one `user_kv` value
+(`learning-path`) keyed `day:taskId`, so once people have started, don't move tasks between days or reuse
+task ids: add new material as new ids. `flows.mjs` has a `learning-path` flow.
+
+## Spaced repetition (flashcards)
+
+Reviews are scheduled with FSRS (`ts-fsrs`, Anki's algorithm) in `src/lib/srs.ts`: Again / Hard / Good /
+Easy with interval previews, learning steps 1m/10m, a daily new-word limit, hard words and leeches.
+Each word's state is a `user_kv` row `srs:<word id>` (`src/lib/srsSync.ts`, mirrored on the device) — no
+table change; `mastery_level` is still written (derived from the state) for the stars and Call Center's
+"known" counts. Words reviewed before FSRS are estimated from their old level (`legacyCard`). Settings are
+`srs-settings`; reminders (`src/lib/reviewReminder.ts`, `ReviewReminders` in `App.tsx`) notify while Khalil
+is open and offer a calendar event for when it's closed.
 
 ## Checks
 

@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { BookOpen, Headphones, Library, Mic2, PenLine, Repeat } from 'lucide-react';
+import { lazy, Suspense, useEffect, useState } from 'react';
+import { BookOpen, Headphones, Library, Mic2, PenLine, Repeat, Route } from 'lucide-react';
 import { useTranslation } from '../../i18n/useTranslation';
 import type { CourseSectionId } from '../../data/courses';
 import type { PracticeKind } from '../../lib/englishPractice';
@@ -9,11 +9,18 @@ import PronunciationReference from './PronunciationReference';
 import ReadingBook from './ReadingBook';
 import ShadowingMethod from './ShadowingMethod';
 import StudyTimer from './StudyTimer';
+import { ENGLISH_TAB_EVENT } from '../../lib/openReview';
 
-type Tab = 'vocabulary' | CourseSectionId;
+const LearningPathSection = lazy(() => import('../LearningPath/LearningPathSection'));
 
-/** The hub's sections, in study order. Names are English in both languages, as the owner asked. */
+type Tab = 'path' | 'vocabulary' | CourseSectionId;
+
+/**
+ * The hub's sections, in study order, after the learning path that draws on
+ * all of them. Names are English in both languages, as the owner asked.
+ */
 const TABS: Array<{ id: Tab; label: string; icon: typeof BookOpen }> = [
+  { id: 'path', label: 'Learning Path', icon: Route },
   { id: 'vocabulary', label: 'Vocabulary', icon: BookOpen },
   { id: 'pronunciation', label: 'Pronunciation & Accent', icon: Mic2 },
   { id: 'listening', label: 'Listening', icon: Headphones },
@@ -41,7 +48,7 @@ function readTab(): Tab {
   } catch {
     // ignore
   }
-  return 'vocabulary';
+  return 'path';
 }
 
 export default function EnglishHub() {
@@ -55,7 +62,18 @@ export default function EnglishHub() {
     } catch {
       // ignore
     }
+    window.scrollTo?.({ top: 0 });
   };
+
+  // Other parts of the app (a review reminder, the learning path) can open a tab.
+  useEffect(() => {
+    const onTab = (e: Event) => {
+      const next = (e as CustomEvent<string>).detail;
+      if (TABS.some((x) => x.id === next)) choose(next as Tab);
+    };
+    window.addEventListener(ENGLISH_TAB_EVENT, onTab);
+    return () => window.removeEventListener(ENGLISH_TAB_EVENT, onTab);
+  }, []);
 
   return (
     <div>
@@ -78,7 +96,11 @@ export default function EnglishHub() {
           ))}
         </div>
       </div>
-      {tab === 'vocabulary' ? (
+      {tab === 'path' ? (
+        <Suspense fallback={<div className="h-64" />}>
+          <LearningPathSection onOpenTab={choose} />
+        </Suspense>
+      ) : tab === 'vocabulary' ? (
         <VocabularySection />
       ) : (
         <div key={tab} className="max-w-6xl mx-auto p-6 space-y-6">

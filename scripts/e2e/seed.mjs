@@ -37,13 +37,13 @@ export function buildSeed() {
       todos.push({ id: uuid(eid++), user_id: USER_ID, text: `Task ${i}-${k}`, completed: i === 0 ? k === 0 : rand() < 0.7, priority: 'medium', gate: 'daily', date: dayStr(daysAgo(i)), sort_order: k, created_at: daysAgo(i).toISOString(), updated_at: daysAgo(i).toISOString() });
     }
   }
-  const vocabCats = [{ id: uuid(201), user_id: USER_ID, name: 'Call Center Interview', color: '#e8d5c4', icon: 'folder', created_at: daysAgo(10).toISOString(), updated_at: daysAgo(10).toISOString() }];
+  const vocabCats = [{ id: uuid(201), user_id: USER_ID, name: 'Shopping & Money', color: '#e8d5c4', icon: 'folder', created_at: daysAgo(10).toISOString(), updated_at: daysAgo(10).toISOString() }];
   const vocab = [
     ['Bargain', 'صفقة رابحة / بسعر مميز', 'This phone was a real bargain'],
     ['Ambitious', 'Having a strong wish to succeed.', 'He is ambitious and works hard'],
     ['Clumsy', 'Often dropping or breaking things.', 'I am clumsy and often drop things'],
     ['Compromise', 'An agreement where both sides accept less.', 'You need to compromise in marriage'],
-    ['Escalation', 'Passing a problem to a supervisor.', "If I can't solve it, I'll raise an escalation."],
+    ['Receipt', 'A piece of paper that shows what you paid.', 'Keep the receipt in case you need to return it.'],
   ].map(([word, definition, ex], i) => ({
     id: uuid(300 + i), user_id: USER_ID, category_id: i > 2 ? uuid(201) : null, word, type: 'word', definition, example_sentence: ex,
     mastery_level: i % 4, review_count: i, lapse_count: i === 2 ? 2 : 0, correct_streak: 0, is_hard: false,

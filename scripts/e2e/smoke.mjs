@@ -25,10 +25,11 @@ async function visit(browser, name, opts, interact) {
 }
 
 const browser = await chromium.launch(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {});
-const sections = ['todo', 'calendar', 'life', 'bookmarks', 'vocabulary', 'path', 'focus', 'wird', 'analytics', 'settings'];
+const sections = ['todo', 'calendar', 'life', 'bookmarks', 'vocabulary', 'focus', 'wird', 'analytics', 'settings'];
 for (const s of sections) await visit(browser, `ar-light-${s}`, { section: s });
-for (const tab of ['accent', 'shadowing', 'reading']) await visit(browser, `ar-light-english-${tab}`, { section: 'vocabulary', englishTab: tab });
-for (const s of ['path', 'focus', 'wird', 'analytics', 'settings']) await visit(browser, `en-dark-${s}`, { section: s, theme: 'dark', language: 'en' });
+for (const tab of ['path', 'vocabulary', 'pronunciation', 'listening', 'reading', 'grammar', 'shadowing']) await visit(browser, `ar-light-english-${tab}`, { section: 'vocabulary', englishTab: tab });
+await visit(browser, 'en-dark-english-path', { section: 'vocabulary', englishTab: 'path', theme: 'dark', language: 'en' });
+for (const s of ['focus', 'wird', 'analytics', 'settings']) await visit(browser, `en-dark-${s}`, { section: s, theme: 'dark', language: 'en' });
 const themes = [['downtown', 'dark'], ['pink', 'light'], ['andalusian', 'light'], ['autumn', 'dark'], ['black', 'dark'], ['wood', 'light'], ['pine', 'dark'], ['velvet', 'dark'], ['copper', 'light']];
 for (const [a, m] of themes) await visit(browser, `theme-${a}-${m}`, { section: 'analytics', theme: m, appearance: a });
 for (const [a, m] of themes.slice(0, 5)) await visit(browser, `theme-${a}-${m}-todo`, { section: 'todo', theme: m, appearance: a });

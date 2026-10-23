@@ -1,17 +1,15 @@
 import type { VocabularyItem, VocabularyReviewResult } from '../types';
+import { DEFAULT_SRS_SETTINGS, buildSession, cardOf, isDue, isHardItem, type SrsSettings } from '../lib/srs';
+
+export { SESSION_SIZE } from '../lib/srs';
 
 /**
- * Determines if a vocabulary item is considered "hard" based on:
- * - Manually marked as hard (isHard)
- * - lapseCount >= 2 (got wrong 2+ times total)
- * - lapseCount >= 1 AND correctStreak === 0 AND masteryLevel <= 1 (got wrong once, never got it right since, and low mastery)
+ * Whether a word is "hard": starred by you, a leech (forgotten again and
+ * again), or difficult and not yet stable in memory (lib/srs.ts). Words not
+ * yet reviewed with the spaced-repetition scheduler use the old rule: wrong
+ * twice, or wrong once and never right since at a low mastery level.
  */
-export function isHardWord(item: VocabularyItem): boolean {
-  if (item.isHard) return true;
-  if (item.lapseCount >= 2) return true;
-  if (item.lapseCount >= 1 && item.correctStreak === 0 && item.masteryLevel <= 1) return true;
-  return false;
-}
+export const isHardWord = (item: VocabularyItem): boolean => isHardItem(item);
 
 /**
  * Builds a review queue from vocabulary items.
@@ -105,23 +103,16 @@ export function applyReviewResult(
   return updated;
 }
 
-// Spaced repetition: days until a word is due again, by mastery level 0–5.
-// A word you know well comes back rarely; a new or shaky one comes back soon.
-export const REVIEW_INTERVAL_DAYS = [0, 1, 3, 7, 14, 30];
-const DAY_MS = 24 * 60 * 60 * 1000;
-
+/**
+ * Whether a word should be studied now: never studied yet, or due again by
+ * the spaced-repetition schedule (lib/srs.ts).
+ */
 export function isDueForReview(item: VocabularyItem, now: Date = new Date()): boolean {
-  if (!item.lastReviewedAt) return true;
-  const last = new Date(item.lastReviewedAt).getTime();
-  // Hard words come back every day.
-  const days = isHardWord(item) ? 1 : REVIEW_INTERVAL_DAYS[Math.min(Math.max(item.masteryLevel, 0), 5)];
-  return now.getTime() - last >= days * DAY_MS - 60 * 60 * 1000; // 1h slack so "tomorrow" isn't to-the-minute
+  const card = cardOf(item);
+  return card.state === 0 || isDue(card, now);
 }
 
-// Default session: due words, hard/weak first, capped so a big pack doesn't
-// turn into a 400-card session.
-export const SESSION_SIZE = 30;
-
-export function buildDueQueue(items: VocabularyItem[], now: Date = new Date()): VocabularyItem[] {
-  return buildReviewQueue(items.filter((i) => isDueForReview(i, now))).slice(0, SESSION_SIZE);
+/** Today's review session: due learning steps, due words, and new words up to the daily limit. */
+export function buildDueQueue(items: VocabularyItem[], now: Date = new Date(), settings: Pick<SrsSettings, 'newPerDay'> = DEFAULT_SRS_SETTINGS): VocabularyItem[] {
+  return buildSession(items, now, settings);
 }

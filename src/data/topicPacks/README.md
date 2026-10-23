@@ -31,7 +31,8 @@ Look at any pack in `course.ts` next to this guide before you write a new one.
 - `work.ts` · `talk.ts` · `life.ts` · `society.ts`: one file per group (`group: 'work' | 'talk' | 'life' | 'society'`).
   Add the new pack at the end of the right file's array.
 - `course.ts` is **only** for lessons taken from the owner's own course slides
-  (`fromCourse: true`). The test expects exactly 8 of them; if the owner sends a new course
+  (`fromCourse: true`, kept as provenance only — Khalil is for everyone, so the UI never
+  labels a lesson as "your course"). The test expects exactly 8 of them; if the owner sends a new course
   lesson, add it there and update that number in `topicPacks.test.ts`.
 - `index.ts` already joins every file into `TOPIC_PACKS`. A new file needs to be added there.
 - `legacy.ts` is history (old pack word lists). Don't touch it.

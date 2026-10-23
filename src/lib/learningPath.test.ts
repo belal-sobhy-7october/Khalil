@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { EMPTY_PATH_STATE, PATH_LENGTH, PATH_PHASES, buildPath, currentDay, dayProgress, packById, pathStats, scheduledDay, taskKey, type PathState } from './learningPath';
+import {
+  EMPTY_PATH_STATE, PATH_LENGTH, PATH_PHASES, buildPath, currentDay, dayProgress, doneByHub, packById, pathStats, scheduledDay, taskKey,
+  type PathState,
+} from './learningPath';
+import { getCourseSection } from '../data/courses';
+import { lessonsDoneOn, sectionOfLesson } from './hubLessons';
 
 const path = buildPath();
 
@@ -28,6 +33,14 @@ describe('learning path plan', () => {
     expect(path[0].tasks[0].kind).toBe('baseline');
     expect(path[88].tasks[0].kind).toBe('finalTest');
     expect(path[89].tasks[0].kind).toBe('reflection');
+  });
+
+  it('every day reviews the flashcards, and each topic takes a lesson from every hub section', () => {
+    for (const d of path) expect(d.tasks.some((t) => t.kind === 'review')).toBe(true);
+    for (const id of PATH_PHASES.flat()) {
+      const sections = path.filter((d) => d.packId === id).flatMap((d) => d.tasks.filter((t) => t.kind === 'course').map((t) => t.section));
+      expect(sections.sort()).toEqual(['grammar', 'listening', 'pronunciation', 'reading', 'shadowing']);
+    }
   });
 
   it('covers every word of a topic across its two word days', () => {
@@ -65,5 +78,37 @@ describe('learning path progress', () => {
     expect(scheduledDay('2026-10-20', '2026-10-20')).toBe(1);
     expect(scheduledDay('2026-10-20', '2026-10-29')).toBe(10);
     expect(scheduledDay('2026-10-20', '2027-06-01')).toBe(90);
+  });
+});
+
+describe('the hub counts for the path', () => {
+  const listening = getCourseSection('listening').sources[0].groups[0].lessons;
+  const grammar = getCourseSection('grammar').sources[0].groups[0].lessons;
+  const day1 = path[0];
+
+  it('knows which section a lesson is from', () => {
+    expect(sectionOfLesson(listening[0].id)).toBe('listening');
+    expect(sectionOfLesson(grammar[0].id)).toBe('grammar');
+    expect(sectionOfLesson('pod:123')).toBe('listening');
+    expect(sectionOfLesson('book:a-novel')).toBe('reading');
+    expect(sectionOfLesson('unknown')).toBeUndefined();
+    expect(lessonsDoneOn({ [listening[0].id]: '2026-10-22', [grammar[0].id]: '2026-10-21' }, '2026-10-22')).toEqual({ listening: [listening[0].id] });
+  });
+
+  it('a lesson finished today ticks the course task; cleared flashcards tick the review', () => {
+    const state: PathState = { ...EMPTY_PATH_STATE, startedAt: '2026-10-22' };
+    expect(doneByHub(day1, state, { lessons: { listening: [listening[0].id] }, reviewCleared: true })).toEqual([
+      { key: taskKey(1, 'review') },
+      { key: taskKey(1, 'lesson-listening'), lesson: listening[0].id },
+    ]);
+    expect(doneByHub(day1, state, { lessons: { grammar: [grammar[0].id] }, reviewCleared: false })).toEqual([]);
+  });
+
+  it('a lesson counts for one task only', () => {
+    const state: PathState = { ...EMPTY_PATH_STATE, startedAt: '2026-10-22', lessons: { [taskKey(1, 'lesson-listening')]: listening[0].id } };
+    expect(doneByHub(path[4], state, { lessons: { listening: [listening[0].id] }, reviewCleared: false })).toEqual([]);
+    expect(doneByHub(path[4], state, { lessons: { listening: [listening[0].id, listening[1].id] }, reviewCleared: false })).toEqual([
+      { key: taskKey(5, 'lesson-listening'), lesson: listening[1].id },
+    ]);
   });
 });

@@ -251,25 +251,17 @@ await flow('vocab-topic-library', { section: 'vocabulary', englishTab: 'vocabula
 });
 
 await flow('vocab-review-flashcards', { section: 'vocabulary', englishTab: 'vocabulary' }, async ({ page, backend, check }) => {
-  await page.getByRole('button', { name: 'Start Review', exact: true }).click();
-  const picker = page.getByRole('heading', { name: /practi|review|mode/i });
-  await visible(picker);
+  await page.getByTestId('review-panel').getByRole('button', { name: /^Review now/ }).click();
   const flash = page.getByRole('button', { name: /flashcard/i }).first();
   if (await visible(flash, 1500)) await flash.click();
-  const know = page.getByRole('button', { name: 'I know it' });
-  const next = page.getByRole('button', { name: 'Next (Enter)' });
   let rated = 0;
-  for (let i = 0; i < 20; i++) {
-    // The answer view animates out; a click that lands on the leaving button just retries the loop.
-    if (await next.isVisible()) await next.click({ timeout: 2000 }).catch(() => {});
-    else if (await visible(know, 1500)) {
-      const answered = await page
-        .getByRole('button', { name: rated % 2 ? "I don't know it" : 'I know it' })
-        .click({ timeout: 2000 })
-        .then(() => true, () => false);
-      if (answered) rated++;
-    } else break;
-    await page.waitForTimeout(250);
+  for (let i = 0; i < 60 && !(await page.getByText('Review Complete').isVisible().catch(() => false)); i++) {
+    await page.getByRole('button', { name: 'Show answer' }).click({ timeout: 2000 }).catch(() => {});
+    const answered = await page
+      .getByRole('button', { name: /^Good/ })
+      .click({ timeout: 2000 })
+      .then(() => true, () => false);
+    if (answered) rated++;
   }
   check(rated > 0, 'no flashcards to rate');
   check(await visible(page.getByText('Review Complete')), 'review did not reach the summary');
@@ -277,7 +269,7 @@ await flow('vocab-review-flashcards', { section: 'vocabulary', englishTab: 'voca
 });
 
 await flow('vocab-typing-practice', { section: 'vocabulary', englishTab: 'vocabulary' }, async ({ page, check }) => {
-  await page.getByRole('button', { name: 'Start Review', exact: true }).click();
+  await page.getByTestId('review-panel').getByRole('button', { name: /^Review now/ }).click();
   const typing = page.getByRole('button', { name: /type the word|typing|spell/i }).first();
   if (!check(await visible(typing), 'typing mode not offered')) return;
   await typing.click();
@@ -293,7 +285,7 @@ await flow('vocab-typing-practice', { section: 'vocabulary', englishTab: 'vocabu
 });
 
 await flow('vocab-upgrade-topics', { section: 'vocabulary', englishTab: 'vocabulary' }, async ({ page, backend, check, reload }) => {
-  // The seed's "Call Center Interview" topic holds words from the old pack.
+  // The seed's "Shopping & Money" topic holds words from the old pack (now the Shop Smart lesson).
   check(await visible(page.getByText(/new lesson method/)), 'upgrade banner not shown');
   await page.getByRole('button', { name: 'Review the update' }).click();
   const dialog = page.getByRole('dialog', { name: 'Update your topics to the new lessons' });
@@ -302,8 +294,8 @@ await flow('vocab-upgrade-topics', { section: 'vocabulary', englishTab: 'vocabul
   await dialog.getByRole('button', { name: /^Apply \d+ changes?$/ }).click();
   check(await visible(dialog.getByText(/Done — \d+ changes? applied/), 10000), 'upgrade did not finish');
   const words = backend.tables.vocabulary_items.map((w) => w.word.toLowerCase());
-  check(words.includes('customer satisfaction'), 'lesson words not added');
-  check(!words.includes('escalation'), 'old filler "escalation" not removed');
+  check(words.includes('consumerism'), 'lesson words not added');
+  check(!words.includes('receipt'), 'old filler "receipt" not removed');
   check(words.includes('compromise'), "the user's own word was removed");
   check(backend.tables.vocabulary_items.length > before, 'no words added');
   await page.keyboard.press('Escape');
@@ -349,26 +341,54 @@ await flow('bookmarks-add', { section: 'bookmarks' }, async ({ page, backend, ch
 });
 
 // ---------------------------------------------------------------- learning path
-await flow('learning-path', { section: 'path' }, async ({ page, backend, check, reload }) => {
+await flow('learning-path', { section: 'vocabulary', englishTab: 'path' }, async ({ page, backend, check, reload }) => {
   const saved = () => backend.tables.user_kv?.find((r) => r.key === 'learning-path')?.value;
-  const wordsBefore = JSON.stringify(backend.tables.vocabulary_items ?? []);
+  const wordCount = () => (backend.tables.vocabulary_items ?? []).length;
+  const wordsBefore = wordCount();
+  check(await visible(page.getByRole('tab', { name: 'Learning Path', selected: true })), 'the path is not a tab of the English hub');
   await page.getByRole('button', { name: 'Start day 1' }).click();
   await page.waitForTimeout(400);
   check(saved()?.startedAt === today, `path start not saved: ${JSON.stringify(saved())}`);
   check(await visible(page.getByRole('heading', { level: 2, name: /Day 1/ })), 'day 1 not shown after starting');
-  // Tick every task of day 1.
+
+  // Words: they reach the flashcards only when asked.
+  await page.locator('[data-task="words-1"] [aria-expanded]').click();
+  check(wordCount() === wordsBefore, 'the path changed the word list before being asked');
+  await page.getByRole('button', { name: /Add to my flashcards/ }).click();
+  await page.waitForTimeout(800);
+  const added = wordCount() - wordsBefore;
+  check(added >= 5 && added <= 7, `adding the day's words added ${added}`);
+  check(backend.tables.vocabulary_categories?.some((c) => c.name === 'Small Talk'), 'words not filed under the topic');
+
+  // Review: the flashcards open in the path; ending the session ticks the task and saves each word's schedule.
+  await page.locator('[data-task="review"] [aria-expanded]').click();
+  await page.getByRole('button', { name: /^Start review/ }).click();
+  for (let i = 0; i < 60 && !(await page.getByText('Review Complete').isVisible().catch(() => false)); i++) {
+    await page.getByRole('button', { name: 'Show answer' }).click({ timeout: 2000 }).catch(() => {});
+    await page.getByRole('button', { name: /^Easy/ }).click({ timeout: 2000 }).catch(() => {});
+  }
+  check(await visible(page.getByText('Review Complete')), 'review session did not finish');
+  await page.getByRole('button', { name: 'Close' }).last().click();
+  await page.waitForTimeout(500);
+  check(saved()?.done?.['1:review'] === today, 'review task not ticked when the session ended');
+  const srsRows = (backend.tables.user_kv ?? []).filter((r) => r.key.startsWith('srs:'));
+  check(srsRows.length >= added, `spaced-repetition states saved for ${srsRows.length} words`);
+
+  // A course task names the next hub lesson and opens its section.
+  await page.locator('[data-task="lesson-listening"] [aria-expanded]').click();
+  check(await visible(page.locator('[data-task="lesson-listening"]').getByText(/Ibrahim Adel/)), 'listening task does not name its source');
+
+  // Tick the rest of day 1.
   const toggles = page.getByRole('button', { name: /^Mark as complete:/ });
-  const total = await toggles.count();
-  check(total >= 4, `day 1 has ${total} tasks`);
-  for (let i = 0; i < total; i++) {
+  for (let i = 0, n = await toggles.count(); i < n; i++) {
     await toggles.first().click();
     await page.waitForTimeout(150);
   }
   check(await visible(page.getByRole('status').filter({ hasText: 'Day 1 done' })), 'day-done banner not shown');
-  check(Object.keys(saved()?.done ?? {}).filter((k) => k.startsWith('1:')).length === total, 'ticked tasks not saved');
+
   // Write a note on day 2 and reload: progress and the note stay.
   await page.getByRole('button', { name: 'Start day 2' }).click();
-  await page.getByRole('button', { name: /^Grammar:/ }).click();
+  await page.locator('[data-task="grammar"] [aria-expanded]').click();
   await page.getByPlaceholder(/Write here/).fill('If I were you, I would talk to her.');
   await page.waitForTimeout(1200);
   check(Object.values(saved()?.notes ?? {}).includes('If I were you, I would talk to her.'), 'note not saved');
@@ -376,17 +396,66 @@ await flow('learning-path', { section: 'path' }, async ({ page, backend, check, 
   check(await visible(page.getByRole('heading', { level: 2, name: /Day 1/ })), 'after reload the day finished today should stay open');
   check(await visible(page.getByText('1/90', { exact: true })), 'days-done count lost after reload');
   await page.getByRole('button', { name: 'Start day 2' }).click();
-  await page.getByRole('button', { name: /^Grammar:/ }).click();
+  await page.locator('[data-task="grammar"] [aria-expanded]').click();
   check((await page.getByPlaceholder(/Write here/).inputValue()) === 'If I were you, I would talk to her.', 'note lost after reload');
   // Roadmap: jump to the final test day.
   await page.getByRole('button', { name: /^Day 89 — / }).click();
   check(await visible(page.getByText('Final speaking test')), 'roadmap day 89 does not show the final test');
-  check(JSON.stringify(backend.tables.vocabulary_items ?? []) === wordsBefore, 'the learning path changed the word list');
-  // The accent task leads to the English hub's Pronunciation & Accent section.
+  // Day 1's Listening lesson opens the hub's Listening section.
   await page.getByRole('button', { name: /^Day 1 — / }).click();
-  await page.locator('[data-task="accent"] [aria-expanded]').click();
-  await page.getByRole('button', { name: 'Open Pronunciation & Accent' }).click();
-  check(await visible(page.getByRole('tab', { name: 'Pronunciation & Accent', selected: true })), 'accent link did not open Pronunciation & Accent');
+  await page.locator('[data-task="lesson-listening"] [aria-expanded]').click();
+  await page.getByRole('button', { name: 'Open Listening' }).click();
+  check(await visible(page.getByRole('tab', { name: 'Listening', selected: true })), 'the listening task did not open Listening');
+});
+
+// ---------------------------------------------------------------- spaced repetition
+await flow('srs-review', { section: 'vocabulary', englishTab: 'vocabulary' }, async ({ page, backend, check, reload }) => {
+  const panel = page.getByTestId('review-panel');
+  check(await visible(panel), 'review panel not on the word list');
+  check(await visible(panel.getByText('5 new today')), 'new words not counted');
+  await panel.getByRole('button', { name: /^Review now/ }).click();
+  await page.getByRole('button', { name: /Flashcards/ }).first().click();
+  // Anki flow: the answer is hidden until asked for, then four grades with their intervals.
+  check(!(await page.getByRole('button', { name: /^Good/ }).count()), 'grades shown before recalling');
+  await page.getByRole('button', { name: 'Show answer' }).click();
+  check(await visible(page.getByRole('button', { name: /^Good\s*10m/ })), 'grade buttons do not show intervals');
+  await page.getByRole('button', { name: /^Again/ }).click();
+  await page.waitForTimeout(400);
+  const first = backend.tables.vocabulary_items.find((w) => w.last_result === 'incorrect');
+  check(first, 'the review was not recorded on the word');
+  const row = first && backend.tables.user_kv?.find((r) => r.key === `srs:${first.id}`);
+  check(row && row.value.state === 1, `schedule not saved: ${JSON.stringify(row?.value)}`);
+  // Finish the session (the forgotten word comes back within it).
+  for (let i = 0; i < 30 && !(await page.getByText('Review Complete').isVisible().catch(() => false)); i++) {
+    await page.getByRole('button', { name: 'Show answer' }).click({ timeout: 2000 }).catch(() => {});
+    await page.getByRole('button', { name: /^Good/ }).click({ timeout: 2000 }).catch(() => {});
+  }
+  check(await visible(page.getByText('Review Complete')), 'session did not end');
+  check(await visible(page.getByText('Missed Words')), 'the forgotten word is not listed');
+  await page.getByRole('button', { name: 'Close' }).last().click();
+  // Settings: daily new words and the reminder are saved per account.
+  await panel.getByRole('button', { name: 'Review settings' }).click();
+  await page.getByLabel('New words per day').selectOption('10');
+  await page.waitForTimeout(400);
+  check(backend.tables.user_kv?.find((r) => r.key === 'srs-settings')?.value?.newPerDay === 10, 'settings not saved');
+  check(await visible(page.getByRole('link', { name: 'Add to Google Calendar' })), 'calendar reminder link missing');
+  await reload();
+  check(await visible(page.getByTestId('review-panel')), 'panel gone after reload');
+  check(!(await page.getByTestId('review-panel').getByText('5 new today').count()), 'the session did not count after reload');
+});
+
+await flow('review-nudge', { section: 'todo' }, async ({ page, backend, check, reload }) => {
+  // A word reviewed ten days ago at level 2 is due again.
+  const word = backend.tables.vocabulary_items[1];
+  Object.assign(word, { mastery_level: 2, review_count: 3, last_reviewed_at: new Date(Date.now() - 10 * 86400000).toISOString() });
+  await reload();
+  const nudge = page.getByTestId('review-nudge');
+  check(await visible(nudge), 'no review reminder on the day page');
+  check(await page.locator('aside nav button', { hasText: 'Learn English' }).locator('[title="Words due: 1"]').count(), 'no due badge in the sidebar');
+  await nudge.getByRole('button', { name: 'Review' }).click();
+  // Straight into the flashcards: 4 new words and the 1 due for review.
+  check(await visible(page.getByRole('button', { name: 'Show answer' })), 'the reminder did not open the review');
+  check(/^4\s*0\s*1/.test((await page.getByTestId('srs-left').textContent()) ?? ''), `session counts: ${await page.getByTestId('srs-left').textContent()}`);
 });
 
 // ---------------------------------------------------------------- navigation

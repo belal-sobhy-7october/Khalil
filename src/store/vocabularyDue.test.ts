@@ -29,8 +29,14 @@ describe('isDueForReview', () => {
 });
 
 describe('buildDueQueue', () => {
+  it('starts at most the daily number of new words', () => {
+    const many = Array.from({ length: 100 }, (_, i) => item({ id: `i${i}`, reviewCount: 0, lastReviewedAt: undefined }));
+    expect(buildDueQueue(many, now)).toHaveLength(20);
+    expect(buildDueQueue(many, now, { newPerDay: 5 })).toHaveLength(5);
+  });
+
   it('caps a session', () => {
-    const many = Array.from({ length: 100 }, (_, i) => item({ id: `i${i}`, lastReviewedAt: undefined }));
+    const many = Array.from({ length: 100 }, (_, i) => item({ id: `i${i}`, masteryLevel: 1, lastReviewedAt: daysAgo(2) }));
     expect(buildDueQueue(many, now)).toHaveLength(SESSION_SIZE);
   });
 });

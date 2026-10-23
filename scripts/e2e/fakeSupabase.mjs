@@ -1,6 +1,6 @@
 // A small in-memory stand-in for Supabase (auth + PostgREST) used by the E2E
 // scripts. Writes are kept per browser context, so a reload shows what the app
-// saved. Supports the subset of PostgREST the app uses: eq/gte/lte filters,
+// saved. Supports the subset of PostgREST the app uses: eq/gte/lte/like filters,
 // order, limit/offset, single objects, insert, upsert (on_conflict), update
 // and delete.
 import crypto from 'node:crypto';
@@ -50,6 +50,12 @@ function applyFilters(rows, params) {
         case 'lt': return compare(v, value) < 0;
         case 'is': return v === value;
         case 'in': return value.replace(/^\(|\)$/g, '').split(',').map((s) => s.replace(/^"|"$/g, '')).includes(String(v));
+        case 'like':
+        case 'ilike': {
+          // PostgREST takes * (or %) as the wildcard.
+          const re = new RegExp(`^${String(value).replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/[*%]/g, '.*')}$`, op === 'ilike' ? 'i' : '');
+          return re.test(String(v ?? ''));
+        }
         default: throw new Error(`fake supabase: unsupported filter ${op}`);
       }
     });

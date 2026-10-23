@@ -76,3 +76,16 @@ describe('planTopicUpgrade', () => {
     expect(hasUpgrade(plan)).toBe(false);
   });
 });
+
+describe('call center topics', () => {
+  it('have no lesson in the general library (an interview there is not a job interview)', () => {
+    expect(lessonForTopicName('Call Center Interview')).toBeUndefined();
+    expect(lessonForTopicName('Call Center: My words')).toBeUndefined();
+    expect(lessonForTopicName('كول سنتر')).toBeUndefined();
+    expect(lessonForTopicName('Interview')?.id).toBe('job-interview');
+  });
+
+  it('are not in the Topic Library', () => {
+    expect(TOPIC_PACKS.some((p) => /call ?cent/i.test(`${p.id} ${p.title} ${p.description}`))).toBe(false);
+  });
+});

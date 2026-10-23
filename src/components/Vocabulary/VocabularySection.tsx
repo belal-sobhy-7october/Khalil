@@ -19,6 +19,9 @@ import TopicChallenge from './TopicChallenge';
 import CheckMeaningsModal from './CheckMeaningsModal';
 import UpgradeTopicsModal from './UpgradeTopicsModal';
 import { hasUpgrade, planTopicUpgrade } from '../../lib/topicUpgrade';
+import ReviewPanel from './ReviewPanel';
+import { OPEN_REVIEW_EVENT, clearPendingReview, hasPendingReview } from '../../lib/openReview';
+import { useSrsSettings } from '../../lib/useSrsSettings';
 
 const UPGRADE_DISMISSED_KEY = 'khalil-topic-upgrade-dismissed';
 import { hasArabicDefinition } from '../../lib/arabicText';
@@ -35,7 +38,8 @@ export default function VocabularySection() {
 
   const [showForm, setShowForm] = useState(false);
   const [showCategories, setShowCategories] = useState(false);
-  const [showReview, setShowReview] = useState(false);
+  // A reminder or the day's page can ask for the review before this page opens.
+  const [showReview, setShowReview] = useState(hasPendingReview);
   const [showImport, setShowImport] = useState(false);
   const [showLibrary, setShowLibrary] = useState(false);
   const [showQuickAdd, setShowQuickAdd] = useState(false);
@@ -73,7 +77,20 @@ export default function VocabularySection() {
   const [pickerIds, setPickerIds] = useState<string[] | null>(null);
   const [typingMode, setTypingMode] = useState<'listen' | 'gap' | null>(null);
 
-  const openReview = (ids?: string[]) => setPickerIds(ids ?? buildDueQueue(vocabularyItems).map((i) => i.id));
+  const [srsSettings] = useSrsSettings();
+  const openReview = (ids?: string[]) => setPickerIds(ids ?? buildDueQueue(vocabularyItems, new Date(), srsSettings).map((i) => i.id));
+
+  // "Review now" from a reminder or the day's page goes straight to the flashcards.
+  useEffect(() => {
+    clearPendingReview();
+    const open = () => {
+      clearPendingReview();
+      setReviewItemIds(undefined);
+      setShowReview(true);
+    };
+    window.addEventListener(OPEN_REVIEW_EVENT, open);
+    return () => window.removeEventListener(OPEN_REVIEW_EVENT, open);
+  }, []);
 
   const startMode = (mode: ReviewMode) => {
     const ids = pickerIds ?? undefined;
@@ -186,6 +203,12 @@ export default function VocabularySection() {
         </div>
       </div>
 
+      <ReviewPanel
+        onStart={() => openReview()}
+        onHard={() => openReview(buildReviewQueue(vocabularyItems, { onlyHard: true }).map((i) => i.id))}
+        hardCount={stats.hard}
+      />
+
       {upgradeAvailable && !upgradeDismissed && (
         <div className="mb-6 flex flex-wrap items-center gap-3 p-3 rounded-xl border border-clay-soft/40 bg-clay-soft/5">
           <RefreshCw size={18} className="text-clay-soft shrink-0" />
@@ -244,26 +267,6 @@ export default function VocabularySection() {
           <Filter size={18} />
           <span>{t('vocabulary.manageCategories')}</span>
         </button>
-        <button
-          onClick={() => {
-            openReview();
-          }}
-          className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
-        >
-          <span>{t('vocabulary.startReview')}</span>
-        </button>
-        {stats.hard > 0 && (
-          <button
-            onClick={() => {
-              const hardItems = buildReviewQueue(vocabularyItems, { onlyHard: true });
-              openReview(hardItems.map((i) => i.id));
-            }}
-            className="flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
-          >
-            <Flame size={18} />
-            <span>{t('vocabulary.reviewHardWords')}</span>
-          </button>
-        )}
         <button
           onClick={() => setShowImport(true)}
           className="flex items-center gap-2 px-4 py-2 bg-ink/5 text-ink rounded-lg hover:bg-ink/10 transition-colors"
@@ -488,6 +491,8 @@ export default function VocabularySection() {
 
       {showReview && (
         <FlashcardReview
+          // A new set of words (e.g. the missed ones again) starts a new session.
+          key={reviewItemIds?.join(',') ?? 'due'}
           onClose={() => {
             setShowReview(false);
             setReviewItemIds(undefined);
