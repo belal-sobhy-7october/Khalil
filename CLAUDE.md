@@ -21,7 +21,8 @@ network at all):
 - Topic packs are bundled data, so they work offline. Don't move them to the network.
 - With no internet, `App.tsx` opens with the session saved on the device instead of waiting
   for supabase-js to fail refreshing the token.
-- `scripts/e2e/offline.mjs` checks all of this against a production build.
+- `scripts/e2e/offline.mjs` checks all of this against a production build, on a desktop, two phones
+  (iPhone SE, Galaxy S24) and a tablet (iPad Mini) with touch (`--device` picks others).
 
 ## Learn Languages and Learn Skills
 
