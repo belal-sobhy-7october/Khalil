@@ -23,6 +23,17 @@ network at all):
   for supabase-js to fail refreshing the token.
 - `scripts/e2e/offline.mjs` checks all of this against a production build.
 
+## Learn Languages and Learn Skills
+
+Two sections in the sidebar hold the learning parts of Khalil, open to every account:
+**Learn Languages** (`languages`: English, plus ten languages marked Soon) and **Learn Skills**
+(`skills`: Call Center Prep and Sales Prep, plus 24 money-making skills marked Soon, nothing haram and
+no trading). `src/data/learnCatalog.ts` lists them: an item with a `section` opens that section (English
+is still `vocabulary`, then `callcenter` and `sales`), the rest are Soon. Names and one-line blurbs are
+`learn.*` keys in `translations.ts`, icons are in `src/components/Learn/icons.ts`. The sidebar marks the
+hub of the open section (`hubOf`), and each open section has a way back (`HubCrumb`, in `App.tsx`). To
+open a Soon item, build its section and give it a `section` in the catalog.
+
 ## English hub sections (courses)
 
 The English hub's tabs after Vocabulary are study sections (Pronunciation & Accent, Listening,
@@ -37,15 +48,13 @@ Reading, Grammar, Shadowing), named in English in both languages on the owner's 
 - Progress (`english-course-progress`) and watch positions (`english-course-positions`) are
   per-user `user_kv` values; lessons resume where they stopped and tick themselves near the end.
 
-## Call Center Prep (owner-only)
+## Call Center Prep (in Learn Skills)
 
-A private section (`callcenter`): the owner's plan from B1 to C1 and an English call center job in
-Egypt. **Read `src/data/callCenter/README.md` before changing it**; Levels 4–5 are still to build,
+A section (`callcenter`), open to every account: a plan from B1 to C1 and an English call center job in
+Egypt, first written for the owner. **Read `src/data/callCenter/README.md` before changing it**; Levels 4–5 are still to build,
 and their detailed plan is in `src/data/callCenter/ROADMAP.md`.
 
-- Only the owner's account sees it: `src/lib/callCenter/access.ts` compares a salted SHA-256 of the
-  signed-in email. The repo is public, so never write the owner's email anywhere. For screenshots
-  and E2E runs, build with `VITE_CALL_CENTER_PREVIEW=1` (never on the deployed site).
+- The repo is public, so never write the owner's email anywhere.
 - Progress is in `user_kv` (`callcenter-*` keys); voice recordings stay on the device (IndexedDB).
 - Selecting English text anywhere in the app shows "Add to my words" (`SelectionWordMenu`, mounted in
   `App.tsx`); an element's `data-vocab-group` picks the flashcard group (the section uses My words).
@@ -57,14 +66,13 @@ and their detailed plan is in `src/data/callCenter/ROADMAP.md`.
 - The Library tab's playlists are in `src/data/callCenter/catalog.ts`;
   `node scripts/sync-courses.mjs callcenter` regenerates their episodes.
 
-## Sales Prep (owner-only)
+## Sales Prep (in Learn Skills)
 
-A private section (`sales`): sales, marketing and negotiation from zero, as knowledge for any job. Four
+A section (`sales`), open to every account: sales, marketing and negotiation from zero, as knowledge for any job. Four
 Knowledge books (sales, psychology, marketing, negotiation) are daily tasks in Levels 1–2 (Egyptian Arabic),
 then Level 3 is the same skills in English; Today shows only one day. Selling electronics (the owner's current
 job, learned inside the company) is an Extra tab outside the plan. **Read `src/data/sales/README.md`
-before changing it.** It uses the Call Center access check (same owner, same preview flag); progress is
-in `user_kv` (`sales-*` keys). Listening tasks link searches unless a video id is confirmed.
+before changing it.** Progress is in `user_kv` (`sales-*` keys). Listening tasks link searches unless a video id is confirmed.
 
 ## Learning Path (مسار التعلم)
 
@@ -99,7 +107,6 @@ npm run build
 End to end (Playwright, against a fake Supabase), with a dev server on port 5173
 (`VITE_SUPABASE_URL=http://localhost:54321 VITE_SUPABASE_ANON_KEY=fake npx vite --port 5173`):
 `node scripts/e2e/smoke.mjs http://localhost:5173 <dir>` (every section, both languages and themes),
-`node scripts/e2e/flows.mjs …` (add, edit, delete, reload) and, with `VITE_CALL_CENTER_PREVIEW=1` on
-the dev server, `node scripts/e2e/callcenter.mjs …` (every tab, and progress kept after a reload) and
-`node scripts/e2e/sales.mjs …` (the same for Sales Prep).
+`node scripts/e2e/flows.mjs …` (add, edit, delete, reload), `node scripts/e2e/callcenter.mjs …` (every
+tab, and progress kept after a reload) and `node scripts/e2e/sales.mjs …` (the same for Sales Prep).
 `scripts/e2e/offline.mjs` runs against a production build (see Offline).

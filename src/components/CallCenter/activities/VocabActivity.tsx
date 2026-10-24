@@ -208,7 +208,7 @@ export function VocabUnitStudy({ unit, onPracticed }: { unit: VocabUnit; onPract
         </div>
         {adding === 'failed' && <p className="text-xs text-red-600 dark:text-red-400">Couldn't add them. Check your internet and try again.</p>}
         <p className="text-xs text-ink-light">
-          They go into Learn English → Vocabulary under “{vocabCategory(unit)}”, and come back for review on the days they're due.
+          They go into Learn Languages → English → Vocabulary under “{vocabCategory(unit)}”, and come back for review on the days they're due.
         </p>
       </section>
 

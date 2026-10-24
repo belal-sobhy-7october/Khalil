@@ -1,6 +1,6 @@
 # Sales Prep (تعلّم السيلز)
 
-> **ملخص بالعربي:** قسم خاص بصاحب التطبيق: يتعلم سيلز وماركتينج وتفاوض من الصفر، معرفة تنفعه في أي شغل.
+> **ملخص بالعربي:** قسم جوه «تعلم المهارات» ومتاح لكل الأكونتات (اتعمل الأول لصاحب التطبيق): يتعلم سيلز وماركتينج وتفاوض من الصفر، معرفة تنفعه في أي شغل.
 > الأساس 4 كتب معرفة (السيلز، علم نفس القرار، الماركتينج، التفاوض) متوزعة كمهام يومية على المستوى 1 و 2
 > بالعربي، وبعدهم المستوى 3 نفس المهارات بالإنجليزي. بيع الأجهزة الإلكترونية (شغله الحالي، اللي هيتعلمه جوه
 > الشركة) في تبويب «إضافي» برا الخطة. مقسوم مستويات ← أسابيع ← أيام ← مهام، وتبويب «النهارده»
@@ -10,7 +10,8 @@ Read this before adding a week, a level or any content.
 
 ## 1. What it is
 
-A private section for the app's owner, a beginner in sales. The owner asked for a daily plan where they
+A section of Learn Skills (`skills`, see `src/data/learnCatalog.ts`), open to every account. It was written for
+the app's owner, a beginner in sales. The owner asked for a daily plan where they
 only think about today, with the whole roadmap, data and progress kept for them.
 
 | Tab | What's there |
@@ -23,8 +24,7 @@ only think about today, with the whole roadmap, data and progress kept for them.
 | إضافي: الأجهزة (Extra) | Selling electronics (`electronics.ts`), outside the plan: lessons, drills and role-plays to open before the first days in the job. Nothing here counts toward a level. |
 
 The chrome is Egyptian Arabic (`dir="rtl"`); English weeks render in `LangBlock lang="en"` (left to right).
-Visibility uses the Call Center check (`useCallCenterAccess`, `VITE_CALL_CENTER_PREVIEW=1` for previews):
-the same owner, the same rules (never write the owner's email anywhere).
+Every account sees it, from the Learn Skills page (never write the owner's email anywhere: the repo is public).
 
 ## 2. Where things are
 
@@ -125,6 +125,6 @@ npm run lint
 npx tsc -b --noEmit
 VITE_SUPABASE_URL=http://localhost:54321 VITE_SUPABASE_ANON_KEY=fake npx vitest run src/data/sales src/lib/sales src/components/Sales
 npm run build
-# with VITE_CALL_CENTER_PREVIEW=1 on the dev server:
+# with the dev server running:
 node scripts/e2e/sales.mjs http://localhost:5173 ./e2e-shots
 ```

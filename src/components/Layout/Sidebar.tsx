@@ -4,19 +4,17 @@ import {
   Heart,
   LogOut,
   Calendar,
-  BookOpen,
   Timer,
   Moon,
   BarChart3,
   Settings,
-  Headset,
-  TrendingUp,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from '../../i18n/useTranslation';
 import { supabase } from '../../lib/supabase';
 import { useDueSummary } from '../../lib/useDueSummary';
-import { useCallCenterAccess } from '../../lib/callCenter/access';
+import { hubOf } from '../../data/learnCatalog';
+import { HUB_ICONS } from '../Learn/icons';
 
 interface NavItem {
   id: string;
@@ -38,8 +36,9 @@ export default function Sidebar({
   onToggle: () => void;
 }) {
   const { t, isRTL } = useTranslation();
-  const callCenter = useCallCenterAccess();
   const { due } = useDueSummary();
+  const LanguagesIcon = HUB_ICONS.languages;
+  const SkillsIcon = HUB_ICONS.skills;
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -50,16 +49,14 @@ export default function Sidebar({
     { id: 'calendar', label: t('nav.calendar'), icon: <Calendar size={18} /> },
     { id: 'life', label: t('nav.life'), icon: <Heart size={18} /> },
     { id: 'bookmarks', label: t('nav.bookmarks'), icon: <Bookmark size={18} /> },
+    // English lives in Learn Languages, Call Center and Sales in Learn Skills (data/learnCatalog.ts).
     {
-      id: 'vocabulary',
-      label: t('nav.vocabulary'),
-      icon: <BookOpen size={18} />,
+      id: 'languages',
+      label: t('nav.languages'),
+      icon: <LanguagesIcon size={18} />,
       badge: due ? { count: due, label: t('vocabulary.srs.badge').replace('{count}', String(due)) } : undefined,
     },
-    // Only the owner's account sees Call Center Prep (see lib/callCenter/access.ts).
-    ...(callCenter ? [{ id: 'callcenter', label: t('nav.callCenter'), icon: <Headset size={18} /> }] : []),
-    // Sales Prep is owner-only too, behind the same check.
-    ...(callCenter ? [{ id: 'sales', label: t('nav.sales'), icon: <TrendingUp size={18} /> }] : []),
+    { id: 'skills', label: t('nav.skills'), icon: <SkillsIcon size={18} /> },
     { id: 'focus', label: t('nav.focus'), icon: <Timer size={18} /> },
     { id: 'wird', label: t('nav.wird'), icon: <Moon size={18} /> },
     { id: 'analytics', label: t('nav.analytics'), icon: <BarChart3 size={18} /> },
@@ -100,7 +97,7 @@ export default function Sidebar({
                 if (window.innerWidth < 1024) onToggle();
               }}
               className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
-                activeSection === item.id
+                (hubOf(activeSection) ?? activeSection) === item.id
                   ? 'bg-ink/8 text-ink border-s-2 border-clay-soft'
                   : 'text-ink-light hover:bg-ink/5 hover:text-ink'
               }`}

@@ -1,8 +1,7 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { useAppStore } from '../../store/appStore';
 import CallCenterPrep from './CallCenterPrep';
-import Sidebar from '../Layout/Sidebar';
 import { VOCAB_UNITS, vocabCategory } from '../../data/callCenter/vocab';
 import type { VocabularyCategory, VocabularyItem } from '../../types';
 
@@ -42,10 +41,6 @@ beforeEach(() => {
   kv.clear();
   localStorage.clear();
   useAppStore.setState({ language: 'en', session: session('someone@example.com') });
-});
-
-afterEach(() => {
-  vi.unstubAllEnvs();
 });
 
 describe('Call Center Prep', () => {
@@ -174,22 +169,6 @@ describe('Call Center Prep', () => {
     fireEvent.click(screen.getByRole('tab', { name: 'Interview' }));
     fireEvent.click(screen.getByRole('button', { name: /Tell me about yourself\./ }));
     expect(screen.getByRole('button', { name: /Show a model answer/ })).toBeInTheDocument();
-  });
-});
-
-describe('Call Center Prep in the sidebar', () => {
-  const nav = () => render(<Sidebar activeSection="todo" onSectionChange={() => {}} isOpen onToggle={() => {}} />);
-
-  it("isn't there for other accounts", async () => {
-    nav();
-    await new Promise((r) => setTimeout(r, 50));
-    expect(screen.queryByRole('button', { name: 'Call Center Prep' })).not.toBeInTheDocument();
-  });
-
-  it('is there in a preview build', () => {
-    vi.stubEnv('VITE_CALL_CENTER_PREVIEW', '1');
-    nav();
-    expect(screen.getByRole('button', { name: 'Call Center Prep' })).toBeInTheDocument();
   });
 });
 

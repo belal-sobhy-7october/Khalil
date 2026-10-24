@@ -1,8 +1,7 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { useAppStore } from '../../store/appStore';
 import SalesPrep from './SalesPrep';
-import Sidebar from '../Layout/Sidebar';
 import { PLAN_DAYS } from '../../data/sales/plan';
 
 vi.mock('../../lib/supabase', async () => {
@@ -37,10 +36,6 @@ beforeEach(() => {
   kv.clear();
   localStorage.clear();
   useAppStore.setState({ language: 'ar', session: session('someone@example.com') });
-});
-
-afterEach(() => {
-  vi.unstubAllEnvs();
 });
 
 describe('Sales Prep', () => {
@@ -140,21 +135,5 @@ describe('Sales Prep: knowledge first, electronics as an extra', () => {
     // The plan itself didn't move.
     fireEvent.click(screen.getByRole('tab', { name: 'النهارده' }));
     expect(screen.getByRole('heading', { name: 'أول يوم' })).toBeInTheDocument();
-  });
-});
-
-describe('Sales Prep in the sidebar', () => {
-  const nav = () => render(<Sidebar activeSection="todo" onSectionChange={() => {}} isOpen onToggle={() => {}} />);
-
-  it("isn't there for other accounts", async () => {
-    nav();
-    await new Promise((r) => setTimeout(r, 50));
-    expect(screen.queryByRole('button', { name: 'تعلّم السيلز' })).not.toBeInTheDocument();
-  });
-
-  it('is there in a preview build', () => {
-    vi.stubEnv('VITE_CALL_CENTER_PREVIEW', '1');
-    nav();
-    expect(screen.getByRole('button', { name: 'تعلّم السيلز' })).toBeInTheDocument();
   });
 });

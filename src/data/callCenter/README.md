@@ -1,6 +1,6 @@
 # Call Center Prep (التحضير لكول سنتر انجلش)
 
-> **ملخص بالعربي:** ده قسم خاص بصاحب التطبيق بس: خطة من B1 لـ C1 وشغلانة كول سنتر انجلش في مصر
+> **ملخص بالعربي:** ده قسم جوه «تعلم المهارات» ومتاح لكل الأكونتات (اتكتب الأول لصاحب التطبيق): خطة من B1 لـ C1 وشغلانة كول سنتر انجلش في مصر
 > (تيكنكال سبورت الأول، وجاهز لأي أكونت). مقسومة ليفلات ← أسابيع ← أيام ← مهام، ولكل أسبوع quiz
 > ولكل ليفل امتحان. المحتوى كله انجليزي، والعربي بس في الملاحظات الصغيرة (`tipAr` و `noteAr`).
 > كل حاجة جوه الكود فبتشتغل من غير نت، ما عدا الفيديوهات و YouGlish والـ AI.
@@ -12,7 +12,7 @@ in [`ROADMAP.md`](./ROADMAP.md).
 
 ## 1. What it is
 
-A private section for the app's owner: from barely B1 (rejected at the voice-note stage of a
+A section of Learn Skills, open to every account and first written for the app's owner: from barely B1 (rejected at the voice-note stage of a
 telecom tech-support hiring process) to C1 and "overqualified" for English call center jobs in
 Egypt. Tech support first, but ready for any account. Everything is free: AI feedback works by
 copying a prompt into ChatGPT or Gemini, and the level check is EF SET.
@@ -35,17 +35,12 @@ with short friendly Egyptian Arabic notes (`ArabicNote`).
 
 ## 2. Who can see it
 
-`src/lib/callCenter/access.ts` hashes the signed-in email (SHA-256 of a salt plus the trimmed,
-lower-cased email) and compares it with `OWNER_HASHES`. The sidebar item and the route in
-`App.tsx` both use `useCallCenterAccess()`, and the section is a lazy chunk.
+Every account. It was the owner's alone until it moved into **Learn Skills** (`skills`, see
+`src/data/learnCatalog.ts`): the sidebar has no item of its own; the Learn Skills page opens it, and a
+crumb above it (`HubCrumb`) leads back. The section is a lazy chunk.
 
-- **The repo is public: never write the owner's email in code, tests, docs or commits.** To let
-  another account in, compute its hash (`emailHash()` in the browser console or a Node one-liner)
-  and add the hash.
-- `VITE_CALL_CENTER_PREVIEW=1` shows the section to any account, for screenshots and E2E runs.
-  Never set it on the deployed site.
-- It's a visibility gate, not a secret: the content is in the repo and the built bundle. The
-  owner's data is per-user in `user_kv` (row-level security), and recordings never leave the device.
+- **The repo is public: never write the owner's email in code, tests, docs or commits.**
+- Everyone's data is per-user in `user_kv` (row-level security), and recordings never leave the device.
 
 ## 3. Where things are
 
@@ -67,7 +62,7 @@ lower-cased email) and compares it with `OWNER_HASHES`. The sidebar item and the
 | `resources.ts` | Hiring stages, targets, salaries, companies, where to apply, free tools, rejection debriefs. |
 | `catalog.ts` · `episodes.ts` · `library.ts` | The Library tab: playlists (import-free, read by the sync script), their generated episodes, and the section built from them. |
 | `index.ts` | Re-exports and `getX(id)` lookups. |
-| `src/lib/callCenter/` | Logic: `progress.ts` (saved data, plan progress), `quiz.ts` (building tests), `grading.ts`, `audio.ts` (pauses and pace), `recordings.ts` (IndexedDB), `voice.ts` (speech), `prompts.ts` (AI prompts), `vocab.ts` (word bank progress), `access.ts`. |
+| `src/lib/callCenter/` | Logic: `progress.ts` (saved data, plan progress), `quiz.ts` (building tests), `grading.ts`, `audio.ts` (pauses and pace), `recordings.ts` (IndexedDB), `voice.ts` (speech), `prompts.ts` (AI prompts), `vocab.ts` (word bank progress). |
 | `src/components/CallCenter/` | The UI: `CallCenterPrep.tsx` (shell and tabs), one view per tab, `TaskCard.tsx` and `activities/` (one per task kind), `TestRunner.tsx` and `testItems.tsx`. |
 
 ## 4. The plan
