@@ -47,14 +47,14 @@ export const LIFE_PACKS: TopicPack[] = [
     `
 n | itinerary | A plan of a journey, including the places you will visit and when. | Our itinerary includes three days in Luxor and two in Aswan.
 n | layover | A short stop between two flights on a long journey. | We had a six-hour layover in Dubai.
-n | accommodation | A place to stay, such as a hotel or an apartment. | Accommodation in the city centre is very expensive.
-n | destination | The place someone is travelling to. | Sharm El Sheikh is a popular holiday destination.
+n | accommodation | A place to stay, such as a hotel or an apartment. | Accommodation in the city center is very expensive.
+n | destination | The place someone is traveling to. | Sharm El Sheikh is a popular vacation destination.
 n | sightseeing | Visiting interesting places as a tourist. | We spent the whole day sightseeing in Istanbul.
 n | jet lag | Feeling tired and confused after a long flight to a different time zone. | I couldn't sleep for two days because of jet lag.
 adj | breathtaking | Extremely beautiful or impressive. | The view from the mountain was breathtaking.
 n | souvenir | Something you buy or keep to remember a place you visited. | I brought back a small souvenir from Paris.
-n | budget travel | Travelling in a cheap way, spending as little money as possible. | Hostels and buses make budget travel easy.
-n | local cuisine | The typical food of a place. | Trying the local cuisine is my favourite part of travelling.
+n | budget travel | Traveling in a cheap way, spending as little money as possible. | Hostels and buses make budget travel easy.
+n | local cuisine | The typical food of a place. | Trying the local cuisine is my favorite part of traveling.
 pv | set off | To start a journey. | We set off at 5 a.m. to avoid the traffic.
 i | off the beaten track | Far away from the places most tourists visit. | We found a lovely village off the beaten track.
 `
@@ -90,7 +90,7 @@ i | off the beaten track | Far away from the places most tourists visit. | We fo
         'Do you prefer trying new dishes or ordering what you know?',
       ],
       task: {
-        prompt: 'Describe your favourite dish.',
+        prompt: 'Describe your favorite dish.',
         points: [
           'Its main ingredients (a few / a little / plenty of)',
           'How it tastes',
@@ -99,11 +99,11 @@ i | off the beaten track | Far away from the places most tourists visit. | We fo
         ],
       },
       paragraph:
-        "On Fridays, we usually eat out. Last week, I made a reservation at a small Lebanese restaurant. Their cuisine is simple, but the ingredients are always fresh. We ordered a few savoury starters and a little hummus to share. The grilled chicken looked mouth-watering, and the portions were huge. My friend is vegetarian, and luckily there were plenty of options for her. The soup was a bit bland, but everything else was perfect. We couldn't finish, so we took the leftovers home. Next time, we'll just grab a bite before the cinema.",
+        "On Fridays, we usually eat out. Last week, I made a reservation at a small Lebanese restaurant. Their cuisine is simple, but the ingredients are always fresh. We ordered a few savoury starters and a little hummus to share. The grilled chicken looked mouth-watering, and the portions were huge. My friend is vegetarian, and luckily there were plenty of options for her. The soup was a bit bland, but everything else was perfect. We couldn't finish, so we took the leftovers home. Next time, we'll just grab a bite before the movie.",
     },
     `
 n | cuisine | A style of cooking, especially of a particular country or region. | Egyptian cuisine uses a lot of beans and spices.
-adj | bland | Having very little flavour. | The soup was bland, so I added some salt.
+adj | bland | Having very little flavor. | The soup was bland, so I added some salt.
 adj | savoury | Salty or spicy rather than sweet. | I prefer savoury snacks to sweet ones.
 n | portion | The amount of food served to one person. | The portions here are huge.
 n | ingredient | One of the foods that are used to make a dish. | Fresh ingredients make all the difference.
@@ -241,7 +241,7 @@ i | glued to the screen | Watching or using a screen with all your attention for
       emoji: '🏙️',
       warmUp: [
         'Would you rather live in the middle of Cairo or in a quiet village?',
-        'What do you like most and least about your neighbourhood?',
+        'What do you like most and least about your neighborhood?',
       ],
       grammar: {
         title: 'Preferences: would rather, prefer, would prefer',
@@ -276,7 +276,7 @@ i | glued to the screen | Watching or using a screen with all your attention for
     },
     `
 adj | crowded | Full of people. | The metro is so crowded in the morning that you can't move.
-n | rush hour | The time of day when roads and trains are busiest because people are travelling to or from work. | I try not to drive during rush hour.
+n | rush hour | The time of day when roads and trains are busiest because people are traveling to or from work. | I try not to drive during rush hour.
 n | pollution | Dirty air, water or land, caused by people. | Air pollution in big cities causes breathing problems.
 n | cost of living | The amount of money you need for basic things such as food, rent and transport. | The cost of living in the capital keeps rising.
 adj | rural | Connected with the countryside, not with towns. | Many rural areas still don't have good internet.
@@ -294,13 +294,13 @@ i | the hustle and bustle | The noise and busy activity of a crowded place. | I 
     {
       id: 'home-and-neighbours',
       group: 'life',
-      title: 'Home & Neighbours',
-      description: 'Rent or buy, describe your flat, get things fixed and deal with noisy neighbours.',
+      title: 'Home & Neighbors',
+      description: 'Rent or buy, describe your apartment, get things fixed and deal with noisy neighbors.',
       level: 'B1',
       emoji: '🏠',
       warmUp: [
         'Describe the home you live in now in three words.',
-        'Do you know your neighbours well?',
+        'Do you know your neighbors well?',
       ],
       grammar: {
         title: 'have / get something done',
@@ -312,38 +312,38 @@ i | the hustle and bustle | The noise and busy activity of a crowded place. | I 
         tip: '“I fixed the sink” means you did it yourself; “I had the sink fixed” means someone did it for you.',
       },
       discussion: [
-        'Is it better to rent or to buy a flat today? Why?',
+        'Is it better to rent or to buy an apartment today? Why?',
         'What makes a good landlord, and what makes a good tenant?',
         'What would you have done to your home if you had the money?',
-        'Have you ever had a problem with noisy neighbours? What did you do?',
-        'Which is more important: a spacious flat or a good neighbourhood?',
+        'Have you ever had a problem with noisy neighbors? What did you do?',
+        'Which is more important: a spacious apartment or a good neighborhood?',
         'What do you do to make guests feel at home?',
       ],
       task: {
         prompt: 'Describe your dream home.',
         points: [
-          'Where it is and what the neighbourhood is like',
+          'Where it is and what the neighborhood is like',
           'The rooms, and how spacious it is',
           'Two things you would have done to it (have something done)',
-          'What your neighbours would be like',
+          'What your neighbors would be like',
           'Use at least 4 new words',
         ],
       },
       paragraph:
-        "Last month, we moved into a new flat in a quiet neighbourhood. It's spacious and bright, but it isn't furnished, so we've spent a lot on furniture. Our landlord is very kind. When we found a leak in the bathroom, he had it fixed the next day. We paid a deposit of two months' rent, and the maintenance fees are reasonable. Next year, we're going to have the kitchen renovated. Our neighbours aren't noisy at all. On our first day, they brought us dinner and told us to make ourselves at home.",
+        "Last month, we moved into a new apartment in a quiet neighborhood. It's spacious and bright, but it isn't furnished, so we've spent a lot on furniture. Our landlord is very kind. When we found a leak in the bathroom, he had it fixed the next day. We paid a deposit of two months' rent, and the maintenance fees are reasonable. Next year, we're going to have the kitchen renovated. Our neighbors aren't noisy at all. On our first day, they brought us dinner and told us to make ourselves at home.",
     },
     `
-n | landlord | A person who owns a flat or a house and rents it to other people. | My landlord wants to raise the rent again.
-n | tenant | A person who pays rent to live in a flat or a house. | The tenants upstairs are always moving furniture at night.
-n | rent | The money you pay regularly to live in a place that you don't own. | Rent is cheaper outside the city centre.
+n | landlord | A person who owns an apartment or a house and rents it to other people. | My landlord wants to raise the rent again.
+n | tenant | A person who pays rent to live in an apartment or a house. | The tenants upstairs are always moving furniture at night.
+n | rent | The money you pay regularly to live in a place that you don't own. | Rent is cheaper outside the city center.
 n | deposit | Money you pay when you start renting, which you get back if you don't damage anything. | We paid two months' rent as a deposit.
-adj | furnished | (Of a flat or house) already having furniture in it. | We rented a furnished flat, so we didn't need to buy anything.
+adj | furnished | (Of an apartment or house) already having furniture in it. | We rented a furnished apartment, so we didn't need to buy anything.
 adj | spacious | Large, with a lot of space inside. | The living room is bright and spacious.
-n | neighbourhood | An area of a town and the people who live there. | It's a quiet neighbourhood with lots of trees.
+n | neighborhood | An area of a town and the people who live there. | It's a quiet neighborhood with lots of trees.
 n | maintenance | The work of keeping a building in good condition. | The building's maintenance fees went up this year.
 n | leak | A hole or crack that lets water or gas escape. | There's a leak under the kitchen sink.
-v | renovate | To repair and improve an old building or room. | They renovated the old flat and doubled its price.
-adj | noisy | Making a lot of loud or annoying sound. | Our neighbours are noisy, especially at weekends.
+v | renovate | To repair and improve an old building or room. | They renovated the old apartment and doubled its price.
+adj | noisy | Making a lot of loud or annoying sound. | Our neighbors are noisy, especially on weekends.
 pv | move in | To start living in a new home. | We moved in last week, and we're still unpacking.
 i | make yourself at home | Used to tell a guest to relax and feel comfortable. | Come in, sit down and make yourself at home!
 `
@@ -397,8 +397,8 @@ n | public transport | Buses, trains and the metro that everyone can use. | Cair
 n | commuter | A person who travels regularly between home and work. | Thousands of commuters use the metro every morning.
 n | fare | The money you pay for a journey by bus, train or taxi. | The metro fare went up last year.
 n | pedestrian | A person who is walking, not driving or riding. | Drivers must stop for pedestrians at crossings.
-n | speed limit | The fastest speed you are allowed to drive on a road. | The speed limit on this road is 80 kilometres an hour.
-n | driving licence | An official document that shows you are allowed to drive. | I got my driving licence when I was eighteen.
+n | speed limit | The fastest speed you are allowed to drive on a road. | The speed limit on this road is 80 kilometers an hour.
+n | driver's license | An official document that shows you are allowed to drive. | I got my driver's license when I was eighteen.
 n | ride-hailing app | A phone app you use to order a car and a driver. | I use a ride-hailing app when I'm late.
 adj | stuck | Unable to move. | Sorry, I'm stuck in traffic. I'll be twenty minutes late.
 n | breakdown | An occasion when a vehicle stops working. | We had a breakdown on the desert road at midnight.
@@ -448,7 +448,7 @@ i | in the nick of time | Just in time; at the last possible moment. | We reache
         ],
       },
       paragraph:
-        "When I was a child, I could play football for hours, but at university I stopped exercising and lost my stamina. Last year I decided to get fit again. Now I work out three times a week. I always start with a warm-up and stretch for ten minutes, because I don't want another knee injury. At first I couldn't run more than one kilometre, but last month I managed to run five without stopping, a new personal best! I'm quite competitive, so now I'm training for a race. No pain, no gain.",
+        "When I was a child, I could play football for hours, but in college I stopped exercising and lost my stamina. Last year I decided to get fit again. Now I work out three times a week. I always start with a warm-up and stretch for ten minutes, because I don't want another knee injury. At first I couldn't run more than one kilometer, but last month I managed to run five without stopping, a new personal best! I'm quite competitive, so now I'm training for a race. No pain, no gain.",
     },
     `
 n | workout | A period of physical exercise. | I do a 30-minute workout every morning.
@@ -533,7 +533,7 @@ i | kill time | To do something while you are waiting so that the time passes mo
       level: 'B1',
       emoji: '🌙',
       warmUp: [
-        'What is your favourite time of the year, and why?',
+        'What is your favorite time of the year, and why?',
         'How do you usually celebrate Eid?',
       ],
       grammar: {
@@ -560,19 +560,19 @@ i | kill time | To do something while you are waiting so that the time passes mo
           'What people do from suhoor until iftar',
           'Two time clauses (as soon as / until / while)',
           'The food and the decorations',
-          'Your favourite tradition',
+          'Your favorite tradition',
           'Use at least 4 new words',
         ],
       },
       paragraph:
-        "Ramadan is my favourite time of the year. The streets are full of lanterns and decorations, and there's a festive atmosphere every night. We fast from dawn until sunset, so we wake up early for suhoor. As soon as we hear the call to prayer at sunset, we break our fast with dates and water, and then we have a big iftar with the family. Many people donate food to those who need it. At the end of the month, we celebrate Eid with a feast. Everyone is welcome at my grandmother's table: the more the merrier.",
+        "Ramadan is my favorite time of the year. The streets are full of lanterns and decorations, and there's a festive atmosphere every night. We fast from dawn until sunset, so we wake up early for suhoor. As soon as we hear the call to prayer at sunset, we break our fast with dates and water, and then we have a big iftar with the family. Many people donate food to those who need it. At the end of the month, we celebrate Eid with a feast. Everyone is welcome at my grandmother's table: the more the merrier.",
     },
     `
 n | celebration | A special event or party for an important day or a success. | The wedding celebration lasted until 2 a.m.
 v | fast | To eat and drink nothing for a period, especially for religious reasons. | Muslims fast from dawn until sunset during Ramadan.
 n | iftar | The meal eaten after sunset to end the day's fast in Ramadan. | My grandmother invites the whole family for iftar on the first day.
-n | suhoor | The meal eaten before dawn during Ramadan. | We have yoghurt and beans for suhoor.
-n | decorations | Things that make a place look attractive for a special occasion. | The streets are full of lanterns and colourful decorations.
+n | suhoor | The meal eaten before dawn during Ramadan. | We have yogurt and beans for suhoor.
+n | decorations | Things that make a place look attractive for a special occasion. | The streets are full of lanterns and colorful decorations.
 n | lantern | A lamp with a cover, often used as a decoration in Ramadan. | My kids chose a new Ramadan lantern at the market.
 v | celebrate | To do something enjoyable for a special day or event. | We celebrate Eid with a big family breakfast.
 n | feast | A large special meal for many people. | On Eid al-Adha, families prepare a feast with meat.

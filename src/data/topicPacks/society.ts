@@ -144,7 +144,7 @@ i | take something with a pinch of salt | To not completely believe something. |
         'What are the advantages and disadvantages of fame?',
         'Do celebrities have a right to a private life?',
         'Should famous people be role models for their young fans?',
-        'Why do people idolise celebrities?',
+        'Why do people idolize celebrities?',
         'Is any publicity good publicity?',
         'If you had become famous at sixteen, how would your life have been different?',
       ],
@@ -162,7 +162,7 @@ i | take something with a pinch of salt | To not completely believe something. |
         "Some people dream of fame, but I'm not sure I would enjoy it. A few years ago, a girl from my university posted a funny video and became an overnight success. Within a month, she was a well-known face, and fans stopped her in the street. But the paparazzi followed her, and a small scandal about her family was everywhere. She lost her private life. She told me, “If I had known how hard it was, I wouldn't have posted that video.” Being in the public eye looks fun on the red carpet, but it has a price.",
     },
     `
-n | celebrity | A famous person, especially in entertainment or sport. | Celebrities can't go shopping without being recognised.
+n | celebrity | A famous person, especially in entertainment or sport. | Celebrities can't go shopping without being recognized.
 n | fame | The state of being known by a lot of people. | Fame came suddenly after her first song.
 n | fan | A person who admires and supports a famous person or a team. | Thousands of fans waited at the airport.
 n | paparazzi | Photographers who follow famous people to take pictures of them. | The paparazzi followed the actor everywhere.
@@ -171,7 +171,7 @@ n | scandal | Something shocking that makes people angry and is talked about pub
 adj | well-known | Known by a lot of people. | He's a well-known TV presenter in the Arab world.
 n | red carpet | The carpet that celebrities walk on at an important event. | Everyone was talking about her dress on the red carpet.
 n | private life | The part of your life connected with your family and relationships, not your work. | Famous people deserve to keep their private life private.
-v | idolise | To admire someone so much that you think they are perfect. | Many teenagers idolise footballers.
+v | idolize | To admire someone so much that you think they are perfect. | Many teenagers idolize footballers.
 n | overnight success | Someone or something that becomes famous or successful very suddenly. | She looked like an overnight success, but she had worked for ten years.
 pv | show off | To try to make people admire you, often in an annoying way. | Some celebrities just show off their cars and money online.
 i | in the public eye | Well known and often seen in the media. | Being in the public eye means people judge everything you do.
@@ -217,7 +217,7 @@ i | in the public eye | Well known and often seen in the media. | Being in the p
         ],
       },
       paragraph:
-        "Last year, I was working full-time and studying at night. I was exhausted, I couldn't sleep, and I had terrible anxiety before every exam. I didn't tell anyone, because I was worried about the stigma. One day, I was at the end of my tether, and I finally opened up to my brother. He listened and helped me see that I couldn't cope alone. I started therapy, and now I practise mindfulness every morning. Looking back, I should have asked for help much earlier. Self-care and a good support network are part of good mental health.",
+        "Last year, I was working full-time and studying at night. I was exhausted, I couldn't sleep, and I had terrible anxiety before every exam. I didn't tell anyone, because I was worried about the stigma. One day, I was at the end of my tether, and I finally opened up to my brother. He listened and helped me see that I couldn't cope alone. I started therapy, and now I practice mindfulness every morning. Looking back, I should have asked for help much earlier. Self-care and a good support network are part of good mental health.",
     },
     `
 n | mental health | The condition of your mind and emotions. | Young people talk about mental health more openly than their parents did.
@@ -335,7 +335,7 @@ i | it's not rocket science | It is not difficult to understand or to do. | Savi
         ],
       },
       paragraph:
-        "When I was younger, I thought success meant wealth: a big car, an expensive flat and a high salary. I worked so hard that I had no time for my family, and I still wasn't content. Then I lost my job. It felt like a failure, but it was such an important lesson. Now I have a job that pays less but is much more fulfilling, and it gives me a real sense of purpose. I try to feel gratitude for small things every day, and I don't need to live up to anyone's expectations. Money is important, but money can't buy happiness.",
+        "When I was younger, I thought success meant wealth: a big car, an expensive apartment and a high salary. I worked so hard that I had no time for my family, and I still wasn't content. Then I lost my job. It felt like a failure, but it was such an important lesson. Now I have a job that pays less but is much more fulfilling, and it gives me a real sense of purpose. I try to feel gratitude for small things every day, and I don't need to live up to anyone's expectations. Money is important, but money can't buy happiness.",
     },
     `
 n | success | Achieving the results that you wanted or hoped for. | For me, success means doing work I'm proud of.

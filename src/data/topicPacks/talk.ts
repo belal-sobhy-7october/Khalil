@@ -53,7 +53,7 @@ v | mingle | To move around and talk to different people at a social event. | At
 adj | approachable | Friendly and easy to talk to. | She smiles a lot, so people find her approachable.
 n | common ground | Interests, experiences or opinions that two people share. | We found some common ground: we both love football.
 n | follow-up question | A question that continues the topic and shows interest in the other person's answer. | Ask a follow-up question to keep the conversation going.
-adj | chatty | Liking to talk a lot in a friendly, informal way. | My new neighbour is very chatty.
+adj | chatty | Liking to talk a lot in a friendly, informal way. | My new neighbor is very chatty.
 n | compliment | Something nice you say to praise or admire someone. | She paid me a compliment on my English.
 pv | run into | To meet someone by chance. | I ran into my old teacher at the mall.
 i | break the ice | To make people feel more relaxed in a new situation, especially by starting a conversation. | He told a joke to break the ice.
@@ -134,7 +134,7 @@ i | agree to disagree | To accept that two people have different opinions and st
         points: [
           { form: '-ed adjective', use: 'How a person feels.', example: 'I’m frustrated. · She was bored.' },
           { form: '-ing adjective', use: 'What causes the feeling.', example: 'The traffic is frustrating. · The film was boring.' },
-          { form: 'make + someone + feel + adjective', use: 'Saying what causes a feeling.', example: 'Long queues make me feel frustrated.' },
+          { form: 'make + someone + feel + adjective', use: 'Saying what causes a feeling.', example: 'Long lines make me feel frustrated.' },
         ],
         tip: '“I’m boring” means other people find you boring! You probably mean “I’m bored”.',
       },
@@ -163,7 +163,7 @@ i | agree to disagree | To accept that two people have different opinions and st
 adj | outgoing | Friendly and enjoying meeting and talking to new people. | My sister is outgoing and makes friends everywhere.
 adj | reserved | Not showing your feelings or opinions easily; quiet. | He seems cold, but he's just reserved.
 adj | easy-going | Relaxed and not easily worried or annoyed. | My boss is easy-going, so the office is calm.
-adj | stubborn | Refusing to change your opinion or behaviour, even when there are good reasons to. | He's so stubborn — he never admits he's wrong.
+adj | stubborn | Refusing to change your opinion or behavior, even when there are good reasons to. | He's so stubborn — he never admits he's wrong.
 adj | considerate | Thinking about other people's feelings and needs. | It was considerate of you to call when you were late.
 adj | ambitious | Having a strong wish to be successful, powerful or rich. | She's ambitious and wants to run her own company.
 adj | sensitive | Easily hurt or upset by what other people say or do. | Don't joke about his weight; he's sensitive about it.
@@ -191,7 +191,7 @@ i | wear your heart on your sleeve | To show your feelings openly. | She wears h
         points: [
           { form: 'wish + past simple', use: 'You want the present to be different.', example: 'I wish my husband had more free time.' },
           { form: 'wish + past perfect', use: 'Regret about the past.', example: 'I wish we hadn’t argued last night.' },
-          { form: 'wish + someone + would + base verb', use: 'Annoyance: you want someone to change their behaviour.', example: 'I wish you would listen to me.' },
+          { form: 'wish + someone + would + base verb', use: 'Annoyance: you want someone to change their behavior.', example: 'I wish you would listen to me.' },
         ],
         tip: 'With “I”, use “were” in careful English: “I wish I were more patient.”',
       },
@@ -279,7 +279,7 @@ n | companionship | The pleasure of being with someone so that you are not alone
 adj | loyal | Always supporting your friends, even in difficult times. | A loyal friend defends you when you aren't there.
 adj | trustworthy | Able to be trusted to be honest and to keep secrets. | I only tell my secrets to people who are trustworthy.
 n | betrayal | Hurting someone who trusts you, for example by telling their secrets. | Sharing my private message with others felt like a betrayal.
-n | bond | A strong feeling of friendship or love that connects people. | Living together at university created a strong bond between us.
+n | bond | A strong feeling of friendship or love that connects people. | Living together in college created a strong bond between us.
 v | confide in | To tell someone your secrets or private feelings because you trust them. | I confide in my sister more than anyone else.
 p | fair-weather friend | A friend who is only there when things are going well. | When I lost my job, I found out who my fair-weather friends were.
 n | peer pressure | The influence that people of your age have on what you do. | Many teenagers start smoking because of peer pressure.
@@ -330,17 +330,17 @@ i | a friend in need is a friend indeed | A real friend is someone who helps you
         ],
       },
       paragraph:
-        "I grew up in a small town in the Delta, and my childhood was carefree. My parents were strict about school, but my grandmother used to spoil us with sweets. After school, my friends and I would play football in the street until it got dark. I was a mischievous kid, so my mother often told me off. I have a vivid memory of the day we got our first computer. Last week my cousins visited, and we spent hours reminiscing about the good old days.",
+        "I grew up in a small town in the Delta, and my childhood was carefree. My parents were strict about school, but my grandmother used to spoil us with candy. After school, my friends and I would play football in the street until it got dark. I was a mischievous kid, so my mother often told me off. I have a vivid memory of the day we got our first computer. Last week my cousins visited, and we spent hours reminiscing about the good old days.",
     },
     `
 n | upbringing | The way a child is raised and taught by their parents. | My grandparents had a big influence on my upbringing.
 adj | carefree | Without worries or responsibilities. | My childhood summers were carefree and full of games.
 adj | mischievous | Enjoying causing small trouble in a playful way. | I was a mischievous child who hid my brother's shoes.
 adj | strict | Making people follow rules and behave in a certain way. | My father was strict about homework, but kind about everything else.
-v | spoil | To give a child everything they want, so that they behave badly. | My grandmother spoiled us with sweets every Friday.
-n | childhood memory | Something you remember from when you were a child. | My favourite childhood memory is flying kites on the roof.
+v | spoil | To give a child everything they want, so that they behave badly. | My grandmother spoiled us with candy every Friday.
+n | childhood memory | Something you remember from when you were a child. | My favorite childhood memory is flying kites on the roof.
 adj | vivid | (Of a memory) very clear and detailed in your mind. | I have a vivid memory of my first day at school.
-v | reminisce | To talk or think with pleasure about things that happened in the past. | When my cousins visit, we reminisce about our holidays in the village.
+v | reminisce | To talk or think with pleasure about things that happened in the past. | When my cousins visit, we reminisce about our summer vacations in the village.
 n | innocence | The state of not knowing about the bad things in life. | Children lose their innocence too early these days.
 n | phase | A short period in someone's life when they behave in a particular way. | I went through a phase of wanting to be a footballer.
 pv | grow up | To change from a child into an adult; to spend your childhood somewhere. | I grew up in a small town near Tanta.
@@ -397,13 +397,13 @@ n | main character | The most important person in a story. | The main character 
 n | spoiler | Information that tells you what happens in a story before you see or read it. | Don't tell me the ending: no spoilers!
 n | twist | An unexpected change in a story. | I didn't see the twist at the end coming at all.
 n | cast | All the actors in a film, a play or a series. | The cast is amazing; every actor is perfect for their role.
-n | genre | A type of film, book or music, such as comedy or horror. | Thrillers are my favourite genre.
+n | genre | A type of film, book or music, such as comedy or horror. | Thrillers are my favorite genre.
 v | binge-watch | To watch many episodes of a series one after another. | I binge-watched the whole season in one weekend.
 adj | gripping | So exciting that it holds your attention completely. | It's a gripping novel; I read it in two days.
 adj | overrated | Thought to be better or more important than it really is. | Everyone loved that film, but I found it overrated.
 v | recommend | To tell someone that they would enjoy something or find it useful. | Can you recommend a good series to improve my English?
 n | sequel | A film or book that continues the story of an earlier one. | The sequel was even better than the first film.
-pv | turn out | To be discovered to be something, often in a surprising way. | The quiet neighbour turns out to be a spy.
+pv | turn out | To be discovered to be something, often in a surprising way. | The quiet neighbor turns out to be a spy.
 i | on the edge of your seat | Very excited and nervous because you want to know what happens next. | The last episode kept me on the edge of my seat.
 `
   ),
@@ -416,13 +416,13 @@ i | on the edge of your seat | Very excited and nervous because you want to know
       level: 'B1',
       emoji: '📅',
       warmUp: [
-        'What do you usually do with your friends at the weekend?',
+        'What do you usually do with your friends on the weekend?',
         'Is it hard for you to say no to an invitation?',
       ],
       grammar: {
         title: 'Making suggestions and answering them',
         points: [
-          { form: 'Let’s + base verb', use: 'A direct suggestion that includes you.', example: 'Let’s go to the cinema on Friday.' },
+          { form: 'Let’s + base verb', use: 'A direct suggestion that includes you.', example: 'Let’s go to the movies on Friday.' },
           { form: 'Why don’t we / Shall we + base verb?', use: 'A friendly suggestion as a question.', example: 'Why don’t we meet at the café instead?' },
           { form: 'How about / What about + V-ing?', use: 'Suggesting an idea or another option.', example: 'How about having dinner at my place?' },
           { form: 'I’d love to, but …', use: 'Saying no politely to an invitation.', example: 'I’d love to, but I’m working late that day.' },
@@ -434,7 +434,7 @@ i | on the edge of your seat | Very excited and nervous because you want to know
         'What is a polite way to decline an invitation in your culture?',
         'Do you like last-minute plans, or do you prefer to plan everything?',
         'How do you feel when a friend calls off plans at the last minute?',
-        'What is your favourite kind of get-together?',
+        'What is your favorite kind of get-together?',
         'When is it better to play it by ear?',
       ],
       task: {
@@ -452,14 +452,14 @@ i | on the edge of your seat | Very excited and nervous because you want to know
     },
     `
 n | invitation | A request to come to a party, a meal or an event. | Thanks for the invitation; I'd love to come.
-v | invite | To ask someone to come to an event or to your home. | We invited all our neighbours to the iftar.
+v | invite | To ask someone to come to an event or to your home. | We invited all our neighbors to the iftar.
 v | suggest | To give someone an idea or a plan to think about. | She suggested meeting earlier to avoid the traffic.
 v | accept | To say yes to an offer or an invitation. | I accepted the invitation even though I was tired.
 v | decline | To say no politely to an invitation or an offer. | I had to decline because I had an exam the next day.
 adj | free | Not busy; having no plans. | Are you free on Saturday evening?
 n | arrangement | A plan for a particular time, made with other people. | We have an arrangement to meet at the station at six.
 adj | last-minute | Done or decided just before something happens. | It was a last-minute plan, but it was the best night of the summer.
-n | get-together | An informal meeting or party with friends or family. | We're having a small get-together for my mum's birthday.
+n | get-together | An informal meeting or party with friends or family. | We're having a small get-together for my mom's birthday.
 pv | call off | To cancel an event or a plan. | They called off the trip because of the storm.
 pv | come over | To visit someone at their home. | Why don't you come over and watch the match with us?
 i | take a rain check | To say no to an invitation now but suggest doing it another time. | Can I take a rain check on dinner? I'm really tired tonight.
@@ -484,7 +484,7 @@ i | play it by ear | To decide what to do as things happen, without a fixed plan
           { form: 'look + adjective', use: 'How someone seems from their appearance.', example: 'You look tired. Did you sleep well?' },
           { form: 'look like + noun', use: 'Physical similarity to someone or something.', example: 'He looks like his father.' },
           { form: 'What is he / she like?', use: 'Asking about someone’s personality (and sometimes appearance).', example: 'What’s your new manager like? — She’s friendly but strict.' },
-          { form: 'opinion → size → age → colour', use: 'The usual order when you use several adjectives.', example: 'She has beautiful long black hair.' },
+          { form: 'opinion → size → age → color', use: 'The usual order when you use several adjectives.', example: 'She has beautiful long black hair.' },
         ],
         tip: '“What does he like?” asks about his hobbies; “What is he like?” asks about his personality.',
       },
@@ -507,7 +507,7 @@ i | play it by ear | To decide what to do as things happen, without a fixed plan
         ],
       },
       paragraph:
-        "My aunt Mona is in her early fifties, but she looks much younger. She's slim and of medium height, with curly grey hair that she never dyes. She's always elegant, even when she isn't dressed up. People say I'm the spitting image of her, and I can see the resemblance in old photos. But what is she like? She's warm, funny and very honest. She never judges people by their appearance, and that's why everyone in the family loves her.",
+        "My aunt Mona is in her early fifties, but she looks much younger. She's slim and of medium height, with curly gray hair that she never dyes. She's always elegant, even when she isn't dressed up. People say I'm the spitting image of her, and I can see the resemblance in old photos. But what is she like? She's warm, funny and very honest. She never judges people by their appearance, and that's why everyone in the family loves her.",
     },
     `
 n | appearance | The way someone looks. | Don't judge people by their appearance.
@@ -569,12 +569,12 @@ i | the spitting image of | Looking exactly like someone else. | Ahmed is the sp
     },
     `
 n | custom | Something that people in a society usually do in a particular situation. | It's a custom to visit relatives on the first day of Eid.
-n | etiquette | The rules of polite behaviour in a society or a group. | Business etiquette in Japan is very formal.
+n | etiquette | The rules of polite behavior in a society or a group. | Business etiquette in Japan is very formal.
 n | manners | Polite ways of behaving with other people. | My mother taught us good table manners.
 n | culture shock | A feeling of confusion when you visit or live in a very different culture. | I had culture shock during my first month in London.
 n | stereotype | A fixed, often unfair idea of what a type of person is like. | It's a stereotype that all Egyptians live near the pyramids.
 adj | offensive | Rude in a way that upsets people. | Some hand gestures are offensive in other countries.
-adj | open-minded | Willing to accept different ideas and ways of living. | Travelling made me more open-minded.
+adj | open-minded | Willing to accept different ideas and ways of living. | Traveling made me more open-minded.
 n | gesture | A movement of your hand or head that shows a meaning. | A thumbs-up is a friendly gesture in most places.
 v | greet | To say hello to someone or welcome them. | In Egypt, people often greet each other with a kiss on the cheek.
 n | hospitality | Being friendly and generous to guests. | Egyptian hospitality is famous: guests are always offered tea.

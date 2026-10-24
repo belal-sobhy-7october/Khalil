@@ -53,9 +53,9 @@ export const COURSE_PACKS: TopicPack[] = [
         "I use AI every day, and honestly, it's very time-saving. My phone uses facial recognition, and I ask a chatbot to check my emails for accuracy. Companies love AI because it improves efficiency and leads to cost reduction. But it's a double-edged sword. Many apps collect our data without real consent, and deepfakes make it hard to know what's true. AI is likely to take over some jobs, so we will all need to adapt. By 2035, I think AI will have changed the way we learn and work.",
     },
     `
-n | facial recognition | Technology that identifies a person by analysing their face. | Many smartphones use facial recognition to unlock the device.
+n | facial recognition | Technology that identifies a person by analyzing their face. | Many smartphones use facial recognition to unlock the device.
 n | efficiency | Doing a job well while wasting as little time, money or effort as possible. | Automation can save time and improve efficiency.
-v | adapt | To change your behaviour or methods so that you can deal successfully with a new situation. | Businesses need to adapt to new technology.
+v | adapt | To change your behavior or methods so that you can deal successfully with a new situation. | Businesses need to adapt to new technology.
 n | convenience | The quality of being easy and useful because it saves you time or effort. | One of the main advantages of AI is its convenience.
 n | accuracy | The quality of being correct and exact, without mistakes. | AI doesn't always guarantee accuracy.
 n | innovation | A new idea, method or product, or the process of creating new ones. | AI is driving innovation in many industries.
@@ -111,7 +111,7 @@ i | a double-edged sword | Something that has both good and bad effects. | AI is
         ],
       },
       paragraph:
-        "Last summer, I was cleaning my grandmother's house when I found a small wooden box. Inside, there was a silver ring that my great-grandfather had bought before he got married. It isn't expensive, but it has great sentimental value, so it's now a family heirloom. My grandmother says I take after him: I'm stubborn and I love old things. Holding the ring made me feel nostalgic about a time I never saw. I realised that our heritage is part of our identity, and I want to keep this legacy alive for my descendants.",
+        "Last summer, I was cleaning my grandmother's house when I found a small wooden box. Inside, there was a silver ring that my great-grandfather had bought before he got married. It isn't expensive, but it has great sentimental value, so it's now a family heirloom. My grandmother says I take after him: I'm stubborn and I love old things. Holding the ring made me feel nostalgic about a time I never saw. I realized that our heritage is part of our identity, and I want to keep this legacy alive for my descendants.",
     },
     `
 n | ancestor | A person in your family who lived a long time before you, such as your great-great-grandfather. | My ancestors were simple farmers.
@@ -185,7 +185,7 @@ n | resilience | The ability to recover quickly and keep going after something d
 n | milestone | An important event or stage in someone's life or progress. | Buying my first car was a huge milestone in my life.
 n | trigger | Something that makes a habit, feeling or reaction start. | Stress is my biggest trigger for eating junk food.
 pv | fall back into | To start doing something again, especially a bad habit that you had stopped. | When you feel stressed, it is very easy to fall back into your old bad habits.
-i | turn over a new leaf | To change your behaviour and start living or working in a better way. | He decided to turn over a new leaf and start studying hard.
+i | turn over a new leaf | To change your behavior and start living or working in a better way. | He decided to turn over a new leaf and start studying hard.
 `
   ),
   pack(
@@ -229,7 +229,7 @@ i | turn over a new leaf | To change your behaviour and start living or working 
         ],
       },
       paragraph:
-        "My flat used to be small and cramped, and clutter accumulated everywhere. I was almost a hoarder: I kept every box and every receipt. Last year, I tried living with fewer possessions. I stopped buying things I didn't need and gave away two bags of clothes. Some things were hard to part with, so I kept one keepsake from each trip. Now my room has a calm, simple aesthetic, and my consumption is much lower. Minimalism taught me that less is more.",
+        "My apartment used to be small and cramped, and clutter accumulated everywhere. I was almost a hoarder: I kept every box and every receipt. Last year, I tried living with fewer possessions. I stopped buying things I didn't need and gave away two bags of clothes. Some things were hard to part with, so I kept one keepsake from each trip. Now my room has a calm, simple aesthetic, and my consumption is much lower. Minimalism taught me that less is more.",
     },
     `
 n | clutter | A lot of objects in an untidy state, filling a space. | I need to clean my room because there is too much clutter.
@@ -257,7 +257,7 @@ i | less is more | Something simple is often better than something with too many
       fromCourse: true,
       warmUp: [
         'You just won $10 million. Do you have a moral obligation to give some to charity — or is every dollar 100% yours?',
-        'You see a stranger drop rubbish in the street. Do you speak up or walk past? What does your answer say about your values?',
+        'You see a stranger drop trash in the street. Do you speak up or walk past? What does your answer say about your values?',
       ],
       grammar: {
         title: 'Rules, expectations and warnings',
@@ -287,7 +287,7 @@ i | less is more | Something simple is often better than something with too many
         ],
       },
       paragraph:
-        "Rubbish in our streets is a problem we can't turn a blind eye to. Throwing litter is not allowed, and every citizen is supposed to keep the city clean. It's our civic duty. Some people say it isn't their job, but being a bystander is also a choice. Last month, our local council launched a new initiative to implement recycling in every school, and a businessman paid for it as an act of philanthropy. Leaders need to accept accountability and lead by example. If we want clean streets, we had better speak up now.",
+        "Trash in our streets is a problem we can't turn a blind eye to. Throwing litter is not allowed, and every citizen is supposed to keep the city clean. It's our civic duty. Some people say it isn't their job, but being a bystander is also a choice. Last month, our local council launched a new initiative to implement recycling in every school, and a businessman paid for it as an act of philanthropy. Leaders need to accept accountability and lead by example. If we want clean streets, we had better speak up now.",
     },
     `
 n | accountability | Being responsible for your decisions and actions and ready to explain them. | A good leader must accept accountability for their team's mistakes.
@@ -351,13 +351,13 @@ n | literacy | The ability to read and write, or basic knowledge and skill in a 
 v | evaluate | To judge how good, useful or successful something or someone is. | The teacher will carefully evaluate your speaking skills during tomorrow's presentation.
 n | comprehension | The ability to understand something, especially spoken or written language. | Reading English news articles every day will greatly improve your reading comprehension.
 v | absorb | To take in information and understand it fully. | It is hard to absorb so much information in just one lecture.
-n | assessment | A test or judgement of someone's knowledge or ability. | Your final assessment for this level will be a speaking test, not a written exam.
+n | assessment | A test or judgment of someone's knowledge or ability. | Your final assessment for this level will be a speaking test, not a written exam.
 n | syllabus | A list of the topics that a course will cover. | Please read the course syllabus carefully to know exactly what topics we will cover this month.
 n | alumni | The former students of a school, college or university. | The university invited its successful alumni to speak to the new students.
 n | methodology | The set of methods used in a particular activity, such as teaching or research. | Smart learning requires a completely different teaching methodology.
 adj | compulsory | Required by a rule or law; that you must do. | Math and science are compulsory subjects in high school.
 adj | intensive | Involving a lot of work or activity in a short time. | She took an intensive three-month course to learn German.
-pv | brush up on | To practise and improve a skill that you had before but have partly forgotten. | She needs to brush up on her grammar before the final exam.
+pv | brush up on | To practice and improve a skill that you had before but have partly forgotten. | She needs to brush up on her grammar before the final exam.
 i | learn by heart | To learn something so well that you can say it from memory. | We had to learn a long poem by heart for the literature class.
 `
   ),
@@ -403,7 +403,7 @@ i | learn by heart | To learn something so well that you can say it from memory.
         ],
       },
       paragraph:
-        "Good evening. Last night, a jewellery shop downtown was robbed. The windows were smashed, and a witness saw two men leaving the building at midnight. The scene is being examined by forensics experts, and a warrant has been issued to search a house nearby. One suspect has already been arrested and accused of the robbery. His attorney says he is innocent, but the prosecutor believes he won't get away with it. If he is found guilty, he could spend years behind bars.",
+        "Good evening. Last night, a jewelry shop downtown was robbed. The windows were smashed, and a witness saw two men leaving the building at midnight. The scene is being examined by forensics experts, and a warrant has been issued to search a house nearby. One suspect has already been arrested and accused of the robbery. His attorney says he is innocent, but the prosecutor believes he won't get away with it. If he is found guilty, he could spend years behind bars.",
     },
     `
 n | forensics | Scientific methods used to find out facts about a crime, such as fingerprints or DNA. | The police used forensics to find the criminal's fingerprints.
@@ -465,7 +465,7 @@ pv | get away with | To do something wrong and not be caught or punished for it.
         ],
       },
       paragraph:
-        "I used to be really brand-conscious. Whenever I felt stressed, I did some retail therapy and splurged on high-end trainers. One day I realised I had paid through the nose for things I never used. Now I compare prices before I buy. Local shops are slightly smaller, but their prices are way more affordable than big retailers. The more I shop around, the more money I save. I also avoid extravagant sales events, where popular items sell out in minutes and people buy counterfeit products by mistake.",
+        "I used to be really brand-conscious. Whenever I felt stressed, I did some retail therapy and splurged on high-end sneakers. One day I realized I had paid through the nose for things I never used. Now I compare prices before I buy. Local shops are slightly smaller, but their prices are way more affordable than big retailers. The more I shop around, the more money I save. I also avoid extravagant sales events, where popular items sell out in minutes and people buy counterfeit products by mistake.",
     },
     `
 adj | brand-conscious | Caring a lot about which brand you buy and preferring famous ones. | Many teenagers are highly brand-conscious and refuse to wear unbranded sneakers.

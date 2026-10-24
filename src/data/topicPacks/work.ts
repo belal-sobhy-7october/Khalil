@@ -42,7 +42,7 @@ export const WORK_PACKS: TopicPack[] = [
         ],
       },
       paragraph:
-        "Thank you for inviting me. My greatest strength is that I'm proactive: I enjoy finding problems before they happen. In my last job, I managed to reduce customer complaints by twenty percent, which is my biggest achievement. My weakness is that I sometimes take on too much, so I'm learning to prioritise. I'm reliable, and I have transferable skills from teaching, like presenting and organising. I have a one-month notice period, so I could hit the ground running in March. I look forward to hearing from you.",
+        "Thank you for inviting me. My greatest strength is that I'm proactive: I enjoy finding problems before they happen. In my last job, I managed to reduce customer complaints by twenty percent, which is my biggest achievement. My weakness is that I sometimes take on too much, so I'm learning to prioritize. I'm reliable, and I have transferable skills from teaching, like presenting and organizing. I have a one-month notice period, so I could hit the ground running in March. I look forward to hearing from you.",
     },
     `
 n | strength | A good quality or ability that makes someone effective. | My greatest strength is that I learn new systems quickly.
@@ -86,7 +86,7 @@ i | hit the ground running | To start a new job or activity quickly and successf
         'What makes a good subject line?',
         'How quickly should you get back to an urgent email?',
         'Is it rude not to answer a voicemail?',
-        'Do you check your work emails on holiday?',
+        'Do you check your work emails on vacation?',
       ],
       task: {
         prompt: 'Leave a voicemail for a colleague you couldn’t reach.',
@@ -164,7 +164,7 @@ v | prioritize | To decide which tasks are most important and do them first. | W
 v | delegate | To give part of your work or responsibility to someone else. | A good manager knows how to delegate tasks.
 n | colleague | A person that you work with. | My colleagues helped me a lot in my first week.
 n | feedback | Comments about how well someone is doing, given to help them improve. | My supervisor gives me feedback after every project.
-n | burnout | Extreme tiredness and loss of motivation caused by working too hard for too long. | After a year without a holiday, she suffered from burnout.
+n | burnout | Extreme tiredness and loss of motivation caused by working too hard for too long. | After a year without a vacation, she suffered from burnout.
 n | work-life balance | The right amount of time for work compared with time for family, friends and rest. | Working from home has improved my work-life balance.
 n | remote working | Working from home or another place instead of the office. | Remote working saves me two hours of commuting every day.
 adj | overwhelmed | Feeling that you have too much to deal with. | I felt overwhelmed in my first month because everything was new.
@@ -341,7 +341,7 @@ n | profit margin | The difference between what something costs to make and the 
 n | competitor | A company that sells similar products or services to the same customers. | Our main competitor is opening a shop on the same street.
 v | launch | To start selling a new product or service, or to start a new business. | We plan to launch the app in September.
 adj | risky | Involving the possibility that something bad will happen, such as losing money. | Quitting your job to start a business is risky, but it can pay off.
-pv | set up | To start a company or an organisation. | It took us three months to set up the company legally.
+pv | set up | To start a company or an organization. | It took us three months to set up the company legally.
 i | get off the ground | (Of a plan or business) to start successfully. | With a small loan from my father, the business finally got off the ground.
 `
   ),
@@ -408,7 +408,7 @@ i | meet someone halfway | To accept some of what someone wants so that you can 
       id: 'presentations',
       group: 'work',
       title: 'Presentations & Public Speaking',
-      description: 'Open, organise and close a talk, answer questions and control your nerves.',
+      description: 'Open, organize and close a talk, answer questions and control your nerves.',
       level: 'B2',
       emoji: '🎤',
       warmUp: [
@@ -444,7 +444,7 @@ i | meet someone halfway | To accept some of what someone wants so that you can 
         ],
       },
       paragraph:
-        "I used to have terrible stage fright. Before every presentation, my hands shook and my mind went blank. What changed everything was rehearsal. Now I practise my talk three times, out loud, in front of a mirror. I keep my slides simple and use one visual aid for each key point. I start with a question to engage the audience, and I speak slowly and confidently. At the end, I sum up the main ideas in one sentence. The Q&A session still makes me a little nervous, but I know I can get my point across.",
+        "I used to have terrible stage fright. Before every presentation, my hands shook and my mind went blank. What changed everything was rehearsal. Now I practice my talk three times, out loud, in front of a mirror. I keep my slides simple and use one visual aid for each key point. I start with a question to engage the audience, and I speak slowly and confidently. At the end, I sum up the main ideas in one sentence. The Q&A session still makes me a little nervous, but I know I can get my point across.",
     },
     `
 n | audience | The group of people who watch or listen to a talk or a performance. | Know your audience before you prepare your slides.
@@ -479,7 +479,7 @@ i | get your point across | To make people understand what you mean. | Use simpl
           { form: 'make + someone + base verb', use: 'Force someone to do something.', example: 'My old boss made us stay late every Thursday.' },
           { form: 'let + someone + base verb', use: 'Give someone permission (informal).', example: 'Our manager lets us choose our own projects.' },
           { form: 'allow / encourage / expect + someone + to + verb', use: 'Permission, support or expectations (more formal).', example: 'A good leader encourages people to share their ideas.' },
-          { form: 'be made / be allowed + to + verb', use: 'The same ideas in the passive, from the worker’s point of view.', example: 'We were made to work at weekends, and we weren’t allowed to work from home.' },
+          { form: 'be made / be allowed + to + verb', use: 'The same ideas in the passive, from the worker’s point of view.', example: 'We were made to work on weekends, and we weren’t allowed to work from home.' },
         ],
         tip: 'No “to” after “make” and “let” in the active: “She made me laugh”, not “She made me to laugh”.',
       },
@@ -513,7 +513,7 @@ n | morale | The level of confidence and enthusiasm in a group of people. | Team
 n | credit | Praise or recognition for something good that you have done. | A good leader gives the team the credit for its success.
 adj | inspiring | Making people feel excited and want to do something. | Our CEO gave an inspiring speech about the company's future.
 n | decision-making | The process of thinking about a problem and choosing what to do. | Fast decision-making is important in a crisis.
-n | role model | A person whose behaviour other people want to copy. | My first manager was my role model: calm, fair and always prepared.
+n | role model | A person whose behavior other people want to copy. | My first manager was my role model: calm, fair and always prepared.
 adj | hands-on | Taking an active part in the work, not just giving instructions. | He's a hands-on manager who helps us when we're busy.
 pv | step in | To get involved in a difficult situation to help or to stop a problem. | When two colleagues started arguing, our team leader stepped in.
 i | pull your weight | To do your fair share of the work. | Everyone has to pull their weight, or the project will fail.
@@ -536,7 +536,7 @@ i | pull your weight | To do your fair share of the work. | Everyone has to pull
         points: [
           { form: 'present simple', use: 'Routines, habits and permanent facts.', example: 'I usually start work at nine and finish at five.' },
           { form: 'present continuous', use: 'Actions happening now or around now, and temporary situations.', example: 'This month I’m working on a website for a client in Dubai.' },
-          { form: 'always + present continuous', use: 'A habit that annoys you.', example: 'My neighbour is always drilling when I have a video call!' },
+          { form: 'always + present continuous', use: 'A habit that annoys you.', example: 'My neighbor is always drilling when I have a video call!' },
           { form: 'state verbs: know, need, prefer, belong', use: 'Verbs for states, not actions, are not used with -ing.', example: 'I prefer working alone. (not: I am preferring)' },
         ],
         tip: '“I work from home” is your normal routine; “I’m working from home this week” is temporary.',
@@ -631,7 +631,7 @@ v | schedule | To plan that something will happen at a particular time. | I sche
 n | time-waster | An activity that uses time without achieving anything useful. | Long meetings with no agenda are a real time-waster.
 adv | efficiently | In a way that gets good results without wasting time or effort. | If you work efficiently, you can finish by four.
 pv | put off | To delay doing something until later. | I always put off boring tasks until the last minute.
-i | kill two birds with one stone | To achieve two things with one action. | I practise English on the bus, so I kill two birds with one stone.
+i | kill two birds with one stone | To achieve two things with one action. | I practice English on the bus, so I kill two birds with one stone.
 `
   ),
 ];
