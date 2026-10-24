@@ -171,7 +171,7 @@ export default function TodoNote({ note, onDelete, onUpdate }: Props) {
           onChange={(e) => setNewItemText(e.target.value)}
           onKeyDown={handleItemKeyDown}
           placeholder={t('notes.addItemPlaceholder')}
-          className="flex-1 text-sm bg-transparent text-ink placeholder-ink-lighter focus:outline-none"
+          className="flex-1 min-w-0 text-sm bg-transparent text-ink placeholder-ink-lighter focus:outline-none"
           dir="auto"
         />
         <button

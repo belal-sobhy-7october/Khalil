@@ -192,7 +192,7 @@ export default function FlashcardReview({ onClose, initialItemIds, onReviewMisse
 
   const shell = (children: React.ReactNode, wide = false) => (
     <div className="fixed inset-0 bg-ink/50 flex items-center justify-center z-50 p-4">
-      <div {...dialog.props} className={`bg-card border border-border-subtle rounded-2xl w-full ${wide ? 'max-w-2xl' : 'max-w-md'} max-h-[92vh] overflow-y-auto`}>
+      <div {...dialog.props} className={`bg-card border border-border-subtle rounded-2xl w-full ${wide ? 'max-w-2xl' : 'max-w-md'} max-h-[92svh] overflow-y-auto`}>
         {children}
       </div>
     </div>

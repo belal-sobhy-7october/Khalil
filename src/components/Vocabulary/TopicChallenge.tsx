@@ -213,7 +213,7 @@ export default function TopicChallenge({ category, paragraph, onClose }: { categ
 
   return (
     <div className="fixed inset-0 bg-ink/50 flex items-center justify-center z-50 p-4" onClick={(e) => e.target === e.currentTarget && handleClose()}>
-      <div {...dialog.props} className="bg-card border border-border-subtle rounded-2xl w-full max-w-3xl max-h-[92vh] overflow-hidden flex flex-col">
+      <div {...dialog.props} className="bg-card border border-border-subtle rounded-2xl w-full max-w-3xl max-h-[92svh] overflow-hidden flex flex-col">
         <div className="px-6 py-4 border-b border-border-subtle flex items-center justify-between gap-3">
           <div className="min-w-0">
             <h2 id={dialog.titleId} className="text-lg font-bold text-ink flex items-center gap-2">
@@ -388,7 +388,7 @@ export default function TopicChallenge({ category, paragraph, onClose }: { categ
                   onChange={(e) => setVideoDraft(e.target.value)}
                   placeholder={data.videoUrl ? t('vocabulary.challenge.changeVideo') : t('vocabulary.challenge.videoPlaceholder')}
                   dir="ltr"
-                  className="flex-1 px-3 py-2 bg-ink/5 border border-border-subtle rounded-lg text-ink text-sm focus:outline-none focus:border-clay-soft"
+                  className="flex-1 min-w-0 px-3 py-2 bg-ink/5 border border-border-subtle rounded-lg text-ink text-sm focus:outline-none focus:border-clay-soft"
                 />
                 <button type="submit" className="px-3 py-2 text-sm rounded-lg bg-clay-soft text-white">{t('common.save')}</button>
               </form>

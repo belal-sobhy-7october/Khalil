@@ -38,7 +38,8 @@ export default function Header({
             className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-ink-light hover:text-ink border border-transparent hover:border-border-subtle transition-all"
           >
             {theme === 'light' ? <Moon size={16} /> : <Sun size={16} />}
-            <span>{theme === 'light' ? t('theme.dark') : t('theme.light')}</span>
+            {/* Text only from 360px: the header doesn't fit a 320px phone with it. */}
+            <span className="sr-only min-[360px]:not-sr-only">{theme === 'light' ? t('theme.dark') : t('theme.light')}</span>
           </button>
           <div className="w-px h-5 bg-border-subtle mx-1" />
           <AccountMenu />

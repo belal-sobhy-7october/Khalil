@@ -161,7 +161,7 @@ export default function NotesPanel({
     <div className="mt-8 border-t border-border-subtle pt-4">
       <button
         onClick={() => setMobileOpen((v) => !v)}
-        className="flex items-center gap-2 text-sm font-medium text-ink mb-2 w-full text-start"
+        className="flex items-center gap-2 py-1 text-sm font-medium text-ink mb-1 w-full text-start"
       >
         {mobileOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
         {t('notes.title')} ({stickyNotes.length + todoNotes.length})

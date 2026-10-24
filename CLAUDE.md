@@ -124,3 +124,10 @@ End to end (Playwright, against a fake Supabase), with a dev server on port 5173
 `node scripts/e2e/flows.mjs …` (add, edit, delete, reload), `node scripts/e2e/callcenter.mjs …` (every
 tab, and progress kept after a reload) and `node scripts/e2e/sales.mjs …` (the same for Sales Prep).
 `scripts/e2e/offline.mjs` runs against a production build (see Offline).
+
+Phones and tablets: `node scripts/e2e/devices.mjs http://localhost:5173 <dir>` goes through every
+section, tab and main dialog with touch on 10 devices (iPhone SE to iPad Pro, Android phones and
+tablets, a fold, phones held sideways) in both languages, and writes `<dir>/report.md`. Read
+`.claude/skills/device-check/SKILL.md` first: it explains the options and the findings, and how
+they've been fixed here. Controls that show on hover need `[@media(hover:none)]:opacity-100`
+(phones have no hover), and dialogs use `svh`, not `vh`.

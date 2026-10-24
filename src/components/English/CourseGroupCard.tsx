@@ -222,7 +222,7 @@ export default function CourseGroupCard({
                         <button
                           type="button"
                           onClick={() => onOpenLesson(lesson)}
-                          className="flex-1 min-w-0 flex items-center gap-3 text-start"
+                          className="flex-1 min-w-0 min-h-6 flex items-center gap-3 text-start"
                           aria-label={`${t(readOnSite(lesson.kind) ? 'english.courses.open' : 'english.links.play')}: ${lesson.title}`}
                         >
                           <span className="w-6 shrink-0 text-center text-[11px] tabular-nums text-ink-lighter">
@@ -280,7 +280,7 @@ export default function CourseGroupCard({
                   onClick={() => {
                     if (window.confirm(t('english.courses.resetConfirm'))) onSetDone(group.lessons.map((l) => l.id), false);
                   }}
-                  className="flex items-center gap-1.5 text-[11px] text-ink-lighter hover:text-ink"
+                  className="flex items-center gap-1.5 py-1 text-[11px] text-ink-lighter hover:text-ink"
                 >
                   <RotateCcw size={12} /> {t('english.courses.reset')}
                 </button>
@@ -288,7 +288,7 @@ export default function CourseGroupCard({
                 <button
                   type="button"
                   onClick={() => onSetDone(group.lessons.map((l) => l.id), true)}
-                  className="flex items-center gap-1.5 text-[11px] text-ink-lighter hover:text-ink"
+                  className="flex items-center gap-1.5 py-1 text-[11px] text-ink-lighter hover:text-ink"
                 >
                   <ListChecks size={12} /> {t('english.courses.markAll')}
                 </button>

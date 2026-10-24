@@ -210,7 +210,7 @@ export default function VoiceRecorder({ promptId, target, onTake, history = true
           </span>
         )}
         {canTranscribe && !recording && (
-          <label className="inline-flex items-center gap-1.5 text-xs text-ink-light cursor-pointer">
+          <label className="inline-flex items-center gap-1.5 py-1 text-xs text-ink-light cursor-pointer">
             <input type="checkbox" checked={useTranscript} onChange={toggleTranscript} className="accent-clay-soft" />
             Live transcript (for words/min)
           </label>

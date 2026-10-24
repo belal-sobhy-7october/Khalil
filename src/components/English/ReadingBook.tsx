@@ -36,7 +36,7 @@ export default function ReadingBook() {
         </div>
         {showBook && (
           <>
-            <iframe src={book.embedUrl} title={t('english.reading.bookTitle')} className="w-full h-[75vh] bg-white border-t border-border-subtle" allow="autoplay" />
+            <iframe src={book.embedUrl} title={t('english.reading.bookTitle')} className="w-full h-[75svh] bg-white border-t border-border-subtle" allow="autoplay" />
             <p className="px-4 py-2 text-[11px] text-ink-lighter">{t('english.reading.driveHint')}</p>
           </>
         )}

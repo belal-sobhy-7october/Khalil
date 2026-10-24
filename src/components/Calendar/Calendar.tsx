@@ -174,34 +174,13 @@ export default function Calendar() {
         </div>
       </div>
 
-      <div className="bg-card border border-border-subtle rounded-xl p-3 md:p-4">
-        <div className="flex flex-wrap items-center justify-center gap-1 md:gap-2" role="tablist" aria-label={t('calendar.title')}>
-          {VIEW_BUTTONS.map(({ mode, icon, tooltip }) => (
-            <Tooltip key={mode} text={t(tooltip)}>
-              <button
-                role="tab"
-                aria-selected={viewMode === mode}
-                onClick={() => setViewMode(mode)}
-                className={`flex flex-col items-center gap-1.5 px-3 py-2 rounded-lg transition-all min-w-[72px] ${
-                  viewMode === mode
-                    ? 'bg-clay-soft text-white'
-                    : 'text-ink-light hover:text-ink hover:bg-ink/5'
-                }`}
-              >
-                <span className="flex items-center justify-center h-5">{icon}</span>
-                <span className="text-xs font-medium">{t(`calendar.${mode === 'multi-day' ? 'multiDay' : mode === 'multi-week' ? 'multiWeek' : mode}`)}</span>
-              </button>
-            </Tooltip>
-          ))}
-        </div>
-      </div>
-
+      {/* In the page, right above the view buttons it points to (a floating card covered them on short phones). */}
       {showCalendarOnboarding && (
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
-          className="fixed bottom-24 start-1/2 -translate-x-1/2 z-50 max-w-md w-full mx-4 bg-card border border-border-subtle rounded-xl p-6 shadow-xl"
+          exit={{ opacity: 0, y: -8 }}
+          className="bg-card border border-clay-soft/40 rounded-xl p-5 md:p-6 shadow-sm"
         >
           <div className="flex items-start gap-3">
             <HelpCircle size={24} className="text-clay-soft shrink-0 mt-0.5" />
@@ -225,6 +204,28 @@ export default function Calendar() {
           </div>
         </motion.div>
       )}
+
+      <div className="bg-card border border-border-subtle rounded-xl p-3 md:p-4">
+        <div className="flex flex-wrap items-center justify-center gap-1 md:gap-2" role="tablist" aria-label={t('calendar.title')}>
+          {VIEW_BUTTONS.map(({ mode, icon, tooltip }) => (
+            <Tooltip key={mode} text={t(tooltip)}>
+              <button
+                role="tab"
+                aria-selected={viewMode === mode}
+                onClick={() => setViewMode(mode)}
+                className={`flex flex-col items-center gap-1.5 px-3 py-2 rounded-lg transition-all min-w-[72px] ${
+                  viewMode === mode
+                    ? 'bg-clay-soft text-white'
+                    : 'text-ink-light hover:text-ink hover:bg-ink/5'
+                }`}
+              >
+                <span className="flex items-center justify-center h-5">{icon}</span>
+                <span className="text-xs font-medium">{t(`calendar.${mode === 'multi-day' ? 'multiDay' : mode === 'multi-week' ? 'multiWeek' : mode}`)}</span>
+              </button>
+            </Tooltip>
+          ))}
+        </div>
+      </div>
 
       <AnimatePresence>
         {isModalOpen && (

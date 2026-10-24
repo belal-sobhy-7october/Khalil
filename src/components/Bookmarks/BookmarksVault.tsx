@@ -197,7 +197,7 @@ export default function BookmarksVault() {
                   }
                   onKeyDown={(e) => e.key === 'Enter' && handleAddCategory()}
                   placeholder={t('bookmarks.categoryNamePlaceholder')}
-                  className="flex-1 border border-border-subtle rounded-lg px-3 py-2 text-sm bg-ink/3 text-ink placeholder-ink-lighter focus:outline-none focus:ring-2 focus:ring-clay-soft/20"
+                  className="flex-1 min-w-0 border border-border-subtle rounded-lg px-3 py-2 text-sm bg-ink/3 text-ink placeholder-ink-lighter focus:outline-none focus:ring-2 focus:ring-clay-soft/20"
                 />
 
                 <div className="flex gap-1.5 flex-wrap">
@@ -277,7 +277,7 @@ export default function BookmarksVault() {
                     onChange={(e) => setNewBookmark({ ...newBookmark, title: e.target.value })}
                     placeholder={t('bookmarks.titlePlaceholder')}
                     dir={isRTL ? 'rtl' : 'ltr'}
-                    className="flex-1 border border-border-subtle rounded-lg px-3 py-2 text-sm bg-ink/3 text-ink placeholder-ink-lighter focus:outline-none focus:ring-2 focus:ring-clay-soft/20"
+                    className="flex-1 min-w-0 border border-border-subtle rounded-lg px-3 py-2 text-sm bg-ink/3 text-ink placeholder-ink-lighter focus:outline-none focus:ring-2 focus:ring-clay-soft/20"
                   />
                   <select
                     value={newBookmark.categoryId}
@@ -298,7 +298,7 @@ export default function BookmarksVault() {
                     value={newBookmark.url}
                     onChange={(e) => setNewBookmark({ ...newBookmark, url: e.target.value })}
                     placeholder={t('bookmarks.urlPlaceholder')}
-                    className="flex-1 border border-border-subtle rounded-lg px-3 py-2 text-sm bg-ink/3 text-ink placeholder-ink-lighter focus:outline-none focus:ring-2 focus:ring-clay-soft/20"
+                    className="flex-1 min-w-0 border border-border-subtle rounded-lg px-3 py-2 text-sm bg-ink/3 text-ink placeholder-ink-lighter focus:outline-none focus:ring-2 focus:ring-clay-soft/20"
                   />
                   <input
                     type="text"
@@ -306,7 +306,7 @@ export default function BookmarksVault() {
                     onChange={(e) => setNewBookmark({ ...newBookmark, description: e.target.value })}
                     placeholder={t('bookmarks.descriptionPlaceholder')}
                     dir={isRTL ? 'rtl' : 'ltr'}
-                    className="flex-1 border border-border-subtle rounded-lg px-3 py-2 text-sm bg-ink/3 text-ink placeholder-ink-lighter focus:outline-none focus:ring-2 focus:ring-clay-soft/20"
+                    className="flex-1 min-w-0 border border-border-subtle rounded-lg px-3 py-2 text-sm bg-ink/3 text-ink placeholder-ink-lighter focus:outline-none focus:ring-2 focus:ring-clay-soft/20"
                   />
                 </div>
                 <textarea
@@ -376,7 +376,7 @@ function BookmarkCard({ bookmark, onRemove }: { bookmark: BookmarkType; onRemove
           e.stopPropagation();
           if (window.confirm(t('bookmarks.confirmDeleteBookmark'))) onRemove();
         }}
-        className="absolute top-2 left-2 p-2 rounded-lg opacity-0 group-hover:opacity-100 text-ink-lighter hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-all"
+        className="absolute top-2 left-2 p-2 rounded-lg opacity-0 group-hover:opacity-100 [@media(hover:none)]:opacity-100 text-ink-lighter hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-all"
       >
         <Trash2 size={14} />
       </button>
