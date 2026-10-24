@@ -18,3 +18,7 @@ jobs:
       - run: npx tsc -b --noEmit
       - run: npm run build
       - run: npm test
+        env:
+          # The tests mock Supabase; the client only needs some value to start.
+          VITE_SUPABASE_URL: http://localhost:54321
+          VITE_SUPABASE_ANON_KEY: test
