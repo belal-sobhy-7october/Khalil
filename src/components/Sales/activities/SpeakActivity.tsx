@@ -123,7 +123,7 @@ export default function SpeakActivity({ refId, lang, onDone }: { refId: string; 
       )}
       {s.model && (
         <details>
-          <summary className="cursor-pointer text-xs text-ink-light hover:text-ink">{pick(lang, 'شوف نموذج بعد ما تجرب', 'See a model after your try')}</summary>
+          <summary className="cursor-pointer py-1 text-xs text-ink-light hover:text-ink">{pick(lang, 'شوف نموذج بعد ما تجرب', 'See a model after your try')}</summary>
           <div className="mt-2 flex items-start gap-1 rounded-xl bg-sage-soft/8 border border-sage-soft/30 p-3">
             <p className="flex-1 text-sm text-ink leading-relaxed">{s.model}</p>
             {lang === 'en' && <SpeakButton text={s.model} />}
@@ -131,7 +131,7 @@ export default function SpeakActivity({ refId, lang, onDone }: { refId: string; 
         </details>
       )}
       <details>
-        <summary className="cursor-pointer text-xs text-ink-light hover:text-ink">{pick(lang, 'خد رأي الـ AI (اكتب اللي قلته)', 'Get AI feedback (type what you said)')}</summary>
+        <summary className="cursor-pointer py-1 text-xs text-ink-light hover:text-ink">{pick(lang, 'خد رأي الـ AI (اكتب اللي قلته)', 'Get AI feedback (type what you said)')}</summary>
         <div className="mt-2">
           <AiButtons prompt={speakFeedbackPrompt(s, lang)} lang={lang} />
         </div>

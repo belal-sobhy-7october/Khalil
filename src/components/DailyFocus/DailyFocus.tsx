@@ -79,7 +79,7 @@ export default function DailyFocus() {
                       onKeyDown={handleKeyDown}
                       placeholder={t('dailyFocus.placeholder')}
                       dir={isRTL ? 'rtl' : 'ltr'}
-                      className="flex-1 bg-ink/5 border border-border-subtle rounded-lg px-4 py-2 text-ink placeholder-ink-lighter text-sm font-medium focus:outline-none focus:ring-2 focus:ring-clay-soft/30 focus:border-transparent transition-all"
+                      className="flex-1 min-w-0 bg-ink/5 border border-border-subtle rounded-lg px-4 py-2 text-ink placeholder-ink-lighter text-sm font-medium focus:outline-none focus:ring-2 focus:ring-clay-soft/30 focus:border-transparent transition-all"
                     />
                     <div className="flex gap-2">
                       <button
@@ -115,7 +115,7 @@ export default function DailyFocus() {
                         setEditing(true);
                         setText(dailyFocus.text);
                       }}
-                      className="p-1.5 rounded-full bg-ink/5 hover:bg-ink/10 opacity-0 group-hover:opacity-100 transition-all text-ink-light"
+                      className="p-1.5 rounded-full bg-ink/5 hover:bg-ink/10 opacity-0 group-hover:opacity-100 [@media(hover:none)]:opacity-100 transition-all text-ink-light"
                       aria-label={t('dailyFocus.edit')}
                     >
                       <Pencil size={14} />

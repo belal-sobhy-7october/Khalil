@@ -165,7 +165,7 @@ export default function ImportWordsModal({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="fixed inset-0 bg-ink/50 flex items-center justify-center z-50 p-4">
-      <div {...dialog.props} className="bg-card border border-border-subtle rounded-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
+      <div {...dialog.props} className="bg-card border border-border-subtle rounded-2xl w-full max-w-5xl max-h-[90svh] overflow-hidden flex flex-col">
         <div className="sticky top-0 bg-card border-b border-border-subtle px-6 py-4 flex items-center justify-between">
           <h2 id={dialog.titleId} className="text-xl font-bold text-ink">{t('vocabulary.importWords')}</h2>
           <button
@@ -234,7 +234,7 @@ export default function ImportWordsModal({ onClose }: { onClose: () => void }) {
               
               <button
                 onClick={() => setShowFormats(!showFormats)}
-                className="flex items-center gap-2 text-sm text-clay-soft hover:text-clay-soft-dark"
+                className="flex items-center gap-2 py-1 text-sm text-clay-soft hover:text-clay-soft-dark"
               >
                 {showFormats ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                 <span>{showFormats ? t('vocabulary.import.hideFormats') : t('vocabulary.import.showFormats')}</span>

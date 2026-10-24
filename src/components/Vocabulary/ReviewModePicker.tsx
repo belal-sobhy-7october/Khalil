@@ -20,7 +20,7 @@ export default function ReviewModePicker({ count, onPick, onClose }: {
 
   return (
     <div className="fixed inset-0 bg-ink/50 flex items-center justify-center z-50 p-4" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div {...dialog.props} className="bg-card border border-border-subtle rounded-2xl w-full max-w-md overflow-hidden">
+      <div {...dialog.props} className="bg-card border border-border-subtle rounded-2xl w-full max-w-md max-h-[90svh] overflow-y-auto">
         <div className="px-6 py-4 border-b border-border-subtle flex items-center justify-between">
           <div>
             <h2 id={dialog.titleId} className="text-lg font-bold text-ink">{t('vocabulary.practice.pickTitle')}</h2>

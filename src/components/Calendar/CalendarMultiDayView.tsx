@@ -84,7 +84,7 @@ export default memo(function CalendarMultiDayView({ currentDate, events, onEditE
   }, [onCompleteEvent]);
 
   return (
-    <div className="h-[calc(100vh-300px)] min-h-[500px] overflow-x-auto scrollbar-thin">
+    <div className="h-[calc(100svh-300px)] min-h-[500px] overflow-x-auto scrollbar-thin">
       <div className="grid grid-cols-[50px_repeat(3,1fr)] min-w-max">
         <div className="sticky left-0 bg-card border-e border-border-subtle z-10">
           <div className="h-12 flex items-center justify-center text-xs text-ink-lighter font-medium border-b border-border-subtle" />

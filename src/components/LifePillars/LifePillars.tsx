@@ -572,7 +572,7 @@ function SubTrackRow({ track, colors }: { track: SubTrack; colors: (typeof pillC
         <button
           onClick={() => removeSubTrack(track.id)}
           aria-label={t('pillars.trackDelete').replace('{name}', track.name)}
-          className="flex items-center justify-center w-5 h-5 rounded opacity-0 group-hover:opacity-100 text-ink-lighter hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-all"
+          className="flex items-center justify-center w-5 h-5 rounded opacity-0 group-hover:opacity-100 [@media(hover:none)]:opacity-100 text-ink-lighter hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-all"
         >
           <Trash2 size={11} />
         </button>

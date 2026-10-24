@@ -66,7 +66,7 @@ export default memo(function CalendarMultiWeekView({ currentDate, events, onEdit
   }, [onCompleteEvent]);
 
   return (
-    <div className="h-[calc(100vh-300px)] min-h-[500px] overflow-x-auto scrollbar-thin">
+    <div className="h-[calc(100svh-300px)] min-h-[500px] overflow-x-auto scrollbar-thin">
       <div className="grid grid-cols-[repeat(14,1fr)] min-w-max">
         {multiWeekDates.map((dateStr) => {
           const date = new Date(dateStr + 'T00:00:00');
@@ -79,7 +79,7 @@ export default memo(function CalendarMultiWeekView({ currentDate, events, onEdit
               key={dateStr}
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
-              className={`relative h-[calc(100vh-300px)] min-h-[500px] border border-border-subtle/50 flex flex-col ${isWeekend ? 'bg-ink/3' : 'bg-card'} ${today ? 'border-clay-soft' : ''}`}
+              className={`relative h-[calc(100svh-300px)] min-h-[500px] border border-border-subtle/50 flex flex-col ${isWeekend ? 'bg-ink/3' : 'bg-card'} ${today ? 'border-clay-soft' : ''}`}
             >
               <div className={`flex flex-col items-center justify-center px-1 py-2 border-b border-border-subtle ${today ? 'bg-clay-soft/10' : ''} sticky top-0 z-10 bg-card/95 backdrop-blur`}>
                 <span className={`text-xs font-medium ${today ? 'text-clay-soft' : 'text-ink'}`}>

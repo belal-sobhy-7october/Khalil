@@ -24,7 +24,7 @@ function ApplicationForm({ onAdd }: { onAdd: (a: Application) => void }) {
   const field = 'rounded-lg border border-border-subtle bg-transparent px-2.5 py-1.5 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-clay-soft/40';
   return (
     <form
-      className="grid sm:grid-cols-2 gap-2"
+      className="grid grid-cols-1 sm:grid-cols-2 gap-2"
       onSubmit={(e) => {
         e.preventDefault();
         if (!company.trim()) return;

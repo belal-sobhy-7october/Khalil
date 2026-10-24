@@ -201,7 +201,7 @@ export function ReviewActivity({ refId, lang, onDone }: { refId: string; lang: L
       )}
       {week && (
         <details>
-          <summary className="cursor-pointer text-xs text-ink-light hover:text-ink">{pick(lang, 'اتمرن على الأسبوع كله مع الـ AI (اختياري)', 'Practice the whole week with an AI (optional)')}</summary>
+          <summary className="cursor-pointer py-1 text-xs text-ink-light hover:text-ink">{pick(lang, 'اتمرن على الأسبوع كله مع الـ AI (اختياري)', 'Practice the whole week with an AI (optional)')}</summary>
           <div className="mt-2">
             <AiButtons prompt={lessonPracticePrompt(week.title, week.goal, lang)} lang={lang} />
           </div>

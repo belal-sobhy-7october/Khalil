@@ -85,7 +85,7 @@ export default memo(function CalendarAgendaView({ currentDate, events, onEditEve
 
   if (dates.length === 0) {
     return (
-      <div className="h-[calc(100vh-300px)] min-h-[400px] flex flex-col items-center justify-center text-center p-8">
+      <div className="h-[calc(100svh-300px)] min-h-[400px] flex flex-col items-center justify-center text-center p-8">
         <svg width={48} height={48} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-ink-lighter mb-4">
           <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
           <line x1="16" y1="2" x2="16" y2="6" />
@@ -99,7 +99,7 @@ export default memo(function CalendarAgendaView({ currentDate, events, onEditEve
   }
 
   return (
-    <div className="h-[calc(100vh-300px)] min-h-[400px] overflow-y-auto scrollbar-thin space-y-6">
+    <div className="h-[calc(100svh-300px)] min-h-[400px] overflow-y-auto scrollbar-thin space-y-6">
       {dates.map((dateStr, index) => {
         const dayEvents = groupedEvents[dateStr];
         const isTodayDate = dateStr === getToday();
@@ -175,7 +175,7 @@ export default memo(function CalendarAgendaView({ currentDate, events, onEditEve
                           )}
                         </div>
                       </div>
-                      <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                      <div className="opacity-0 group-hover:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity flex gap-1">
                         <button
                           onClick={(e) => { e.stopPropagation(); onEditEvent(event); }}
                           className="p-1.5 rounded text-ink-lighter hover:text-clay-soft hover:bg-ink/5 transition-colors"

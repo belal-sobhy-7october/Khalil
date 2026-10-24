@@ -14,8 +14,8 @@ export default function ReadingBook() {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[1fr_20rem] gap-6 items-start">
       <div className="rounded-xl border border-border-subtle overflow-hidden">
-        <div className="flex items-center justify-between gap-2 px-4 py-3">
-          <div className="flex items-center gap-2 min-w-0">
+        <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
+          <div className="flex-1 min-w-[10rem] flex items-center gap-2">
             <BookOpen size={18} className="text-clay-soft shrink-0" />
             <span className="font-semibold text-ink truncate">{t('english.reading.bookTitle')}</span>
           </div>
@@ -36,7 +36,7 @@ export default function ReadingBook() {
         </div>
         {showBook && (
           <>
-            <iframe src={book.embedUrl} title={t('english.reading.bookTitle')} className="w-full h-[75vh] bg-white border-t border-border-subtle" allow="autoplay" />
+            <iframe src={book.embedUrl} title={t('english.reading.bookTitle')} className="w-full h-[75svh] bg-white border-t border-border-subtle" allow="autoplay" />
             <p className="px-4 py-2 text-[11px] text-ink-lighter">{t('english.reading.driveHint')}</p>
           </>
         )}

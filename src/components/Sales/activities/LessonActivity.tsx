@@ -104,7 +104,7 @@ export default function LessonActivity({ refId, lang, onDone }: { refId: string;
         ))}
       </div>
       <details>
-        <summary className="cursor-pointer text-xs text-ink-light hover:text-ink">{pick(lang, 'اتمرن على الدرس ده مع الـ AI (اختياري)', 'Practice this lesson with an AI (optional)')}</summary>
+        <summary className="cursor-pointer py-1 text-xs text-ink-light hover:text-ink">{pick(lang, 'اتمرن على الدرس ده مع الـ AI (اختياري)', 'Practice this lesson with an AI (optional)')}</summary>
         <div className="mt-2">
           <AiButtons prompt={lessonPracticePrompt(lesson.title, lesson.summary, lang)} lang={lang} />
         </div>

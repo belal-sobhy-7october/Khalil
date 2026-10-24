@@ -153,7 +153,7 @@ export default function AnalyticsSection({ onNavigate }: { onNavigate?: (section
                 <span aria-hidden="true">{ins.icon}</span>
                 <span className="flex-1">{ins.text}</span>
                 {ins.section && onNavigate && (
-                  <button onClick={() => onNavigate(ins.section!)} className="shrink-0 text-xs text-clay-soft hover:underline">{t('analytics.open')}</button>
+                  <button onClick={() => onNavigate(ins.section!)} className="shrink-0 -my-1 px-1.5 py-1 rounded text-xs text-clay-soft hover:underline">{t('analytics.open')}</button>
                 )}
               </li>
             ))}

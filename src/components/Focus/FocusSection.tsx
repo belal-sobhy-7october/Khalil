@@ -101,7 +101,7 @@ export default function FocusSection() {
     <NumberSetting label={t(`focus.settings.${key}`)} value={s.settings[key]} min={min} max={max} onChange={(v) => setting(key, v)} />
   );
   const toggleInput = (key: 'autoStartBreaks' | 'autoStartFocus' | 'sound' | 'notify' | 'titleCountdown') => (
-    <label className="flex items-center justify-between gap-2 text-sm text-ink cursor-pointer">
+    <label className="flex items-center justify-between gap-2 py-1 text-sm text-ink cursor-pointer">
       {t(`focus.settings.${key}`)}
       <input type="checkbox" checked={s.settings[key]} onChange={(e) => setting(key, e.target.checked)} className="accent-clay-soft w-4 h-4" />
     </label>
@@ -315,7 +315,7 @@ export default function FocusSection() {
                     <span className="tabular-nums text-ink-light">{r.minutes}′</span>
                     <button
                       onClick={() => void s.deleteSession(r.id, userId)}
-                      className="opacity-0 group-hover:opacity-100 p-0.5 text-ink-lighter hover:text-red-500"
+                      className="opacity-0 group-hover:opacity-100 [@media(hover:none)]:opacity-100 p-0.5 text-ink-lighter hover:text-red-500"
                       aria-label={t('common.delete')}
                     >
                       <Trash2 size={12} />

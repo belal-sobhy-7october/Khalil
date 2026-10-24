@@ -126,21 +126,22 @@ export default function Calendar() {
     <section id="section-calendar" className="space-y-6">
       <div className="bg-card border border-border-subtle rounded-xl overflow-hidden">
         <div className="p-4 md:p-6 border-b border-border-subtle flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 min-w-0">
             <button
               onClick={navigatePrevious}
               className="p-2 rounded-lg text-ink-light hover:text-ink hover:bg-ink/5 transition-colors"
               aria-label={t('a11y.previousPeriod')}
             >
-              <ChevronLeft size={20} />
+              <ChevronLeft size={20} className="rtl:rotate-180" />
             </button>
-            <h2 className="text-lg font-semibold text-ink whitespace-nowrap">{periodLabel}</h2>
+            {/* Wraps on a phone: on one line it pushed "next" out of the card at 320px. */}
+            <h2 className="min-w-0 text-center text-base sm:text-lg font-semibold text-ink sm:whitespace-nowrap">{periodLabel}</h2>
             <button
               onClick={navigateNext}
               className="p-2 rounded-lg text-ink-light hover:text-ink hover:bg-ink/5 transition-colors"
               aria-label={t('a11y.nextPeriod')}
             >
-              <ChevronRight size={20} />
+              <ChevronRight size={20} className="rtl:rotate-180" />
             </button>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
@@ -174,34 +175,13 @@ export default function Calendar() {
         </div>
       </div>
 
-      <div className="bg-card border border-border-subtle rounded-xl p-3 md:p-4">
-        <div className="flex flex-wrap items-center justify-center gap-1 md:gap-2" role="tablist" aria-label={t('calendar.title')}>
-          {VIEW_BUTTONS.map(({ mode, icon, tooltip }) => (
-            <Tooltip key={mode} text={t(tooltip)}>
-              <button
-                role="tab"
-                aria-selected={viewMode === mode}
-                onClick={() => setViewMode(mode)}
-                className={`flex flex-col items-center gap-1.5 px-3 py-2 rounded-lg transition-all min-w-[72px] ${
-                  viewMode === mode
-                    ? 'bg-clay-soft text-white'
-                    : 'text-ink-light hover:text-ink hover:bg-ink/5'
-                }`}
-              >
-                <span className="flex items-center justify-center h-5">{icon}</span>
-                <span className="text-xs font-medium">{t(`calendar.${mode === 'multi-day' ? 'multiDay' : mode === 'multi-week' ? 'multiWeek' : mode}`)}</span>
-              </button>
-            </Tooltip>
-          ))}
-        </div>
-      </div>
-
+      {/* In the page, right above the view buttons it points to (a floating card covered them on short phones). */}
       {showCalendarOnboarding && (
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
-          className="fixed bottom-24 start-1/2 -translate-x-1/2 z-50 max-w-md w-full mx-4 bg-card border border-border-subtle rounded-xl p-6 shadow-xl"
+          exit={{ opacity: 0, y: -8 }}
+          className="bg-card border border-clay-soft/40 rounded-xl p-5 md:p-6 shadow-sm"
         >
           <div className="flex items-start gap-3">
             <HelpCircle size={24} className="text-clay-soft shrink-0 mt-0.5" />
@@ -225,6 +205,28 @@ export default function Calendar() {
           </div>
         </motion.div>
       )}
+
+      <div className="bg-card border border-border-subtle rounded-xl p-3 md:p-4">
+        <div className="flex flex-wrap items-center justify-center gap-1 md:gap-2" role="tablist" aria-label={t('calendar.title')}>
+          {VIEW_BUTTONS.map(({ mode, icon, tooltip }) => (
+            <Tooltip key={mode} text={t(tooltip)}>
+              <button
+                role="tab"
+                aria-selected={viewMode === mode}
+                onClick={() => setViewMode(mode)}
+                className={`flex flex-col items-center gap-1.5 px-3 py-2 rounded-lg transition-all min-w-[72px] ${
+                  viewMode === mode
+                    ? 'bg-clay-soft text-white'
+                    : 'text-ink-light hover:text-ink hover:bg-ink/5'
+                }`}
+              >
+                <span className="flex items-center justify-center h-5">{icon}</span>
+                <span className="text-xs font-medium">{t(`calendar.${mode === 'multi-day' ? 'multiDay' : mode === 'multi-week' ? 'multiWeek' : mode}`)}</span>
+              </button>
+            </Tooltip>
+          ))}
+        </div>
+      </div>
 
       <AnimatePresence>
         {isModalOpen && (

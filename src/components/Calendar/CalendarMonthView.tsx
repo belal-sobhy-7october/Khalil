@@ -71,7 +71,7 @@ export default memo(function CalendarMonthView({ currentDate, events, onEditEven
   }, [onCompleteEvent]);
 
   return (
-    <div className="h-[calc(100vh-300px)] min-h-[500px] overflow-y-auto scrollbar-thin">
+    <div className="h-[calc(100svh-300px)] min-h-[500px] overflow-y-auto scrollbar-thin">
       <div className="grid grid-cols-7 gap-0.5">
         {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
           <div key={day} className="h-10 flex items-center justify-center text-xs font-medium text-ink-lighter border-b border-border-subtle bg-card/50 sticky top-0 z-10">

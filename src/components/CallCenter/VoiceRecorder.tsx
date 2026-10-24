@@ -210,7 +210,7 @@ export default function VoiceRecorder({ promptId, target, onTake, history = true
           </span>
         )}
         {canTranscribe && !recording && (
-          <label className="inline-flex items-center gap-1.5 text-xs text-ink-light cursor-pointer">
+          <label className="inline-flex items-center gap-1.5 py-1 text-xs text-ink-light cursor-pointer">
             <input type="checkbox" checked={useTranscript} onChange={toggleTranscript} className="accent-clay-soft" />
             Live transcript (for words/min)
           </label>
@@ -250,7 +250,7 @@ export default function VoiceRecorder({ promptId, target, onTake, history = true
 
       {history && takes.length > 1 && (
         <details className="group">
-          <summary className="cursor-pointer text-xs text-ink-light hover:text-ink">
+          <summary className="cursor-pointer py-1 text-xs text-ink-light hover:text-ink">
             Your takes ({takes.length}) {first && '· compare with your first one'}
           </summary>
           <ul className="mt-2 space-y-2">

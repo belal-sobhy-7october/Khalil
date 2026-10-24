@@ -92,7 +92,7 @@ export default function WeeklyTodo() {
               onKeyDown={handleKeyDown}
               placeholder={t('weekly.addPlaceholder')}
               dir={isRTL ? 'rtl' : 'ltr'}
-              className="flex-1 border border-border-subtle rounded-lg px-4 py-2.5 text-sm bg-ink/3 text-ink placeholder-ink-lighter focus:outline-none focus:ring-2 focus:ring-gold-soft/20 focus:border-transparent transition-all"
+              className="flex-1 min-w-0 border border-border-subtle rounded-lg px-4 py-2.5 text-sm bg-ink/3 text-ink placeholder-ink-lighter focus:outline-none focus:ring-2 focus:ring-gold-soft/20 focus:border-transparent transition-all"
             />
             <div className="flex gap-1 flex-shrink-0">
               {(['high', 'medium', 'low'] as Priority[]).map((p) => (
@@ -183,7 +183,8 @@ const WeeklyTodoItem = memo(function WeeklyTodoItem({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, x: -20, height: 0, marginBottom: 0 }}
       transition={{ duration: 0.2 }}
-      className={`group flex items-center gap-2 sm:gap-3 p-3 rounded-lg hover:bg-ink/3 transition-colors ${
+      // Two lines on a phone, as in DailyTodo.
+      className={`group flex flex-wrap sm:flex-nowrap items-center gap-x-2 gap-y-1 sm:gap-3 p-3 rounded-lg hover:bg-ink/3 transition-colors ${
         todo.completed ? 'opacity-60' : ''
       }`}
     >
@@ -199,7 +200,7 @@ const WeeklyTodoItem = memo(function WeeklyTodoItem({
         )}
       </button>
 
-      <div className={`flex items-center gap-1.5 shrink-0 ${priorityColors[todo.priority].bg} px-2 py-0.5 rounded`}>
+      <div className={`order-1 sm:order-none ms-7 sm:ms-0 flex items-center gap-1.5 shrink-0 ${priorityColors[todo.priority].bg} px-2 py-0.5 rounded`}>
         <span className={`w-1.5 h-1.5 rounded-full ${priorityColors[todo.priority].dot}`} />
         <span className={`text-[10px] uppercase tracking-wider font-medium ${priorityColors[todo.priority].text} whitespace-nowrap`}>
           {todo.priority}
@@ -207,7 +208,7 @@ const WeeklyTodoItem = memo(function WeeklyTodoItem({
       </div>
 
       <span
-        className={`flex-1 min-w-0 text-sm leading-relaxed ${
+        className={`flex-1 basis-[calc(100%-2.5rem)] sm:basis-auto min-w-0 text-sm leading-relaxed ${
           todo.completed
             ? 'line-through text-ink-lighter'
             : 'text-ink'
@@ -225,7 +226,7 @@ const WeeklyTodoItem = memo(function WeeklyTodoItem({
       </span>
 
 
-      <div className="flex gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-all">
+      <div className="order-2 sm:order-none ms-auto sm:ms-0 flex gap-1 shrink-0 opacity-0 group-hover:opacity-100 [@media(hover:none)]:opacity-100 transition-all">
         <button
           onClick={() => onMoveToDaily(todo.id)}
           disabled={isMoving}

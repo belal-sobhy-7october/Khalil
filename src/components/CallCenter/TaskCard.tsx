@@ -53,7 +53,7 @@ function VoiceTask({ promptId, onDone }: { promptId: string; onDone: () => void 
       </ol>
       {v.sample && (
         <details>
-          <summary className="cursor-pointer text-xs text-ink-light hover:text-ink">Listen to a model first</summary>
+          <summary className="cursor-pointer py-1 text-xs text-ink-light hover:text-ink">Listen to a model first</summary>
           <div className="mt-2 flex items-start gap-1 rounded-xl bg-sage-soft/8 border border-sage-soft/30 p-3">
             <p className="flex-1 text-sm text-ink leading-relaxed">{v.sample}</p>
             <SpeakButton text={v.sample} />

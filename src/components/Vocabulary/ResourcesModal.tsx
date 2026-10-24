@@ -31,7 +31,7 @@ function StarRow({ value, onRate, label }: { value: number; onRate?: (n: number)
             aria-label={`${n}`}
             onMouseEnter={() => setHover(n)}
             onClick={() => onRate(n)}
-            className="p-0.5"
+            className="p-[5px]"
           >
             {icon}
           </button>
@@ -123,7 +123,7 @@ export default function ResourcesModal({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="fixed inset-0 bg-ink/50 flex items-center justify-center z-50 p-4" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div {...dialog.props} className="bg-card border border-border-subtle rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+      <div {...dialog.props} className="bg-card border border-border-subtle rounded-2xl w-full max-w-4xl max-h-[90svh] overflow-hidden flex flex-col">
         <div className="px-6 py-4 border-b border-border-subtle flex items-center justify-between">
           <div>
             <h2 id={dialog.titleId} className="text-xl font-bold text-ink flex items-center gap-2">
@@ -137,7 +137,7 @@ export default function ResourcesModal({ onClose }: { onClose: () => void }) {
           </button>
         </div>
 
-        <div className="px-6 pt-4 flex gap-2 overflow-x-auto pb-1">
+        <div className="shrink-0 px-6 pt-4 flex gap-2 overflow-x-auto pb-1">
           {(['all', ...RESOURCE_CATEGORIES] as const).map((c) => (
             <button
               key={c}

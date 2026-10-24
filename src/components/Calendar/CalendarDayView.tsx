@@ -59,7 +59,7 @@ export default memo(function CalendarDayView({ currentDate, events, onEditEvent,
   }, [onCompleteEvent]);
 
   return (
-    <div className="h-[calc(100vh-300px)] min-h-[500px] overflow-y-auto scrollbar-thin">
+    <div className="h-[calc(100svh-300px)] min-h-[500px] overflow-y-auto scrollbar-thin">
       <div className="grid grid-cols-[50px_1fr] gap-2">
         <div className="sticky top-0 bg-card border-e border-border-subtle z-10">
           <div className="h-12 flex items-center justify-center text-xs text-ink-lighter font-medium border-b border-border-subtle">
