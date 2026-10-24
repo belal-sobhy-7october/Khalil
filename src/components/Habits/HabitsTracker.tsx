@@ -256,6 +256,7 @@ const SortableHabitRow = memo(function SortableHabitRow({ habit, dates, entrySet
         <span
           {...attributes}
           {...listeners}
+          aria-label={t('a11y.reorder')}
           className="shrink-0 opacity-20 group-hover:opacity-60 hover:!opacity-100 cursor-grab active:cursor-grabbing p-1 -m-1 text-ink-lighter transition-opacity touch-none"
         >
           <GripVertical size={14} />
@@ -267,7 +268,7 @@ const SortableHabitRow = memo(function SortableHabitRow({ habit, dates, entrySet
           <span className="text-sm font-medium text-ink truncate" title={habit.name}>
             {habit.name}
           </span>
-          <span className="text-[10px] text-ink-lighter truncate">
+          <span className="text-[11px] text-ink-lighter truncate">
             {habit.scheduleDays
               ? habit.scheduleDays.map((d) => weekdayName(d, locale, 'short')).join(' · ')
               : t('habits.since').replace('{date}', shortDate(habit.startDate, locale))}
@@ -845,18 +846,18 @@ export default function HabitsTracker() {
                       date === today ? 'bg-clay-soft/10 ring-1 ring-inset ring-clay-soft/40' : date > today ? 'opacity-60' : ''
                     }`}
                   >
-                    <div className="flex flex-col items-center leading-tight text-ink-lighter">
+                    <div className="flex flex-col items-center gap-px leading-none text-ink-lighter">
                       {/* The 1st of a month (after the first column) names the month, so the jump from 31 to 1 reads clearly. */}
                       {date.endsWith('-01') && date !== gridDates[0] && gridDates.length > 7 ? (
-                        <span className="text-[9px] font-semibold text-clay-soft">{monthShort(date, locale)}</span>
+                        <span className="text-[11px] font-semibold text-clay-soft">{monthShort(date, locale)}</span>
                       ) : (
                         gridDates.length <= 31 && (
-                          <span className="text-[9px]">
+                          <span className="text-[11px]">
                             {gridDates.length <= 7 ? dayNameOf(date, locale) : weekdayName(weekdayOf(date), locale, 'narrow')}
                           </span>
                         )
                       )}
-                      <span className={`text-[10px] ${date === today ? 'text-clay-soft font-semibold' : ''}`}>
+                      <span className={`text-[11px] ${date === today ? 'text-clay-soft font-semibold' : ''}`}>
                         {Number(date.slice(8))}
                       </span>
                     </div>
@@ -990,7 +991,7 @@ export default function HabitsTracker() {
                         style={{ width: `${ha.percent}%` }}
                       />
                     </div>
-                    <span className="text-[10px] text-ink-light tabular-nums w-8 text-end">
+                    <span className="text-[11px] text-ink-light tabular-nums w-8 text-end">
                       {ha.percent}%
                     </span>
                   </div>
@@ -1042,7 +1043,7 @@ function ProgressBar({ label, title, count, total, color }: { label: string; tit
           />
         )}
       </div>
-      <div className="text-[10px] text-ink-lighter tabular-nums whitespace-nowrap">{label}</div>
+      <div className="text-[11px] text-ink-lighter tabular-nums whitespace-nowrap">{label}</div>
     </div>
   );
 }

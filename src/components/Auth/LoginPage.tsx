@@ -86,7 +86,7 @@ export default function LoginPage() {
           </div>
 
           <div className="px-8 pb-6 text-center">
-            <p className="text-[10px] text-ink-lighter">
+            <p className="text-[11px] text-ink-lighter">
               {t('auth.privacyNotice')}
             </p>
           </div>

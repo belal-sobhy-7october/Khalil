@@ -194,7 +194,7 @@ const BacklogTodoItem = memo(function BacklogTodoItem({
 
       <div className={`order-1 sm:order-none ms-7 sm:ms-0 flex items-center gap-1.5 shrink-0 ${priorityColors[todo.priority].bg} px-2 py-0.5 rounded`}>
         <span className={`w-1.5 h-1.5 rounded-full ${priorityColors[todo.priority].dot}`} />
-        <span className={`text-[10px] uppercase tracking-wider font-medium ${priorityColors[todo.priority].text} whitespace-nowrap`}>
+        <span className={`text-[11px] uppercase tracking-wider font-medium ${priorityColors[todo.priority].text} whitespace-nowrap`}>
           {todo.priority}
         </span>
       </div>

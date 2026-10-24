@@ -168,7 +168,7 @@ export default function WirdSection() {
                 className={`${cell} flex-col h-12 ${d === selected ? 'bg-clay-soft/15 font-semibold' : ''} ${d === today ? 'text-clay-soft' : 'text-ink'} disabled:opacity-40`}
               >
                 <span>{dayLabel(d)}</span>
-                <span className="text-[10px] text-ink-lighter">{Number(d.slice(8))}</span>
+                <span className="text-[11px] text-ink-lighter">{Number(d.slice(8))}</span>
               </button>
             ))}
 
@@ -210,6 +210,7 @@ export default function WirdSection() {
                     key={d}
                     disabled={d > today}
                     onClick={() => setSelected(d)}
+                    aria-label={`${t(`wird.row.${key}`)} ${d}${fmt(day(d)) ? `: ${fmt(day(d))}` : ''}`}
                     className={`${cell} tabular-nums text-ink ${d === selected ? 'bg-clay-soft/10' : 'hover:bg-ink/5'} disabled:bg-ink/3`}
                   >
                     {fmt(day(d))}
@@ -273,7 +274,7 @@ export default function WirdSection() {
               >
                 {st === 'jamaah' ? <Users size={14} /> : st === 'alone' ? <User size={14} /> : null}
                 {t(`wird.prayer.${p}`)}
-                <span className="text-[10px] opacity-80">· {t(`wird.state.${st ?? 'none'}`)}</span>
+                <span className="text-[11px] opacity-80">· {t(`wird.state.${st ?? 'none'}`)}</span>
               </button>
             );
           })}

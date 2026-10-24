@@ -24,7 +24,7 @@ function SoundGrid({ title, sounds }: { title: string; sounds: SoundEntry[] }) {
                 </button>
               ))}
             </div>
-            {s.tip && <p className="text-[10px] text-ink-lighter mt-1 leading-snug">{s.tip}</p>}
+            {s.tip && <p className="text-[11px] text-ink-lighter mt-1 leading-snug">{s.tip}</p>}
           </div>
         ))}
       </div>

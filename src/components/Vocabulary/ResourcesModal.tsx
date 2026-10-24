@@ -167,7 +167,7 @@ export default function ResourcesModal({ onClose }: { onClose: () => void }) {
                       {r.name}
                       <ExternalLink size={13} className="text-ink-lighter" />
                     </a>
-                    <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded bg-ink/5 text-ink-light" dir="auto">
+                    <span className="shrink-0 text-[11px] px-1.5 py-0.5 rounded bg-ink/5 text-ink-light" dir="auto">
                       {categoryLabel(r.category)} · {t(r.free === true ? 'vocabulary.resources.free' : 'vocabulary.resources.freemium')}
                     </span>
                   </div>
@@ -291,7 +291,7 @@ export default function ResourcesModal({ onClose }: { onClose: () => void }) {
                       <a href={s.url} target="_blank" rel="noopener noreferrer" className="text-ink hover:text-clay-soft truncate" dir="auto">
                         {s.name}
                       </a>
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 shrink-0">
+                      <span className="text-[11px] px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 shrink-0">
                         {t('vocabulary.resources.pending')}
                       </span>
                       <button

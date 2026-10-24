@@ -289,9 +289,9 @@ export default function FocusSection() {
             <div className="flex items-end gap-1.5 h-28">
               {week.map((w) => (
                 <div key={w.day} className="flex-1 flex flex-col items-center gap-1 h-full justify-end" title={`${w.minutes} ${t('focus.stats.min')}`}>
-                  <span className="text-[10px] text-ink-light tabular-nums">{w.minutes || ''}</span>
+                  <span className="text-[11px] text-ink-light tabular-nums">{w.minutes || ''}</span>
                   <div className={`w-full rounded-t ${w.day === today ? 'bg-clay-soft' : 'bg-clay-soft/65'}`} style={{ height: `${(w.minutes / weekMax) * 100}%`, minHeight: w.minutes ? 3 : 0 }} />
-                  <span className="text-[10px] text-ink-lighter">
+                  <span className="text-[11px] text-ink-lighter">
                     {new Date(`${w.day}T00:00:00`).toLocaleDateString(locale, { weekday: 'narrow' })}
                   </span>
                 </div>

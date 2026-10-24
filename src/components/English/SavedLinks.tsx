@@ -68,7 +68,7 @@ export default function SavedLinks({ section, track, onPlay, activeUrl }: {
                 <a href={l.url} target="_blank" rel="noopener noreferrer" className="flex-1 truncate text-ink hover:text-clay-soft" dir="auto">
                   {l.title}
                 </a>
-                <span className="text-[10px] text-ink-lighter shrink-0">{ref?.listId && !ref.videoId ? t('english.links.playlist') : ref ? t('english.links.video') : ''}</span>
+                <span className="text-[11px] text-ink-lighter shrink-0">{ref?.listId && !ref.videoId ? t('english.links.playlist') : ref ? t('english.links.video') : ''}</span>
                 <button
                   onClick={() => setLinks((all) => all.filter((x) => x.id !== l.id))}
                   className="p-1 text-ink-lighter hover:text-red-500"

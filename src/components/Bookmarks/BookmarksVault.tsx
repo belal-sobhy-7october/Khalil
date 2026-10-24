@@ -117,6 +117,7 @@ export default function BookmarksVault() {
           <button
             onClick={() => setShowCategoryForm(true)}
             className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-ink/5 hover:bg-ink/10 text-ink-light hover:text-ink rounded-lg transition-colors"
+            aria-label={t('bookmarks.addCategory')}
           >
             <FolderPlus size={14} />
             <span className="hidden sm:inline">{t('bookmarks.addCategory')}</span>
@@ -129,6 +130,7 @@ export default function BookmarksVault() {
               setShowBookmarkForm(true);
             }}
             className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-clay-soft hover:bg-clay-soft-dark text-white rounded-lg transition-colors"
+            aria-label={t('bookmarks.addBookmark')}
           >
             <Plus size={14} />
             <span className="hidden sm:inline">{t('bookmarks.addBookmark')}</span>
@@ -398,7 +400,7 @@ function BookmarkCard({ bookmark, onRemove }: { bookmark: BookmarkType; onRemove
               {bookmark.note}
             </p>
           )}
-          <p className="text-[10px] text-ink-lighter mt-1 truncate">
+          <p className="text-[11px] text-ink-lighter mt-1 truncate">
             {bookmark.url.replace(/^https?:\/\//, '')}
           </p>
         </div>

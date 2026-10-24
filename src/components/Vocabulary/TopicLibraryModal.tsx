@@ -197,11 +197,11 @@ export default function TopicLibraryModal({ onClose, onAdded }: TopicLibraryModa
                         <span className="text-2xl">{pack.emoji}</span>
                         <span className="flex items-center gap-1">
                           {studied[pack.id] && (
-                            <span className="flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-green-500/10 text-green-700 dark:text-green-400" dir="auto">
+                            <span className="flex items-center gap-0.5 text-[11px] font-semibold px-1.5 py-0.5 rounded bg-green-500/10 text-green-700 dark:text-green-400" dir="auto">
                               <BookCheck size={11} /> {t('vocabulary.library.studied')}
                             </span>
                           )}
-                          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-ink/5 text-ink-light">{pack.level}</span>
+                          <span className="text-[11px] font-semibold px-1.5 py-0.5 rounded bg-ink/5 text-ink-light">{pack.level}</span>
                         </span>
                       </div>
                       <div className="font-semibold text-ink">{pack.title}</div>
@@ -250,7 +250,7 @@ export default function TopicLibraryModal({ onClose, onAdded }: TopicLibraryModa
                           >
                             <PlayCircle size={14} className="text-ink-light" />
                           </button>
-                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-ink/5 text-ink-light">{item.pos}</span>
+                          <span className="text-[11px] px-1.5 py-0.5 rounded bg-ink/5 text-ink-light">{item.pos}</span>
                           {owned && <Check size={12} className="text-green-600" />}
                         </div>
                         <div className="text-sm text-ink mt-1">{item.definition}</div>

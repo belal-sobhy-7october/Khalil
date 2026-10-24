@@ -112,7 +112,7 @@ export default memo(function CalendarMultiWeekView({ currentDate, events, onEdit
                     <div className="min-w-0 flex-1">
                       <span className="truncate font-medium block" style={{ color: `var(--calendar-color-${event.color}-700)` }}>{event.title}</span>
                       {event.startTime && (
-                        <span className="text-[10px] opacity-70 truncate block">{event.startTime}{event.endTime && ` - ${event.endTime}`}</span>
+                        <span className="text-[11px] opacity-70 truncate block">{event.startTime}{event.endTime && ` - ${event.endTime}`}</span>
                       )}
                     </div>
                   </motion.div>

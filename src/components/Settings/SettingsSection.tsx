@@ -140,7 +140,7 @@ export default function SettingsSection() {
                 <div className="h-16 flex items-end p-2" style={{ backgroundColor: a.swatches[1] }}>
                   <span className="text-sm font-bold font-amiri" style={{ color: a.swatches[0] }}>{t(`settings.names.${a.id}.light`)}</span>
                 </div>
-                <div className="absolute top-1.5 end-1.5 px-1.5 py-0.5 rounded bg-black/30 text-[9px] text-white font-mono" dir="ltr">{a.swatches[0]}</div>
+                <div className="absolute top-1.5 end-1.5 px-1.5 py-0.5 rounded bg-black/30 text-[11px] text-white font-mono" dir="ltr">{a.swatches[0]}</div>
                 {active && (
                   <span className="absolute bottom-1.5 end-1.5 w-6 h-6 rounded-full bg-clay-soft text-white flex items-center justify-center shadow">
                     <Check size={14} />

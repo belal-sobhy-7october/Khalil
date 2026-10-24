@@ -25,7 +25,7 @@ function Forecast({ counts, labels }: { counts: number[]; labels: string[] }) {
           const label = `${labels[i]}: ${n}`;
           return (
             <div key={i} role="listitem" tabIndex={0} title={label} aria-label={label} className="flex-1 h-full flex flex-col items-center justify-end gap-0.5 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-clay-soft">
-              {i === 0 && <span className="text-[10px] font-semibold text-ink tabular-nums">{n}</span>}
+              {i === 0 && <span className="text-[11px] font-semibold text-ink tabular-nums">{n}</span>}
               <span
                 className={`w-full max-w-6 rounded-t ${i === 0 ? 'bg-clay-soft' : 'bg-clay-soft/60'}`}
                 style={{ height: n ? `${Math.max(4, (n / max) * 44)}px` : '2px', opacity: n ? 1 : 0.35 }}
@@ -36,7 +36,7 @@ function Forecast({ counts, labels }: { counts: number[]; labels: string[] }) {
       </div>
       <div className="flex gap-1 mt-1">
         {labels.map((l, i) => (
-          <span key={i} className="flex-1 text-center text-[10px] text-ink-lighter truncate">{l}</span>
+          <span key={i} className="flex-1 text-center text-[11px] text-ink-lighter truncate">{l}</span>
         ))}
       </div>
     </figure>

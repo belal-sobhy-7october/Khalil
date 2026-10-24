@@ -98,7 +98,7 @@ export default memo(function CalendarYearView({ currentDate, events }: CalendarY
             <div className="p-2">
               <div className="grid grid-cols-7 gap-0.5 mb-1">
                 {weekdayLabels.map((day, i) => (
-                  <div key={`weekday-${i}`} className="h-6 flex items-center justify-center text-[10px] text-ink-lighter font-medium">
+                  <div key={`weekday-${i}`} className="h-6 flex items-center justify-center text-[11px] text-ink-lighter font-medium">
                     {day}
                   </div>
                 ))}
@@ -132,7 +132,7 @@ export default memo(function CalendarYearView({ currentDate, events }: CalendarY
                             />
                           ))}
                           {dayEvents.length > 3 && (
-                            <span className="text-[8px] text-ink-light">+{dayEvents.length - 3}</span>
+                            <div className="w-1.5 h-1.5 rounded-full bg-ink-lighter" title={`+${dayEvents.length - 3}`} />
                           )}
                         </div>
                       )}
