@@ -365,7 +365,7 @@ await flow('learning-path', { section: 'vocabulary', englishTab: 'path' }, async
   await page.waitForTimeout(800);
   const added = wordCount() - wordsBefore;
   check(added > 0 && added <= 16, `adding the day's words added ${added}`);
-  check(backend.tables.vocabulary_categories?.some((c) => c.name === 'Small Talk'), 'words not filed under the topic');
+  check(backend.tables.vocabulary_categories?.some((c) => c.name === 'Self-Introduction & Background'), 'words not filed under the day 1 topic');
 
   // Review: the flashcards open in the path; ending the session ticks the review and saves each word's schedule.
   await block('vocabulary').getByRole('button', { name: /^Start review/ }).click();
