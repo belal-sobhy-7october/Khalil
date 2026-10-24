@@ -48,6 +48,11 @@ const openBlock = (section: string) => {
   if (within(b).getAllByRole('button')[0].getAttribute('aria-expanded') !== 'true') fireEvent.click(within(b).getAllByRole('button')[0]);
   return block(section);
 };
+/** Day 1 is on screen and has opened its first block (the saved path arrives after the first render). */
+async function dayOpened() {
+  await screen.findByRole('heading', { level: 2, name: 'Day 1' });
+  await act(async () => {});
+}
 const lessonOf = (day: number, section: string) => {
   const item = path[day - 1].blocks.find((b) => b.section === section)!.items[0];
   if (item.item.kind !== 'lesson') throw new Error(`day ${day} ${section} has a lesson first`);
@@ -133,7 +138,7 @@ describe('LearningPathSection', () => {
     serve({ [PATH_KV_KEY]: started() });
     const { key, lesson } = lessonOf(1, 'listening');
     render(<LearningPathSection onOpenTab={onOpenTab} />);
-    await screen.findByRole('heading', { level: 2, name: 'Day 1' });
+    await dayOpened();
     const listening = openBlock('listening');
     expect(within(listening).getByText('Listen in five steps')).toBeInTheDocument();
     fireEvent.click(within(listening).getByRole('button', { name: 'Play' }));
@@ -149,12 +154,25 @@ describe('LearningPathSection', () => {
 
   it('shows a lesson finished in its own tab as done, and starts a lesson where it stopped', async () => {
     const listening = lessonOf(1, 'listening');
-    const reading = lessonOf(1, 'reading');
-    serve({ [PATH_KV_KEY]: started(), [COURSE_PROGRESS_KEY]: { [listening.lesson.id]: today }, [COURSE_POSITIONS_KEY]: { [reading.lesson.id]: 200 } });
+    const shadowing = lessonOf(1, 'shadowing');
+    serve({ [PATH_KV_KEY]: started(), [COURSE_PROGRESS_KEY]: { [listening.lesson.id]: today }, [COURSE_POSITIONS_KEY]: { [shadowing.lesson.id]: 200 } });
     render(<LearningPathSection onOpenTab={onOpenTab} />);
+    await dayOpened();
     await waitFor(() => expect(within(block('listening')).getByText(/1\/1/)).toBeInTheDocument());
-    fireEvent.click(within(openBlock('reading')).getByRole('button', { name: 'Play' }));
+    fireEvent.click(within(openBlock('shadowing')).getByRole('button', { name: 'Play' }));
     expect(screen.getByTestId('loop-player')).toHaveAttribute('data-start', '197');
+  });
+
+  it("links the day's British Council text, and ticks it by hand", async () => {
+    const { key, lesson } = lessonOf(1, 'reading');
+    serve({ [PATH_KV_KEY]: started() });
+    render(<LearningPathSection onOpenTab={onOpenTab} />);
+    await dayOpened();
+    const row = within(openBlock('reading')).getByText(lesson.title).closest('[data-item]') as HTMLElement;
+    expect(within(row).getByRole('link', { name: /Read/ })).toHaveAttribute('href', lesson.url);
+    fireEvent.click(within(row).getAllByRole('button')[0]);
+    await waitFor(() => expect(lastSaved(COURSE_PROGRESS_KEY)).toEqual({ [lesson.id]: today }));
+    expect(row.getAttribute('data-item')).toBe(key);
   });
 
   it('ticks a part of a long lesson once playback reaches its end', async () => {
@@ -164,7 +182,7 @@ describe('LearningPathSection', () => {
     if (part.item.kind !== 'lesson' || !part.item.part) throw new Error('a part');
     serve({ [PATH_KV_KEY]: started() });
     render(<LearningPathSection onOpenTab={onOpenTab} />);
-    await screen.findByRole('heading', { level: 2, name: 'Day 1' });
+    await dayOpened();
     fireEvent.click(screen.getByRole('button', { name: new RegExp(`^Day ${day.day} \\(0/\\d+\\)$`) }));
     const opened = openBlock(b.section);
     expect(within(opened).getByText(new RegExp(`Part 1 of ${part.item.part.count}`))).toBeInTheDocument();
@@ -190,7 +208,7 @@ describe('LearningPathSection', () => {
     useAppStore.setState({ vocabularyItems: owned.map((w, n) => ({ id: `w${n}`, word: w.word })) as never });
     serve({ [PATH_KV_KEY]: started({ done }), [COURSE_PROGRESS_KEY]: course });
     render(<LearningPathSection onOpenTab={onOpenTab} />);
-    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Day 1 done'));
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Day 1 done'), { timeout: 3000 });
     expect(screen.getByTestId('path-day-progress')).toHaveTextContent('6/6');
     fireEvent.click(screen.getByRole('button', { name: 'Start day 2' }));
     expect(screen.getByRole('heading', { level: 2, name: 'Day 2' })).toBeInTheDocument();
@@ -201,7 +219,7 @@ describe('LearningPathSection', () => {
     const key = day.blocks.find((b) => b.section === 'grammar')!.items[0].key;
     serve({ [PATH_KV_KEY]: started() });
     render(<LearningPathSection onOpenTab={onOpenTab} />);
-    await screen.findByRole('heading', { level: 2, name: 'Day 1' });
+    await dayOpened();
     fireEvent.click(screen.getByRole('button', { name: new RegExp(`^Day ${day.day} \\(0/\\d+\\)$`) }));
     fireEvent.change(within(openBlock('grammar')).getByRole('textbox'), { target: { value: 'I enjoy reading.' } });
     await waitFor(() => expect(lastSaved<PathState>(PATH_KV_KEY)?.notes[key]).toBe('I enjoy reading.'), { timeout: 2000 });

@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { BookOpen, ChevronDown, CircleCheckBig, Headphones, ListChecks, RotateCcw } from 'lucide-react';
+import { BookOpen, ChevronDown, CircleCheckBig, FileText, Headphones, ListChecks, RotateCcw } from 'lucide-react';
 import { useTranslation } from '../../i18n/useTranslation';
 import { EASE } from './courseMotion';
 import { markDoneKey } from './courseLabels';
-import { videoThumb, type CourseGroup, type CourseLesson } from '../../data/courses';
+import { readOnSite, videoThumb, type CourseGroup, type CourseLesson } from '../../data/courses';
 import { clockLength, lessonFraction, lessonStats, type CourseProgress, type WatchPositions } from '../../lib/courseProgress';
 import { AnimatedNumber, DoneCheck, PlayingBars, ProgressBar, Thumb, ThumbProgress } from './CourseVisuals';
 
@@ -24,6 +24,13 @@ function LessonArt({ lesson, done, fraction }: { lesson: CourseLesson; done: boo
       </span>
     );
   }
+  if (lesson.kind === 'text') {
+    return (
+      <span className={`hidden sm:flex w-10 h-10 shrink-0 rounded-lg items-center justify-center bg-sage-soft/15 text-sage-soft ${done ? 'opacity-50' : ''}`}>
+        <FileText size={16} />
+      </span>
+    );
+  }
   if (lesson.kind === 'book') {
     return (
       <span className="relative hidden sm:block w-9 shrink-0 aspect-[2/3] rounded overflow-hidden bg-ink/10">
@@ -39,13 +46,20 @@ function LessonArt({ lesson, done, fraction }: { lesson: CourseLesson; done: boo
   );
 }
 
-/** The level's picture in its header: the first video, the first book's cover or a podcast tile. */
+/** The level's picture in its header: the first video, the first book's cover, or a podcast or text tile. */
 function GroupCover({ group }: { group: CourseGroup }) {
   const first = group.lessons[0];
   if (!first || first.kind === 'audio') {
     return (
       <span className="w-full h-full flex items-center justify-center bg-linear-to-br from-clay-soft/25 to-gold-soft/25 text-clay-soft-dark">
         <Headphones size={20} />
+      </span>
+    );
+  }
+  if (first.kind === 'text') {
+    return (
+      <span className="w-full h-full flex items-center justify-center bg-linear-to-br from-sage-soft/25 to-gold-soft/25 text-sage-soft">
+        <FileText size={20} />
       </span>
     );
   }
@@ -209,10 +223,10 @@ export default function CourseGroupCard({
                           type="button"
                           onClick={() => onOpenLesson(lesson)}
                           className="flex-1 min-w-0 flex items-center gap-3 text-start"
-                          aria-label={`${t(lesson.kind === 'book' ? 'english.courses.open' : 'english.links.play')}: ${lesson.title}`}
+                          aria-label={`${t(readOnSite(lesson.kind) ? 'english.courses.open' : 'english.links.play')}: ${lesson.title}`}
                         >
                           <span className="w-6 shrink-0 text-center text-[11px] tabular-nums text-ink-lighter">
-                            {active && lesson.kind !== 'book' ? <PlayingBars /> : index + 1}
+                            {active && !readOnSite(lesson.kind) ? <PlayingBars /> : index + 1}
                           </span>
                           <LessonArt lesson={lesson} done={done} fraction={partial ? fraction : 0} />
                           <span className="flex-1 min-w-0">

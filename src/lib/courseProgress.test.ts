@@ -103,7 +103,7 @@ describe('course catalog', () => {
     expect(COURSE_SECTIONS.map((s) => s.sources.map((src) => src.id))).toEqual([
       ['ibrahim-adel', 'voa'],
       ['ibrahim-adel', 'voa', 'dalilk-daily'],
-      ['ibrahim-adel', 'lovely-stories'], // Dalilk's novels join once their list is filled in
+      ['british-council', 'ibrahim-adel', 'lovely-stories'], // Dalilk's novels join once their list is filled in
       ['ibrahim-adel'],
       ['listening-time'],
     ]);
@@ -120,6 +120,15 @@ describe('course catalog', () => {
       'American Stories',
       'TALK2US: English Conversation',
     ]);
+    // British Council's graded texts, A1 to C1, read on their site.
+    const britishCouncil = COURSE_SECTIONS[2].sources[0];
+    expect(britishCouncil.groups.map((g) => g.name)).toEqual(['A1 reading', 'A2 reading', 'B1 reading', 'B2 reading', 'C1 reading']);
+    for (const g of britishCouncil.groups) {
+      for (const l of g.lessons) {
+        expect(l.kind).toBe('text');
+        expect(l.url).toMatch(new RegExp(`^https://learnenglish\\.britishcouncil\\.org/free-resources/reading/${g.name.slice(0, 2).toLowerCase()}/[a-z0-9-]+$`));
+      }
+    }
     for (const section of COURSE_SECTIONS) {
       for (const source of section.sources) {
         if (source.kind === 'podcast') continue; // read at runtime

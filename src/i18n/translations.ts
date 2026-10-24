@@ -671,7 +671,7 @@ export const translations = {
       },
       courses: {
         sources: 'Sources',
-        kind: { youtube: 'Videos', podcast: 'Podcast', library: 'Novels' },
+        kind: { youtube: 'Videos', podcast: 'Podcast', library: 'Novels', texts: 'Texts' },
         levels: 'Levels',
         lessonsDone: '{done} of {total} lessons',
         watched: '{done} of {total} watched',
@@ -720,6 +720,8 @@ export const translations = {
         seek: 'Position in the episode',
         readBook: 'Read the novel',
         bookHint: 'Read it on Dalilk — every novel has audio and questions — then come back and tick it.',
+        readText: 'Open the lesson',
+        textHint: 'Read it on British Council LearnEnglish: a preparation task, the text and two tasks. Then come back and tick it.',
         tip: {
           pronunciation: 'After each lesson, copy the sounds out loud, then check yourself with the sounds chart below.',
           listening: 'Listen once without subtitles, then again with them — and say the new phrases out loud.',
@@ -1818,7 +1820,7 @@ export const translations = {
       },
       courses: {
         sources: 'المصادر',
-        kind: { youtube: 'فيديوهات', podcast: 'بودكاست', library: 'روايات' },
+        kind: { youtube: 'فيديوهات', podcast: 'بودكاست', library: 'روايات', texts: 'نصوص' },
         levels: 'المستويات',
         lessonsDone: '{done} من {total} درس',
         watched: 'اتفرّجت على {done} من {total}',
@@ -1867,6 +1869,8 @@ export const translations = {
         seek: 'مكانك في الحلقة',
         readBook: 'اقرأ الرواية',
         bookHint: 'اقراها على دليلك — كل رواية معاها صوت وأسئلة — وبعدين ارجع علّم عليها.',
+        readText: 'افتح الدرس',
+        textHint: 'اقراه على British Council LearnEnglish: تمرين تحضير، النص، وتمرينين. وبعدين ارجع علّم عليه.',
         tip: {
           pronunciation: 'بعد كل درس قلّد الأصوات بصوت عالي، وراجع نفسك على جدول الأصوات تحت.',
           listening: 'اسمع مرة من غير ترجمة، وبعدين مرة بالترجمة — وقول العبارات الجديدة بصوت عالي.',

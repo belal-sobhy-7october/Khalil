@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
-  BookOpen, CalendarCheck, Check, ExternalLink, Flame, Headphones, Link2, Loader2, MonitorPlay, Play, RefreshCw, SkipForward,
+  BookOpen, CalendarCheck, Check, ExternalLink, FileText, Flame, Headphones, Link2, Loader2, MonitorPlay, Play, RefreshCw, SkipForward,
   Sparkles, Trophy,
 } from 'lucide-react';
 import { useTranslation } from '../../i18n/useTranslation';
@@ -13,7 +13,7 @@ import type { YouTubeRef } from '../../lib/youtube';
 import type { PracticeKind } from '../../lib/englishPractice';
 import { podcastGroups, usePodcast, type PodcastStatus } from '../../lib/podcast';
 import {
-  getCourseSection, videoThumb, videoUrl, type CourseLesson, type CourseSection as Section, type CourseSectionId, type CourseSource,
+  getCourseSection, readOnSite, videoThumb, videoUrl, type CourseLesson, type CourseSection as Section, type CourseSectionId, type CourseSource,
 } from '../../data/courses';
 import {
   COURSE_POSITIONS_KEY, COURSE_PROGRESS_KEY, clockLength, doneThisWeek, dropPositions, durationParts, findLesson, isNearEnd,
@@ -50,6 +50,7 @@ function readSource(section: Section): string {
 function SourceIcon({ kind, size = 15 }: { kind: CourseSource['kind']; size?: number }) {
   if (kind === 'podcast') return <Headphones size={size} />;
   if (kind === 'library') return <BookOpen size={size} />;
+  if (kind === 'texts') return <FileText size={size} />;
   return <MonitorPlay size={size} />;
 }
 
@@ -444,11 +445,17 @@ function SourceView({
           {/* Player / up next */}
           <div ref={playerRef} className="lg:sticky lg:top-4 space-y-3 scroll-mt-4">
             {current && playing?.kind === 'lesson' ? (
-              current.lesson.kind === 'book' ? (
+              readOnSite(current.lesson.kind) ? (
                 <div className="rounded-2xl border border-border-subtle bg-card/40 p-5 flex flex-col sm:flex-row gap-5">
-                  <div className="w-32 shrink-0 self-center sm:self-start aspect-[2/3] rounded-xl overflow-hidden bg-ink/10 shadow-lg">
-                    {current.lesson.image && <Thumb src={current.lesson.image} eager className="w-full h-full object-cover" />}
-                  </div>
+                  {current.lesson.kind === 'text' ? (
+                    <div className="w-20 h-20 shrink-0 self-center sm:self-start rounded-2xl flex items-center justify-center bg-sage-soft/15 text-sage-soft">
+                      <FileText size={36} />
+                    </div>
+                  ) : (
+                    <div className="w-32 shrink-0 self-center sm:self-start aspect-[2/3] rounded-xl overflow-hidden bg-ink/10 shadow-lg">
+                      {current.lesson.image && <Thumb src={current.lesson.image} eager className="w-full h-full object-cover" />}
+                    </div>
+                  )}
                   <div className="flex-1 min-w-0 space-y-3">
                     <div className="space-y-1">
                       <div className="text-[11px] text-ink-light">
@@ -457,7 +464,7 @@ function SourceView({
                       <div className="text-lg font-bold text-ink leading-snug">
                         <bdi>{current.lesson.title}</bdi>
                       </div>
-                      <p className="text-xs text-ink-light">{t('english.courses.bookHint')}</p>
+                      <p className="text-xs text-ink-light">{t(current.lesson.kind === 'text' ? 'english.courses.textHint' : 'english.courses.bookHint')}</p>
                     </div>
                     <a
                       href={current.lesson.url}
@@ -465,7 +472,7 @@ function SourceView({
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-clay-soft text-white text-sm font-semibold hover:bg-clay-soft-dark shadow-sm"
                     >
-                      <BookOpen size={16} /> {t('english.courses.readBook')}
+                      <BookOpen size={16} /> {t(current.lesson.kind === 'text' ? 'english.courses.readText' : 'english.courses.readBook')}
                     </a>
                     <div className="flex flex-wrap items-center gap-2 pt-1">
                       {doneButton}
@@ -555,6 +562,11 @@ function SourceView({
                     <Headphones aria-hidden="true" className="absolute -end-6 -top-6 w-48 h-48 text-white/10" />
                   </span>
                 )}
+                {next.lesson.kind === 'text' && (
+                  <span className="absolute inset-0 bg-linear-to-br from-sage-soft via-sage-soft-dark to-gold-soft-dark">
+                    <FileText aria-hidden="true" className="absolute -end-6 -top-6 w-48 h-48 text-white/10" />
+                  </span>
+                )}
                 {next.lesson.kind === 'book' && next.lesson.image && (
                   <>
                     <Thumb src={next.lesson.image} eager className="absolute inset-0 w-full h-full object-cover opacity-40 blur-sm scale-110" />
@@ -564,7 +576,7 @@ function SourceView({
                   </>
                 )}
                 <span className="absolute inset-0 bg-linear-to-t from-black/90 via-black/30 to-black/10" />
-                {next.lesson.kind !== 'book' && (
+                {!readOnSite(next.lesson.kind) && (
                   <span className="absolute inset-x-0 top-0 bottom-28 flex items-center justify-center">
                     <span className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-white/95 text-clay-soft flex items-center justify-center shadow-xl transition-transform group-hover:scale-110">
                       <Play size={26} fill="currentColor" className="translate-x-[2px]" />

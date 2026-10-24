@@ -7,6 +7,7 @@ import { clockLength, isNearEnd } from '../../lib/courseProgress';
 import { wordKey, type AccentItem, type PathItem } from '../../lib/learningPath';
 import { useDueSummary, useMinuteClock } from '../../lib/useDueSummary';
 import { useWaitLabel } from '../../lib/useWaitLabel';
+import { readOnSite } from '../../data/courses';
 import type { PackItem, TopicPack } from '../../data/topicPacks';
 import { GrammarCard } from '../Vocabulary/TopicLesson';
 import YouGlishModal from '../Vocabulary/YouGlishModal';
@@ -267,7 +268,7 @@ export function LessonLine({ item, playing, onPlay }: { item: LessonItem; playin
         <span className="block text-sm font-medium text-ink"><bdi>{lesson.title}</bdi></span>
         <span className="block text-[11px] text-ink-lighter"><bdi>{item.groupName}</bdi>{length && <> · <span dir="ltr" className="tabular-nums">{length}</span></>}</span>
       </span>
-      {lesson.kind === 'book' ? (
+      {readOnSite(lesson.kind) ? (
         <ActionButton href={lesson.url}>
           <BookOpen size={13} /> {t('path.item.read')}
         </ActionButton>

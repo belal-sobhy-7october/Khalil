@@ -88,6 +88,20 @@ describe('the plan', () => {
     expect([...new Set(lessons(adelFirst, 'listening').filter((l) => l.sourceId === 'ibrahim-adel').map((l) => l.lesson.id))]).toEqual(ibrahim('listening'));
   });
 
+  it('reads British Council by default, one text a day from the chosen level, then Ibrahim Adel', () => {
+    expect(defaultSettings().reading).toBe('british-council');
+    const items = lessons(path, 'reading');
+    expect(items[0]).toMatchObject({ sourceId: 'british-council', groupName: 'B1 reading' });
+    expect(items[0].lesson.kind).toBe('text');
+    expect(items[0].lesson.url).toMatch(/^https:\/\/learnenglish\.britishcouncil\.org\/free-resources\/reading\/b1\//);
+    expect(blockOf(path[0], 'reading').items).toHaveLength(1);
+    const levels = [...new Set(items.filter((l) => l.sourceId === 'british-council').map((l) => l.groupName))];
+    expect(levels).toEqual(['B1 reading', 'B2 reading', 'C1 reading']);
+    const after = items.find((l) => l.sourceId !== 'british-council')!;
+    expect(after.sourceId).toBe('ibrahim-adel');
+    expect(lessons(buildPath(settings({ readingLevel: 'A1' })), 'reading')[0].groupName).toBe('A1 reading');
+  });
+
   it('reads with Ibrahim Adel, then Lovely English Stories from the chosen level', () => {
     const items = lessons(buildPath(settings({ reading: 'ibrahim-adel', readingLevel: 'B1' })), 'reading');
     expect(items[0].sourceId).toBe('ibrahim-adel');

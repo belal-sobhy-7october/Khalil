@@ -244,11 +244,16 @@ describe('EnglishHub', () => {
     await waitFor(() => expect(screen.getByText('0 of 60 lessons')).toBeInTheDocument());
   });
 
-  it('reading: Ibrahim Adel and Lovely English Stories at every level, plus the book', () => {
+  it('reading: British Council texts, Ibrahim Adel and Lovely English Stories at every level, plus the book', () => {
     render(<EnglishHub />);
     openTab('Reading');
     const sources = screen.getByRole('tablist', { name: 'Sources' });
-    expect(within(sources).getAllByRole('tab')).toHaveLength(2);
+    expect(within(sources).getAllByRole('tab')).toHaveLength(3);
+    // British Council's texts are read on their site: the lesson opens a link, and is ticked by hand.
+    for (const level of ['A1', 'A2', 'B1', 'B2', 'C1']) expect(levelButton(new RegExp(`${level} reading`))).toBeDefined();
+    fireEvent.click(screen.getAllByRole('button', { name: /^Open: / })[0]);
+    expect(screen.getByRole('link', { name: /Open the lesson/ })).toHaveAttribute('href', expect.stringMatching(/^https:\/\/learnenglish\.britishcouncil\.org\/free-resources\/reading\/a1\//));
+    fireEvent.click(within(sources).getByRole('tab', { name: /Ibrahim Adel/ }));
     expect(screen.getByText('0 of 51 lessons')).toBeInTheDocument();
     fireEvent.click(within(sources).getByRole('tab', { name: /Lovely English Stories/ }));
     for (const level of [/Beginner Stories — A1 \/ A2/, /Intermediate Stories — B1 \/ B2/, /Advanced Stories — C1 \/ C2/]) {

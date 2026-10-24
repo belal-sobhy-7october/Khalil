@@ -47,6 +47,9 @@ Reading, Grammar, Shadowing), named in English in both languages on the owner's 
   Topic Library is written in American English (its test checks).
 - Dalilk's daily podcast is read at runtime through `api/podcast.ts` (a Vercel function that
   finds the feed via Apple Podcasts) and played inside the page; the list is saved on the device.
+- Reading starts with British Council LearnEnglish's graded texts (`src/data/britishCouncil.ts`, A1–C1,
+  lesson kind `text`): read on their site, ticked by hand. Their site refuses cloud machines, so the
+  list came from search results; add a lesson by its slug in `/free-resources/reading/<level>/<slug>`.
 - Dalilk's novel library (`src/data/dalilkNovels.ts`) appears in Reading once that list is filled.
 - Progress (`english-course-progress`) and watch positions (`english-course-positions`) are
   per-user `user_kv` values; lessons resume where they stopped and tick themselves near the end.
@@ -89,8 +92,7 @@ minutes each (10/15/20/30 in its settings), and plays the hub's own lessons insi
   the flashcard review plus the words of the day's topic (`PATH_TOPICS`: all 90 Topic Library packs, one
   a day, B1 → B2 → C1); Grammar is Ibrahim Adel's course, then the grammar point of the day's topic.
 - Settings choose the sources and levels: Listening VOA (American English, the default) or Ibrahim Adel,
-  Reading British Council or Ibrahim Adel (British Council appears once its texts are in the catalog as
-  the `british-council` reading source, groups `british-council-a1`…`-c1`), and the Shadowing level.
+  Reading British Council (the default) or Ibrahim Adel, and the Shadowing level.
 - Lessons are ticked in the hub's progress (`english-course-progress`), so one finished here or in its tab
   is done in both. The path's own `user_kv` value (`learning-path-v2`) keeps the settings, what the hub
   can't know (reviews, grammar points, sound drills, parts of lessons) and notes, keyed by `itemKey`.

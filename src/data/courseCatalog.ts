@@ -1,6 +1,6 @@
 /**
  * The English hub's study sections and what's inside each: one or more
- * sources (a teacher's YouTube courses, a podcast, a novel library), each
+ * sources (a teacher's YouTube courses, a podcast, a novel library, graded texts), each
  * made of levels in study order. Names are English on purpose — the owner
  * wants section and course names in English in both languages.
  *
@@ -61,7 +61,12 @@ export interface CatalogLibrarySource extends SourceBase {
   kind: 'library';
 }
 
-export type CatalogSource = CatalogYouTubeSource | CatalogPodcastSource | CatalogLibrarySource;
+/** Graded texts read on their own site, each with its tasks; the list lives in src/data. */
+export interface CatalogTextsSource extends SourceBase {
+  kind: 'texts';
+}
+
+export type CatalogSource = CatalogYouTubeSource | CatalogPodcastSource | CatalogLibrarySource | CatalogTextsSource;
 
 export interface CatalogSection {
   id: CourseSectionId;
@@ -73,6 +78,7 @@ export interface CatalogSection {
 
 const IBRAHIM_ADEL: CourseChannel = { name: 'Ibrahim Adel · Z American English', url: 'https://www.youtube.com/@ZAmericanEnglish/courses' };
 const DALILK: CourseChannel = { name: 'Dalilk · Daily English Listening', url: 'https://dalilk.com/links/daily-podcast' };
+const BRITISH_COUNCIL: CourseChannel = { name: 'British Council · LearnEnglish', url: 'https://learnenglish.britishcouncil.org/free-resources/reading' };
 const DALILK_LIBRARY: CourseChannel = { name: 'Dalilk · Novel Library', url: 'https://dalilk.com/resources/fluency/read' };
 const LOVELY_STORIES: CourseChannel = { name: 'Lovely English Stories', url: 'https://www.youtube.com/@LovelyEnglishStories' };
 const LISTENING_TIME: CourseChannel = { name: 'Listening Time', url: 'https://www.youtube.com/@listeningtimepodcast/podcasts' };
@@ -183,6 +189,7 @@ export const COURSE_CATALOG: CatalogSection[] = [
     name: 'Reading',
     icon: '📖',
     sources: [
+      { kind: 'texts', id: 'british-council', name: 'British Council LearnEnglish', channel: BRITISH_COUNCIL },
       {
         kind: 'youtube',
         id: 'ibrahim-adel',
