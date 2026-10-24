@@ -41,9 +41,15 @@ Reading, Grammar, Shadowing), named in English in both languages on the owner's 
 
 - `src/data/courseCatalog.ts` lists each section's sources and their levels in study order.
   YouTube episodes are generated into `src/data/courseEpisodes.ts` by
-  `node scripts/sync-courses.mjs` (YouTube's web API; run it to pick up new episodes).
+  `node scripts/sync-courses.mjs` (YouTube's web API; run it to pick up new episodes). A playlist can
+  be `reverse`d (newest-first playlists) or limited to a `pick` of video ids in a chosen order (VOA's).
+- The owner learns American English: VOA Learning English is in Listening and Pronunciation, and the
+  Topic Library is written in American English (its test checks).
 - Dalilk's daily podcast is read at runtime through `api/podcast.ts` (a Vercel function that
   finds the feed via Apple Podcasts) and played inside the page; the list is saved on the device.
+- Reading starts with British Council LearnEnglish's graded texts (`src/data/britishCouncil.ts`, A1–C1,
+  lesson kind `text`): read on their site, ticked by hand. Their site refuses cloud machines, so the
+  list came from search results; add a lesson by its slug in `/free-resources/reading/<level>/<slug>`.
 - Dalilk's novel library (`src/data/dalilkNovels.ts`) appears in Reading once that list is filled.
 - Progress (`english-course-progress`) and watch positions (`english-course-positions`) are
   per-user `user_kv` values; lessons resume where they stopped and tick themselves near the end.
@@ -77,13 +83,21 @@ before changing it.** Progress is in `user_kv` (`sales-*` keys). Listening tasks
 ## Learning Path (مسار التعلم)
 
 A 90-day English roadmap, open to every account: the first tab of the English hub (`path`; the old
-`path` section redirects there). `src/lib/learningPath.ts` builds the days from the topic lessons
-(`PATH_PHASES`: 18 topics, four study days each, a review every 7th day, a final week) and from the hub:
-every day starts with the flashcard review, and `course` tasks take the next lesson of a hub section
-(`src/lib/hubLessons.ts`); a lesson finished there today ticks the task (`doneByHub`). Words reach the
-flashcards only through the "Add to my flashcards" button. Progress and notes are one `user_kv` value
-(`learning-path`) keyed `day:taskId`, so once people have started, don't move tasks between days or reuse
-task ids: add new material as new ids. `flows.mjs` has a `learning-path` flow.
+`path` section redirects there). It isn't a separate course: every day has the same six blocks, one per
+hub section (Vocabulary, Pronunciation & Accent, Listening, Reading, Grammar, Shadowing), about 20
+minutes each (10/15/20/30 in its settings), and plays the hub's own lessons inside the block.
+
+- `src/lib/learningPath.ts` builds the days (`buildPath(settings)`): each section's lessons in study order,
+  packed into days by length × a study factor (`STUDY_FACTOR`), long lessons cut into parts. Vocabulary is
+  the flashcard review plus the words of the day's topic (`PATH_TOPICS`: all 90 Topic Library packs, one
+  a day, B1 → B2 → C1); Grammar is Ibrahim Adel's course, then the grammar point of the day's topic.
+- Settings choose the sources and levels: Listening VOA (American English, the default) or Ibrahim Adel,
+  Reading British Council (the default) or Ibrahim Adel, and the Shadowing level.
+- Lessons are ticked in the hub's progress (`english-course-progress`), so one finished here or in its tab
+  is done in both. The path's own `user_kv` value (`learning-path-v2`) keeps the settings, what the hub
+  can't know (reviews, grammar points, sound drills, parts of lessons) and notes, keyed by `itemKey`.
+- Words reach the flashcards only through the "Add to my flashcards" button. `flows.mjs` has a
+  `learning-path` flow.
 
 ## Spaced repetition (flashcards)
 

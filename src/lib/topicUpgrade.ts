@@ -75,7 +75,7 @@ const SUBJECTS: Array<[RegExp, string]> = [
   [/describ|appearance|وصف/i, 'describing-people'],
   [/cultur|etiquette|custom|manners|ثقاف/i, 'cultural-differences'],
   [/\bcity\b|village|countryside|مدين|ريف/i, 'city-vs-countryside'],
-  [/\bhome\b|house|\bflat\b|neighbo|\brent\b|سكن|بيت|جيران/i, 'home-and-neighbours'],
+  [/\bhome\b|house|\bflat\b|apartment|neighbo|\brent\b|سكن|بيت|جيران/i, 'home-and-neighbours'],
   [/transport|traffic|driving|مواصلات|زحم/i, 'transport-and-traffic'],
   [/sport|fitness|\bgym\b|football|رياض/i, 'sports-and-fitness'],
   [/hobb|free time|هواي/i, 'hobbies-and-free-time'],

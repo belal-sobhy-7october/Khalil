@@ -1,25 +1,31 @@
 /**
  * The study sections as the app uses them: each source's levels ("groups")
  * with their lessons. YouTube lessons come from courseEpisodes.ts, novels
- * from dalilkNovels.ts; a podcast's episodes are read at runtime
+ * from dalilkNovels.ts, British Council's texts from britishCouncil.ts; a
+ * podcast's episodes are read at runtime
  * (src/lib/podcast.ts), so its groups start empty here.
  */
 import { COURSE_CATALOG, type CatalogSource, type CourseChannel, type CourseSectionId } from './courseCatalog';
 import { COURSE_EPISODES } from './courseEpisodes';
 import { DALILK_NOVELS, type NovelLevel } from './dalilkNovels';
+import { BRITISH_COUNCIL_READING, britishCouncilUrl, type BritishCouncilLevel } from './britishCouncil';
 
 export type { CourseChannel, CourseSectionId };
 
-export type LessonKind = 'video' | 'audio' | 'book';
+/** A text is a lesson read on another site (British Council), a book a novel there. */
+export type LessonKind = 'video' | 'audio' | 'book' | 'text';
+
+/** Read on its own site rather than played here. */
+export const readOnSite = (kind: LessonKind) => kind === 'book' || kind === 'text';
 
 export interface CourseLesson {
-  /** A YouTube video id, `pod:<episode>` or `book:<slug>` — the key progress is saved under. */
+  /** A YouTube video id, `pod:<episode>`, `book:<slug>` or `text:<slug>` — the key progress is saved under. */
   id: string;
   title: string;
-  /** Length; 0 when unknown (books). */
+  /** Length; 0 when unknown (books and texts). */
   seconds: number;
   kind: LessonKind;
-  /** The audio file (podcast) or the book's page. */
+  /** The audio file (podcast), or the page of a book or a text. */
   url?: string;
   /** A book's cover. */
   image?: string;
@@ -86,6 +92,22 @@ function buildSource(sectionId: CourseSectionId, s: CatalogSource): CourseSource
           image: n.cover,
         })),
       })).filter((g) => g.lessons.length > 0),
+    };
+  }
+  if (s.kind === 'texts') {
+    return {
+      ...base,
+      groups: (Object.keys(BRITISH_COUNCIL_READING) as BritishCouncilLevel[]).map((level) => ({
+        id: `${s.id}-${level}`,
+        name: `${level.toUpperCase()} reading`,
+        lessons: BRITISH_COUNCIL_READING[level].map((text) => ({
+          id: `text:bc-${level}-${text.slug}`,
+          title: text.title,
+          seconds: 0,
+          kind: 'text' as const,
+          url: britishCouncilUrl(level, text.slug),
+        })),
+      })),
     };
   }
   return { ...base, groups: [], appleId: s.appleId };

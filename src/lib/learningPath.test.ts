@@ -1,114 +1,184 @@
 import { describe, expect, it } from 'vitest';
 import {
-  EMPTY_PATH_STATE, PATH_LENGTH, PATH_PHASES, buildPath, currentDay, dayProgress, doneByHub, packById, pathStats, scheduledDay, taskKey,
-  type PathState,
+  PATH_LENGTH, PATH_SECTIONS, PATH_TOPICS, buildPath, currentDay, dayProgress, defaultSettings, isItemDone, packById, pathStats,
+  scheduledDay, sectionTimeline, withDefaults, wordKey, wordsOf, type PathDay, type PathItem, type PathProgress, type PathSettings,
+  type PlannedItem,
 } from './learningPath';
 import { getCourseSection } from '../data/courses';
-import { lessonsDoneOn, sectionOfLesson } from './hubLessons';
+import { TOPIC_PACKS } from '../data/topicPacks';
+import { addDaysToDateString } from '../store/dateHelpers';
 
 const path = buildPath();
+const settings = (s: Partial<PathSettings>) => ({ ...defaultSettings(), ...s });
+const blockOf = (d: PathDay, section: string) => d.blocks.find((b) => b.section === section)!;
+const lessons = (p: PathDay[], section: string) =>
+  p.flatMap((d) => blockOf(d, section).items.map((i) => i.item)).filter((i): i is Extract<PathItem, { kind: 'lesson' }> => i.kind === 'lesson');
+const progress = (over: Partial<PathProgress> = {}): PathProgress => ({
+  state: withDefaults(null),
+  course: {},
+  positions: {},
+  words: new Set(),
+  ...over,
+});
+const ibrahim = (section: 'grammar' | 'listening' | 'reading' | 'pronunciation') =>
+  getCourseSection(section).sources.find((s) => s.id === 'ibrahim-adel')!.groups.flatMap((g) => g.lessons.map((l) => l.id));
 
-describe('learning path plan', () => {
-  it('has 90 days, each with tasks and unique task ids', () => {
+describe('the plan', () => {
+  it('has 90 days of the same six blocks, every item planned once', () => {
     expect(path).toHaveLength(PATH_LENGTH);
-    expect(path.map((d) => d.day)).toEqual(Array.from({ length: 90 }, (_, i) => i + 1));
+    const keys = new Set<string>();
     for (const d of path) {
-      expect(d.tasks.length).toBeGreaterThan(0);
-      expect(new Set(d.tasks.map((t) => t.id)).size).toBe(d.tasks.length);
-      const minutes = d.tasks.reduce((n, t) => n + t.minutes, 0);
-      expect(minutes).toBeGreaterThanOrEqual(15);
-      expect(minutes).toBeLessThanOrEqual(75);
+      expect(d.blocks.map((b) => b.section)).toEqual(PATH_SECTIONS);
+      for (const b of d.blocks) {
+        expect(b.items.length, `day ${d.day} ${b.section}`).toBeGreaterThan(0);
+        // About the day's minutes for the section: a long lesson is cut into parts.
+        expect(b.minutes, `day ${d.day} ${b.section}`).toBeLessThanOrEqual(31);
+        for (const i of b.items) {
+          expect(keys.has(i.key), i.key).toBe(false);
+          keys.add(i.key);
+        }
+      }
     }
   });
 
-  it('uses only existing lessons, each for exactly four study days', () => {
-    for (const id of PATH_PHASES.flat()) {
-      expect(packById(id)).toBeDefined();
-      expect(path.filter((d) => d.packId === id).map((d) => d.kind)).toEqual(['words', 'grammar', 'input', 'speak']);
+  it('gives every day a topic from the Topic Library, every topic in the path', () => {
+    expect(new Set(PATH_TOPICS).size).toBe(PATH_TOPICS.length);
+    for (const id of PATH_TOPICS) expect(packById(id), id).toBeDefined();
+    expect([...PATH_TOPICS].sort()).toEqual(TOPIC_PACKS.map((p) => p.id).sort());
+    // Each topic's words are spread over its days, every word once.
+    for (const id of PATH_TOPICS) {
+      const words = path.flatMap((d) => blockOf(d, 'vocabulary').items.map((i) => i.item)).filter((i) => i.kind === 'words' && i.packId === id);
+      expect(words.flatMap((w) => (w.kind === 'words' ? wordsOf(w).map((x) => x.word) : []))).toEqual(packById(id)!.items.map((x) => x.word));
+    }
+    for (const d of path) expect(blockOf(d, 'vocabulary').items[0].item.kind).toBe('review');
+  });
+
+  it("follows Ibrahim Adel's grammar course in order, then the grammar of the day's topic", () => {
+    const course = ibrahim('grammar');
+    expect([...new Set(lessons(path, 'grammar').map((l) => l.lesson.id))]).toEqual(course);
+    const last = path.findIndex((d) => blockOf(d, 'grammar').items[0].item.kind === 'grammar');
+    expect(last).toBeGreaterThan(30);
+    for (const d of path.slice(last)) {
+      const item = blockOf(d, 'grammar').items[0].item;
+      expect(item).toMatchObject({ kind: 'grammar', packId: d.packId });
     }
   });
 
-  it('reviews every seventh day and ends with the final test', () => {
-    expect(path.filter((d) => d.kind === 'review').map((d) => d.day)).toEqual([7, 14, 21, 28, 35, 42, 49, 56, 63, 70, 77, 84]);
-    expect(path[0].tasks[0].kind).toBe('baseline');
-    expect(path[88].tasks[0].kind).toBe('finalTest');
-    expect(path[89].tasks[0].kind).toBe('reflection');
+  it('cuts a long lesson into parts that cover it', () => {
+    const parts = lessons(path, 'grammar').filter((l) => l.part);
+    expect(parts.length).toBeGreaterThan(0);
+    const first = parts[0];
+    const all = parts.filter((p) => p.lesson.id === first.lesson.id);
+    expect(all.map((p) => p.part!.index)).toEqual(Array.from({ length: first.part!.count }, (_, i) => i + 1));
+    expect(all[0].part!.from).toBe(0);
+    expect(all.at(-1)!.part!.to).toBe(first.lesson.seconds);
+    for (let i = 1; i < all.length; i++) expect(all[i].part!.from).toBe(all[i - 1].part!.to);
   });
 
-  it('every day reviews the flashcards, and each topic takes a lesson from every hub section', () => {
-    for (const d of path) expect(d.tasks.some((t) => t.kind === 'review')).toBe(true);
-    for (const id of PATH_PHASES.flat()) {
-      const sections = path.filter((d) => d.packId === id).flatMap((d) => d.tasks.filter((t) => t.kind === 'course').map((t) => t.section));
-      expect(sections.sort()).toEqual(['grammar', 'listening', 'pronunciation', 'reading', 'shadowing']);
+  it('listens to VOA from the chosen level, or to Ibrahim Adel first with VOA after his course', () => {
+    const voa = getCourseSection('listening').sources.find((s) => s.id === 'voa')!;
+    expect(lessons(path, 'listening')[0].groupName).toBe("America's National Parks");
+    expect(lessons(buildPath(settings({ listeningLevel: 'beginner' })), 'listening')[0].groupId).toBe(voa.groups[0].id);
+    const adelFirst = buildPath(settings({ listening: 'ibrahim-adel' }));
+    const ids = lessons(adelFirst, 'listening').map((l) => l.sourceId);
+    expect(ids[0]).toBe('ibrahim-adel');
+    const switchAt = ids.indexOf('voa');
+    expect(switchAt).toBeGreaterThan(0);
+    expect(ids.slice(switchAt).every((s) => s === 'voa')).toBe(true);
+    expect([...new Set(lessons(adelFirst, 'listening').filter((l) => l.sourceId === 'ibrahim-adel').map((l) => l.lesson.id))]).toEqual(ibrahim('listening'));
+  });
+
+  it('reads British Council by default, one text a day from the chosen level, then Ibrahim Adel', () => {
+    expect(defaultSettings().reading).toBe('british-council');
+    const items = lessons(path, 'reading');
+    expect(items[0]).toMatchObject({ sourceId: 'british-council', groupName: 'B1 reading' });
+    expect(items[0].lesson.kind).toBe('text');
+    expect(items[0].lesson.url).toMatch(/^https:\/\/learnenglish\.britishcouncil\.org\/free-resources\/reading\/b1\//);
+    expect(blockOf(path[0], 'reading').items).toHaveLength(1);
+    const levels = [...new Set(items.filter((l) => l.sourceId === 'british-council').map((l) => l.groupName))];
+    expect(levels).toEqual(['B1 reading', 'B2 reading', 'C1 reading']);
+    const after = items.find((l) => l.sourceId !== 'british-council')!;
+    expect(after.sourceId).toBe('ibrahim-adel');
+    expect(lessons(buildPath(settings({ readingLevel: 'A1' })), 'reading')[0].groupName).toBe('A1 reading');
+  });
+
+  it('reads with Ibrahim Adel, then Lovely English Stories from the chosen level', () => {
+    const items = lessons(buildPath(settings({ reading: 'ibrahim-adel', readingLevel: 'B1' })), 'reading');
+    expect(items[0].sourceId).toBe('ibrahim-adel');
+    const stories = items.filter((l) => l.sourceId === 'lovely-stories');
+    expect(stories[0].groupName).toBe('Intermediate Stories — B1 / B2');
+  });
+
+  it('shadows one Listening Time lesson a day from the chosen level', () => {
+    const a2 = buildPath(settings({ shadowingLevel: 'A2' }));
+    expect(lessons(a2, 'shadowing')[0].groupName).toBe('A2 English Listening Practice');
+    expect(lessons(path, 'shadowing')[0].groupName).toBe('A1 English Listening Practice');
+    expect(blockOf(path[0], 'shadowing').items).toHaveLength(1);
+  });
+
+  it("takes Ibrahim Adel's pronunciation course, then VOA's How to Pronounce, then sound drills", () => {
+    const timeline = sectionTimeline(path, 'pronunciation');
+    expect(timeline[0]).toMatchObject({ from: 1, what: { kind: 'group', source: 'Ibrahim Adel' } });
+    expect(timeline.some((s) => s.what.kind === 'group' && s.what.source === 'VOA How to Pronounce')).toBe(true);
+    expect(timeline.at(-1)!.what.kind).toBe('sounds');
+  });
+
+  it('plans less of each course a day with fewer minutes', () => {
+    const end = (p: PathDay[]) => p.findIndex((d) => blockOf(d, 'grammar').items[0].item.kind === 'grammar');
+    expect(end(buildPath(settings({ minutes: 30 })))).toBeLessThan(end(path));
+    expect(end(buildPath(settings({ minutes: 10 })))).toBe(-1); // the course lasts the 90 days
+  });
+
+  it('shows each section as consecutive segments over the 90 days', () => {
+    for (const section of PATH_SECTIONS) {
+      const timeline = sectionTimeline(path, section);
+      expect(timeline[0].from).toBe(1);
+      expect(timeline.at(-1)!.to).toBe(PATH_LENGTH);
+      for (let i = 1; i < timeline.length; i++) expect(timeline[i].from).toBe(timeline[i - 1].to + 1);
     }
-  });
-
-  it('covers every word of a topic across its two word days', () => {
-    const days = path.filter((d) => d.packId === 'travel');
-    const ranges = days.flatMap((d) => d.tasks.filter((t) => t.kind === 'words').map((t) => t.words!));
-    const pack = packById('travel')!;
-    expect(ranges).toEqual([[0, Math.ceil(pack.items.length / 2)], [Math.ceil(pack.items.length / 2), pack.items.length]]);
   });
 });
 
-describe('learning path progress', () => {
-  const doneDay = (state: PathState, day: number, date: string): PathState => ({
-    ...state,
-    done: { ...state.done, ...Object.fromEntries(path[day - 1].tasks.map((t) => [taskKey(day, t.id), date])) },
-  });
-
-  it('moves to the first unfinished day and counts days, minutes and streak', () => {
-    let s: PathState = { ...EMPTY_PATH_STATE, startedAt: '2026-10-20' };
-    expect(currentDay(path, s)).toBe(1);
-    s = doneDay(s, 1, '2026-10-20');
-    s = doneDay(s, 2, '2026-10-21');
-    s = { ...s, done: { ...s.done, [taskKey(3, path[2].tasks[0].id)]: '2026-10-22' } };
-    expect(currentDay(path, s)).toBe(3);
-    expect(dayProgress(path[2], s)).toEqual({ done: 1, total: path[2].tasks.length });
-    const stats = pathStats(path, s, '2026-10-22');
-    expect(stats.daysDone).toBe(2);
-    expect(stats.streak).toBe(3);
-    expect(stats.minutes).toBe([...path[0].tasks, ...path[1].tasks, path[2].tasks[0]].reduce((n, t) => n + t.minutes, 0));
-    expect(stats.bySkill.vocab.done).toBe(2);
-    // A missed day breaks the streak.
-    expect(pathStats(path, s, '2026-10-24').streak).toBe(0);
-  });
-
-  it('knows which day the calendar expects', () => {
-    expect(scheduledDay('2026-10-20', '2026-10-20')).toBe(1);
-    expect(scheduledDay('2026-10-20', '2026-10-29')).toBe(10);
-    expect(scheduledDay('2026-10-20', '2027-06-01')).toBe(90);
-  });
-});
-
-describe('the hub counts for the path', () => {
-  const listening = getCourseSection('listening').sources[0].groups[0].lessons;
-  const grammar = getCourseSection('grammar').sources[0].groups[0].lessons;
+describe('progress', () => {
   const day1 = path[0];
+  const items = day1.blocks.flatMap((b) => b.items);
+  const doneAll = (list: PlannedItem[], date: string) => Object.fromEntries(list.map((i) => [i.key, date]));
 
-  it('knows which section a lesson is from', () => {
-    expect(sectionOfLesson(listening[0].id)).toBe('listening');
-    expect(sectionOfLesson(grammar[0].id)).toBe('grammar');
-    expect(sectionOfLesson('pod:123')).toBe('listening');
-    expect(sectionOfLesson('book:a-novel')).toBe('reading');
-    expect(sectionOfLesson('unknown')).toBeUndefined();
-    expect(lessonsDoneOn({ [listening[0].id]: '2026-10-22', [grammar[0].id]: '2026-10-21' }, '2026-10-22')).toEqual({ listening: [listening[0].id] });
+  it('counts lessons finished in the hub, the words in your flashcards and the rest from the path', () => {
+    const lesson = items.find((i) => i.item.kind === 'lesson' && !i.item.part)!;
+    const words = items.find((i) => i.item.kind === 'words')!;
+    const review = items.find((i) => i.item.kind === 'review')!;
+    if (lesson.item.kind !== 'lesson' || words.item.kind !== 'words') throw new Error('day 1 has a lesson and words');
+    expect(isItemDone(lesson, progress())).toBe(false);
+    expect(isItemDone(lesson, progress({ course: { [lesson.item.lesson.id]: '2026-10-20' } }))).toBe(true);
+    const owned = new Set(wordsOf(words.item).map((w) => wordKey(w.word)));
+    expect(isItemDone(words, progress({ words: owned }))).toBe(true);
+    expect(isItemDone(review, progress({ state: { ...withDefaults(null), done: { [review.key]: '2026-10-20' } } }))).toBe(true);
   });
 
-  it('a lesson finished today ticks the course task; cleared flashcards tick the review', () => {
-    const state: PathState = { ...EMPTY_PATH_STATE, startedAt: '2026-10-22' };
-    expect(doneByHub(day1, state, { lessons: { listening: [listening[0].id] }, reviewCleared: true })).toEqual([
-      { key: taskKey(1, 'review') },
-      { key: taskKey(1, 'lesson-listening'), lesson: listening[0].id },
-    ]);
-    expect(doneByHub(day1, state, { lessons: { grammar: [grammar[0].id] }, reviewCleared: false })).toEqual([]);
+  it('ticks a part of a lesson once playback reaches its end', () => {
+    const part = path.flatMap((d) => d.blocks.flatMap((b) => b.items)).find((i) => i.item.kind === 'lesson' && i.item.part?.index === 1)!;
+    if (part.item.kind !== 'lesson' || !part.item.part) throw new Error('a part');
+    expect(isItemDone(part, progress({ positions: { [part.item.lesson.id]: part.item.part.to - 30 } }))).toBe(false);
+    expect(isItemDone(part, progress({ positions: { [part.item.lesson.id]: part.item.part.to } }))).toBe(true);
   });
 
-  it('a lesson counts for one task only', () => {
-    const state: PathState = { ...EMPTY_PATH_STATE, startedAt: '2026-10-22', lessons: { [taskKey(1, 'lesson-listening')]: listening[0].id } };
-    expect(doneByHub(path[4], state, { lessons: { listening: [listening[0].id] }, reviewCleared: false })).toEqual([]);
-    expect(doneByHub(path[4], state, { lessons: { listening: [listening[0].id, listening[1].id] }, reviewCleared: false })).toEqual([
-      { key: taskKey(5, 'lesson-listening'), lesson: listening[1].id },
-    ]);
+  it('works on the first unfinished day, and counts a streak and the time', () => {
+    const today = '2026-10-24';
+    const state = { ...withDefaults(null), startedAt: today, done: doneAll(items, today) };
+    const course = Object.fromEntries(items.flatMap((i) => (i.item.kind === 'lesson' ? [[i.item.lesson.id, addDaysToDateString(today, -1)]] : [])));
+    const p = progress({ state, course });
+    expect(dayProgress(day1, p)).toEqual({ done: 6, total: 6 });
+    expect(currentDay(path, p)).toBe(2);
+    const stats = pathStats(path, p, today);
+    expect(stats.daysDone).toBe(1);
+    expect(stats.streak).toBe(2);
+    expect(stats.minutes).toBe(items.reduce((n, i) => n + i.minutes, 0));
+    expect(stats.bySection.vocabulary.done).toBe(2);
+    expect(scheduledDay('2026-10-20', today)).toBe(5);
+  });
+
+  it('fills in settings missing from a saved value', () => {
+    expect(withDefaults({ startedAt: '2026-10-01', settings: { minutes: 30 } as PathSettings }).settings).toEqual({ ...defaultSettings(), minutes: 30 });
   });
 });

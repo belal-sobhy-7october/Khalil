@@ -26,6 +26,20 @@ describe('TOPIC_PACKS', () => {
     expect(TOPIC_PACKS.reduce((n, p) => n + p.items.length, 0)).toBe(lines.length);
   });
 
+  it('writes American English', () => {
+    const british = /\b(\w+our(s|ed|ing|ite|ites|able|ful|y|hood|hoods)?|\w+(ise|ised|ising|isation)|\w+yse[ds]?|centre|theatre|metre|litre|kilometres?|licence|defence|offence|practis\w*|travell\w*|cancell\w*|jewellery|judgement|grey|yoghurt|mum|flat|holidays?|queues?|rubbish|whilst|learnt|at weekends|with a pinch of salt|on the blink|tether|public transport(?!ation))\b/gi;
+    // Spelled the same way in American English.
+    const sameInAmerican = /^(exercis|ris|rais|nois|surpris|prais|compromis|promis|otherwis|concis|advis|revis|supervis|wis|precis|premis|expertis|disguis|despis|improvis|enterpris|franchis|merchandis|cruis|bruis|pois|treatis|televis|paradis|sunris|edgewis)|^(your|yours|our|ours|hour|hours|four|tour|tours|pour|pours|poured|pouring|flour|sour|detour|detours|contour|devour|glamour|nour)$/i;
+    const found = TOPIC_PACKS.flatMap((p) =>
+      [p.title, p.description, ...p.warmUp, ...p.discussion, p.task.prompt, ...p.task.points, p.paragraph, p.grammar.title, p.grammar.tip ?? '',
+        ...p.grammar.points.flatMap((g) => [g.form, g.use, g.example]), ...p.items.flatMap((i) => [i.word, i.definition, i.example])]
+        .flatMap((text) => text.match(british) ?? [])
+        .filter((w) => !sameInAmerican.test(w))
+        .map((w) => `${p.id}: ${w}`)
+    );
+    expect(found).toEqual([]);
+  });
+
   it('includes the eight lessons from the course', () => {
     expect(TOPIC_PACKS.filter((p) => p.fromCourse)).toHaveLength(8);
   });

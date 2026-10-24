@@ -82,8 +82,10 @@ Rules, all of them important:
 6. **English only** inside packs (no Arabic letters; the test checks).
 7. Write the word in its base form. Spell out `someone` / `something` (`meet someone halfway`),
    don't use `sb` / `sth`. Avoid `/` alternatives.
-8. Use **British spelling**, like the rest of the packs (neighbour, colour, practise as a
-   verb, organise).
+8. Use **American English**, like the rest of the packs: the spelling (neighbor, color, practice
+   as a verb, organize, traveling, center) and the words (apartment, vacation, line, trash, on
+   weekends, in college). The owner is learning American English; the test checks the common
+   British spellings and words.
 9. Don't put a `|` or a backtick inside a line; it breaks the format. Straight apostrophes are
    fine inside the template string.
 
