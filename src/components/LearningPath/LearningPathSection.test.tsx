@@ -208,7 +208,8 @@ describe('LearningPathSection', () => {
     useAppStore.setState({ vocabularyItems: owned.map((w, n) => ({ id: `w${n}`, word: w.word })) as never });
     serve({ [PATH_KV_KEY]: started({ done }), [COURSE_PROGRESS_KEY]: course });
     render(<LearningPathSection onOpenTab={onOpenTab} />);
-    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Day 1 done'), { timeout: 3000 });
+    await dayOpened();
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Day 1 done'));
     expect(screen.getByTestId('path-day-progress')).toHaveTextContent('6/6');
     fireEvent.click(screen.getByRole('button', { name: 'Start day 2' }));
     expect(screen.getByRole('heading', { level: 2, name: 'Day 2' })).toBeInTheDocument();
