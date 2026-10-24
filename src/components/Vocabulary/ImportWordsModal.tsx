@@ -171,6 +171,7 @@ export default function ImportWordsModal({ onClose }: { onClose: () => void }) {
           <button
             onClick={handleClose}
             className="p-2 hover:bg-ink/5 rounded-lg transition-colors"
+            aria-label={t('common.close')}
           >
             <X size={20} className="text-ink-light" />
           </button>

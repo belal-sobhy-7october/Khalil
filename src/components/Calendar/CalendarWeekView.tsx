@@ -164,7 +164,7 @@ export default memo(function CalendarWeekView({ currentDate, events, onEditEvent
                           </span>
                         </div>
                         {event.startTime && (
-                          <div className="text-[10px] opacity-70 mt-0.5 truncate">
+                          <div className="text-[11px] opacity-70 mt-0.5 truncate">
                             {event.startTime}{event.endTime && ` - ${event.endTime}`}
                           </div>
                         )}

@@ -54,7 +54,7 @@ export default function DailyFocus() {
         <div className="relative z-10">
           <div className="flex items-center justify-center gap-2 mb-1">
             <Target size={16} className="text-clay-soft" />
-            <span className="text-[10px] uppercase tracking-[0.15em] text-ink-light font-medium">
+            <span className="text-[11px] uppercase tracking-[0.15em] text-ink-light font-medium">
               {t('dailyFocus.subtitle')}
             </span>
           </div>
@@ -124,7 +124,7 @@ export default function DailyFocus() {
                 )}
               </AnimatePresence>
 
-              <p className="text-[10px] text-ink-light/50 mt-2 tracking-wide text-center">
+              <p className="text-[11px] text-ink-light/50 mt-2 tracking-wide text-center">
                 {new Date().toLocaleDateString(isRTL ? 'ar-SA' : 'en-US', {
                   weekday: 'long',
                   year: 'numeric',

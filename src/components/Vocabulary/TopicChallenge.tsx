@@ -247,7 +247,7 @@ export default function TopicChallenge({ category, paragraph, onClose }: { categ
                 </span>
                 <span className="text-[11px] leading-tight text-ink">
                   {i + 1}. {stepTitle(key)}
-                  {key === 'shadow' && <span className="block text-[10px] text-ink-lighter">{t('vocabulary.challenge.optional')}</span>}
+                  {key === 'shadow' && <span className="block text-[11px] text-ink-lighter">{t('vocabulary.challenge.optional')}</span>}
                 </span>
               </button>
             );

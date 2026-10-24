@@ -77,7 +77,7 @@ export default function LessonActivity({ refId, lang, onDone }: { refId: string;
           <div className="space-y-1.5 rounded-xl border border-border-subtle p-3">
             {lesson.example.map((line, i) => (
               <div key={i} className={`flex items-start gap-2 ${line.who === 'seller' ? '' : 'opacity-90'}`}>
-                <span className={`shrink-0 mt-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold ${line.who === 'seller' ? 'bg-clay-soft/15 text-clay-soft-dark' : 'bg-ink/5 text-ink-light'}`}>
+                <span className={`shrink-0 mt-0.5 px-1.5 py-0.5 rounded text-[11px] font-semibold ${line.who === 'seller' ? 'bg-clay-soft/15 text-clay-soft-dark' : 'bg-ink/5 text-ink-light'}`}>
                   {line.who === 'seller' ? pick(lang, 'انت', 'You') : pick(lang, 'العميل', 'Customer')}
                 </span>
                 <p className="flex-1 text-sm text-ink leading-relaxed">{line.text}</p>

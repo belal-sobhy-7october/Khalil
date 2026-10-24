@@ -519,7 +519,7 @@ function SubTrackRow({ track, colors }: { track: SubTrack; colors: (typeof pillC
             transition={{ duration: 0.6, ease: 'easeOut' }}
           />
         </div>
-        <span className="text-[10px] font-medium text-ink-light tabular-nums w-8 text-end shrink-0">
+        <span className="text-[11px] font-medium text-ink-light tabular-nums w-8 text-end shrink-0">
           {percent}%
         </span>
       </div>
@@ -643,7 +643,7 @@ function AddTrackForm({ categoryId }: { categoryId: string }) {
 
           <div className="flex items-center gap-3">
             <div className="flex-1">
-              <label className="block text-[10px] font-medium text-ink-light mb-1 text-end">
+              <label className="block text-[11px] font-medium text-ink-light mb-1 text-end">
                 {t('pillars.target')}
               </label>
               <input
@@ -654,12 +654,12 @@ function AddTrackForm({ categoryId }: { categoryId: string }) {
                 className="w-full border border-border-subtle rounded-lg px-3 py-2 text-sm bg-ink/3 text-ink focus:outline-none focus:ring-1 focus:ring-clay-soft/30"
               />
               {targetError && (
-                <p className="text-[10px] text-red-500 mt-1 text-end">{targetError}</p>
+                <p className="text-[11px] text-red-500 mt-1 text-end">{targetError}</p>
               )}
             </div>
 
             <div className="flex-1">
-              <label className="block text-[10px] font-medium text-ink-light mb-1 text-end">
+              <label className="block text-[11px] font-medium text-ink-light mb-1 text-end">
                 {t('pillars.unit')}
               </label>
               <input

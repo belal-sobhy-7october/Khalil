@@ -73,7 +73,7 @@ function Tooltip({ x, date, value, unit, align }: { x: number; date: string; val
       role="status"
     >
       <div className="text-sm font-semibold tabular-nums">{value === null ? '—' : `${value}${unit}`}</div>
-      <div className="text-[10px] opacity-75">{fmt(date, { weekday: 'short', day: 'numeric', month: 'short' })}</div>
+      <div className="text-[11px] opacity-75">{fmt(date, { weekday: 'short', day: 'numeric', month: 'short' })}</div>
     </div>
   );
 }
@@ -95,7 +95,7 @@ function XAxis({ data }: { data: DayPoint[] }) {
   if (data.length === 0) return null;
   const picks = data.length > 2 ? [0, Math.floor((data.length - 1) / 2), data.length - 1] : data.map((_, i) => i);
   return (
-    <div className="relative h-4 mt-1 text-[10px] text-ink-lighter" dir="ltr">
+    <div className="relative h-4 mt-1 text-[11px] text-ink-lighter" dir="ltr">
       {picks.map((i) => (
         <span
           key={i}
@@ -116,7 +116,7 @@ function YGrid({ max, unit }: { max: number; unit: string }) {
     <>
       {fractions.map((f) => (
         <div key={f} className="absolute inset-x-0 border-t border-border-subtle" style={{ bottom: `${f * 100}%` }}>
-          <span className="absolute -top-2 end-0 translate-x-full ps-1 text-[10px] text-ink-lighter tabular-nums">
+          <span className="absolute -top-2 end-0 translate-x-full ps-1 text-[11px] text-ink-lighter tabular-nums">
             {Math.round(max * f)}
             {f === 1 ? unit : ''}
           </span>
@@ -157,7 +157,7 @@ export function ColumnChart({ title, subtitle, data, unit = '', height = 140 }: 
                     style={{ height: `${h}%`, minHeight: p.value ? 2 : 0 }}
                   />
                   {i === peak && (p.value ?? 0) > 0 && hover === null && (
-                    <span className="absolute text-[10px] font-semibold text-ink tabular-nums" style={{ bottom: `calc(${h}% + 2px)` }}>
+                    <span className="absolute text-[11px] font-semibold text-ink tabular-nums" style={{ bottom: `calc(${h}% + 2px)` }}>
                       {p.value}
                     </span>
                   )}
@@ -250,7 +250,7 @@ export function LineChart({ title, subtitle, data, unit = '%', max: fixedMax = 1
           {last && hover === null && (
             <>
               <span className="absolute w-2.5 h-2.5 -translate-x-1/2 translate-y-1/2 rounded-full bg-clay-soft ring-2 ring-card" style={{ left: `${x(last.i)}%`, bottom: `${100 - y(last.p.value!)}%` }} />
-              <span className="absolute text-[10px] font-semibold text-ink tabular-nums -translate-x-1/2" style={{ left: `${x(last.i)}%`, bottom: `calc(${100 - y(last.p.value!)}% + 8px)` }}>
+              <span className="absolute text-[11px] font-semibold text-ink tabular-nums -translate-x-1/2" style={{ left: `${x(last.i)}%`, bottom: `calc(${100 - y(last.p.value!)}% + 8px)` }}>
                 {last.p.value}
                 {unit}
               </span>
@@ -313,7 +313,7 @@ export function Heatmap({ title, subtitle, data }: { title: string; subtitle?: s
           ))}
         </div>
       </div>
-      <div className="flex flex-wrap items-center justify-between gap-2 mt-2 text-[10px] text-ink-lighter">
+      <div className="flex flex-wrap items-center justify-between gap-2 mt-2 text-[11px] text-ink-lighter">
         <span className="text-xs text-ink min-h-4" aria-live="polite">
           {hover ? `${fmt(hover.date, { weekday: 'long', day: 'numeric', month: 'short' })} — ${hover.value === null ? t('analytics.noData') : `${hover.value}%`}` : ''}
         </span>

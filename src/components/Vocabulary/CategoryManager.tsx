@@ -70,6 +70,7 @@ export default function CategoryManager({ categories, onClose }: { categories: V
           <button
             onClick={onClose}
             className="p-2 hover:bg-ink/5 rounded-lg transition-colors"
+            aria-label={t('common.close')}
           >
             <X size={20} className="text-ink-light" />
           </button>
@@ -162,12 +163,14 @@ export default function CategoryManager({ categories, onClose }: { categories: V
                   <button
                     onClick={() => handleEdit(category)}
                     className="p-1.5 hover:bg-ink/5 rounded transition-colors"
+                    aria-label={`${t('common.edit')}: ${category.name}`}
                   >
                     <Edit2 size={14} className="text-ink-light" />
                   </button>
                   <button
                     onClick={() => handleDelete(category.id)}
                     className="p-1.5 hover:bg-red-50 dark:hover:bg-red-950/20 rounded transition-colors"
+                    aria-label={`${t('common.delete')}: ${category.name}`}
                   >
                     <Trash2 size={14} className="text-ink-light hover:text-red-500" />
                   </button>

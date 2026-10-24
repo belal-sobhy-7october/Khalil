@@ -131,7 +131,7 @@ export default function CourseGroupCard({
       >
         <div className="relative w-20 shrink-0 aspect-video rounded-lg overflow-hidden bg-ink/10">
           <GroupCover group={group} />
-          <span className="absolute bottom-0.5 end-0.5 px-1 rounded bg-black/75 text-[10px] text-white tabular-nums">{stats.total}</span>
+          <span className="absolute bottom-0.5 end-0.5 px-1 rounded bg-black/75 text-[11px] text-white tabular-nums">{stats.total}</span>
           <AnimatePresence initial={false}>
             {complete && (
               <motion.span
@@ -238,13 +238,13 @@ export default function CourseGroupCard({
                               <bdi>{lesson.title}</bdi>
                             </span>
                             {isNext && (
-                              <span className="inline-block mt-1 px-1.5 py-px rounded-full bg-clay-soft/15 text-clay-soft-dark text-[10px] font-semibold">
+                              <span className="inline-block mt-1 px-1.5 py-px rounded-full bg-clay-soft/15 text-clay-soft-dark text-[11px] font-semibold">
                                 {t('english.courses.continue')}
                               </span>
                             )}
                           </span>
                           {lesson.seconds > 0 && (
-                            <span className="shrink-0 text-end text-[10px] tabular-nums leading-tight">
+                            <span className="shrink-0 text-end text-[11px] tabular-nums leading-tight">
                               {partial ? (
                                 <span className="text-clay-soft-dark">
                                   {t('english.courses.left').replace(

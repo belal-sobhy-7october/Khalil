@@ -14,6 +14,7 @@ export const translations = {
       editEvent: 'Edit event',
       deleteEvent: 'Delete event',
       accountMenu: 'Account menu',
+      reorder: 'Drag to reorder',
     },
     app: {
       title: 'Khalil',
@@ -1161,6 +1162,7 @@ export const translations = {
       editEvent: 'تعديل الحدث',
       deleteEvent: 'حذف الحدث',
       accountMenu: 'قائمة الحساب',
+      reorder: 'اسحب لإعادة الترتيب',
     },
     app: {
       title: 'خليل',

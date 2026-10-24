@@ -123,7 +123,7 @@ export default memo(function CalendarMonthView({ currentDate, events, onEditEven
                       {event.completed ? <CheckCircle size={12} className="text-sage-soft" /> : <Circle size={12} className="text-ink-light" />}
                     </button>
                     <span className="truncate font-medium" style={{ color: `var(--calendar-color-${event.color}-700)` }}>{event.title}</span>
-                    {event.startTime && <span className="text-[10px] opacity-70">{event.startTime}</span>}
+                    {event.startTime && <span className="text-[11px] opacity-70">{event.startTime}</span>}
                   </motion.div>
                 ))}
               </div>

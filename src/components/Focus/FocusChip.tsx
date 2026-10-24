@@ -158,7 +158,7 @@ export default function FocusChip({ onOpen }: { onOpen: () => void }) {
         </button>
         <button onClick={onOpen} className="relative flex flex-col items-center leading-tight px-1" aria-label={t('focus.chip.open')}>
           <span className="text-lg font-semibold tabular-nums text-ink">{formatClock(remaining)}</span>
-          <span className="text-[10px] text-ink-light flex items-center gap-1">
+          <span className="text-[11px] text-ink-light flex items-center gap-1">
             {t(`focus.phase.${s.phase}`)}
             {noise && <Waves size={10} className="text-clay-soft" aria-hidden="true" />}
           </span>

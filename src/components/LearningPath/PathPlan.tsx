@@ -104,7 +104,7 @@ export function WeekGrid({ path, progress, current, selected, onGoTo }: {
                     title={label}
                     aria-label={label}
                     aria-current={d.day === selected ? 'true' : undefined}
-                    className={`w-7 h-7 rounded-md text-[10px] tabular-nums transition-colors ${
+                    className={`w-7 h-7 rounded-md text-[11px] tabular-nums transition-colors ${
                       done ? 'bg-sage-soft text-white' : p.done ? 'bg-gold-soft/60 text-ink' : 'bg-ink/5 text-ink-light hover:bg-ink/10'
                     } ${d.day === current ? 'ring-2 ring-clay-soft' : ''} ${d.day === selected ? 'outline outline-2 outline-offset-1 outline-ink/40' : ''}`}
                   >
