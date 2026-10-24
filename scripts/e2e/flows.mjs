@@ -342,27 +342,33 @@ await flow('bookmarks-add', { section: 'bookmarks' }, async ({ page, backend, ch
 
 // ---------------------------------------------------------------- learning path
 await flow('learning-path', { section: 'vocabulary', englishTab: 'path' }, async ({ page, backend, check, reload }) => {
-  const saved = () => backend.tables.user_kv?.find((r) => r.key === 'learning-path')?.value;
+  const kv = (key) => backend.tables.user_kv?.find((r) => r.key === key)?.value;
+  const saved = () => kv('learning-path-v2');
+  const block = (section) => page.locator(`[data-block="${section}"]`);
+  const openBlock = async (section) => {
+    const head = block(section).locator('> button');
+    if ((await head.getAttribute('aria-expanded')) !== 'true') await head.click();
+  };
   const wordCount = () => (backend.tables.vocabulary_items ?? []).length;
   const wordsBefore = wordCount();
   check(await visible(page.getByRole('tab', { name: 'Learning Path', selected: true })), 'the path is not a tab of the English hub');
   await page.getByRole('button', { name: 'Start day 1' }).click();
   await page.waitForTimeout(400);
   check(saved()?.startedAt === today, `path start not saved: ${JSON.stringify(saved())}`);
+  check(saved()?.settings?.listening === 'voa', 'VOA is not the listening source by default');
   check(await visible(page.getByRole('heading', { level: 2, name: /Day 1/ })), 'day 1 not shown after starting');
+  check((await page.locator('[data-block]').count()) === 6, 'a day does not have six blocks');
 
   // Words: they reach the flashcards only when asked.
-  await page.locator('[data-task="words-1"] [aria-expanded]').click();
   check(wordCount() === wordsBefore, 'the path changed the word list before being asked');
-  await page.getByRole('button', { name: /Add to my flashcards/ }).click();
+  await block('vocabulary').getByRole('button', { name: /Add to my flashcards/ }).click();
   await page.waitForTimeout(800);
   const added = wordCount() - wordsBefore;
-  check(added >= 5 && added <= 7, `adding the day's words added ${added}`);
+  check(added > 0 && added <= 16, `adding the day's words added ${added}`);
   check(backend.tables.vocabulary_categories?.some((c) => c.name === 'Small Talk'), 'words not filed under the topic');
 
-  // Review: the flashcards open in the path; ending the session ticks the task and saves each word's schedule.
-  await page.locator('[data-task="review"] [aria-expanded]').click();
-  await page.getByRole('button', { name: /^Start review/ }).click();
+  // Review: the flashcards open in the path; ending the session ticks the review and saves each word's schedule.
+  await block('vocabulary').getByRole('button', { name: /^Start review/ }).click();
   for (let i = 0; i < 60 && !(await page.getByText('Review Complete').isVisible().catch(() => false)); i++) {
     await page.getByRole('button', { name: 'Show answer' }).click({ timeout: 2000 }).catch(() => {});
     await page.getByRole('button', { name: /^Easy/ }).click({ timeout: 2000 }).catch(() => {});
@@ -370,42 +376,53 @@ await flow('learning-path', { section: 'vocabulary', englishTab: 'path' }, async
   check(await visible(page.getByText('Review Complete')), 'review session did not finish');
   await page.getByRole('button', { name: 'Close' }).last().click();
   await page.waitForTimeout(500);
-  check(saved()?.done?.['1:review'] === today, 'review task not ticked when the session ended');
+  check(saved()?.done?.['review:1'] === today, 'review not ticked when the session ended');
   const srsRows = (backend.tables.user_kv ?? []).filter((r) => r.key.startsWith('srs:'));
   check(srsRows.length >= added, `spaced-repetition states saved for ${srsRows.length} words`);
 
-  // A course task names the next hub lesson and opens its section.
-  await page.locator('[data-task="lesson-listening"] [aria-expanded]').click();
-  check(await visible(page.locator('[data-task="lesson-listening"]').getByText(/Ibrahim Adel/)), 'listening task does not name its source');
+  // Listening: a VOA lesson plays inside its block, with the five steps.
+  await openBlock('listening');
+  check(await visible(block('listening').getByText(/VOA Learning English/).first()), 'listening block does not name its source');
+  check(await visible(block('listening').getByText('Listen in five steps')), 'the five listening steps are missing');
+  await block('listening').getByRole('button', { name: 'Play' }).click();
+  check(await visible(block('listening').getByRole('button', { name: 'Playing' })), 'the lesson did not start in the block');
 
-  // Tick the rest of day 1.
-  const toggles = page.getByRole('button', { name: /^Mark as complete:/ });
-  for (let i = 0, n = await toggles.count(); i < n; i++) {
-    await toggles.first().click();
-    await page.waitForTimeout(150);
+  // Tick the rest of day 1, block by block.
+  for (const section of ['pronunciation', 'listening', 'reading', 'grammar', 'shadowing', 'vocabulary']) {
+    await openBlock(section);
+    const toggles = block(section).getByRole('button', { name: /^Mark as complete:/ });
+    for (let i = 0, n = await toggles.count(); i < n; i++) {
+      await toggles.first().click();
+      await page.waitForTimeout(150);
+    }
   }
   check(await visible(page.getByRole('status').filter({ hasText: 'Day 1 done' })), 'day-done banner not shown');
+  check(Object.keys(kv('english-course-progress') ?? {}).length >= 5, 'the lessons were not ticked in the hub too');
 
-  // Write a note on day 2 and reload: progress and the note stay.
-  await page.getByRole('button', { name: 'Start day 2' }).click();
-  await page.locator('[data-task="grammar"] [aria-expanded]').click();
-  await page.getByPlaceholder(/Write here/).fill('If I were you, I would talk to her.');
-  await page.waitForTimeout(1200);
-  check(Object.values(saved()?.notes ?? {}).includes('If I were you, I would talk to her.'), 'note not saved');
+  // Reload: the day finished today stays open and the progress stays.
   await reload();
   check(await visible(page.getByRole('heading', { level: 2, name: /Day 1/ })), 'after reload the day finished today should stay open');
   check(await visible(page.getByText('1/90', { exact: true })), 'days-done count lost after reload');
-  await page.getByRole('button', { name: 'Start day 2' }).click();
-  await page.locator('[data-task="grammar"] [aria-expanded]').click();
-  check((await page.getByPlaceholder(/Write here/).inputValue()) === 'If I were you, I would talk to her.', 'note lost after reload');
-  // Roadmap: jump to the final test day.
-  await page.getByRole('button', { name: /^Day 89 — / }).click();
-  check(await visible(page.getByText('Final speaking test')), 'roadmap day 89 does not show the final test');
-  // Day 1's Listening lesson opens the hub's Listening section.
-  await page.getByRole('button', { name: /^Day 1 — / }).click();
-  await page.locator('[data-task="lesson-listening"] [aria-expanded]').click();
-  await page.getByRole('button', { name: 'Open Listening' }).click();
-  check(await visible(page.getByRole('tab', { name: 'Listening', selected: true })), 'the listening task did not open Listening');
+
+  // A grammar point after Ibrahim Adel's course: its sentences are saved.
+  await page.getByRole('button', { name: /^Day 60 \(/ }).click();
+  await openBlock('grammar');
+  await block('grammar').getByPlaceholder(/Write here/).fill('If I were you, I would talk to her.');
+  await page.waitForTimeout(1200);
+  check(Object.values(saved()?.notes ?? {}).includes('If I were you, I would talk to her.'), 'note not saved');
+
+  // Settings: Ibrahim Adel for listening re-plans the days.
+  await page.locator('summary', { hasText: 'Settings' }).click();
+  await page.getByRole('radio', { name: /Ibrahim Adel/ }).first().check();
+  await page.waitForTimeout(400);
+  check(saved()?.settings?.listening === 'ibrahim-adel', 'listening source not saved');
+  await page.getByRole('button', { name: /^Day 2 \(/ }).click();
+  check(await visible(block('listening').getByText(/^Ibrahim Adel · /)), 'day 2 listening did not move to Ibrahim Adel');
+
+  // A block opens its own section of the hub.
+  await openBlock('listening');
+  await block('listening').getByRole('button', { name: 'Open Listening' }).last().click();
+  check(await visible(page.getByRole('tab', { name: 'Listening', selected: true })), 'the listening block did not open Listening');
 });
 
 // ---------------------------------------------------------------- spaced repetition

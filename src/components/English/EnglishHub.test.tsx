@@ -93,12 +93,13 @@ describe('EnglishHub', () => {
     }
   });
 
-  it('opens on the learning path, which opens the section a task takes its lesson from', async () => {
+  it('opens on the learning path, whose blocks open their own section', async () => {
     render(<EnglishHub />);
     expect(screen.getByRole('tab', { name: 'Learning Path' })).toHaveAttribute('aria-selected', 'true');
     fireEvent.click(await screen.findByRole('button', { name: 'Start day 1' }));
-    fireEvent.click(screen.getByText('Listening: the next lesson'));
-    fireEvent.click(screen.getByRole('button', { name: 'Open Listening' }));
+    const listening = document.querySelector('[data-block="listening"]') as HTMLElement;
+    fireEvent.click(within(listening).getAllByRole('button')[0]);
+    fireEvent.click(within(listening).getByRole('button', { name: 'Open Listening' }));
     expect(screen.getByRole('tab', { name: 'Listening' })).toHaveAttribute('aria-selected', 'true');
     expect(localStorage.getItem('khalil-english-tab')).toBe('listening');
   });

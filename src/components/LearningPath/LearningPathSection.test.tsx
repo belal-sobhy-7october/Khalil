@@ -1,11 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { useAppStore } from '../../store/appStore';
-import { addDaysToDateString, getToday } from '../../store/dateHelpers';
+import { getToday } from '../../store/dateHelpers';
 import { loadKv, saveKv } from '../../lib/userKv';
-import { EMPTY_PATH_STATE, PATH_KV_KEY, buildPath, taskKey, type PathState } from '../../lib/learningPath';
-import { COURSE_PROGRESS_KEY } from '../../lib/courseProgress';
-import { getCourseSection } from '../../data/courses';
+import { PATH_KV_KEY, buildPath, defaultSettings, emptyPathState, wordsOf, type PathItem, type PathState } from '../../lib/learningPath';
+import { COURSE_POSITIONS_KEY, COURSE_PROGRESS_KEY } from '../../lib/courseProgress';
 import LearningPathSection from './LearningPathSection';
 
 vi.mock('../../lib/supabase', async () => {
@@ -18,26 +17,41 @@ vi.mock('../../lib/userKv', () => ({
   saveKv: vi.fn(async () => true),
 }));
 vi.mock('../Vocabulary/YouGlishModal', () => ({ default: () => null }));
+type SimProps = { onProgress?: (s: number, playing: boolean) => void; onEnded?: () => void; source: { videoId: string | null; start?: number }; compact?: boolean };
+vi.mock('../English/LoopPlayer', () => ({
+  default: ({ onProgress, source, compact }: SimProps) => (
+    <div data-testid="loop-player" data-video={source.videoId ?? ''} data-start={source.start ?? 0} data-compact={String(!!compact)}>
+      <button onClick={() => onProgress?.(30, false)}>sim: pause at 0:30</button>
+      <button onClick={() => onProgress?.(100_000, true)}>sim: near the end</button>
+    </div>
+  ),
+}));
 
 const today = getToday();
 const path = buildPath();
 const onOpenTab = vi.fn();
-
-/** State with the first `n` days fully done. */
-function doneThrough(n: number, startedAt: string): PathState {
-  const done: Record<string, string> = {};
-  for (const d of path.slice(0, n)) for (const t of d.tasks) done[taskKey(d.day, t.id)] = addDaysToDateString(startedAt, d.day - 1);
-  return { startedAt, done, notes: {} };
-}
+const started = (over: Partial<PathState> = {}): PathState => ({ ...emptyPathState(), startedAt: today, ...over });
 
 /** What the database holds, by user_kv key. */
 function serve(values: Record<string, unknown>) {
   vi.mocked(loadKv).mockImplementation(async (_u, k, f) => (k in values ? values[k] : f) as never);
 }
 
-const lastSaved = () => {
-  const calls = vi.mocked(saveKv).mock.calls.filter(([, key]) => key === PATH_KV_KEY);
-  return calls[calls.length - 1]?.[2] as PathState | undefined;
+const lastSaved = <T,>(key: string) => {
+  const calls = vi.mocked(saveKv).mock.calls.filter(([, k]) => k === key);
+  return calls[calls.length - 1]?.[2] as T | undefined;
+};
+
+const block = (section: string) => document.querySelector(`[data-block="${section}"]`) as HTMLElement;
+const openBlock = (section: string) => {
+  const b = block(section);
+  if (within(b).getAllByRole('button')[0].getAttribute('aria-expanded') !== 'true') fireEvent.click(within(b).getAllByRole('button')[0]);
+  return block(section);
+};
+const lessonOf = (day: number, section: string) => {
+  const item = path[day - 1].blocks.find((b) => b.section === section)!.items[0];
+  if (item.item.kind !== 'lesson') throw new Error(`day ${day} ${section} has a lesson first`);
+  return { key: item.key, lesson: item.item.lesson, item: item.item as Extract<PathItem, { kind: 'lesson' }> };
 };
 
 const RAW_KEY = /\b(path|vocabulary|a11y|nav)\.[a-zA-Z]+/;
@@ -62,167 +76,154 @@ beforeEach(() => {
 });
 
 describe('LearningPathSection', () => {
-  it.each(['en', 'ar'] as const)('shows the intro, then day 1 after starting (%s)', async (language) => {
+  it.each(['en', 'ar'] as const)('shows the six sections and the settings, then day 1 after starting (%s)', async (language) => {
     useAppStore.setState({ language });
     render(<LearningPathSection onOpenTab={onOpenTab} />);
+    await act(async () => {}); // the saved values load first
     expectNoRawKeys();
+    expect(screen.getAllByText(language === 'en' ? /around 2h a day/ : /حوالي 2 ساعة في اليوم/).length).toBeGreaterThan(0);
     fireEvent.click(screen.getByRole('button', { name: language === 'en' ? 'Start day 1' : 'ابدأ اليوم الأول' }));
-    expect(lastSaved()).toEqual({ ...EMPTY_PATH_STATE, startedAt: today });
+    await waitFor(() => expect(lastSaved<PathState>(PATH_KV_KEY)?.startedAt).toBe(today));
+    expect(lastSaved<PathState>(PATH_KV_KEY)?.settings).toEqual(defaultSettings());
     expect(screen.getByRole('heading', { level: 2, name: /Day 1|اليوم 1/ })).toBeInTheDocument();
-    expect(screen.getByText(language === 'en' ? 'Record your starting point' : 'سجّل نقطة البداية')).toBeInTheDocument();
+    expect([...document.querySelectorAll('[data-block]')].map((b) => b.getAttribute('data-block'))).toEqual([
+      'vocabulary', 'pronunciation', 'listening', 'reading', 'grammar', 'shadowing',
+    ]);
     expectNoRawKeys();
   });
 
-  it('ticking tasks saves progress to the path key only and finishes the day', async () => {
-    const vocabBefore = useAppStore.getState().vocabularyItems;
+  it('chooses the sources before starting', async () => {
     render(<LearningPathSection onOpenTab={onOpenTab} />);
+    await act(async () => {});
+    fireEvent.click(screen.getAllByRole('radio', { name: /Ibrahim Adel/ })[0]);
+    fireEvent.change(screen.getByRole('combobox', { name: 'Shadowing starts at' }), { target: { value: 'A2' } });
+    fireEvent.click(screen.getByRole('button', { name: '30 min' }));
     fireEvent.click(screen.getByRole('button', { name: 'Start day 1' }));
-    const day1 = path[0];
-    for (const [i, task] of day1.tasks.entries()) {
-      const row = document.querySelector(`[data-task="${task.id}"]`) as HTMLElement;
-      fireEvent.click(within(row).getByRole('button', { name: /^Mark as complete/ }));
-      expect(screen.getByTestId('path-day-progress')).toHaveTextContent(`${i + 1}/${day1.tasks.length}`);
-    }
-    expect(lastSaved()?.done).toEqual(Object.fromEntries(day1.tasks.map((t) => [taskKey(1, t.id), today])));
-    expect(screen.getByRole('status')).toHaveTextContent('Day 1 done');
-    // Day 1 finished on the start date is on schedule, not ahead.
-    expect(screen.getByTestId('path-schedule')).toHaveTextContent('On schedule');
-    expect(Number(screen.getByTestId('path-percent').textContent?.replace('%', ''))).toBeGreaterThan(0);
-    // Nothing but the path's own key was written; the word list is untouched.
-    expect(vi.mocked(saveKv).mock.calls.every(([, key]) => key === PATH_KV_KEY)).toBe(true);
-    expect(useAppStore.getState().vocabularyItems).toBe(vocabBefore);
-
-    fireEvent.click(screen.getByRole('button', { name: 'Start day 2' }));
-    expect(screen.getByRole('heading', { level: 2, name: /Day 2/ })).toBeInTheDocument();
-    // Un-ticking works too.
-    fireEvent.click(screen.getByRole('button', { name: 'Previous day' }));
-    fireEvent.click(within(document.querySelector('[data-task="warmup"]') as HTMLElement).getByRole('button', { name: /^Mark as incomplete/ }));
-    expect(lastSaved()?.done[taskKey(1, 'warmup')]).toBeUndefined();
+    await waitFor(() => expect(lastSaved<PathState>(PATH_KV_KEY)?.startedAt).toBe(today));
+    expect(lastSaved<PathState>(PATH_KV_KEY)?.settings).toMatchObject({ listening: 'ibrahim-adel', shadowingLevel: 'A2', minutes: 30 });
+    expect(within(block('listening')).getByText(/^Ibrahim Adel · /)).toBeInTheDocument();
+    expect(within(block('shadowing')).getByText(/A2 English Listening Practice/)).toBeInTheDocument();
   });
 
-  it('opens on the first unfinished day from the saved state and shows the schedule', async () => {
-    serve({ [PATH_KV_KEY]: doneThrough(3, addDaysToDateString(today, -9)) });
-    render(<LearningPathSection onOpenTab={onOpenTab} />);
-    expect(await screen.findByRole('heading', { level: 2, name: /Day 4/ })).toBeInTheDocument();
-    // Day 10 on the calendar, day 4 in the path.
-    expect(screen.getByTestId('path-schedule')).toHaveTextContent('6 days behind schedule');
-    expect(screen.getByText('Day 4 of 90')).toBeInTheDocument();
-  });
-
-  it('counts days finished beyond the calendar as ahead', async () => {
-    serve({ [PATH_KV_KEY]: doneThrough(3, today) });
-    render(<LearningPathSection onOpenTab={onOpenTab} />);
-    await waitFor(() => expect(screen.getByTestId('path-schedule')).toHaveTextContent('2 days ahead'));
-  });
-
-  it('keeps a day finished today open instead of handing over the next one', async () => {
-    const s = doneThrough(2, addDaysToDateString(today, -1));
-    for (const t of path[1].tasks) s.done[taskKey(2, t.id)] = today;
-    serve({ [PATH_KV_KEY]: s });
-    render(<LearningPathSection onOpenTab={onOpenTab} />);
-    expect(await screen.findByRole('heading', { level: 2, name: /Day 2/ })).toBeInTheDocument();
-    expect(screen.getByRole('status')).toHaveTextContent("That's today's work");
-    expect(screen.getByTestId('path-schedule')).toHaveTextContent('On schedule');
-    fireEvent.click(screen.getByRole('button', { name: 'Start day 3' }));
-    expect(screen.getByRole('heading', { level: 2, name: /Day 3/ })).toBeInTheDocument();
-  });
-
-  it('after finishing a day, cleared flashcards do not tick the next day before you start it', async () => {
-    const s = doneThrough(1, today);
-    const reviewed = new Date().toISOString();
-    useAppStore.setState({
-      vocabularyItems: [{
-        id: 'w1', userId: 'u1', word: 'chat', type: 'word', definition: 'd', masteryLevel: 2, reviewCount: 2, lapseCount: 0, correctStreak: 2,
-        isHard: false, createdAt: '', updatedAt: '', lastReviewedAt: reviewed,
-        srs: { due: new Date(Date.now() + 3 * 86400000).toISOString(), stability: 3, difficulty: 5, scheduled_days: 3, learning_steps: 0, reps: 2, lapses: 0, state: 2, last_review: reviewed },
-      }],
-    });
-    serve({ [PATH_KV_KEY]: s });
-    render(<LearningPathSection onOpenTab={onOpenTab} />);
-    expect(await screen.findByRole('heading', { level: 2, name: /Day 1/ })).toBeInTheDocument();
-    expect(screen.getByRole('status')).toHaveTextContent("That's today's work");
-    expect(vi.mocked(saveKv).mock.calls.some(([, key, value]) => key === PATH_KV_KEY && (value as PathState).done[taskKey(2, 'review')])).toBe(false);
-  });
-
-  it('a lesson finished today in Listening ticks the day’s Listening task, and shows which one', async () => {
-    const lesson = getCourseSection('listening').sources[0].groups[0].lessons[0];
-    serve({ [PATH_KV_KEY]: { ...EMPTY_PATH_STATE, startedAt: today }, [COURSE_PROGRESS_KEY]: { [lesson.id]: today } });
-    render(<LearningPathSection onOpenTab={onOpenTab} />);
-    await waitFor(() => expect(lastSaved()?.done[taskKey(1, 'lesson-listening')]).toBe(today));
-    expect(lastSaved()?.lessons).toEqual({ [taskKey(1, 'lesson-listening')]: lesson.id });
-    const row = document.querySelector('[data-task="lesson-listening"]') as HTMLElement;
-    expect(within(row).getByRole('button', { name: /^Mark as incomplete/ })).toBeInTheDocument();
-    fireEvent.click(within(row).getByText('Listening: the next lesson'));
-    expect(within(row).getByText(`Done: ${lesson.title}`)).toBeInTheDocument();
-  });
-
-  it('a course task shows the next lesson and opens its section', async () => {
-    serve({ [PATH_KV_KEY]: { ...EMPTY_PATH_STATE, startedAt: today } });
-    const first = getCourseSection('listening').sources[0].groups[0].lessons[0];
-    render(<LearningPathSection onOpenTab={onOpenTab} />);
-    const row = (await screen.findByText('Listening: the next lesson')).closest('[data-task]') as HTMLElement;
-    fireEvent.click(within(row).getByText('Listening: the next lesson'));
-    expect(within(row).getByText(first.title)).toBeInTheDocument();
-    fireEvent.click(within(row).getByRole('button', { name: 'Open Listening' }));
-    expect(onOpenTab).toHaveBeenCalledWith('listening');
-  });
-
-  it('the words task adds the topic words to the flashcards only when asked', async () => {
+  it("opens the day's words with the review, and adds the words to the flashcards", async () => {
     const importVocabularyItems = vi.fn(async () => ({ inserted: 6, updated: 0, skipped: 0, failed: 0 }));
     useAppStore.setState({ importVocabularyItems } as never);
-    serve({ [PATH_KV_KEY]: { ...EMPTY_PATH_STATE, startedAt: today } });
+    serve({ [PATH_KV_KEY]: started() });
     render(<LearningPathSection onOpenTab={onOpenTab} />);
-    const row = (await screen.findByText(/^Learn words 1–/)).closest('[data-task]') as HTMLElement;
-    fireEvent.click(within(row).getByText(/^Learn words 1–/));
-    expect(importVocabularyItems).not.toHaveBeenCalled();
-    fireEvent.click(within(row).getByRole('button', { name: /Add to my flashcards/ }));
+    const vocabulary = await waitFor(() => {
+      const b = block('vocabulary');
+      expect(within(b).getByText('Review your flashcards')).toBeInTheDocument();
+      return b;
+    });
+    const words = path[0].blocks[0].items[1].item;
+    if (words.kind !== 'words') throw new Error('day 1 has words');
+    for (const w of wordsOf(words)) expect(within(vocabulary).getByText(w.word)).toBeInTheDocument();
+    fireEvent.click(within(vocabulary).getByRole('button', { name: /Add to my flashcards/ }));
     await waitFor(() => expect(importVocabularyItems).toHaveBeenCalledTimes(1));
-    const [words, options] = importVocabularyItems.mock.calls[0] as unknown as [Array<{ word: string }>, { categoryForAll: string }];
-    expect(words.length).toBeGreaterThan(0);
-    expect(options).toMatchObject({ duplicateMode: 'skip', categoryForAll: 'Small Talk' });
+    expect((importVocabularyItems.mock.calls[0] as unknown[])[1]).toMatchObject({ duplicateMode: 'skip', categoryForAll: 'Small Talk' });
   });
 
-  it('saves notes once typing pauses', async () => {
-    serve({ [PATH_KV_KEY]: { ...EMPTY_PATH_STATE, startedAt: today } });
+  it('ticks the review of the day by itself when nothing is due', async () => {
+    serve({ [PATH_KV_KEY]: started() });
     render(<LearningPathSection onOpenTab={onOpenTab} />);
-    await screen.findByText('Record your starting point');
-    fireEvent.click(screen.getByText('Your own sentences'));
-    fireEvent.change(screen.getByPlaceholderText(/Write here/), { target: { value: 'I sometimes feel awkward at parties.' } });
-    expect(lastSaved()?.notes ?? {}).toEqual({});
-    await waitFor(() => expect(lastSaved()?.notes[taskKey(1, 'sentences-1')]).toBe('I sometimes feel awkward at parties.'), { timeout: 2000 });
+    await waitFor(() => expect(lastSaved<PathState>(PATH_KV_KEY)?.done['review:1']).toBe(today));
   });
 
-  it('start over clears only the path after confirming', async () => {
-    serve({ [PATH_KV_KEY]: doneThrough(5, addDaysToDateString(today, -5)) });
+  it('plays a lesson inside its block, saves where it stopped and ticks it at the end', async () => {
+    serve({ [PATH_KV_KEY]: started() });
+    const { key, lesson } = lessonOf(1, 'listening');
     render(<LearningPathSection onOpenTab={onOpenTab} />);
-    await screen.findByRole('heading', { level: 2, name: /Day 6/ });
-    const confirm = vi.spyOn(window, 'confirm').mockReturnValueOnce(false).mockReturnValueOnce(true);
-    fireEvent.click(screen.getByRole('button', { name: 'Start over' }));
-    expect(screen.getByRole('heading', { level: 2, name: /Day 6/ })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Start over' }));
-    expect(lastSaved()).toEqual(EMPTY_PATH_STATE);
-    expect(screen.getByRole('button', { name: 'Start day 1' })).toBeInTheDocument();
-    confirm.mockRestore();
+    await screen.findByRole('heading', { level: 2, name: 'Day 1' });
+    const listening = openBlock('listening');
+    expect(within(listening).getByText('Listen in five steps')).toBeInTheDocument();
+    fireEvent.click(within(listening).getByRole('button', { name: 'Play' }));
+    expect(screen.getByTestId('loop-player')).toHaveAttribute('data-video', lesson.id);
+    fireEvent.click(screen.getByRole('button', { name: 'sim: pause at 0:30' }));
+    expect(lastSaved(COURSE_POSITIONS_KEY)).toEqual({ [lesson.id]: 30 });
+    fireEvent.click(screen.getByRole('button', { name: 'sim: near the end' }));
+    expect(lastSaved(COURSE_PROGRESS_KEY)).toEqual({ [lesson.id]: today });
+    const row = document.querySelector(`[data-item="${key}"]`) as HTMLElement;
+    expect(within(row).getAllByRole('button')[0]).toHaveAttribute('aria-pressed', 'true');
+    expect(within(block('listening')).getByText(/1\/1/)).toBeInTheDocument();
   });
 
-  it.each(['en', 'ar'] as const)('every day and task renders without missing translations (%s)', async (language) => {
-    useAppStore.setState({ language });
-    serve({ [PATH_KV_KEY]: { ...EMPTY_PATH_STATE, startedAt: today } });
+  it('shows a lesson finished in its own tab as done, and starts a lesson where it stopped', async () => {
+    const listening = lessonOf(1, 'listening');
+    const reading = lessonOf(1, 'reading');
+    serve({ [PATH_KV_KEY]: started(), [COURSE_PROGRESS_KEY]: { [listening.lesson.id]: today }, [COURSE_POSITIONS_KEY]: { [reading.lesson.id]: 200 } });
     render(<LearningPathSection onOpenTab={onOpenTab} />);
-    await screen.findByTestId('path-percent');
-    const roadmap = screen.getByRole('heading', { name: language === 'en' ? 'Roadmap' : 'خريطة المسار' }).closest('section') as HTMLElement;
-    const dayButtons = within(roadmap).getAllByRole('button');
-    expect(dayButtons).toHaveLength(90);
-    for (const [i, button] of dayButtons.entries()) {
-      act(() => button.click());
-      expect(screen.getByRole('heading', { level: 2, name: new RegExp(`(Day|اليوم) ${i + 1} `) })).toBeInTheDocument();
-      for (const task of path[i].tasks) {
-        const row = document.querySelector(`[data-task="${task.id}"]`) as HTMLElement;
-        const toggle = row.querySelector('[aria-expanded]') as HTMLElement;
-        if (toggle.getAttribute('aria-expanded') !== 'true') act(() => toggle.click());
-        expect(row.textContent).not.toMatch(/\{(topic|title|name|from|to|n|section|source|count)\}/);
+    await waitFor(() => expect(within(block('listening')).getByText(/1\/1/)).toBeInTheDocument());
+    fireEvent.click(within(openBlock('reading')).getByRole('button', { name: 'Play' }));
+    expect(screen.getByTestId('loop-player')).toHaveAttribute('data-start', '197');
+  });
+
+  it('ticks a part of a long lesson once playback reaches its end', async () => {
+    const day = path.find((d) => d.blocks.some((b) => b.items.some((i) => i.item.kind === 'lesson' && i.item.part?.index === 1)))!;
+    const b = day.blocks.find((x) => x.items.some((i) => i.item.kind === 'lesson' && i.item.part?.index === 1))!;
+    const part = b.items.find((i) => i.item.kind === 'lesson' && i.item.part?.index === 1)!;
+    if (part.item.kind !== 'lesson' || !part.item.part) throw new Error('a part');
+    serve({ [PATH_KV_KEY]: started() });
+    render(<LearningPathSection onOpenTab={onOpenTab} />);
+    await screen.findByRole('heading', { level: 2, name: 'Day 1' });
+    fireEvent.click(screen.getByRole('button', { name: `Day ${day.day} (0/6)` }));
+    const opened = openBlock(b.section);
+    expect(within(opened).getByText(new RegExp(`Part 1 of ${part.item.part.count}`))).toBeInTheDocument();
+    fireEvent.click(within(document.querySelector(`[data-item="${part.key}"]`) as HTMLElement).getByRole('button', { name: 'Play' }));
+    expect(screen.getByTestId('loop-player')).toHaveAttribute('data-start', '0');
+    fireEvent.click(screen.getByRole('button', { name: 'sim: near the end' }));
+    // The end of the lesson is past the end of the part: the lesson is done, so is the part.
+    expect(lastSaved(COURSE_PROGRESS_KEY)).toEqual({ [part.item.lesson.id]: today });
+  });
+
+  it('says the day is done when all six parts are', async () => {
+    const d = path[0];
+    const course: Record<string, string> = {};
+    const done: Record<string, string> = {};
+    const owned: Array<{ word: string }> = [];
+    for (const b of d.blocks) {
+      for (const i of b.items) {
+        if (i.item.kind === 'lesson') course[i.item.lesson.id] = today;
+        else if (i.item.kind === 'words') owned.push(...wordsOf(i.item));
+        else done[i.key] = today;
       }
-      expectNoRawKeys();
     }
-  }, 60000);
+    useAppStore.setState({ vocabularyItems: owned.map((w, n) => ({ id: `w${n}`, word: w.word })) as never });
+    serve({ [PATH_KV_KEY]: started({ done }), [COURSE_PROGRESS_KEY]: course });
+    render(<LearningPathSection onOpenTab={onOpenTab} />);
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Day 1 done'));
+    expect(screen.getByTestId('path-day-progress')).toHaveTextContent('6/6');
+    fireEvent.click(screen.getByRole('button', { name: 'Start day 2' }));
+    expect(screen.getByRole('heading', { level: 2, name: 'Day 2' })).toBeInTheDocument();
+  });
+
+  it('saves the sentences of a grammar point once typing pauses', async () => {
+    const day = path.find((d) => d.blocks.find((b) => b.section === 'grammar')!.items[0].item.kind === 'grammar')!;
+    const key = day.blocks.find((b) => b.section === 'grammar')!.items[0].key;
+    serve({ [PATH_KV_KEY]: started() });
+    render(<LearningPathSection onOpenTab={onOpenTab} />);
+    await screen.findByRole('heading', { level: 2, name: 'Day 1' });
+    fireEvent.click(screen.getByRole('button', { name: `Day ${day.day} (0/6)` }));
+    fireEvent.change(within(openBlock('grammar')).getByRole('textbox'), { target: { value: 'I enjoy reading.' } });
+    await waitFor(() => expect(lastSaved<PathState>(PATH_KV_KEY)?.notes[key]).toBe('I enjoy reading.'), { timeout: 2000 });
+  });
+
+  it('shows the 90-day plan from the settings and changes with them', async () => {
+    serve({ [PATH_KV_KEY]: started() });
+    render(<LearningPathSection onOpenTab={onOpenTab} />);
+    const plan = await screen.findByRole('region', { name: 'The 90-day plan' });
+    expect(within(plan).getAllByText(/VOA Learning English · America's National Parks/).length).toBeGreaterThan(0);
+    fireEvent.click(screen.getAllByRole('radio', { name: /Ibrahim Adel/ })[0]);
+    await waitFor(() => expect(lastSaved<PathState>(PATH_KV_KEY)?.settings.listening).toBe('ibrahim-adel'));
+    expect(within(plan).getAllByText(/Ibrahim Adel · Listening Course — Level 1/).length).toBeGreaterThan(0);
+  });
+
+  it('starts over without losing the settings', async () => {
+    serve({ [PATH_KV_KEY]: started({ settings: { ...defaultSettings(), minutes: 15 }, done: { 'review:1': today } }) });
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    render(<LearningPathSection onOpenTab={onOpenTab} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Start over' }));
+    expect(confirm).toHaveBeenCalled();
+    await waitFor(() => expect(lastSaved<PathState>(PATH_KV_KEY)).toMatchObject({ startedAt: null, done: {}, settings: { minutes: 15 } }));
+    act(() => confirm.mockRestore());
+  });
 });

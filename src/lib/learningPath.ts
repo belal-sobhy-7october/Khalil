@@ -1,212 +1,359 @@
 /**
- * A 90-day English learning path (B2 → C1) inside the English hub, built from
- * what the hub already has: each day reviews your flashcards (spaced
- * repetition), studies a topic lesson from the Topic Library, and takes the
- * next lesson of the hub's own courses (Listening, Reading, Grammar,
- * Pronunciation & Accent, Shadowing). Lessons you finish in those sections
- * count here. The path's own progress is one user_kv value; words reach your
- * flashcards only when you add them.
+ * The 90-day learning path, the first tab of the English hub. Every day has
+ * the same six blocks, one per section of the hub, each about the same length
+ * (20 minutes by default):
  *
- * Shape: three 4-week phases of six topics, then a final week.
- *   Each topic takes four study days:
- *     A  warm-up, words 1–6, your own sentences, a Listening lesson
- *     B  words 7–12, the grammar point, a Grammar lesson, an accent drill
- *     C  a Reading lesson, listen & repeat, a Shadowing lesson, an accent drill
- *     D  discussion, one-minute task, AI conversation, a Pronunciation lesson
- *   Every day starts with the flashcard review; every 7th day is a review day;
- *   days 85–90 review everything and end with a final speaking test compared
- *   with the recording made on day 1.
+ *   Vocabulary              the flashcard review and the day's topic words
+ *   Pronunciation & Accent  Ibrahim Adel's course, VOA's How to Pronounce, then sound drills
+ *   Listening               VOA or Ibrahim Adel (you choose; the other follows)
+ *   Reading                 British Council or Ibrahim Adel (the same), then Lovely English Stories
+ *   Grammar                 Ibrahim Adel's course, then the grammar point of the day's topic
+ *   Shadowing               Listening Time, from the level you choose
+ *
+ * The lessons are the hub's own, in study order, put into days by their length
+ * and by how long a minute of them takes to study (a VOA lesson is heard three
+ * times, a shadowing one practised four). A lesson too long for one day is cut
+ * into parts. A lesson finished anywhere — here or in its tab — is done in both,
+ * since lessons are ticked in the hub's progress; the path's own value keeps
+ * only its settings and what the hub can't know (reviews, grammar points,
+ * sound drills, parts of lessons).
  */
 import { TOPIC_PACKS, type TopicPack } from '../data/topicPacks';
 import { ACCENT_FEATURES, CONSONANTS, VOWELS, type AccentFeature, type SoundEntry } from '../data/englishStudy';
-import type { CourseSectionId } from '../data/courseCatalog';
+import { getCourseSection, type CourseLesson, type CourseSectionId } from '../data/courses';
 import { addDaysToDateString, daysBetweenDateStrings } from '../store/dateHelpers';
+import type { CourseProgress, WatchPositions } from './courseProgress';
 
 export const PATH_LENGTH = 90;
-export const PATH_KV_KEY = 'learning-path';
+export const PATH_KV_KEY = 'learning-path-v2';
 
-export type Skill = 'vocab' | 'grammar' | 'reading' | 'listening' | 'shadowing' | 'speaking' | 'accent' | 'review' | 'writing';
-export const SKILLS: Skill[] = ['vocab', 'grammar', 'reading', 'listening', 'shadowing', 'speaking', 'accent', 'review', 'writing'];
+export type PathSection = 'vocabulary' | CourseSectionId;
+export const PATH_SECTIONS: PathSection[] = ['vocabulary', 'pronunciation', 'listening', 'reading', 'grammar', 'shadowing'];
 
-export type TaskKind =
-  | 'baseline' | 'review' | 'warmUp' | 'words' | 'sentences' | 'grammar' | 'paragraph' | 'course' | 'accent'
-  | 'check' | 'discussion' | 'speakingTask' | 'aiTalk' | 'weeklyWriting' | 'replay' | 'reRecord' | 'mockTalk' | 'finalTest' | 'reflection';
+// ---- settings ---------------------------------------------------------------
 
-export type AccentItem =
-  | { kind: 'sound'; sound: SoundEntry }
-  | { kind: 'feature'; feature: AccentFeature };
+export type ListeningSource = 'voa' | 'ibrahim-adel';
+export type ReadingSource = 'british-council' | 'ibrahim-adel';
+export type ListeningLevel = 'beginner' | 'intermediate' | 'advanced';
+export type ReadingLevel = 'A1' | 'A2' | 'B1' | 'B2' | 'C1';
+export type ShadowingLevel = 'A1' | 'A2' | 'B1' | 'B2';
 
-export interface PathTask {
-  /** Unique within its day. */
-  id: string;
-  kind: TaskKind;
-  skill: Skill;
+export interface PathSettings {
+  /** Minutes of each section a day. */
   minutes: number;
-  /** The topic the task is about. */
-  packId?: string;
-  /** Half-open range of the topic's words, for "words" and "sentences". */
-  words?: [number, number];
-  /** Topics whose words a "check" or "replay" covers. */
-  packIds?: string[];
-  accent?: AccentItem;
-  /** The English hub section a "course" task takes its next lesson from. */
-  section?: CourseSectionId;
+  listening: ListeningSource;
+  /** Where VOA starts. */
+  listeningLevel: ListeningLevel;
+  reading: ReadingSource;
+  /** Where British Council (and Lovely English Stories after it) start. */
+  readingLevel: ReadingLevel;
+  shadowingLevel: ShadowingLevel;
 }
 
-export type DayKind = 'words' | 'grammar' | 'input' | 'speak' | 'review' | 'final';
+export const MINUTE_CHOICES = [10, 15, 20, 30];
+export const LISTENING_LEVELS: ListeningLevel[] = ['beginner', 'intermediate', 'advanced'];
+export const READING_LEVELS: ReadingLevel[] = ['A1', 'A2', 'B1', 'B2', 'C1'];
+export const SHADOWING_LEVELS: ShadowingLevel[] = ['A1', 'A2', 'B1', 'B2'];
 
-export interface PathDay {
-  day: number;
-  week: number;
-  /** 1–3, or 4 for the final week. */
-  phase: 1 | 2 | 3 | 4;
-  kind: DayKind;
-  packId?: string;
-  tasks: PathTask[];
-}
+const sourceOf = (section: CourseSectionId, id: string) => getCourseSection(section).sources.find((s) => s.id === id);
 
-/** Topics in order, six per phase: everyday life → work & communication → ideas & the world. */
-export const PATH_PHASES: string[][] = [
-  ['small-talk', 'feelings-and-personality', 'habitual-change', 'travel', 'identity-and-heritage', 'relationships-and-marriage'],
-  ['work-and-office', 'phone-and-email', 'meetings-and-discussions', 'job-interview', 'opinions-and-arguing', 'shop-smart'],
-  ['minimalism', 'smart-learning', 'social-media', 'artificial-intelligence', 'social-responsibility', 'crime'],
-];
+/** British Council's texts join Reading once their list is in the app. */
+export const hasBritishCouncil = () => (sourceOf('reading', 'british-council')?.groups.length ?? 0) > 0;
 
-const STUDY_DAYS_PER_TOPIC = 4;
+export const defaultSettings = (): PathSettings => ({
+  minutes: 20,
+  listening: 'voa',
+  listeningLevel: 'intermediate',
+  reading: hasBritishCouncil() ? 'british-council' : 'ibrahim-adel',
+  readingLevel: 'B1',
+  shadowingLevel: 'A1',
+});
 
-/** The skill each hub section trains. */
-export const SECTION_SKILL: Record<CourseSectionId, Skill> = {
-  listening: 'listening',
-  reading: 'reading',
-  grammar: 'grammar',
-  pronunciation: 'accent',
-  shadowing: 'shadowing',
+/** The first playlist of each starting level. */
+const VOA_START: Record<ListeningLevel, string> = {
+  beginner: 'PLd9hCvj34W5it4a-RMzhlwNJ-edf5HU3Q',
+  intermediate: 'PLd9hCvj34W5i4HBJAVHrMhtnPfATt73Oe',
+  advanced: 'PLd9hCvj34W5jekhcE7BPlwkEqFiLrS_Wk',
 };
+const SHADOWING_START: Record<ShadowingLevel, string> = {
+  A1: 'PLhNRdHEdUQewzYZ0X6gt3x9_CVen_HldI',
+  A2: 'PLhNRdHEdUQexUblCTMd1ATwOd5J4SxtNM',
+  B1: 'PLhNRdHEdUQeyIjNRrwWnMU_iph8amkaJg',
+  B2: 'PLhNRdHEdUQeynyOmJASMe_xVYg0YZHWyt',
+};
+const STORIES_START: Record<ReadingLevel, string> = {
+  A1: 'PLt8VdtLSFrrjuUQRBx4INQvPJy_7hWps6',
+  A2: 'PLt8VdtLSFrrjuUQRBx4INQvPJy_7hWps6',
+  B1: 'PLt8VdtLSFrrjRkYvE0qtb0GYvEOVDxHzi',
+  B2: 'PLt8VdtLSFrrjRkYvE0qtb0GYvEOVDxHzi',
+  C1: 'PLt8VdtLSFrrj3M3URpLdSlykxr8Asc8wV',
+};
+
+/** Minutes of study for each minute of a source's lessons. */
+const STUDY_FACTOR: Record<string, number> = {
+  'pronunciation/voa': 2, // watch, then say it along
+  'listening/voa': 3, // the five steps: three listens and a summary
+  'shadowing/listening-time': 4, // listen, shadow sentence by sentence, record
+};
+/** A lesson without a length (a text to read) takes a whole block. */
+const UNTIMED = -1;
+const SOUND_MINUTES = 10;
+
+// ---- topics -----------------------------------------------------------------
+
+/** The Topic Library in the path's order: a topic a day, easier ones first. */
+export const PATH_TOPICS: string[] = [
+  // B1
+  'small-talk', 'describing-people', 'making-plans', 'hobbies-and-free-time', 'home-and-neighbours', 'restaurant-and-food',
+  'travel', 'transport-and-traffic', 'health', 'sports-and-fitness', 'ramadan-and-celebrations',
+  // B2
+  'feelings-and-personality', 'friendship', 'childhood-and-memories', 'films-series-and-books', 'relationships-and-marriage',
+  'city-vs-countryside', 'shop-smart', 'habitual-change', 'minimalism', 'smart-learning', 'cultural-differences',
+  'opinions-and-arguing', 'identity-and-heritage', 'work-and-office', 'phone-and-email', 'job-interview',
+  'meetings-and-discussions', 'tech-everyday', 'time-management', 'remote-work-and-freelancing', 'presentations',
+  'leadership-and-teamwork', 'negotiation', 'starting-a-business', 'social-media', 'news-and-media', 'mental-health',
+  'happiness-and-success', 'fame-and-celebrity', 'science-and-space', 'climate-and-environment', 'artificial-intelligence',
+  'social-responsibility', 'crime',
+];
 
 export function packById(id: string | undefined): TopicPack | undefined {
   return id ? TOPIC_PACKS.find((p) => p.id === id) : undefined;
 }
 
-/**
- * Sounds that are hardest for Arabic speakers first, then the rest, then the
- * features that make speech sound natural.
- */
-function accentSequence(): AccentItem[] {
-  const priority = ['θ', 'ð', 'p', 'v', 'r', 'ŋ', 'ɪ', 'iː', 'æ', 'ɑː', 'ʌ', 'ə', 'ɝ', 'ɚ', 'oʊ', 'ɔː', 'ʊ', 'uː'];
+/** Each day's topic and its share of the topic's words (all of them once there is a topic for every day). */
+function topicDays(): Array<{ packId: string; from: number; to: number }> {
+  const topics = PATH_TOPICS.filter((id) => packById(id));
+  const out: Array<{ packId: string; from: number; to: number }> = [];
+  topics.forEach((packId, t) => {
+    const first = Math.floor((t * PATH_LENGTH) / topics.length);
+    const span = Math.floor(((t + 1) * PATH_LENGTH) / topics.length) - first;
+    const words = packById(packId)!.items.length;
+    for (let k = 0; k < span; k++) out.push({ packId, from: Math.floor((k * words) / span), to: Math.floor(((k + 1) * words) / span) });
+  });
+  return out;
+}
+
+// ---- accent -----------------------------------------------------------------
+
+export type AccentItem =
+  | { kind: 'sound'; sound: SoundEntry }
+  | { kind: 'feature'; feature: AccentFeature };
+
+/** The sounds hardest for Arabic speakers, first. */
+const HARDEST = ['θ', 'ð', 'p', 'v', 'r', 'ŋ', 'ɪ', 'iː', 'æ', 'ɑː', 'ʌ', 'ə', 'ɝ', 'ɚ', 'oʊ', 'ɔː', 'ʊ', 'uː'];
+
+/** Round 1: every sound (the hardest first) and the features of connected speech; then rounds of the hardest again. */
+function accentRounds(): AccentItem[][] {
   const all = [...CONSONANTS, ...VOWELS];
-  const first = priority.map((ipa) => all.find((s) => s.ipa === ipa)).filter((s): s is SoundEntry => !!s);
-  const rest = all.filter((s) => !priority.includes(s.ipa));
+  const hardest = HARDEST.map((ipa) => all.find((s) => s.ipa === ipa)).filter((s): s is SoundEntry => !!s);
+  const rest = all.filter((s) => !HARDEST.includes(s.ipa));
+  const features = ACCENT_FEATURES.map((feature) => ({ kind: 'feature' as const, feature }));
   return [
-    ...[...first, ...rest].map((sound) => ({ kind: 'sound' as const, sound })),
-    ...ACCENT_FEATURES.map((feature) => ({ kind: 'feature' as const, feature })),
+    [...[...hardest, ...rest].map((sound) => ({ kind: 'sound' as const, sound })), ...features],
+    [...hardest.map((sound) => ({ kind: 'sound' as const, sound })), ...features],
   ];
 }
 
-const half = (pack: TopicPack) => Math.ceil(pack.items.length / 2);
+export const accentId = (a: AccentItem) => (a.kind === 'sound' ? a.sound.ipa : a.feature.id);
 
-const review = (minutes = 10): PathTask => ({ id: 'review', kind: 'review', skill: 'review', minutes });
-const course = (section: CourseSectionId, minutes: number): PathTask => ({ id: `lesson-${section}`, kind: 'course', skill: SECTION_SKILL[section], minutes, section });
+// ---- the plan ---------------------------------------------------------------
 
-export function buildPath(): PathDay[] {
-  const topics = PATH_PHASES.flat();
-  const accents = accentSequence();
-  let accentIndex = 0;
-  const nextAccent = (): AccentItem => accents[accentIndex++ % accents.length];
-  const days: PathDay[] = [];
-  let studyIndex = 0;
+export interface LessonPart {
+  /** 1-based. */
+  index: number;
+  count: number;
+  /** Seconds into the lesson. */
+  from: number;
+  to: number;
+}
 
-  for (let day = 1; day <= 84; day++) {
-    const week = Math.ceil(day / 7);
-    const phase = Math.min(3, Math.ceil(week / 4)) as 1 | 2 | 3;
-    if (day % 7 === 0) {
-      // Review the topics studied this week.
-      const studied = new Set<string>();
-      for (const d of days.slice(-6)) if (d.packId) studied.add(d.packId);
-      const packIds = [...studied];
-      days.push({
-        day, week, phase, kind: 'review',
-        tasks: [
-          review(15),
-          { id: 'writing', kind: 'weeklyWriting', skill: 'writing', minutes: 20, packIds },
-          { id: 'replay', kind: 'replay', skill: 'listening', minutes: 15, packIds },
-          { id: 'rerecord', kind: 'reRecord', skill: 'speaking', minutes: 10, packIds },
-        ],
-      });
+export type PathItem =
+  | {
+      kind: 'lesson';
+      section: CourseSectionId;
+      sourceId: string;
+      sourceName: string;
+      groupId: string;
+      groupName: string;
+      lesson: CourseLesson;
+      part?: LessonPart;
+    }
+  | { kind: 'review' }
+  | { kind: 'words'; packId: string; from: number; to: number }
+  /** `from`: the day's share of the topic, like its words (0 on the topic's first day). */
+  | { kind: 'grammar'; packId: string; from: number }
+  | { kind: 'sound'; accent: AccentItem; round: number }
+  /** Nothing planned is left in the section: study what you like in its tab. */
+  | { kind: 'free'; section: CourseSectionId };
+
+export interface PlannedItem {
+  /** Unique in the plan; what the path's progress is saved under. */
+  key: string;
+  item: PathItem;
+  minutes: number;
+}
+
+export interface PathBlock {
+  section: PathSection;
+  items: PlannedItem[];
+  minutes: number;
+}
+
+export interface PathDay {
+  day: number;
+  week: number;
+  /** The topic of the day's words. */
+  packId?: string;
+  blocks: PathBlock[];
+}
+
+export function itemKey(item: PathItem, day: number): string {
+  switch (item.kind) {
+    case 'lesson':
+      return `lesson:${item.lesson.id}${item.part ? `#${item.part.index}` : ''}`;
+    case 'review':
+      return `review:${day}`;
+    case 'words':
+      return `words:${item.packId}:${item.from}`;
+    case 'grammar':
+      return `grammar:${item.packId}${item.from ? `:${item.from}` : ''}`;
+    case 'sound':
+      return `sound:${item.round}:${accentId(item.accent)}`;
+    case 'free':
+      return `free:${day}:${item.section}`;
+  }
+}
+
+interface Unit {
+  item: PathItem;
+  /** Minutes of study, or UNTIMED. */
+  minutes: number;
+  /** A lesson's length and study factor, so it can be cut into parts. */
+  media?: { seconds: number; factor: number };
+}
+
+/** A source's lessons from one of its levels (playlists) on. */
+function lessonUnits(section: CourseSectionId, sourceId: string, fromGroup?: string): Unit[] {
+  const source = sourceOf(section, sourceId);
+  if (!source) return [];
+  const start = fromGroup ? Math.max(0, source.groups.findIndex((g) => g.id === fromGroup)) : 0;
+  const factor = STUDY_FACTOR[`${section}/${sourceId}`] ?? 1;
+  return source.groups.slice(start).flatMap((group) =>
+    group.lessons.map((lesson) => ({
+      item: { kind: 'lesson' as const, section, sourceId, sourceName: source.name, groupId: group.id, groupName: group.name, lesson },
+      minutes: lesson.seconds > 0 ? (lesson.seconds / 60) * factor : UNTIMED,
+      media: lesson.seconds > 0 ? { seconds: lesson.seconds, factor } : undefined,
+    }))
+  );
+}
+
+/** Units in order, each lesson once. */
+function chain(...lists: Unit[][]): Unit[] {
+  const seen = new Set<string>();
+  return lists.flat().filter((u) => u.item.kind !== 'lesson' || (!seen.has(u.item.lesson.id) && !!seen.add(u.item.lesson.id)));
+}
+
+/** A day may run this much over its minutes before the next unit waits for tomorrow. */
+const SLACK = 0.25;
+/** A lesson longer than this many days' minutes is cut into parts. */
+const SPLIT_AT = 1.5;
+
+/** Puts units into at most `length` days of about `budget` minutes. */
+function pack(units: Unit[], budget: number, length: number): Array<Array<{ item: PathItem; minutes: number }>> {
+  const days: Array<Array<{ item: PathItem; minutes: number }>> = [];
+  let day: Array<{ item: PathItem; minutes: number }> = [];
+  let used = 0;
+  const close = () => {
+    if (day.length) days.push(day);
+    day = [];
+    used = 0;
+  };
+  for (const u of units) {
+    if (days.length >= length) break;
+    const minutes = u.minutes === UNTIMED ? budget : u.minutes;
+    if (u.media && u.item.kind === 'lesson' && minutes > budget * SPLIT_AT) {
+      close();
+      const count = Math.ceil(minutes / budget);
+      const size = u.media.seconds / count;
+      for (let i = 0; i < count; i++) {
+        const part = { index: i + 1, count, from: Math.round(i * size), to: i === count - 1 ? u.media.seconds : Math.round((i + 1) * size) };
+        days.push([{ item: { ...u.item, part }, minutes: minutes / count }]);
+      }
       continue;
     }
-    const topicIndex = Math.floor(studyIndex / STUDY_DAYS_PER_TOPIC);
-    const step = studyIndex % STUDY_DAYS_PER_TOPIC;
-    studyIndex++;
-    const packId = topics[topicIndex];
-    const pack = packById(packId)!;
-    const n = pack.items.length;
-    let kind: DayKind;
-    let tasks: PathTask[];
-    if (step === 0) {
-      kind = 'words';
-      tasks = [
-        ...(day === 1 ? [{ id: 'baseline', kind: 'baseline' as const, skill: 'speaking' as const, minutes: 5 }] : []),
-        review(),
-        { id: 'warmup', kind: 'warmUp', skill: 'speaking', minutes: 5, packId },
-        { id: 'words-1', kind: 'words', skill: 'vocab', minutes: 15, packId, words: [0, half(pack)] },
-        { id: 'sentences-1', kind: 'sentences', skill: 'writing', minutes: 10, packId, words: [0, half(pack)] },
-        course('listening', 15),
-      ];
-    } else if (step === 1) {
-      kind = 'grammar';
-      tasks = [
-        review(),
-        { id: 'words-2', kind: 'words', skill: 'vocab', minutes: 15, packId, words: [half(pack), n] },
-        { id: 'grammar', kind: 'grammar', skill: 'grammar', minutes: 10, packId },
-        course('grammar', 15),
-        { id: 'accent', kind: 'accent', skill: 'accent', minutes: 5, accent: nextAccent() },
-      ];
-    } else if (step === 2) {
-      kind = 'input';
-      tasks = [
-        review(),
-        course('reading', 20),
-        { id: 'paragraph', kind: 'paragraph', skill: 'listening', minutes: 10, packId },
-        course('shadowing', 15),
-        { id: 'accent', kind: 'accent', skill: 'accent', minutes: 5, accent: nextAccent() },
-      ];
-    } else {
-      kind = 'speak';
-      tasks = [
-        review(),
-        { id: 'discussion', kind: 'discussion', skill: 'speaking', minutes: 15, packId },
-        { id: 'task', kind: 'speakingTask', skill: 'speaking', minutes: 10, packId },
-        { id: 'ai', kind: 'aiTalk', skill: 'speaking', minutes: 10, packId },
-        course('pronunciation', 15),
-      ];
-    }
-    days.push({ day, week, phase, kind, packId, tasks });
+    if (day.length && (u.minutes === UNTIMED || used + minutes > budget * (1 + SLACK))) close();
+    day.push({ item: u.item, minutes });
+    used += minutes;
   }
+  close();
+  return days.slice(0, length);
+}
 
-  // Final week: review each phase's words, then the final speaking test.
-  const final = (day: number, tasks: PathTask[]): PathDay => ({ day, week: 13, phase: 4, kind: 'final', tasks });
-  days.push(
-    final(85, [
-      review(15),
-      { id: 'check', kind: 'check', skill: 'review', minutes: 15, packIds: PATH_PHASES[0] },
-      { id: 'accent', kind: 'accent', skill: 'accent', minutes: 10, accent: { kind: 'feature', feature: ACCENT_FEATURES[0] } },
-      { id: 'rerecord', kind: 'reRecord', skill: 'speaking', minutes: 10, packIds: PATH_PHASES[0] },
-    ]),
-    final(86, [
-      review(15),
-      { id: 'check', kind: 'check', skill: 'review', minutes: 15, packIds: PATH_PHASES[1] },
-      { id: 'writing', kind: 'weeklyWriting', skill: 'writing', minutes: 20, packIds: PATH_PHASES[1] },
-    ]),
-    final(87, [
-      review(15),
-      { id: 'check', kind: 'check', skill: 'review', minutes: 15, packIds: PATH_PHASES[2] },
-      { id: 'replay', kind: 'replay', skill: 'listening', minutes: 15, packIds: PATH_PHASES[2] },
-      course('shadowing', 15),
-    ]),
-    final(88, [{ id: 'mock', kind: 'mockTalk', skill: 'speaking', minutes: 20, packIds: [PATH_PHASES[0][1], PATH_PHASES[1][4], PATH_PHASES[2][3]] }, review()]),
-    final(89, [{ id: 'final', kind: 'finalTest', skill: 'speaking', minutes: 15, packIds: [PATH_PHASES[0][2], PATH_PHASES[1][3], PATH_PHASES[2][4]] }, review()]),
-    final(90, [{ id: 'reflection', kind: 'reflection', skill: 'writing', minutes: 15 }, review()]),
-  );
+const block = (section: PathSection, day: number, items: Array<{ item: PathItem; minutes: number }>): PathBlock => {
+  const planned = items.map(({ item, minutes }) => ({ key: itemKey(item, day), item, minutes: Math.max(1, Math.round(minutes)) }));
+  return { section, items: planned, minutes: planned.reduce((n, i) => n + i.minutes, 0) };
+};
+
+export function buildPath(settings: PathSettings = defaultSettings()): PathDay[] {
+  const budget = Math.max(5, settings.minutes);
+  const topics = topicDays();
+  const [round1, again] = accentRounds();
+  const sounds = (items: AccentItem[], round: number): Unit[] =>
+    items.map((accent) => ({ item: { kind: 'sound', accent, round }, minutes: SOUND_MINUTES }));
+
+  const voa = lessonUnits('listening', 'voa', VOA_START[settings.listeningLevel]);
+  const ibrahimListening = lessonUnits('listening', 'ibrahim-adel');
+  const britishCouncil = lessonUnits('reading', 'british-council', `british-council-${settings.readingLevel.toLowerCase()}`);
+  const ibrahimReading = lessonUnits('reading', 'ibrahim-adel');
+  const stories = lessonUnits('reading', 'lovely-stories', STORIES_START[settings.readingLevel]);
+
+  const plans: Record<CourseSectionId, Array<Array<{ item: PathItem; minutes: number }>>> = {
+    pronunciation: pack(
+      chain(
+        lessonUnits('pronunciation', 'ibrahim-adel'),
+        lessonUnits('pronunciation', 'voa'),
+        sounds(round1, 1),
+        ...[2, 3, 4, 5].map((round) => sounds(again, round))
+      ),
+      budget,
+      PATH_LENGTH
+    ),
+    listening: pack(settings.listening === 'voa' ? chain(voa, ibrahimListening) : chain(ibrahimListening, voa), budget, PATH_LENGTH),
+    reading: pack(
+      settings.reading === 'british-council' ? chain(britishCouncil, ibrahimReading, stories) : chain(ibrahimReading, britishCouncil, stories),
+      budget,
+      PATH_LENGTH
+    ),
+    // After Ibrahim Adel's course the grammar point of each day's topic follows (below).
+    grammar: pack(lessonUnits('grammar', 'ibrahim-adel'), budget, PATH_LENGTH),
+    shadowing: pack(
+      chain(lessonUnits('shadowing', 'listening-time', SHADOWING_START[settings.shadowingLevel]), lessonUnits('shadowing', 'listening-time')),
+      budget,
+      PATH_LENGTH
+    ),
+  };
+
+  const days: PathDay[] = [];
+  for (let day = 1; day <= PATH_LENGTH; day++) {
+    const topic = topics[day - 1];
+    const vocabulary: Array<{ item: PathItem; minutes: number }> = [{ item: { kind: 'review' }, minutes: budget / 2 }];
+    if (topic) vocabulary.push({ item: { kind: 'words', ...topic }, minutes: budget / 2 });
+    const planned = (section: CourseSectionId) => {
+      const items = plans[section][day - 1];
+      if (items?.length) return items;
+      if (section === 'grammar' && topic) return [{ item: { kind: 'grammar' as const, packId: topic.packId, from: topic.from }, minutes: budget }];
+      return [{ item: { kind: 'free' as const, section }, minutes: budget }];
+    };
+    days.push({
+      day,
+      week: Math.ceil(day / 7),
+      packId: topic?.packId,
+      blocks: [
+        block('vocabulary', day, vocabulary),
+        ...(['pronunciation', 'listening', 'reading', 'grammar', 'shadowing'] as const).map((s) => block(s, day, planned(s))),
+      ],
+    });
+  }
   return days;
 }
 
@@ -215,59 +362,83 @@ export function buildPath(): PathDay[] {
 export interface PathState {
   /** Local date the path was started (YYYY-MM-DD), or null before starting. */
   startedAt: string | null;
-  /** `${day}:${taskId}` → local date it was done. */
+  settings: PathSettings;
+  /** Item key → local date it was done (the hub's own progress covers whole lessons). */
   done: Record<string, string>;
-  /** `${day}:${taskId}` → what the user wrote (sentences, paragraphs, reflections). */
+  /** Item key → what the user wrote (sentences with a grammar point). */
   notes: Record<string, string>;
-  /** `${day}:${taskId}` of a course task → the hub lesson that did it. */
-  lessons?: Record<string, string>;
 }
 
-export const EMPTY_PATH_STATE: PathState = { startedAt: null, done: {}, notes: {} };
+export const emptyPathState = (): PathState => ({ startedAt: null, settings: defaultSettings(), done: {}, notes: {} });
 
-export const taskKey = (day: number, taskId: string) => `${day}:${taskId}`;
+/** A saved value with every setting filled in (older or partial values). */
+export const withDefaults = (state: Partial<PathState> | null | undefined): PathState => ({
+  ...emptyPathState(),
+  ...(state ?? {}),
+  settings: { ...defaultSettings(), ...(state?.settings ?? {}) },
+  done: state?.done ?? {},
+  notes: state?.notes ?? {},
+});
 
-export function dayProgress(day: PathDay, state: PathState): { done: number; total: number } {
-  const done = day.tasks.filter((t) => state.done[taskKey(day.day, t.id)]).length;
-  return { done, total: day.tasks.length };
+/** Everything that says what's done: the path's value, the hub's lessons and where they stopped, and your words. */
+export interface PathProgress {
+  state: PathState;
+  course: CourseProgress;
+  positions: WatchPositions;
+  /** The words in your flashcards, lower-cased. */
+  words: Set<string>;
 }
 
-export const isDayDone = (day: PathDay, state: PathState) => day.tasks.every((t) => state.done[taskKey(day.day, t.id)]);
+/** Seconds before the end of a part that count as having reached it. */
+const PART_SLACK = 5;
 
-/** What the English hub shows was done today. */
-export interface HubToday {
-  /** Lessons finished today in each section. */
-  lessons: Partial<Record<CourseSectionId, string[]>>;
-  /** You reviewed flashcards today and nothing is due any more. */
-  reviewCleared: boolean;
+export const wordKey = (w: string) => w.trim().toLowerCase();
+
+export function wordsOf(item: { packId: string; from: number; to: number }) {
+  return packById(item.packId)?.items.slice(item.from, item.to) ?? [];
 }
 
-/**
- * Tasks of `day` the hub has already done today: a course task whose section
- * had a lesson finished today (each lesson counts for one task only), and the
- * review once today's flashcards are cleared.
- */
-export function doneByHub(day: PathDay, state: PathState, hub: HubToday): Array<{ key: string; lesson?: string }> {
-  const claimed = new Set(Object.values(state.lessons ?? {}));
-  const out: Array<{ key: string; lesson?: string }> = [];
-  for (const task of day.tasks) {
-    const key = taskKey(day.day, task.id);
-    if (state.done[key]) continue;
-    if (task.kind === 'review' && hub.reviewCleared) out.push({ key });
-    if (task.kind === 'course' && task.section) {
-      const lesson = (hub.lessons[task.section] ?? []).find((id) => !claimed.has(id));
-      if (lesson) {
-        claimed.add(lesson);
-        out.push({ key, lesson });
-      }
-    }
+export function isItemDone(planned: PlannedItem, p: PathProgress): boolean {
+  if (p.state.done[planned.key]) return true;
+  const { item } = planned;
+  if (item.kind === 'lesson') {
+    if (p.course[item.lesson.id]) return true;
+    return !!item.part && (p.positions[item.lesson.id] ?? 0) >= item.part.to - PART_SLACK;
   }
-  return out;
+  if (item.kind === 'words') {
+    const words = wordsOf(item);
+    return words.length > 0 && words.every((w) => p.words.has(wordKey(w.word)));
+  }
+  return false;
 }
+
+export function blockProgress(b: PathBlock, p: PathProgress): { done: number; total: number } {
+  return { done: b.items.filter((i) => isItemDone(i, p)).length, total: b.items.length };
+}
+
+export const isBlockDone = (b: PathBlock, p: PathProgress) => b.items.every((i) => isItemDone(i, p));
+
+export function dayProgress(d: PathDay, p: PathProgress): { done: number; total: number } {
+  return { done: d.blocks.filter((b) => isBlockDone(b, p)).length, total: d.blocks.length };
+}
+
+export const isDayDone = (d: PathDay, p: PathProgress) => d.blocks.every((b) => isBlockDone(b, p));
 
 /** The day to work on: the first one not fully done (the last day once everything is done). */
-export function currentDay(path: PathDay[], state: PathState): number {
-  return path.find((d) => !isDayDone(d, state))?.day ?? path[path.length - 1].day;
+export function currentDay(path: PathDay[], p: PathProgress): number {
+  return path.find((d) => !isDayDone(d, p))?.day ?? path[path.length - 1].day;
+}
+
+/** The latest date anything in the day was done (lessons by the hub's date). */
+export function finishedOn(d: PathDay, p: PathProgress): string {
+  let last = '';
+  for (const b of d.blocks) {
+    for (const i of b.items) {
+      const date = p.state.done[i.key] ?? (i.item.kind === 'lesson' ? p.course[i.item.lesson.id] : undefined) ?? '';
+      if (date > last) last = date;
+    }
+  }
+  return last;
 }
 
 /** Which day the calendar says you'd be on (1 on the start date). */
@@ -276,53 +447,95 @@ export function scheduledDay(startedAt: string, today: string): number {
 }
 
 export interface PathStats {
-  tasksDone: number;
-  tasksTotal: number;
+  itemsDone: number;
+  itemsTotal: number;
   percent: number;
   daysDone: number;
+  /** Planned minutes of what's done. */
   minutes: number;
-  /** Consecutive days, up to today (or yesterday), with at least one task done. */
+  /** Consecutive days, up to today (or yesterday), with something of the path done. */
   streak: number;
-  topicsDone: number;
-  bySkill: Record<Skill, { done: number; total: number }>;
+  bySection: Record<PathSection, { done: number; total: number }>;
 }
 
-export function pathStats(path: PathDay[], state: PathState, today: string): PathStats {
-  const bySkill = Object.fromEntries(SKILLS.map((s) => [s, { done: 0, total: 0 }])) as PathStats['bySkill'];
-  let tasksDone = 0;
-  let tasksTotal = 0;
+export function pathStats(path: PathDay[], p: PathProgress, today: string): PathStats {
+  const bySection = Object.fromEntries(PATH_SECTIONS.map((s) => [s, { done: 0, total: 0 }])) as PathStats['bySection'];
+  let itemsDone = 0;
+  let itemsTotal = 0;
   let minutes = 0;
+  const dates = new Set(Object.values(p.state.done));
   for (const d of path) {
-    for (const t of d.tasks) {
-      tasksTotal++;
-      bySkill[t.skill].total++;
-      if (state.done[taskKey(d.day, t.id)]) {
-        tasksDone++;
-        bySkill[t.skill].done++;
-        minutes += t.minutes;
+    for (const b of d.blocks) {
+      for (const i of b.items) {
+        itemsTotal++;
+        bySection[b.section].total++;
+        if (!isItemDone(i, p)) continue;
+        itemsDone++;
+        bySection[b.section].done++;
+        minutes += i.minutes;
+        if (i.item.kind === 'lesson' && p.course[i.item.lesson.id]) dates.add(p.course[i.item.lesson.id]);
       }
     }
   }
-  const activeDates = new Set(Object.values(state.done));
   let streak = 0;
-  let cursor = activeDates.has(today) ? today : addDaysToDateString(today, -1);
-  while (activeDates.has(cursor)) {
+  let cursor = dates.has(today) ? today : addDaysToDateString(today, -1);
+  while (dates.has(cursor)) {
     streak++;
     cursor = addDaysToDateString(cursor, -1);
   }
-  // A topic is done when its four study days are.
-  const topicsDone = PATH_PHASES.flat().filter((id) => {
-    const topicDays = path.filter((d) => d.packId === id);
-    return topicDays.length > 0 && topicDays.every((d) => isDayDone(d, state));
-  }).length;
   return {
-    tasksDone,
-    tasksTotal,
-    percent: tasksTotal ? Math.round((tasksDone / tasksTotal) * 100) : 0,
-    daysDone: path.filter((d) => isDayDone(d, state)).length,
+    itemsDone,
+    itemsTotal,
+    percent: itemsTotal ? Math.floor((itemsDone / itemsTotal) * 100) : 0,
+    daysDone: path.filter((d) => isDayDone(d, p)).length,
     minutes,
     streak,
-    topicsDone,
-    bySkill,
+    bySection,
   };
+}
+
+// ---- the plan at a glance ---------------------------------------------------
+
+export type SegmentWhat =
+  | { kind: 'group'; source: string; group: string }
+  | { kind: 'topics'; level: TopicPack['level'] }
+  | { kind: 'grammar' }
+  | { kind: 'sounds'; round: number }
+  | { kind: 'free' };
+
+export interface TimelineSegment {
+  what: SegmentWhat;
+  /** Days, inclusive. */
+  from: number;
+  to: number;
+}
+
+function blockWhat(b: PathBlock): SegmentWhat {
+  const main = b.items.find((i) => i.item.kind !== 'review')?.item ?? b.items[0].item;
+  switch (main.kind) {
+    case 'lesson':
+      return { kind: 'group', source: main.sourceName, group: main.groupName };
+    case 'words':
+      return { kind: 'topics', level: packById(main.packId)?.level ?? 'B1' };
+    case 'grammar':
+      return { kind: 'grammar' };
+    case 'sound':
+      return { kind: 'sounds', round: main.round };
+    default:
+      return { kind: 'free' };
+  }
+}
+
+/** What a section covers on which days: consecutive days studying the same thing make one segment. */
+export function sectionTimeline(path: PathDay[], section: PathSection): TimelineSegment[] {
+  const out: TimelineSegment[] = [];
+  for (const d of path) {
+    const b = d.blocks.find((x) => x.section === section);
+    if (!b) continue;
+    const what = blockWhat(b);
+    const last = out[out.length - 1];
+    if (last && JSON.stringify(last.what) === JSON.stringify(what) && last.to === d.day - 1) last.to = d.day;
+    else out.push({ what, from: d.day, to: d.day });
+  }
+  return out;
 }
