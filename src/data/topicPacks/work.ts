@@ -269,7 +269,7 @@ i | on the same page | Agreeing about something or understanding it in the same 
         ],
       },
       paragraph:
-        "Thanks for calling technical support. So your connection is intermittent and your laptop keeps freezing? Let's troubleshoot it together. First, please check that the router is plugged in. Then, reboot it and wait two minutes. Once the lights are green, open the app again. If it still crashes, it may be a glitch in the old version, so please install the latest software update. Until the fix comes, here's a workaround: connect with a cable. I've also sent you a link for a password reset. Your router seems to be on the blink, so I'll book a technician.",
+        "Thanks for calling technical support. So your connection is intermittent and your laptop keeps freezing? Let's troubleshoot it together. First, please check that the router is plugged in. Then, reboot it and wait two minutes. Once the lights are green, open the app again. If it still crashes, it may be a glitch in the old version, so please install the latest software update. Until the fix comes, here's a workaround: connect with a cable. I've also sent you a link for a password reset. Your router seems to be on the fritz, so I'll book a technician.",
     },
     `
 v | troubleshoot | To find and fix the cause of a problem in a system or machine. | Let's troubleshoot the problem step by step.
@@ -283,7 +283,7 @@ n | password reset | Creating a new password when you have forgotten the old one
 adj | intermittent | Stopping and starting again; not continuous. | The customer reported an intermittent connection.
 n | workaround | A temporary way of avoiding a problem until it is properly fixed. | Until the update comes, here's a workaround.
 pv | plug in | To connect a device to the electricity supply or to another device. | Is the router plugged in?
-i | on the blink | (informal, British) Not working properly. | My printer is on the blink again.
+i | on the fritz | (informal) Not working properly. | My printer is on the fritz again.
 `
   ),
   pack(

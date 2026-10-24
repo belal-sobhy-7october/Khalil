@@ -101,7 +101,7 @@ i | the tip of the iceberg | A small sign of a much bigger problem. | The floods
         ],
       },
       paragraph:
-        "Last week, my uncle sent the family a story with a sensational headline: a famous drink causes cancer. The article claimed that doctors had hidden the truth for years. I decided to fact-check it. I couldn't find a single credible source, and no journalist from a real newspaper had written about it. The company denied the story, and later the website admitted making it up to get clicks. It was pure clickbait. Now I always tell my family to take anything they read online with a pinch of salt.",
+        "Last week, my uncle sent the family a story with a sensational headline: a famous drink causes cancer. The article claimed that doctors had hidden the truth for years. I decided to fact-check it. I couldn't find a single credible source, and no journalist from a real newspaper had written about it. The company denied the story, and later the website admitted making it up to get clicks. It was pure clickbait. Now I always tell my family to take anything they read online with a grain of salt.",
     },
     `
 n | headline | The title of a news story, printed in large letters. | The headline said “Prices to double”, but the story said something different.
@@ -116,7 +116,7 @@ v | fact-check | To check that the facts in a story are correct. | Before you sh
 adj | sensational | Presenting news in a shocking way to get attention. | Some newspapers print sensational stories to sell more copies.
 n | press | Newspapers and magazines, and the journalists who work for them. | The minister refused to talk to the press.
 pv | make up | To invent a story, often to trick people. | The whole story was made up to get more clicks.
-i | take something with a pinch of salt | To not completely believe something. | I take everything I read on social media with a pinch of salt.
+i | take something with a grain of salt | To not completely believe something. | I take everything I read on social media with a grain of salt.
 `
   ),
   pack(
@@ -217,7 +217,7 @@ i | in the public eye | Well known and often seen in the media. | Being in the p
         ],
       },
       paragraph:
-        "Last year, I was working full-time and studying at night. I was exhausted, I couldn't sleep, and I had terrible anxiety before every exam. I didn't tell anyone, because I was worried about the stigma. One day, I was at the end of my tether, and I finally opened up to my brother. He listened and helped me see that I couldn't cope alone. I started therapy, and now I practice mindfulness every morning. Looking back, I should have asked for help much earlier. Self-care and a good support network are part of good mental health.",
+        "Last year, I was working full-time and studying at night. I was exhausted, I couldn't sleep, and I had terrible anxiety before every exam. I didn't tell anyone, because I was worried about the stigma. One day, I was at the end of my rope, and I finally opened up to my brother. He listened and helped me see that I couldn't cope alone. I started therapy, and now I practice mindfulness every morning. Looking back, I should have asked for help much earlier. Self-care and a good support network are part of good mental health.",
     },
     `
 n | mental health | The condition of your mind and emotions. | Young people talk about mental health more openly than their parents did.
@@ -232,7 +232,7 @@ n | self-care | The things you do to look after your own health and happiness. |
 n | support network | The people you can rely on for help. | Friends and family are an important support network.
 n | mindfulness | Paying full attention to the present moment, often as a way to reduce stress. | Ten minutes of mindfulness every morning helps me stay calm.
 pv | open up | To talk honestly about your feelings. | It took him months to open up to his family.
-i | at the end of your tether | So tired or worried that you can't deal with a situation any more. | After three sleepless nights with the baby, I was at the end of my tether.
+i | at the end of your rope | So tired or worried that you can't deal with a situation anymore. | After three sleepless nights with the baby, I was at the end of my rope.
 `
   ),
   pack(

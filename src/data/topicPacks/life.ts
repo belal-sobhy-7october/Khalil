@@ -99,12 +99,12 @@ i | off the beaten track | Far away from the places most tourists visit. | We fo
         ],
       },
       paragraph:
-        "On Fridays, we usually eat out. Last week, I made a reservation at a small Lebanese restaurant. Their cuisine is simple, but the ingredients are always fresh. We ordered a few savoury starters and a little hummus to share. The grilled chicken looked mouth-watering, and the portions were huge. My friend is vegetarian, and luckily there were plenty of options for her. The soup was a bit bland, but everything else was perfect. We couldn't finish, so we took the leftovers home. Next time, we'll just grab a bite before the movie.",
+        "On Fridays, we usually eat out. Last week, I made a reservation at a small Lebanese restaurant. Their cuisine is simple, but the ingredients are always fresh. We ordered a few savory starters and a little hummus to share. The grilled chicken looked mouth-watering, and the portions were huge. My friend is vegetarian, and luckily there were plenty of options for her. The soup was a bit bland, but everything else was perfect. We couldn't finish, so we took the leftovers home. Next time, we'll just grab a bite before the movie.",
     },
     `
 n | cuisine | A style of cooking, especially of a particular country or region. | Egyptian cuisine uses a lot of beans and spices.
 adj | bland | Having very little flavor. | The soup was bland, so I added some salt.
-adj | savoury | Salty or spicy rather than sweet. | I prefer savoury snacks to sweet ones.
+adj | savory | Salty or spicy rather than sweet. | I prefer savory snacks to sweet ones.
 n | portion | The amount of food served to one person. | The portions here are huge.
 n | ingredient | One of the foods that are used to make a dish. | Fresh ingredients make all the difference.
 n | appetite | The feeling that you want to eat. | Stress makes me lose my appetite.
@@ -353,7 +353,7 @@ i | make yourself at home | Used to tell a guest to relax and feel comfortable. 
       id: 'transport-and-traffic',
       group: 'life',
       title: 'Transport & Traffic',
-      description: 'Getting around, traffic jams, public transport and guessing what happened on the road.',
+      description: 'Getting around, traffic jams, public transportation and guessing what happened on the road.',
       level: 'B1',
       emoji: '🚗',
       warmUp: [
@@ -372,7 +372,7 @@ i | make yourself at home | Used to tell a guest to relax and feel comfortable. 
       },
       discussion: [
         'What is the best way to get around your city?',
-        'Should public transport be free? Who would pay for it?',
+        'Should public transportation be free? Who would pay for it?',
         'Are ride-hailing apps better than normal taxis? Why?',
         'What makes driving in your city stressful?',
         'Have you ever had a breakdown on the road? What happened?',
@@ -393,7 +393,7 @@ i | make yourself at home | Used to tell a guest to relax and feel comfortable. 
     },
     `
 n | traffic jam | A long line of vehicles that can't move or are moving very slowly. | We were stuck in a traffic jam for two hours on the ring road.
-n | public transport | Buses, trains and the metro that everyone can use. | Cairo's public transport is cheap but very crowded.
+n | public transportation | Buses, trains and the metro that everyone can use. | Cairo's public transportation is cheap but very crowded.
 n | commuter | A person who travels regularly between home and work. | Thousands of commuters use the metro every morning.
 n | fare | The money you pay for a journey by bus, train or taxi. | The metro fare went up last year.
 n | pedestrian | A person who is walking, not driving or riding. | Drivers must stop for pedestrians at crossings.
