@@ -12,7 +12,8 @@
  * Reads public playlists through YouTube's web client API (the one
  * youtube.com itself calls) — no API key needed. Unavailable/private
  * episodes, the catalog's `exclude` ids and lessons already in an earlier
- * playlist of the same source are dropped.
+ * playlist of the same source are dropped; a playlist with `pick` keeps only
+ * those episodes, in that order.
  */
 import { writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -110,7 +111,14 @@ async function sync(sections, target, header) {
     for (const playlist of source.playlists) {
       const skip = new Set(playlist.exclude ?? []);
       const listed = await playlistEpisodes(playlist.id);
-      const episodes = (playlist.reverse ? listed.reverse() : listed)
+      let ordered = playlist.reverse ? listed.reverse() : listed;
+      if (playlist.pick) {
+        const byId = new Map(ordered.map((e) => [e.id, e]));
+        const missing = playlist.pick.filter((id) => !byId.has(id));
+        if (missing.length) console.warn(`${playlist.name}: no longer in the playlist: ${missing.join(', ')}`);
+        ordered = playlist.pick.flatMap((id) => (byId.has(id) ? [byId.get(id)] : []));
+      }
+      const episodes = ordered
         .filter((e) => !skip.has(e.id) && !inSource.has(e.id))
         .map((e) => (source.tidyTitles ? { ...e, title: tidyTitle(e.title, playlist.name) } : e));
       for (const e of episodes) inSource.add(e.id);

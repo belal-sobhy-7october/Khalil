@@ -25,6 +25,10 @@ export interface CatalogPlaylist {
   name: string;
   /** Episodes to leave out (off-topic, trailers, announcements). */
   exclude?: string[];
+  /** The playlist lists its newest episode first: keep episode 1 first. */
+  reverse?: boolean;
+  /** Keep only these episodes, in this order (a playlist with repeats or parts out of order). */
+  pick?: string[];
 }
 
 interface SourceBase {
@@ -72,6 +76,37 @@ const DALILK: CourseChannel = { name: 'Dalilk · Daily English Listening', url: 
 const DALILK_LIBRARY: CourseChannel = { name: 'Dalilk · Novel Library', url: 'https://dalilk.com/resources/fluency/read' };
 const LOVELY_STORIES: CourseChannel = { name: 'Lovely English Stories', url: 'https://www.youtube.com/@LovelyEnglishStories' };
 const LISTENING_TIME: CourseChannel = { name: 'Listening Time', url: 'https://www.youtube.com/@listeningtimepodcast/podcasts' };
+const VOA: CourseChannel = { name: 'VOA Learning English', url: 'https://www.youtube.com/channel/UCKyTokYo0nK2OA-az-sDijA' };
+
+/** Let's Learn English Level 1, lessons 1–52 (the playlist also holds practice videos, repeats and Level 2; lesson 44 isn't in it). */
+const VOA_LEVEL_1 = [
+  'WR9_nsLyaEY', '1-U7o9xjWQc', 'IEA9LMy-N3M', 'Z5PF-vJdUdc', 'lDaZB5BBw7M', 'T3AJ29_2IX8', 'Ka33lX-kbMg', 'sp0cwcd1fGE', 'ZfdNbSe7Prw',
+  '1Lo_ICJYxZI', '8_npDNRKGIE', 'cyRaZA9ZD08', 'jkutq1P7AHU', '4Xn1Ysdmuvg', 'c6_7RYaNgdA', 'QQavoMYmMVE', '91sCUUVTDV8', 'he12VfXp5Ec',
+  'lgEodUvA5Po', '2juFXfLsSJk', 'A9lwBqNZEh8', '8Whu9xgm3dE', 'DzaLlp_kG6c', '7BDjr0Oc6VM', 'bfRNAlZRiHg', 'x2SQcTFvVzw', 'd_4TVWhqX4E',
+  'rn7kmGroxKs', '_demyJmMyCo', 'GnQEE0gEir0', 'xfMnWypEufs', '1egFRwUFc48', 'GpiXMzf3FvY', 'qIiGG0pwzwk', '6rFolPv2ntQ', 'NXYXu9Kcb7o',
+  'AGYPb0eeIs8', 'oPEzfd7ZKQs', 'FpCQfJLD4K8', 'nABtxJy06Yo', 'jCSHkjcmZvs', '0aa78zW51so', '4z_TK18v2u8', 'R4SVqLFBhVY', '1z7pSR1nW54',
+  'vlNqXVmMPNY', 'Dngj5yTCQIY', 'qDqwN0mXm1o', 'DGAUQIcY8FA', 'GvjBCQ3KOws', 'vJPvOYb1K10',
+];
+
+/**
+ * American Stories, easiest first (O. Henry, folk tales, then Poe, Hawthorne,
+ * London…), each story's parts in order and every story once.
+ */
+const VOA_AMERICAN_STORIES = [
+  // O. Henry
+  'ORZ5IJea14Q', 'TXWMS4KFm1k', 'qRWPbkgXSgY', '-NJc7KsQ8Nk', 'VpxzL4hMbBI', '0JLhEdmIgKE', 'KGdezsrWQlo', 'NQQmOiizK5g', 'dWaE8oEnzJ4',
+  'NKVAdd-MWXQ', 'o8i-MVG8heo', 'GYZpSUVyrVg', 'Nm-4FtujQwE', 'GU7YKkPQWSI', 'YrONKAyweuc',
+  // Folk tales and short classics
+  'oMW8Z1TaSeQ', 'ZfTzEr_o2s0', 'nFZa1c6l2Us', '3t3ZV00WHdQ', '7NUWQ6Cc7Bc', 'kDJhNNOwSEA', '6AdJkd1lM3U', 'Be5G7W209Hc', 'aNwL-9RREVE',
+  '9lGpGwLOecM', 'DbHahAeDyvQ',
+  // Edgar Allan Poe
+  'bkrfnIT5BFc', 'wlJnLoFK6VA', 'bu5GVJ6z3uk', 'RAy5GJxo0KU', '2wLLLE-TqUQ', 'hRLjp0--2q4', 'uCDFgU5grU8', '4Aa11aAO0V4', 'AuMckGpaBFk',
+  'J1arsXhsFag', 'hrmOwH7Jqbc',
+  // Hawthorne, Irving, London, Bierce, Garland, Cather, O'Brien, Melville, Burroughs
+  '3oBjHD-UbtQ', 'fdsD3n0Kw2Q', 'nK2epXzyUko', '89hi569Lp1E', 'twp0Ccl8AgY', 'i2gaVgzybuA', 'LN3fiDZ1f_Y', 'pwRvfy_EVyI', 'A7kxBcBBMuU',
+  '-yrwYTVj3u8', 'KlU2Jh2Ulw0', 'lELLfMIKVO8', '1ddrau6LoPQ', 'djUzKyjZ21c', 'UmHOmDTiowM', '_wUt26G7Cps', 'X8715YXkcOs', 'AyC0rFSADW4',
+  'NOjfCFcxuVI', 'oaBs1pj2vKk', 'ywqOOlVttxE', 'b-CnmIu58Mw', 'w-0rDy97NT4', 'c9N0orpuDQI', 'sD1UsOdLMKA',
+];
 
 /** Not lessons: the Listening Time trailer and two short announcements. */
 const LISTENING_TIME_PROMOS = ['BXCQpEqu7L0', 'H8DyKBj5v3M', 'HBWijSabtmQ'];
@@ -101,6 +136,13 @@ export const COURSE_CATALOG: CatalogSection[] = [
           { id: 'PLp22-4PivYmIPxfMzIpbB766dcSrbdCug', name: 'American & British Accent — Level 3' },
         ],
       },
+      {
+        kind: 'youtube',
+        id: 'voa',
+        name: 'VOA How to Pronounce',
+        channel: VOA,
+        playlists: [{ id: 'PLd9hCvj34W5gxnTUV-wHERehpInsTJgq7', name: 'How to Pronounce (American English)', reverse: true }],
+      },
     ],
   },
   {
@@ -118,6 +160,19 @@ export const COURSE_CATALOG: CatalogSection[] = [
           { id: 'PLp22-4PivYmLmnv85IWWhNL4PtzcqC5mS', name: 'Listening & Understanding Accents — Level 2' },
           { id: 'PLp22-4PivYmKpHQio7q6UsspV1lpXwzAp', name: 'Listening Course — Level 3' },
           { id: 'PLp22-4PivYmIZtXNNriSBxmSeCK7juwS_', name: 'English News, Explained' },
+        ],
+      },
+      {
+        // American English, from beginner to natural conversation.
+        kind: 'youtube',
+        id: 'voa',
+        name: 'VOA Learning English',
+        channel: VOA,
+        playlists: [
+          { id: 'PLd9hCvj34W5it4a-RMzhlwNJ-edf5HU3Q', name: "Let's Learn English — Level 1", pick: VOA_LEVEL_1 },
+          { id: 'PLd9hCvj34W5i4HBJAVHrMhtnPfATt73Oe', name: "America's National Parks" },
+          { id: 'PLd9hCvj34W5gR8u7liXqZeWLsVnhR5ZPV', name: 'American Stories', pick: VOA_AMERICAN_STORIES },
+          { id: 'PLd9hCvj34W5jekhcE7BPlwkEqFiLrS_Wk', name: 'TALK2US: English Conversation' },
         ],
       },
       { kind: 'podcast', id: 'dalilk-daily', name: 'Dalilk Daily Podcast', channel: DALILK, appleId: '1755537616' },

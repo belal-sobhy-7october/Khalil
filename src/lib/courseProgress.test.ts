@@ -101,8 +101,8 @@ describe('course catalog', () => {
   it('has the five sections in study order, each with lessons and no lesson twice in one source', () => {
     expect(COURSE_SECTIONS.map((s) => s.id)).toEqual(['pronunciation', 'listening', 'reading', 'grammar', 'shadowing']);
     expect(COURSE_SECTIONS.map((s) => s.sources.map((src) => src.id))).toEqual([
-      ['ibrahim-adel'],
-      ['ibrahim-adel', 'dalilk-daily'],
+      ['ibrahim-adel', 'voa'],
+      ['ibrahim-adel', 'voa', 'dalilk-daily'],
       ['ibrahim-adel', 'lovely-stories'], // Dalilk's novels join once their list is filled in
       ['ibrahim-adel'],
       ['listening-time'],
@@ -112,6 +112,13 @@ describe('course catalog', () => {
       'Phonetics: Pronouncing Every Letter — Level 1',
       'British & American Phonetics — Level 2',
       'American & British Accent — Level 3',
+    ]);
+    // VOA's American English goes from a beginner course to natural conversation.
+    expect(COURSE_SECTIONS[1].sources[1].groups.map((g) => g.name)).toEqual([
+      "Let's Learn English — Level 1",
+      "America's National Parks",
+      'American Stories',
+      'TALK2US: English Conversation',
     ]);
     for (const section of COURSE_SECTIONS) {
       for (const source of section.sources) {

@@ -201,12 +201,13 @@ describe('EnglishHub', () => {
     expect(screen.getByText('14 of 39 lessons')).toBeInTheDocument();
   });
 
-  it('listening: Ibrahim Adel\'s courses, or Dalilk\'s daily podcast played in the page', async () => {
+  it('listening: Ibrahim Adel\'s courses, VOA, or Dalilk\'s daily podcast played in the page', async () => {
     render(<EnglishHub />);
     openTab('Listening');
     const sources = screen.getByRole('tablist', { name: 'Sources' });
     expect(within(sources).getAllByRole('tab').map((t) => t.textContent)).toEqual([
       expect.stringContaining('Ibrahim Adel'),
+      expect.stringContaining('VOA Learning English'),
       expect.stringContaining('Dalilk Daily Podcast'),
     ]);
     expect(screen.getByText('0 of 27 lessons')).toBeInTheDocument();
