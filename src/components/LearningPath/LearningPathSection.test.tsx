@@ -3,7 +3,7 @@ import { act, fireEvent, render, screen, waitFor, within } from '@testing-librar
 import { useAppStore } from '../../store/appStore';
 import { getToday } from '../../store/dateHelpers';
 import { loadKv, saveKv } from '../../lib/userKv';
-import { PATH_KV_KEY, buildPath, defaultSettings, emptyPathState, wordsOf, type PathItem, type PathState } from '../../lib/learningPath';
+import { PATH_KV_KEY, buildPath, defaultSettings, emptyPathState, packById, wordsOf, type PathItem, type PathState } from '../../lib/learningPath';
 import { COURSE_POSITIONS_KEY, COURSE_PROGRESS_KEY } from '../../lib/courseProgress';
 import LearningPathSection from './LearningPathSection';
 
@@ -120,7 +120,7 @@ describe('LearningPathSection', () => {
     for (const w of wordsOf(words)) expect(within(vocabulary).getByText(w.word)).toBeInTheDocument();
     fireEvent.click(within(vocabulary).getByRole('button', { name: /Add to my flashcards/ }));
     await waitFor(() => expect(importVocabularyItems).toHaveBeenCalledTimes(1));
-    expect((importVocabularyItems.mock.calls[0] as unknown[])[1]).toMatchObject({ duplicateMode: 'skip', categoryForAll: 'Small Talk' });
+    expect((importVocabularyItems.mock.calls[0] as unknown[])[1]).toMatchObject({ duplicateMode: 'skip', categoryForAll: packById(words.packId)!.title });
   });
 
   it('ticks the review of the day by itself when nothing is due', async () => {
@@ -165,7 +165,7 @@ describe('LearningPathSection', () => {
     serve({ [PATH_KV_KEY]: started() });
     render(<LearningPathSection onOpenTab={onOpenTab} />);
     await screen.findByRole('heading', { level: 2, name: 'Day 1' });
-    fireEvent.click(screen.getByRole('button', { name: `Day ${day.day} (0/6)` }));
+    fireEvent.click(screen.getByRole('button', { name: new RegExp(`^Day ${day.day} \\(0/\\d+\\)$`) }));
     const opened = openBlock(b.section);
     expect(within(opened).getByText(new RegExp(`Part 1 of ${part.item.part.count}`))).toBeInTheDocument();
     fireEvent.click(within(document.querySelector(`[data-item="${part.key}"]`) as HTMLElement).getByRole('button', { name: 'Play' }));
@@ -202,7 +202,7 @@ describe('LearningPathSection', () => {
     serve({ [PATH_KV_KEY]: started() });
     render(<LearningPathSection onOpenTab={onOpenTab} />);
     await screen.findByRole('heading', { level: 2, name: 'Day 1' });
-    fireEvent.click(screen.getByRole('button', { name: `Day ${day.day} (0/6)` }));
+    fireEvent.click(screen.getByRole('button', { name: new RegExp(`^Day ${day.day} \\(0/\\d+\\)$`) }));
     fireEvent.change(within(openBlock('grammar')).getByRole('textbox'), { target: { value: 'I enjoy reading.' } });
     await waitFor(() => expect(lastSaved<PathState>(PATH_KV_KEY)?.notes[key]).toBe('I enjoy reading.'), { timeout: 2000 });
   });

@@ -3,7 +3,7 @@
  * the same six blocks, one per section of the hub, each about the same length
  * (20 minutes by default):
  *
- *   Vocabulary              the flashcard review and the day's topic words
+ *   Vocabulary              the flashcard review and the words of the day's topic (90 topics, one a day)
  *   Pronunciation & Accent  Ibrahim Adel's course, VOA's How to Pronounce, then sound drills
  *   Listening               VOA or Ibrahim Adel (you choose; the other follows)
  *   Reading                 British Council or Ibrahim Adel (the same), then Lovely English Stories
@@ -12,7 +12,7 @@
  *
  * The lessons are the hub's own, in study order, put into days by their length
  * and by how long a minute of them takes to study (a VOA lesson is heard three
- * times, a shadowing one practised four). A lesson too long for one day is cut
+ * times, a shadowing one practiced four). A lesson too long for one day is cut
  * into parts. A lesson finished anywhere — here or in its tab — is done in both,
  * since lessons are ticked in the hub's progress; the path's own value keeps
  * only its settings and what the hub can't know (reviews, grammar points,
@@ -104,16 +104,27 @@ const SOUND_MINUTES = 10;
 /** The Topic Library in the path's order: a topic a day, easier ones first. */
 export const PATH_TOPICS: string[] = [
   // B1
-  'small-talk', 'describing-people', 'making-plans', 'hobbies-and-free-time', 'home-and-neighbours', 'restaurant-and-food',
-  'travel', 'transport-and-traffic', 'health', 'sports-and-fitness', 'ramadan-and-celebrations',
+  'self-introduction', 'small-talk', 'family-and-relatives', 'describing-people', 'daily-routines',
+  'meeting-new-people', 'making-plans', 'hobbies-and-free-time', 'household-chores', 'home-and-neighbours',
+  'housing-and-rent', 'cooking-and-recipes', 'restaurant-and-food', 'clothes-and-style', 'returns-and-complaints',
+  'money-and-saving', 'directions-and-help', 'transport-and-traffic', 'travel', 'tourism-and-culture', 'health',
+  'nutrition', 'sleep-and-energy', 'sports-and-fitness', 'football', 'adventure-and-outdoors', 'video-games',
+  'emergencies-and-safety', 'ramadan-and-celebrations', 'university-life', 'exams-and-projects',
   // B2
-  'feelings-and-personality', 'friendship', 'childhood-and-memories', 'films-series-and-books', 'relationships-and-marriage',
-  'city-vs-countryside', 'shop-smart', 'habitual-change', 'minimalism', 'smart-learning', 'cultural-differences',
-  'opinions-and-arguing', 'identity-and-heritage', 'work-and-office', 'phone-and-email', 'job-interview',
-  'meetings-and-discussions', 'tech-everyday', 'time-management', 'remote-work-and-freelancing', 'presentations',
-  'leadership-and-teamwork', 'negotiation', 'starting-a-business', 'social-media', 'news-and-media', 'mental-health',
-  'happiness-and-success', 'fame-and-celebrity', 'science-and-space', 'climate-and-environment', 'artificial-intelligence',
-  'social-responsibility', 'crime',
+  'feelings-and-personality', 'friendship', 'keeping-conversations-going', 'misunderstandings',
+  'apologies-and-forgiveness', 'advice-and-support', 'childhood-and-memories', 'relationships-and-marriage',
+  'goals-and-dreams', 'learning-languages', 'smart-learning', 'films-series-and-books', 'photography-and-content',
+  'city-vs-countryside', 'shop-smart', 'habitual-change', 'minimalism', 'cultural-differences',
+  'opinions-and-arguing', 'identity-and-heritage', 'history-and-civilizations', 'nature-and-wildlife',
+  'living-abroad', 'career-plans', 'job-hunting', 'job-interview', 'work-and-office', 'phone-and-email',
+  'meetings-and-discussions', 'tech-everyday', 'internet-and-online-services', 'cybersecurity-and-scams',
+  'programming', 'time-management', 'remote-work-and-freelancing', 'presentations', 'leadership-and-teamwork',
+  'negotiation', 'starting-a-business', 'inflation-and-cost-of-living', 'jobs-and-future-work', 'social-media',
+  'news-and-media', 'mental-health', 'happiness-and-success', 'fame-and-celebrity', 'art-and-architecture',
+  'science-and-space', 'climate-and-environment', 'artificial-intelligence', 'social-responsibility', 'crime',
+  // C1
+  'decision-making-and-trade-offs', 'problem-solving', 'change-and-risk', 'equality-and-opportunity',
+  'ethics-and-dilemmas', 'education-systems', 'future-of-society',
 ];
 
 export function packById(id: string | undefined): TopicPack | undefined {
