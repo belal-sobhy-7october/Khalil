@@ -126,21 +126,22 @@ export default function Calendar() {
     <section id="section-calendar" className="space-y-6">
       <div className="bg-card border border-border-subtle rounded-xl overflow-hidden">
         <div className="p-4 md:p-6 border-b border-border-subtle flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 min-w-0">
             <button
               onClick={navigatePrevious}
               className="p-2 rounded-lg text-ink-light hover:text-ink hover:bg-ink/5 transition-colors"
               aria-label={t('a11y.previousPeriod')}
             >
-              <ChevronLeft size={20} />
+              <ChevronLeft size={20} className="rtl:rotate-180" />
             </button>
-            <h2 className="text-lg font-semibold text-ink whitespace-nowrap">{periodLabel}</h2>
+            {/* Wraps on a phone: on one line it pushed "next" out of the card at 320px. */}
+            <h2 className="min-w-0 text-center text-base sm:text-lg font-semibold text-ink sm:whitespace-nowrap">{periodLabel}</h2>
             <button
               onClick={navigateNext}
               className="p-2 rounded-lg text-ink-light hover:text-ink hover:bg-ink/5 transition-colors"
               aria-label={t('a11y.nextPeriod')}
             >
-              <ChevronRight size={20} />
+              <ChevronRight size={20} className="rtl:rotate-180" />
             </button>
           </div>
           <div className="flex items-center gap-2 flex-wrap">

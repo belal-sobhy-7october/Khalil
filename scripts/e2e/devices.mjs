@@ -138,7 +138,14 @@ function inspect(scope) {
   for (const el of document.body.querySelectorAll('*')) {
     const r = el.getBoundingClientRect();
     const text = [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim());
-    if (text && r.height >= 16 && r.width < 16 && el.textContent.trim().length >= 3 && el.checkVisibility({ visibilityProperty: true }) && !offCanvas(el) && !hidden(el)) {
+    // Squeezed: under 16px wide and broken onto several lines, or cut down to an ellipsis (a short
+    // text like "(8)" is just narrow).
+    const squeezed = () => {
+      const s = css(el);
+      const line = parseFloat(s.lineHeight) || parseFloat(s.fontSize) * 1.2;
+      return r.height > line * 1.8 || el.scrollWidth > el.clientWidth + 16;
+    };
+    if (text && r.height >= 16 && r.width < 16 && el.textContent.trim().length >= 3 && el.checkVisibility({ visibilityProperty: true }) && !offCanvas(el) && !hidden(el) && squeezed()) {
       add('layout', `text squeezed under 16px wide, so it can't be read (what's next to it takes the room): ${label(el, false)}`);
     }
     if (r.width < 2 || r.height < 2) continue;
@@ -243,7 +250,9 @@ function inspect(scope) {
     const r = el.getBoundingClientRect();
     const cx = r.left + r.width / 2;
     for (let e = el.parentElement; e && e !== document.body; e = e.parentElement) {
-      if (!/hidden|clip/.test(css(e).overflowX)) continue;
+      const ox = css(e).overflowX;
+      if (/auto|scroll/.test(ox) && e.scrollWidth > e.clientWidth) break; // a row that scrolls sideways: a swipe reaches it
+      if (!/hidden|clip/.test(ox)) continue;
       const q = e.getBoundingClientRect();
       if (cx < q.left || cx > q.right) {
         add('layout', `cut off at the side by ${label(e)}, so it can't be seen or tapped: ${label(el)}`);

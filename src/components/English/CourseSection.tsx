@@ -347,7 +347,7 @@ function SourceView({
         <span aria-hidden="true" className="pointer-events-none absolute -top-24 -end-20 w-72 h-72 rounded-full bg-gold-soft/20 blur-3xl" />
         <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, ease: EASE }} className="relative space-y-4">
           <div className="flex items-start gap-4">
-            <span className="w-12 h-12 shrink-0 rounded-2xl bg-card/80 shadow-sm flex items-center justify-center text-2xl">{section.icon}</span>
+            <span className="w-12 h-12 shrink-0 rounded-2xl bg-card/80 shadow-sm hidden min-[360px]:flex items-center justify-center text-2xl">{section.icon}</span>
             <div className="flex-1 min-w-0 space-y-0.5">
               <h3 className="text-lg font-bold text-ink leading-tight">
                 <bdi>{section.name}</bdi>
