@@ -77,6 +77,24 @@ describe('toggleHabitEntry', () => {
     expect(mockSupabase.from).toHaveBeenCalledWith('habit_entries');
   });
 
+  it('counts a day already ticked on another device as done, and unticks the day whatever its id', async () => {
+    mockSupabase.upsert.mockClear();
+    mockSupabase.eq.mockClear();
+    useAppStore.setState({ habitEntries: [] });
+    await useAppStore.getState().toggleHabitEntry('h1', today);
+    // ON CONFLICT DO NOTHING: a second device's tick isn't a duplicate-key error.
+    expect(mockSupabase.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({ user_id: 'user-1', habit_id: 'h1', date: today }),
+      { onConflict: 'habit_id,date', ignoreDuplicates: true }
+    );
+    expect(useAppStore.getState().habitEntries).toHaveLength(1);
+
+    await useAppStore.getState().toggleHabitEntry('h1', today);
+    expect(mockSupabase.eq).toHaveBeenCalledWith('habit_id', 'h1');
+    expect(mockSupabase.eq).toHaveBeenCalledWith('date', today);
+    expect(useAppStore.getState().habitEntries).toHaveLength(0);
+  });
+
   it('rolls back optimistic add on failure', async () => {
     mockSupabaseResponse.error = { message: 'insert failed' };
     

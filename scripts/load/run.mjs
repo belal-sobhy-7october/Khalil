@@ -10,11 +10,13 @@
 //   node scripts/load/run.mjs all                  isolation, then steady at 100…2000, then opens
 //
 // Options (env): REST (PostgREST, default http://127.0.0.1:54331), USERS (seeded, default 20000),
-// THINK (mean seconds between a person's actions, default 10), OUT (a JSON file for the results).
+// THINK (mean seconds between a person's actions, default 10), RAMP (seconds over which the people
+// of a steady run arrive, default 60), OUT (a JSON file for the results).
 import http from 'node:http';
 import fs from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import crypto from 'node:crypto';
+import { monitorEventLoopDelay } from 'node:perf_hooks';
 import { userToken } from './jwt.mjs';
 import { idOf, tierOf } from './users.mjs';
 
@@ -25,8 +27,12 @@ const agent = new http.Agent({ keepAlive: true, maxSockets: 2048 });
 
 // ---- one request ------------------------------------------------------------
 
-/** Sends a request as a user (or anonymous) and records how it went under `name`. */
-function call(stats, name, method, path, { token, body, prefer } = {}) {
+/**
+ * Sends a request as a user (or anonymous) and records how it went under `name`.
+ * The body is parsed only with `parse` (parsing every list would make this script,
+ * not the server, the bottleneck); `rows` comes from PostgREST's Content-Range.
+ */
+function call(stats, name, method, path, { token, body, prefer, parse } = {}) {
   const payload = body === undefined ? undefined : Buffer.from(JSON.stringify(body));
   const headers = { Accept: 'application/json', 'Accept-Profile': 'public' };
   if (token) headers.Authorization = `Bearer ${token}`;
@@ -41,12 +47,15 @@ function call(stats, name, method, path, { token, body, prefer } = {}) {
         const buf = Buffer.concat(chunks);
         stats?.add(name, performance.now() - started, res.statusCode, buf.length);
         let json = null;
-        try {
-          json = buf.length ? JSON.parse(buf) : null;
-        } catch {
-          // not JSON
+        if (parse || !stats) {
+          try {
+            json = buf.length ? JSON.parse(buf) : null;
+          } catch {
+            // not JSON
+          }
         }
-        resolve({ status: res.statusCode, json, bytes: buf.length });
+        const range = /^(\d+)-(\d+)/.exec(res.headers['content-range'] ?? '');
+        resolve({ status: res.statusCode, json, bytes: buf.length, rows: range ? Number(range[2]) - Number(range[1]) + 1 : 0 });
       });
     });
     req.on('error', (e) => {
@@ -123,7 +132,8 @@ function cpu() {
       const comm = stat.slice(stat.indexOf('(') + 1, stat.lastIndexOf(')'));
       const f = stat.slice(stat.lastIndexOf(')') + 2).split(' ');
       const secs = (Number(f[11]) + Number(f[12])) / tick;
-      if (comm === 'postgres') out.postgres += secs;
+      // Postgres starts a process per connection: count the ended ones too (the postmaster's children).
+      if (comm === 'postgres') out.postgres += secs + (Number(f[13]) + Number(f[14])) / tick;
       else if (comm === 'postgrest') out.postgrest += secs;
     } catch {
       // the process ended
@@ -180,15 +190,19 @@ function someone() {
 }
 
 const enc = encodeURIComponent;
+/** md5(text)::uuid, as the seed makes ids. */
+const idFrom = (text) => {
+  const h = crypto.createHash('md5').update(text).digest('hex');
+  return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`;
+};
 
-/** Pages of 1000 rows until a short one, as the app reads long lists. */
-async function paged(stats, name, token, path) {
+/** Pages of 1000 rows until a short one, as the app reads long lists (the rows, with `parse`). */
+async function paged(stats, name, token, path, parse = false) {
   const rows = [];
   for (let offset = 0; ; offset += 1000) {
-    const r = await call(stats, name, 'GET', `${path}&offset=${offset}&limit=1000`, { token });
-    if (!Array.isArray(r.json)) return rows;
-    rows.push(...r.json);
-    if (r.json.length < 1000) return rows;
+    const r = await call(stats, name, 'GET', `${path}&offset=${offset}&limit=1000`, { token, parse });
+    if (Array.isArray(r.json)) rows.push(...r.json);
+    if (r.status >= 300 || r.rows < 1000) return rows;
   }
 }
 
@@ -199,18 +213,18 @@ async function openApp(stats, user) {
   const kv = (key) => call(stats, 'open: user_kv key', 'GET', `/user_kv?select=value&${u}&key=eq.${enc(key)}`, { token });
   const list = (table, order) => call(stats, `open: ${table}`, 'GET', `/${table}?select=*&${u}&order=${order}`, { token });
   const [todos, , , , , entries, , , words, , , habits] = await Promise.all([
-    paged(stats, 'open: todos', token, `/todos?select=*&${u}&order=sort_order.asc,id.asc`),
+    paged(stats, 'open: todos', token, `/todos?select=*&${u}&order=sort_order.asc,id.asc`, true),
     paged(stats, 'open: sub_track_entries', token, `/sub_track_entries?select=*&${u}&order=date.asc,id.asc`),
     paged(stats, 'open: calendar_events', token, `/calendar_events?select=*&${u}&order=date.asc,id.asc`),
     paged(stats, 'open: daily_mood', token, `/daily_mood?select=*&${u}&order=date.asc,id.asc`),
     call(stats, 'open: daily_focus', 'GET', `/daily_focus?select=*&${u}&limit=1`, { token }),
-    paged(stats, 'open: habit_entries', token, `/habit_entries?select=*&${u}&order=date.asc,id.asc`),
+    paged(stats, 'open: habit_entries', token, `/habit_entries?select=*&${u}&order=date.asc,id.asc`, true),
     list('life_categories', 'sort_order.asc'),
     list('sub_tracks', 'sort_order.asc'),
     paged(stats, 'open: vocabulary_items', token, `/vocabulary_items?select=*&${u}&order=created_at.asc,id.asc`),
     list('bookmarks', 'created_at.asc'),
     list('bookmark_categories', 'name.asc'),
-    list('habits', 'sort_order.asc').then((r) => r.json ?? []),
+    call(stats, 'open: habits', 'GET', `/habits?select=*&${u}&order=sort_order.asc`, { token, parse: true }).then((r) => r.json ?? []),
     kv('appearance'),
     list('vocabulary_categories', 'name.asc'),
     paged(stats, 'open: wird_days (all)', token, `/wird_days?select=date,data&${u}&order=date.asc`),
@@ -223,8 +237,10 @@ async function openApp(stats, user) {
   ]);
   user.todos = todos;
   user.entries = entries;
-  user.words = words;
   user.habits = habits;
+  // The words' ids are known from the seed (md5('word-<n>-<k>')), so the 1000-row lists needn't be parsed here.
+  const count = { light: 10, medium: 150, heavy: 1000 }[tierOf(user.n)];
+  user.words = words.length ? words : Array.from({ length: count }, (_, k) => ({ id: idFrom(`word-${user.n}-${k + 1}`), review_count: 0 }));
 }
 
 /** One thing a person does, picked by how often people do it. */
@@ -244,12 +260,13 @@ const ACTIONS = [
     const h = pick(u.habits);
     if (!h) return;
     const done = u.entries.find((e) => e.habit_id === h.id && e.date === today);
+    // As the app sends them (appStore.toggleHabitEntry): a tick that another device already made isn't an error.
     if (done) {
-      await call(stats, 'tick a habit', 'DELETE', `/habit_entries?id=eq.${done.id}`, { token: u.token });
+      await call(stats, 'tick a habit', 'DELETE', `/habit_entries?habit_id=eq.${h.id}&date=eq.${today}`, { token: u.token });
       u.entries = u.entries.filter((e) => e !== done);
     } else {
       const entry = { id: crypto.randomUUID(), user_id: u.id, habit_id: h.id, date: today };
-      const r = await call(stats, 'tick a habit', 'POST', '/habit_entries', { token: u.token, body: entry });
+      const r = await call(stats, 'tick a habit', 'POST', '/habit_entries?on_conflict=habit_id,date', { token: u.token, body: entry, prefer: 'resolution=ignore-duplicates' });
       if (r.status < 300) u.entries.push(entry);
     }
   }],
@@ -276,7 +293,7 @@ const ACTIONS = [
     })],
   [4, 'add a task', async (stats, u) => {
     const r = await call(stats, 'add a task', 'POST', '/todos', {
-      token: u.token, prefer: 'return=representation',
+      token: u.token, prefer: 'return=representation', parse: true,
       body: { id: crypto.randomUUID(), user_id: u.id, gate: 'daily', text: 'New task', date: today, sort_order: 999, priority: 'medium', created_at: Date.now(), updated_at: Date.now() },
     });
     if (Array.isArray(r.json)) u.todos.push(...r.json);
@@ -310,15 +327,27 @@ async function visit(stats, until) {
 // ---- scenarios --------------------------------------------------------------
 
 /** `people` visits at the same time for `seconds`; each one that ends is replaced by someone else. */
+/** How late this script's own event loop runs: when it's high, the numbers measure the generator, not the server. */
+function lagMonitor() {
+  const h = monitorEventLoopDelay({ resolution: 10 });
+  h.enable();
+  return () => {
+    h.disable();
+    return { p50: h.percentile(50) / 1e6, p99: h.percentile(99) / 1e6, max: h.max / 1e6 };
+  };
+}
+
 async function steady(people, seconds) {
   const stats = new Stats();
+  const lag = lagMonitor();
   sql('select pg_stat_statements_reset()');
   const before = cpu();
   const until = performance.now() + seconds * 1000;
   let visits = 0;
   await Promise.all(
     Array.from({ length: people }, async (_, i) => {
-      await sleep((i / people) * Math.min(20, seconds / 4)); // arrive over the first seconds, not all in the same millisecond
+      // People arrive over the first minute (RAMP seconds), as they would, not all in the same second.
+      await sleep((i / people) * Math.min(Number(process.env.RAMP ?? 60), seconds / 2));
       while (performance.now() < until) {
         await visit(stats, until);
         visits++;
@@ -329,14 +358,17 @@ async function steady(people, seconds) {
   sum.cpu = cpuReport(before, cpu(), sum.seconds);
   sum.top = topQueries();
   sum.visits = visits;
+  sum.lag = lag();
   print(`steady: ${people} people at once for ${seconds} s`, sum, ` (${visits} visits)`);
   console.log(`  ${sum.cpu}`);
+  console.log(`  generator's own delay: p50 ${ms(sum.lag.p50)} · p99 ${ms(sum.lag.p99)} · max ${ms(sum.lag.max)}`);
   return sum;
 }
 
 /** `people` open the app within `seconds` (a morning peak): how long does the app take to load? */
 async function opens(people, seconds) {
   const stats = new Stats();
+  const lag = lagMonitor();
   const appTimes = [];
   sql('select pg_stat_statements_reset()');
   const before = cpu();
@@ -354,9 +386,11 @@ async function opens(people, seconds) {
   sum.cpu = cpuReport(before, cpu(), sum.seconds);
   sum.appOpen = pcts(appTimes);
   sum.top = topQueries();
+  sum.lag = lag();
   print(`opens: ${people} people open the app within ${seconds} s`, sum);
   console.log(`  whole app loaded: p50 ${ms(sum.appOpen.p50)} · p95 ${ms(sum.appOpen.p95)} · p99 ${ms(sum.appOpen.p99)} · max ${ms(sum.appOpen.max)}`);
   console.log(`  ${sum.cpu}`);
+  console.log(`  generator's own delay: p50 ${ms(sum.lag.p50)} · p99 ${ms(sum.lag.p99)} · max ${ms(sum.lag.max)}`);
   return sum;
 }
 
@@ -407,6 +441,12 @@ async function isolation(pairs = 200) {
 // ---- main -------------------------------------------------------------------
 
 const [scenario = 'all', a, b] = process.argv.slice(2);
+// Without the API there is nothing to measure (and refused connections would spin this script).
+const ready = await call(null, '', 'GET', '/');
+if (ready.status !== 200) {
+  console.error(`PostgREST isn't answering at ${REST.origin} (status ${ready.status} ${ready.error ?? ''}): run scripts/load/stack.sh up`);
+  process.exit(1);
+}
 const results = { at: new Date().toISOString(), users: USERS, think: THINK, runs: [] };
 const save = () => process.env.OUT && fs.writeFileSync(process.env.OUT, JSON.stringify(results, null, 2));
 const record = (kind, args, sum) => {

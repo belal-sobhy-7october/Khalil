@@ -64,11 +64,14 @@ node scripts/load/run.mjs open 2000 60     # 2000 people open the app within a m
 OUT=results.json node scripts/load/run.mjs all
 ```
 
+People in a steady run arrive over a minute (`RAMP`); a shorter `RAMP` tests a sudden burst instead.
+The results of the first run, and what they mean for 20,000 users: `RESULTS.md`.
+
 Each run prints requests per second, errors, response times (p50 / p95 / p99) per kind of
 request, the CPU used by Postgres, PostgREST and the generator, and the slowest queries
 (`pg_stat_statements`).
 
-The generator shares the machine's 4 cores with the database and the API, so the numbers
-are a floor: the same test on Supabase's own servers would only do better on CPU, but
-adds the network. Compare runs with each other (before and after a change), not with a
-promise of a number of users.
+The generator shares the machine's 4 cores with the database and the API, and Supabase's
+computes differ from this machine (the smaller ones have fewer cores; the network adds its
+own time). Compare runs with each other (before and after a change), not with a promise of a
+number of users.

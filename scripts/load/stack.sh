@@ -20,8 +20,16 @@ PGRST_VERSION=v12.2.12
 PG="psql -h 127.0.0.1 -p 54322 -U postgres -d postgres -v ON_ERROR_STOP=1 -q"
 # Postgres won't run as root: the data directory belongs to the postgres user.
 as_pg() { if [ "$(id -u)" = 0 ]; then su postgres -c "$*"; else bash -c "$*"; fi; }
-# Stops the process whose pid is in $DATA_DIR/$1.pid, if it still runs.
-stop_pid() { local f="$DATA_DIR/$1.pid"; [ -f "$f" ] && kill "$(cat "$f")" 2>/dev/null; rm -f "$f"; }
+# Stops the process whose pid is in $DATA_DIR/$1.pid, if it still runs, and waits for it to end.
+stop_pid() {
+  local f="$DATA_DIR/$1.pid"
+  if [ -f "$f" ]; then
+    local pid; pid=$(cat "$f")
+    kill "$pid" 2>/dev/null || true
+    for _ in $(seq 1 50); do kill -0 "$pid" 2>/dev/null || break; sleep 0.1; done
+    rm -f "$f"
+  fi
+}
 
 up() {
   mkdir -p "$DATA_DIR"

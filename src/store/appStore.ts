@@ -1475,8 +1475,9 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     if (existingEntry) {
       // Optimistic delete
       set((s) => ({ habitEntries: s.habitEntries.filter((e) => e.id !== existingEntry.id) }));
+      // By habit and day, not by id: the day's row may have been made on another device.
       const { success } = await supabaseCall(
-        supabase.from('habit_entries').delete().eq('id', existingEntry.id),
+        supabase.from('habit_entries').delete().eq('habit_id', habitId).eq('date', date),
         'toggleHabitEntry delete'
       );
       if (!success) {
@@ -1492,10 +1493,12 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       const id = generateId();
       const newEntry = { id, habitId, date };
       set((s) => ({ habitEntries: [...s.habitEntries, newEntry] }));
+      // Already ticked on another device (same habit, same day) counts as done, not as an error.
       const { success } = await supabaseCall(
-        supabase.from('habit_entries').insert({
-          id, user_id: userId, habit_id: habitId, date,
-        }),
+        supabase.from('habit_entries').upsert(
+          { id, user_id: userId, habit_id: habitId, date },
+          { onConflict: 'habit_id,date', ignoreDuplicates: true }
+        ),
         'toggleHabitEntry insert'
       );
       if (!success) {
@@ -1521,7 +1524,13 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     set({ habitEntries: [...previous.filter((e) => !staleIds.has(e.id)), ...added] });
     const results = await Promise.all([
       added.length
-        ? supabaseCall(supabase.from('habit_entries').insert(added.map((e) => ({ id: e.id, user_id: userId, habit_id: habitId, date: e.date }))), 'setHabitEntryDates insert')
+        ? supabaseCall(
+            supabase.from('habit_entries').upsert(
+              added.map((e) => ({ id: e.id, user_id: userId, habit_id: habitId, date: e.date })),
+              { onConflict: 'habit_id,date', ignoreDuplicates: true }
+            ),
+            'setHabitEntryDates insert'
+          )
         : { success: true },
       stale.length ? supabaseCall(supabase.from('habit_entries').delete().in('id', [...staleIds]), 'setHabitEntryDates delete') : { success: true },
     ]);

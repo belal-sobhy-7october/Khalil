@@ -138,11 +138,13 @@ export function createFakeSupabase(seed) {
       const incoming = (Array.isArray(body) ? body : [body]).filter(Boolean);
       const conflict = url.searchParams.get('on_conflict')?.split(',');
       const merge = prefer.includes('resolution=merge-duplicates');
+      const ignore = prefer.includes('resolution=ignore-duplicates');
       const saved = [];
       for (const row of incoming) {
         const key = conflict ?? ['id'];
         const existing = rows.find((r) => key.every((k) => row[k] !== undefined && String(r[k]) === String(row[k])));
         if (existing) {
+          if (ignore) continue; // ON CONFLICT DO NOTHING
           if (!merge && !conflict) return route.fulfill({ status: 409, json: { code: '23505', message: `duplicate key value violates unique constraint on ${table}` } });
           Object.assign(existing, row, { updated_at: row.updated_at ?? now });
           saved.push(existing);
