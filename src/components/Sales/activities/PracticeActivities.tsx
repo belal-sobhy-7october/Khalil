@@ -32,7 +32,7 @@ export function DrillActivity({ refId, taskId, lang, onDone }: { refId: string; 
             <div className="text-sm font-medium text-ink">
               {i + 1}. {item.prompt}
             </div>
-            <NoteBox noteKey={`${taskId}#${i}`} rows={2} lang={lang} placeholder={pick(lang, 'اكتب ردك الأول…', 'Write yours first…')} />
+            <NoteBox noteKey={`${taskId}#${i}`} rows={2} lang={lang} placeholder={pick(lang, 'اكتب ردك أولًا…', 'Write yours first…')} />
             {shown.has(i) ? (
               <div className="flex items-start gap-1 rounded-lg bg-sage-soft/8 border border-sage-soft/30 px-3 py-2">
                 <p className="flex-1 text-sm text-ink whitespace-pre-line">{item.model}</p>
@@ -69,7 +69,7 @@ export function MissionActivity({ refId, taskId, lang, onDone }: { refId: string
         ))}
       </div>
       <button type="button" onClick={onDone} className={primaryBtn}>
-        {pick(lang, 'عملت المهمة', 'Mission done')}
+        {pick(lang, 'أنجزت المهمة', 'Mission done')}
       </button>
     </div>
   );
@@ -77,11 +77,11 @@ export function MissionActivity({ refId, taskId, lang, onDone }: { refId: string
 
 const SPECIAL_PROMPTS: Record<string, { ar: string; en: string }> = {
   start: {
-    ar: 'ليه عاوز تتعلم سيلز؟ وعاوز تكون فين بعد 3 شهور؟ (اكتب بصراحة، هترجعله في آخر كل مستوى)',
+    ar: 'لماذا تريد أن تتعلم المبيعات؟ وأين تريد أن تكون بعد 3 أشهر؟ (اكتب بصراحة، فستعود إليه في آخر كل مستوى)',
     en: 'Why do you want to learn sales, and where do you want to be in 3 months?',
   },
   exam: {
-    ar: 'خلصت مستوى! إيه أكتر 3 حاجات اتغيرت فيك؟ وإيه أضعف نقطة هتشتغل عليها في المستوى الجاي؟',
+    ar: 'أنهيت مستوى! ما أكثر 3 أشياء تغيّرت فيك؟ وما أضعف نقطة ستعمل عليها في المستوى التالي؟',
     en: 'You finished a level! What are the three biggest changes in you, and the one weak point you will work on next?',
   },
 };
@@ -161,8 +161,8 @@ export function ReviewActivity({ refId, lang, onDone }: { refId: string; lang: L
     <div className="space-y-4">
       <p className="text-sm text-ink-light">
         {week
-          ? pick(lang, 'اقرا ملخص كل درس بصوت عالي، وبعدين راجع الأسئلة اللي غلطت فيها قبل الكويز.', 'Read each lesson summary out loud, then review the questions you missed before the quiz.')
-          : pick(lang, 'قبل الامتحان: راجع ملخص كل دروس المستوى، وكل سؤال غلطت فيه في الكويزات.', 'Before the exam: review every lesson summary of the level and every question you missed.')}
+          ? pick(lang, 'اقرأ ملخص كل درس بصوت مرتفع، ثم راجع الأسئلة التي أخطأت فيها قبل الاختبار القصير.', 'Read each lesson summary out loud, then review the questions you missed before the quiz.')
+          : pick(lang, 'قبل الامتحان: راجع ملخص كل دروس المستوى، وكل سؤال أخطأت فيه في الاختبارات القصيرة.', 'Before the exam: review every lesson summary of the level and every question you missed.')}
       </p>
       <ul className="space-y-1.5">
         {lessons.map((l) => (
@@ -187,7 +187,7 @@ export function ReviewActivity({ refId, lang, onDone }: { refId: string; lang: L
       )}
       {missed.size > 0 && (
         <div className="space-y-1.5">
-          <div className="text-xs font-semibold text-ink-light">{pick(lang, `أسئلة غلطت فيها (${missed.size})`, `Questions you missed (${missed.size})`)}</div>
+          <div className="text-xs font-semibold text-ink-light">{pick(lang, `أسئلة أخطأت فيها (${missed.size})`, `Questions you missed (${missed.size})`)}</div>
           <ul className="space-y-1 text-sm">
             {[...missed].slice(0, week ? 10 : 30).map(([q, right]) => (
               <li key={q} className="rounded-lg border border-border-subtle px-3 py-1.5">
@@ -201,7 +201,7 @@ export function ReviewActivity({ refId, lang, onDone }: { refId: string; lang: L
       )}
       {week && (
         <details>
-          <summary className="cursor-pointer py-1 text-xs text-ink-light hover:text-ink">{pick(lang, 'اتمرن على الأسبوع كله مع الـ AI (اختياري)', 'Practice the whole week with an AI (optional)')}</summary>
+          <summary className="cursor-pointer py-1 text-xs text-ink-light hover:text-ink">{pick(lang, 'تدرّب على الأسبوع كله مع الذكاء الاصطناعي (اختياري)', 'Practice the whole week with an AI (optional)')}</summary>
           <div className="mt-2">
             <AiButtons prompt={lessonPracticePrompt(week.title, week.goal, lang)} lang={lang} />
           </div>

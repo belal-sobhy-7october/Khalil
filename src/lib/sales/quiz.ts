@@ -67,7 +67,7 @@ export function buildQuiz(id: string, seed = 1): SalesQuiz | null {
   if (weekly) {
     const week = getWeek(weekly[1]);
     if (!week) return null;
-    const title = week.lang === 'en' ? `Week ${week.number} quiz: ${week.title}` : `كويز الأسبوع ${week.number}: ${week.title}`;
+    const title = week.lang === 'en' ? `Week ${week.number} quiz: ${week.title}` : `اختبار الأسبوع ${week.number}: ${week.title}`;
     return { id, title, lang: week.lang, pass: 80, questions: shuffle(weekQuestions(week, rand), rand).map((q) => shuffleOptions(q, rand)) };
   }
   const exam = id.match(/^(S\d)-EXAM$/);

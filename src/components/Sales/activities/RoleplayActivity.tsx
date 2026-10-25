@@ -18,8 +18,8 @@ export default function RoleplayActivity({ refId, lang, onDone }: { refId: strin
   const best = bestRoleplay(calls, r.id);
   const percent = Math.round((ticked.filter(Boolean).length / r.steps.length) * 100);
   const rows: Array<[string, string]> = [
-    [pick(lang, 'بتبيع', 'You sell'), r.youSell],
-    [pick(lang, 'الـ AI هيبقى', 'The AI plays'), r.persona],
+    [pick(lang, 'تبيع', 'You sell'), r.youSell],
+    [pick(lang, 'يؤدي الذكاء الاصطناعي دور', 'The AI plays'), r.persona],
     [pick(lang, 'الموقف', 'Situation'), r.situation],
     [pick(lang, 'المطلوب', 'Your goal'), r.goal],
   ];
@@ -34,16 +34,16 @@ export default function RoleplayActivity({ refId, lang, onDone }: { refId: strin
         ))}
       </dl>
       <div className="space-y-1.5">
-        <div className="text-xs font-semibold text-ink-light">{pick(lang, '1. ابدأ الرول بلاي (بالصوت أحسن)', '1. Start the role-play (voice is best)')}</div>
+        <div className="text-xs font-semibold text-ink-light">{pick(lang, '1. ابدأ تمثيل الأدوار (بالصوت أفضل)', '1. Start the role-play (voice is best)')}</div>
         <AiButtons prompt={roleplayPrompt(r, lang)} lang={lang} />
         <p className="text-[11px] text-ink-light">
-          {pick(lang, 'في الآخر قول «تقييم» والـ AI هيقيّمك على كل نقطة.', 'At the end, say "feedback" and the AI scores you on each step.')}
+          {pick(lang, 'في النهاية قل «تقييم» وسيقيّمك الذكاء الاصطناعي في كل نقطة.', 'At the end, say "feedback" and the AI scores you on each step.')}
         </p>
       </div>
       <div className="space-y-2">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs font-semibold text-ink-light">{pick(lang, '2. قيّم نفسك: عملت إيه فعلًا؟', '2. Score yourself: what did you actually do?')}</span>
-          {best !== null && <Pill tone={best >= 80 ? 'good' : 'neutral'}>{pick(lang, `أحسن نتيجة ${best}%`, `Best ${best}%`)}</Pill>}
+          <span className="text-xs font-semibold text-ink-light">{pick(lang, '2. قيّم نفسك: ماذا فعلت حقًا؟', '2. Score yourself: what did you actually do?')}</span>
+          {best !== null && <Pill tone={best >= 80 ? 'good' : 'neutral'}>{pick(lang, `أفضل نتيجة ${best}%`, `Best ${best}%`)}</Pill>}
         </div>
         <ul className="space-y-1">
           {r.steps.map((s, i) => (
@@ -74,7 +74,7 @@ export default function RoleplayActivity({ refId, lang, onDone }: { refId: strin
           </button>
           {saved !== null && (
             <span className="text-xs text-sage-soft-dark">
-              {saved >= 80 ? pick(lang, 'عاش! 💪', 'Great job! 💪') : pick(lang, 'اتحفظت. جرب تاني بكرة وركز على اللي فاتك.', 'Saved. Try again tomorrow and focus on what you missed.')}
+              {saved >= 80 ? pick(lang, 'أحسنت! 💪', 'Great job! 💪') : pick(lang, 'حُفظت. حاول مرة أخرى غدًا وركّز على ما فاتك.', 'Saved. Try again tomorrow and focus on what you missed.')}
             </span>
           )}
         </div>

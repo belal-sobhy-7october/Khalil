@@ -1,7 +1,18 @@
 # Khalil — notes for agents
 
 Personal dashboard (React 19 + TypeScript + Vite + Tailwind + Zustand + Supabase). See
-`README.md` for setup and scripts. The owner uses the app in Arabic (Egyptian) and English.
+`README.md` for setup and scripts. The app is in Arabic and English.
+
+## Arabic is Fusha only (الفصحى فقط)
+
+**Every Arabic word in Khalil is Modern Standard Arabic (الفصحى): no Egyptian or any other dialect, ever.**
+This covers the interface (`translations.ts`), lessons and data, notes, prompts sent to the AI, docs, comments,
+tests and e2e scripts. Write simple, friendly Fusha (لماذا، الآن، لا، هذا، اليوم), and use Arabic words where they
+exist (تمثيل الأدوار، التسويق، المبيعات) instead of English ones spelled in Arabic letters.
+`src/i18n/fusha.test.ts` lists the dialect words to avoid and fails on them in `src`,
+`scripts`, `api`, `.claude` and the top-level docs. Its `NOT_OURS` list is only for text that isn't ours (YouTube
+titles as their channels wrote them, and the keywords that recognize what a user types); never add a file there to
+silence the test, rewrite the text instead.
 
 ## Adding English topics (Topic Library)
 
@@ -104,7 +115,7 @@ and their detailed plan is in `src/data/callCenter/ROADMAP.md`.
 ## Sales Prep (in Learn Skills)
 
 A section (`sales`), open to every account: sales, marketing and negotiation from zero, as knowledge for any job. Four
-Knowledge books (sales, psychology, marketing, negotiation) are daily tasks in Levels 1–2 (Egyptian Arabic),
+Knowledge books (sales, psychology, marketing, negotiation) are daily tasks in Levels 1–2 (Arabic, Fusha),
 then Level 3 is the same skills in English; Today shows only one day. Selling electronics (the owner's current
 job, learned inside the company) is an Extra tab outside the plan. **Read `src/data/sales/README.md`
 before changing it.** Progress is in `user_kv` (`sales-*` keys). Listening tasks link searches unless a video id is confirmed.

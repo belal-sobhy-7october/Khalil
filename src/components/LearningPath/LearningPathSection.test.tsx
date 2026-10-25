@@ -86,7 +86,7 @@ describe('LearningPathSection', () => {
     render(<LearningPathSection onOpenTab={onOpenTab} />);
     await act(async () => {}); // the saved values load first
     expectNoRawKeys();
-    expect(screen.getAllByText(language === 'en' ? /around 2h a day/ : /حوالي 2 ساعة في اليوم/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(language === 'en' ? /around 2h a day/ : /نحو 2 ساعة في اليوم/).length).toBeGreaterThan(0);
     fireEvent.click(screen.getByRole('button', { name: language === 'en' ? 'Start day 1' : 'ابدأ اليوم الأول' }));
     await waitFor(() => expect(lastSaved<PathState>(PATH_KV_KEY)?.startedAt).toBe(today));
     expect(lastSaved<PathState>(PATH_KV_KEY)?.settings).toEqual(defaultSettings());

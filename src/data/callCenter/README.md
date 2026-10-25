@@ -1,10 +1,10 @@
-# Call Center Prep (التحضير لكول سنتر انجلش)
+# Call Center Prep (الاستعداد لمراكز الاتصال بالإنجليزية)
 
-> **ملخص بالعربي:** ده قسم جوه «تعلم المهارات» ومتاح لكل الأكونتات (اتكتب الأول لصاحب التطبيق): خطة من B1 لـ C1 وشغلانة كول سنتر انجلش في مصر
-> (تيكنكال سبورت الأول، وجاهز لأي أكونت). مقسومة ليفلات ← أسابيع ← أيام ← مهام، ولكل أسبوع quiz
-> ولكل ليفل امتحان. المحتوى كله انجليزي، والعربي بس في الملاحظات الصغيرة (`tipAr` و `noteAr`).
-> كل حاجة جوه الكود فبتشتغل من غير نت، ما عدا الفيديوهات و YouGlish والـ AI.
-> ليفل 4 و 5 لسه متبنوش: الخطة التفصيلية بتاعتهم في [`ROADMAP.md`](./ROADMAP.md).
+> **ملخص بالعربية:** قسم داخل «تعلم المهارات» متاح لكل الحسابات (كُتب أولًا لصاحب التطبيق): خطة من B1 إلى C1 ثم وظيفة في مركز اتصال بالإنجليزية في مصر
+> (الدعم الفني أولًا، مع الاستعداد لأي حساب). مقسّمة إلى مستويات ← أسابيع ← أيام ← مهام، ولكل أسبوع اختبار قصير
+> ولكل مستوى امتحان. المحتوى كله بالإنجليزية، والعربية في الملاحظات القصيرة فقط (`tipAr` و`noteAr`)، وبالفصحى.
+> كل شيء داخل الكود فيعمل دون إنترنت، عدا المقاطع وYouGlish والذكاء الاصطناعي.
+> المستويان 4 و5 لم يُبنيا بعد: خطتهما التفصيلية في [`ROADMAP.md`](./ROADMAP.md).
 
 This is the guide for anyone (human or agent) changing the **Call Center Prep** section. Read it
 before adding a week, a test or any content. The plan for the levels still to build (4 and 5) is
@@ -31,7 +31,7 @@ copying a prompt into ChatGPT or Gemini, and the level check is EF SET.
 | Accent (extra) | Ibrahim Adel's phonetics and accent course. Optional: nothing from it is in the plan or the levels. |
 
 The UI is English in both app languages (the owner asked for it), wrapped in `dir="ltr" lang="en"`,
-with short friendly Egyptian Arabic notes (`ArabicNote`).
+with short, friendly notes in Modern Standard Arabic (`ArabicNote`; no dialect, see CLAUDE.md).
 
 ## 2. Who can see it
 
@@ -131,7 +131,7 @@ something broken. Never rename a day or week id.
 ## 5. Content rules
 
 - **English content, American spelling** (color, center, canceled). Arabic only in `tipAr`
-  (sounds, grammar, questions) and `noteAr` (weeks), in short, friendly Egyptian Arabic. The
+  (sounds, grammar, questions) and `noteAr` (weeks), in short, friendly Modern Standard Arabic (no dialect). The
   content test fails on Arabic anywhere else.
 - **The owner is the agent and the candidate**: the agent is called Belal; the candidate is a
   software developer from Cairo moving into tech support. Customers and companies in scripts and

@@ -107,7 +107,7 @@ describe('TopicLibraryModal', () => {
     useAppStore.setState({ language });
     render(<TopicLibraryModal onClose={() => {}} />);
     // Khalil is for everyone: no lesson is labelled as someone's own course.
-    expect(screen.queryByText(/Your course|الكورس بتاعك/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Your course|الدورة الخاصة بك/)).not.toBeInTheDocument();
     fireEvent.click(screen.getByText('Artificial Intelligence'));
     const pack = TOPIC_PACKS.find((p) => p.id === 'artificial-intelligence')!;
     expect(screen.getByText(pack.warmUp[0])).toBeInTheDocument();

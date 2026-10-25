@@ -20,7 +20,7 @@ export function taskTitle(task: SalesTask, lang: Lang): string {
     case 'speak':
       return getSpeak(task.ref)?.title ?? task.ref;
     case 'journal':
-      return en ? 'Your notebook: one line about today' : 'دفترك: سطرين عن النهارده';
+      return en ? 'Your notebook: one line about today' : 'دفترك: سطران عن اليوم';
     case 'words': {
       const week = getWeek(task.ref);
       return `${week?.content.words?.length ?? 12} sales words for your flashcards`;

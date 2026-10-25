@@ -110,7 +110,7 @@ async function run(browser, name) {
     await page.reload({ waitUntil: 'domcontentloaded' });
     await page.waitForTimeout(1500);
     check(!(await page.getByText('تسجيل الدخول بـ Google').count()), 'offline: login page shown instead of the app');
-    check(await page.getByText('مفيش نت').first().isVisible().catch(() => false), 'offline: no offline banner');
+    check(await page.getByText('لا يوجد اتصال بالإنترنت').first().isVisible().catch(() => false), 'offline: no offline banner');
     await fits('offline');
     await page.screenshot({ path: `${dir}/offline-app.png`, fullPage: true });
 
@@ -124,7 +124,7 @@ async function run(browser, name) {
     await page.waitForTimeout(300);
     check(await page.getByText('الكلمات المفتاحية').first().isVisible().catch(() => false), 'offline: lesson did not open');
     await fits('offline lesson');
-    await press(page.getByRole('button', { name: 'علّم إنك ذاكرته' }));
+    await press(page.getByRole('button', { name: 'علّمه مذاكَرًا' }));
     check(await page.evaluate(() => Object.keys(JSON.parse(localStorage.getItem('khalil-studied-topics') ?? '{}')).length === 1), 'offline: studied mark not saved');
     await page.screenshot({ path: `${dir}/offline-lesson.png` });
 
@@ -132,7 +132,7 @@ async function run(browser, name) {
     await page.evaluate((s) => localStorage.setItem('sb-localhost-auth-token', JSON.stringify(s)), expired);
     const t0 = Date.now();
     await page.reload({ waitUntil: 'domcontentloaded' });
-    await page.getByText('مفيش نت').first().waitFor({ timeout: 8000 }).catch(() => {});
+    await page.getByText('لا يوجد اتصال بالإنترنت').first().waitFor({ timeout: 8000 }).catch(() => {});
     check(Date.now() - t0 < 8000, `offline + expired token: took ${Date.now() - t0}ms to open`);
     check(!(await page.getByText('تسجيل الدخول بـ Google').count()), 'offline + expired token: login page shown');
 
@@ -141,9 +141,9 @@ async function run(browser, name) {
     server = await startServer();
     networkUp = true;
     await context.setOffline(false);
-    await page.waitForFunction(() => !document.body.innerText.includes('مفيش نت'), null, { timeout: 10000 }).catch(() => {});
+    await page.waitForFunction(() => !document.body.innerText.includes('لا يوجد اتصال بالإنترنت'), null, { timeout: 10000 }).catch(() => {});
     await page.waitForTimeout(2500);
-    check(!(await page.getByText('مفيش نت').count()), 'back online: offline banner still shown');
+    check(!(await page.getByText('لا يوجد اتصال بالإنترنت').count()), 'back online: offline banner still shown');
     check(supabaseReads.slice(before).some((p) => p.endsWith('/vocabulary_items')), 'back online: the data was not loaded');
     await fits('back online');
     await page.screenshot({ path: `${dir}/offline-back-online.png`, fullPage: true });

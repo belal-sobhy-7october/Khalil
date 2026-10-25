@@ -580,7 +580,7 @@ await flow('learn-hubs', { section: 'todo' }, async ({ page, check, reload }) =>
   check(await visible(page.getByRole('heading', { name: 'Call Center English Prep' })), 'Call Center Prep not kept after reload');
   await page.getByRole('navigation', { name: 'Where you are' }).getByRole('button', { name: 'Learn Skills' }).click();
   await page.getByRole('button', { name: /Sales Prep/ }).click();
-  check(await visible(page.getByRole('heading', { name: 'تعلّم السيلز' })), 'Sales Prep did not open');
+  check(await visible(page.getByRole('heading', { name: 'تعلّم المبيعات' })), 'Sales Prep did not open');
   // Learn Languages → English.
   await open('Learn Languages');
   check((await page.getByRole('region', { name: /Coming soon/ }).getByRole('listitem').count()) === 10, 'not 10 languages coming soon');

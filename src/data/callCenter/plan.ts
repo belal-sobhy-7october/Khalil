@@ -27,7 +27,7 @@ const WEEKS: Record<'L1' | 'L2' | 'L3', WeekSpec[]> = {
     {
       title: 'Sounds & Your Story',
       goal: 'Introduce yourself in a clear one-minute voice note, and fix the four sounds that give Egyptian speakers away.',
-      noteAr: 'أول أسبوع: هنظبط الأصوات اللي بتفضحنا (P/B و V/F) ونسجل أول voice note. متقلقش من أول تسجيل، ده نقطة البداية مش حكم عليك.',
+      noteAr: 'الأسبوع الأول: نضبط الأصوات التي تفضحنا (P/B وV/F) ونسجّل أول رسالة صوتية. لا تقلق من التسجيل الأول، فهو نقطة البداية لا حكم عليك.',
       content: {
         sounds: ['p-b', 'f-v', 'i-ee', 'e-ae'],
         phraseSets: ['intro-yourself', 'talk-skills'],
@@ -43,7 +43,7 @@ const WEEKS: Record<'L1' | 'L2' | 'L3', WeekSpec[]> = {
     {
       title: 'Numbers, Letters & Spelling',
       goal: "Take a customer's name, phone, email and address without a single mistake, and spell yours with the NATO alphabet.",
-      noteAr: 'الأرقام والتهجئة أكتر حاجة بتوقّع الناس في أول مكالمة. لو ظبطتها، نص الشغل خلص.',
+      noteAr: 'الأرقام والتهجئة أكثر ما يُوقع الناس في أول مكالمة. إن أتقنتها، أنجزت نصف العمل.',
       content: {
         sounds: ['letters-nato', 'numbers-teens', 'th-voiceless', 'th-voiced'],
         phraseSets: ['spelling-confirming', 'asking-details'],
@@ -59,7 +59,7 @@ const WEEKS: Record<'L1' | 'L2' | 'L3', WeekSpec[]> = {
     {
       title: 'Tell Your Story: Tenses',
       goal: 'Talk about your past, your experience and your skills with the right tenses: the base of every interview answer.',
-      noteAr: 'الأزمنة هي اللي بتفرق بين حد بيتكلم انجليزي وحد بيترجم من العربي. ركّز على past simple و present perfect.',
+      noteAr: 'الأزمنة هي ما يفرّق بين من يتكلم الإنجليزية ومن يترجم من العربية. ركّز على past simple وpresent perfect.',
       content: {
         sounds: ['ed-endings', 's-endings', 'clusters', 'ch-sh'],
         phraseSets: ['talking-experience', 'telling-a-story'],
@@ -75,7 +75,7 @@ const WEEKS: Record<'L1' | 'L2' | 'L3', WeekSpec[]> = {
     {
       title: 'Polite Phone English',
       goal: 'Open and close a call, make polite requests and offers, and put someone on hold without sounding rude.',
-      noteAr: 'في الكول سنتر الأدب مش كلمة please وبس. هنتعلم could و would و I\'ll بالشكل اللي العميل الأمريكي مستنيه.',
+      noteAr: 'الأدب في مراكز الاتصال ليس كلمة please فقط. سنتعلم could وwould وI\'ll بالشكل الذي ينتظره العميل الأمريكي.',
       content: {
         sounds: ['word-stress', 'intonation', 'contractions', 'j-sound'],
         phraseSets: ['open-close-call', 'polite-requests-offers', 'hold-basics'],
@@ -93,7 +93,7 @@ const WEEKS: Record<'L1' | 'L2' | 'L3', WeekSpec[]> = {
     {
       title: 'The Call Flow',
       goal: 'Run a whole call in order: greeting, verification, the problem, the fix and the closing.',
-      noteAr: 'كل مكالمة ليها هيكل ثابت. لو حفظت الهيكل، عمرك ما هتتوه في مكالمة حتى لو العميل صعب.',
+      noteAr: 'لكل مكالمة هيكل ثابت. إن حفظت الهيكل فلن تضيع في مكالمة أبدًا ولو كان العميل صعبًا.',
       content: {
         sounds: ['linking', 'thought-groups', 'ow-diphthong', 'ei-diphthong'],
         phraseSets: ['call-opening', 'verification', 'call-closing'],
@@ -108,7 +108,7 @@ const WEEKS: Record<'L1' | 'L2' | 'L3', WeekSpec[]> = {
     {
       title: 'Listen, Probe, Paraphrase',
       goal: 'Find the real problem fast with open and closed questions and paraphrasing, and ask people to repeat without sounding lost.',
-      noteAr: 'العميل الأمريكي بيتكلم بسرعة. مش عيب تقوله Could you repeat that؟ العيب إنك تخمّن.',
+      noteAr: 'العميل الأمريكي يتكلم بسرعة. لا عيب أن تقول له Could you repeat that؟ العيب أن تخمّن.',
       content: {
         sounds: ['reductions', 'flap-t', 'schwa', 'o-vowels'],
         phraseSets: ['probing-questions', 'paraphrasing', 'asking-repeat'],
@@ -123,7 +123,7 @@ const WEEKS: Record<'L1' | 'L2' | 'L3', WeekSpec[]> = {
     {
       title: 'Empathy & Positive Scripting',
       goal: "Calm an upset customer with real empathy, and say no in a positive way.",
-      noteAr: 'الـ empathy مش إنك تقول sorry عشر مرات. هي إنك تسمّي مشكلته وتوريه إنك فاهمه، وبعدين تقوله هتعمل إيه.',
+      noteAr: 'الـ empathy ليست أن تقول sorry عشر مرات، بل أن تسمّي مشكلته وتُريه أنك فهمته، ثم تخبره بما ستفعله.',
       content: {
         sounds: ['tone-warm', 'stress-shift', 'r-american', 'dark-l'],
         phraseSets: ['empathy', 'apologizing', 'positive-scripting'],
@@ -138,7 +138,7 @@ const WEEKS: Record<'L1' | 'L2' | 'L3', WeekSpec[]> = {
     {
       title: 'Billing, Payments & Orders',
       goal: 'Explain charges, refunds and delivery times clearly, so you can handle any general customer service account.',
-      noteAr: 'حتى لو هدفك tech support، أغلب الأكونتات فيها billing. خليك جاهز لأي حاجة.',
+      noteAr: 'حتى لو كان هدفك الدعم الفني، ففي أغلب الحسابات billing. كن مستعدًا لأي شيء.',
       content: {
         sounds: ['prices-dates', 'stop-t', 'us-names', 'silent-letters'],
         phraseSets: ['billing', 'orders-returns', 'setting-expectations'],
@@ -153,7 +153,7 @@ const WEEKS: Record<'L1' | 'L2' | 'L3', WeekSpec[]> = {
     {
       title: 'Tech Support I: Step by Step',
       goal: 'Walk a non-technical customer through troubleshooting, one clear step at a time.',
-      noteAr: 'إنت مبرمج، فالتكنيكال مش المشكلة. التحدي إنك تشرح لست عندها 70 سنة إزاي تعمل restart للراوتر من غير ولا مصطلح.',
+      noteAr: 'أنت مبرمج، فالجانب التقني ليس المشكلة. التحدي أن تشرح لسيدة في السبعين كيف تعيد تشغيل الراوتر دون أي مصطلح.',
       content: {
         sounds: ['tech-words', 'spelling-urls', 'list-intonation', 'tricky-words'],
         phraseSets: ['step-by-step', 'checking-screen', 'explaining-simply'],
@@ -168,7 +168,7 @@ const WEEKS: Record<'L1' | 'L2' | 'L3', WeekSpec[]> = {
     {
       title: 'Tech Support II: Accounts & Escalation',
       goal: 'Handle password resets, slow devices and app problems, write clean ticket notes, and escalate the right way.',
-      noteAr: 'الشركات بتحب الـ agent اللي بيكتب notes واضحة وبيعرف إمتى يصعّد المشكلة. ده اللي هيفرّقك عن غيرك.',
+      noteAr: 'تحب الشركات الموظف الذي يكتب ملاحظات واضحة ويعرف متى يصعّد المشكلة. وهذا ما سيميزك عن غيرك.',
       content: {
         sounds: ['pace', 'confident-voice', 'schwa', 'linking'],
         phraseSets: ['account-password', 'escalation-transfer', 'ticket-notes'],
@@ -185,7 +185,7 @@ const WEEKS: Record<'L1' | 'L2' | 'L3', WeekSpec[]> = {
     {
       title: 'Your Voice Note & the HR Call',
       goal: 'Record a voice note that gets you a callback, and pass the ten-minute HR screening call.',
-      noteAr: 'دي النقطة اللي وقعتك في eClerx. هنشتغل عليها لحد ما الريكورد بتاعك يبقى أحسن من المطلوب.',
+      noteAr: 'هذه النقطة التي أسقطتك في eClerx. سنعمل عليها حتى يصبح تسجيلك أفضل من المطلوب.',
       content: {
         sounds: ['pace', 'tone-warm', 'thought-groups', 'intonation'],
         phraseSets: ['buying-time', 'structuring-answers'],
@@ -200,7 +200,7 @@ const WEEKS: Record<'L1' | 'L2' | 'L3', WeekSpec[]> = {
     {
       title: 'The Assessment',
       goal: 'Beat the online test: Versant-style speaking, grammar and reading, and typing at 35+ words per minute.',
-      noteAr: 'الأسسمنت مش امتحان مدرسة، هو اختبار سرعة ووضوح. هنتدرب على نفس شكل الأسئلة لحد ما تبقى عادية بالنسبالك.',
+      noteAr: 'التقييم ليس امتحانًا مدرسيًا، بل اختبار سرعة ووضوح. سنتدرب على شكل الأسئلة نفسه حتى يصبح مألوفًا لك.',
       content: {
         sounds: ['clusters', 'ed-endings', 's-endings', 'th-voiced'],
         phraseSets: ['open-question-answers', 'retelling'],
@@ -215,7 +215,7 @@ const WEEKS: Record<'L1' | 'L2' | 'L3', WeekSpec[]> = {
     {
       title: 'The Operations Interview',
       goal: "Ace the final round: mock calls, 'sell me this pen', STAR answers and explaining tech simply.",
-      noteAr: 'الـ operations manager مش بيدوّر على انجليزي perfect. بيدوّر على حد هادي ومنظم وبيحل المشكلة. وريه ده.',
+      noteAr: 'مدير العمليات لا يبحث عن إنجليزية مثالية، بل عن شخص هادئ ومنظّم يحل المشكلة. أظهر له ذلك.',
       content: {
         sounds: ['stress-shift', 'flap-t', 'reductions', 'confident-voice'],
         phraseSets: ['star-answers', 'sales-pitch', 'describing'],
@@ -230,7 +230,7 @@ const WEEKS: Record<'L1' | 'L2' | 'L3', WeekSpec[]> = {
     {
       title: 'Full Simulations & Applying',
       goal: 'Go through the whole hiring process again and again, fix what breaks, and start applying with a strong CV and voice note.',
-      noteAr: 'آخر أسبوع قبل ما تقدّم بجد. هنعمل الـ hiring process كامل كذا مرة، وكل مرة هتبقى أحسن من اللي قبلها.',
+      noteAr: 'الأسبوع الأخير قبل أن تتقدم فعلًا. سنمر بعملية التوظيف كاملة عدة مرات، وستكون كل مرة أفضل من سابقتها.',
       content: {
         sounds: ['p-b', 'f-v', 'i-ee', 'ow-diphthong'],
         phraseSets: ['questions-for-interviewer', 'follow-up-messages'],

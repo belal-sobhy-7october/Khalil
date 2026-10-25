@@ -19,7 +19,7 @@ export function ReviewActivity({ refId, onGoTab }: { refId: string; onGoTab: (ta
     <div className="space-y-3">
       {week ? (
         <>
-          <ArabicNote>يوم المراجعة: ضيف جمل الأسبوع للـ flashcards وراجعها، وبعدين سجّل تاني أضعف إجابة عندك، وبعدها امتحان الأسبوع.</ArabicNote>
+          <ArabicNote>يوم المراجعة: أضف جمل الأسبوع إلى البطاقات وراجعها، ثم أعد تسجيل أضعف إجاباتك، وبعد ذلك اختبار الأسبوع.</ArabicNote>
           <div className="flex flex-wrap gap-2">
             <button type="button" onClick={() => void flash.add(`Call Center: ${week.title}`, phrases)} className={secondaryBtn}>
               <BookmarkPlus size={13} /> Add the week's {phrases.length} phrases to flashcards
@@ -34,7 +34,7 @@ export function ReviewActivity({ refId, onGoTab }: { refId: string; onGoTab: (ta
           {flash.status && <p className="text-[11px] text-sage-soft-dark">{flash.status}</p>}
         </>
       ) : (
-        <ArabicNote>قبل الامتحان: راجع الغلطات اللي اتجمعت من امتحاناتك، وشغّل أضعف تسجيلاتك تاني.</ArabicNote>
+        <ArabicNote>قبل الاختبار: راجع الأخطاء التي جُمعت من اختباراتك، وأعد تشغيل أضعف تسجيلاتك.</ArabicNote>
       )}
       {mistakes.length > 0 && (
         <div>
@@ -66,7 +66,7 @@ export function EfsetActivity({ onDone }: { onDone: () => void }) {
   const valid = score !== '' && value >= 0 && value <= 100;
   return (
     <div className="space-y-3">
-      <ArabicNote>اختبار مجاني 50 دقيقة (قراءة واستماع) وبيديك شهادة CEFR تحطها في الـ CV واللينكدإن. خده دلوقتي وبعد ليفل 3 وبعد ليفل 5.</ArabicNote>
+      <ArabicNote>اختبار مجاني مدته 50 دقيقة (قراءة واستماع)، ويمنحك شهادة CEFR تضعها في سيرتك الذاتية وعلى لينكدإن. أدِّه الآن، وبعد المستوى 3، وبعد المستوى 5.</ArabicNote>
       <div className="flex flex-wrap items-center gap-2">
         <a href={EFSET_URL} target="_blank" rel="noopener noreferrer" className={primaryBtn}>
           <ExternalLink size={13} /> Open EF SET

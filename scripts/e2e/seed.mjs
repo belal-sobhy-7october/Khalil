@@ -18,7 +18,7 @@ export function buildSeed() {
     { id: uuid(101), user_id: USER_ID, name: 'القيام', icon: 'moon', sort_order: 0, active: true, start_date: dayStr(daysAgo(45)), schedule_days: null, created_at: Date.now() },
     { id: uuid(102), user_id: USER_ID, name: 'جزء الورد', icon: 'book-open', sort_order: 1, active: true, start_date: dayStr(daysAgo(30)), schedule_days: null, created_at: Date.now() },
     { id: uuid(103), user_id: USER_ID, name: 'الجيم', icon: 'dumbbell', sort_order: 2, active: true, start_date: dayStr(daysAgo(40)), schedule_days: [0, 2, 4], created_at: Date.now() },
-    { id: uuid(104), user_id: USER_ID, name: 'تطوير الأنجلش', icon: 'globe', sort_order: 3, active: true, start_date: dayStr(daysAgo(20)), schedule_days: null, created_at: Date.now() },
+    { id: uuid(104), user_id: USER_ID, name: 'تطوير الإنجليزية', icon: 'globe', sort_order: 3, active: true, start_date: dayStr(daysAgo(20)), schedule_days: null, created_at: Date.now() },
   ];
   const habitEntries = [];
   let eid = 1000;

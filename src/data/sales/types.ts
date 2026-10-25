@@ -1,6 +1,6 @@
 /**
  * Sales Prep: the owner's private plan for learning sales from zero, in
- * Egyptian Arabic first and then in English, up to a first sales job.
+ * Modern Standard Arabic first and then in English, up to a first sales job.
  *
  * Everything here is bundled with the app, so lessons, drills and quizzes
  * work with no internet; videos, podcasts and the AI partners need it.
@@ -41,7 +41,7 @@ export interface SalesLesson {
   mistakes: string[];
   /** Two or three questions to check you got it (they also make up the weekly quiz). */
   check: SalesChoice[];
-  /** English lessons: a short hint in Egyptian Arabic. */
+  /** English lessons: a short hint in Modern Standard Arabic. */
   noteAr?: string;
 }
 
@@ -117,7 +117,7 @@ export interface SalesWord {
   word: string;
   /** A learner-dictionary definition, ending in `.` */
   definition: string;
-  /** The meaning in Egyptian Arabic. */
+  /** The meaning in Modern Standard Arabic. */
   ar: string;
   example: string;
 }
@@ -178,7 +178,7 @@ export interface SalesWeekSpec {
   title: string;
   /** What you can do after this week. */
   goal: string;
-  /** A friendly line in Egyptian Arabic. */
+  /** A friendly line in Modern Standard Arabic. */
   noteAr: string;
   /** The language the week is studied in. */
   lang: Lang;
@@ -220,7 +220,7 @@ export interface SalesSource {
   /** Who it's by. */
   by: string;
   url: string;
-  /** Why it's worth your time, in Egyptian Arabic. */
+  /** Why it's worth your time, in Modern Standard Arabic. */
   whyAr: string;
   /** Beginner-friendly: start with these. */
   start?: boolean;

@@ -6,7 +6,7 @@ import { ArabicNote, Card, NeedsInternet, Pill } from './ui';
 const KIND: Record<SalesSource['kind'], { label: string; icon: typeof BookOpen }> = {
   podcast: { label: 'بودكاست', icon: Headphones },
   youtube: { label: 'يوتيوب', icon: MonitorPlay },
-  course: { label: 'كورس مجاني', icon: GraduationCap },
+  course: { label: 'دورة مجانية', icon: GraduationCap },
   book: { label: 'كتاب', icon: BookOpen },
 };
 
@@ -22,7 +22,7 @@ function SourceCard({ s }: { s: SalesSource }) {
           <span className="text-sm font-semibold text-ink" dir="auto">
             {s.name}
           </span>
-          {s.start && <Pill tone="accent">ابدأ بيه</Pill>}
+          {s.start && <Pill tone="accent">ابدأ به</Pill>}
         </span>
         <span className="block text-xs text-ink-light" dir="auto">
           {label} · {s.by}
@@ -37,14 +37,14 @@ function SourceCard({ s }: { s: SalesSource }) {
 /** Free podcasts, channels, courses and books: Arabic first, then English. */
 export default function LibraryView() {
   const groups = [
-    { title: 'بالعربي', items: SALES_SOURCES.filter((s) => s.lang === 'ar') },
-    { title: 'بالإنجليزي (للمستوى 3 وبعده)', items: SALES_SOURCES.filter((s) => s.lang === 'en') },
+    { title: 'بالعربية', items: SALES_SOURCES.filter((s) => s.lang === 'ar') },
+    { title: 'بالإنجليزية (للمستوى 3 وما بعده)', items: SALES_SOURCES.filter((s) => s.lang === 'en') },
   ];
   return (
     <div className="space-y-4">
       <Card className="space-y-1">
         <ArabicNote>
-          الخطة اليومية فيها كل اللي محتاجه. المكتبة دي للأيام اللي عندك فيها وقت زيادة، أو وانت في المواصلات: بودكاست بدل الأغاني. ابدأ باللي عليهم «ابدأ بيه».
+          في الخطة اليومية كل ما تحتاجه. هذه المكتبة للأيام التي لديك فيها وقت إضافي، أو وأنت في المواصلات: بودكاست بدل الأغاني. ابدأ بما عليه «ابدأ به».
         </ArabicNote>
         <NeedsInternet />
       </Card>

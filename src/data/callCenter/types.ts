@@ -17,7 +17,7 @@ export interface SoundTarget {
   label: string;
   /** How to make it, in plain English. */
   how: string;
-  /** One short tip in Egyptian Arabic. */
+  /** One short tip in Modern Standard Arabic. */
   tipAr: string;
   /** Minimal pairs, or "say it like this" contrasts, to hear and say. */
   pairs?: Array<[string, string]>;
@@ -235,7 +235,7 @@ export interface PlanWeek {
   title: string;
   /** What you can do after this week. */
   goal: string;
-  /** A friendly line in Egyptian Arabic. */
+  /** A friendly line in Modern Standard Arabic. */
   noteAr: string;
   content: WeekContent;
   days: PlanDay[];

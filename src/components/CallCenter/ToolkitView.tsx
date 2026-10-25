@@ -36,7 +36,7 @@ export default function ToolkitView({ level }: { level: LevelId }) {
     <div className="space-y-4">
       <Card className="space-y-3">
         <h3 className="font-semibold text-ink">The call flow, on one card</h3>
-        <ArabicNote>ده هيكل أي مكالمة. حطه قدامك في أول أسابيع الشغل كمان.</ArabicNote>
+        <ArabicNote>هذا هيكل أي مكالمة. ضعه أمامك في أول أسابيع العمل أيضًا.</ArabicNote>
         <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-3">
           {CALL_FLOW.map((c) => (
             <div key={c.step} className="rounded-xl bg-ink/3 p-3">

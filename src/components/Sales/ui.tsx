@@ -18,7 +18,7 @@ export function LangBlock({ lang, children, className = '' }: { lang: Lang; chil
   );
 }
 
-/** A short friendly line in Egyptian Arabic. */
+/** A short friendly line in Modern Standard Arabic. */
 export function ArabicNote({ children, className = '' }: { children: ReactNode; className?: string }) {
   return (
     <p dir="rtl" lang="ar" className={`text-sm leading-relaxed text-ink-light ${className}`}>
@@ -36,7 +36,7 @@ export function DoneToggle({ done, onToggle, lang }: { done: boolean; onToggle: 
       onClick={onToggle}
       className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${done ? 'bg-sage-soft text-white' : 'bg-ink/5 text-ink hover:bg-sage-soft/15'}`}
     >
-      <Check size={13} strokeWidth={3} /> {done ? pick(lang, 'خلصت', 'Done') : pick(lang, 'علّم إنها خلصت', 'Mark as done')}
+      <Check size={13} strokeWidth={3} /> {done ? pick(lang, 'تم', 'Done') : pick(lang, 'علّمها منجزة', 'Mark as done')}
     </button>
   );
 }
@@ -53,16 +53,16 @@ export function AiButtons({ prompt, lang }: { prompt: string; lang: Lang }) {
       <div className="flex flex-wrap items-center gap-2">
         {AI_PARTNERS.map((p) => (
           <button key={p.name} type="button" onClick={() => void go(p.url)} className={primaryBtn}>
-            <ExternalLink size={13} /> {pick(lang, `انسخ البرومبت وافتح ${p.name}`, `Copy prompt & open ${p.name}`)}
+            <ExternalLink size={13} /> {pick(lang, `انسخ التعليمات وافتح ${p.name}`, `Copy prompt & open ${p.name}`)}
           </button>
         ))}
         <button type="button" onClick={async () => setCopied(await copyText(prompt))} className={secondaryBtn}>
-          <Copy size={13} /> {pick(lang, 'انسخ البرومبت', 'Copy prompt')}
+          <Copy size={13} /> {pick(lang, 'انسخ التعليمات', 'Copy prompt')}
         </button>
         <NeedsInternet />
       </div>
       {copied && (
-        <p className="text-[11px] text-sage-soft-dark">{pick(lang, 'اتنسخ. الصقه هناك، شغّل الـ voice mode، وابدأ تتكلم.', 'Copied. Paste it, turn on voice mode, and start talking.')}</p>
+        <p className="text-[11px] text-sage-soft-dark">{pick(lang, 'نُسخت. الصقها هناك، وشغّل الوضع الصوتي، وابدأ الكلام.', 'Copied. Paste it, turn on voice mode, and start talking.')}</p>
       )}
     </div>
   );
@@ -98,7 +98,7 @@ export function NoteBox({ noteKey, label, placeholder, rows = 3, lang, onSaved }
         value={text}
         rows={rows}
         dir="auto"
-        placeholder={placeholder ?? pick(lang, 'اكتب هنا… بيتحفظ في دفترك', 'Write here… saved in your notebook')}
+        placeholder={placeholder ?? pick(lang, 'اكتب هنا… يُحفظ في دفترك', 'Write here… saved in your notebook')}
         onChange={(e) => setText(e.target.value)}
         onBlur={save}
         className="w-full rounded-xl border border-border-subtle bg-card px-3 py-2 text-sm text-ink focus:outline-none focus:border-clay-soft"

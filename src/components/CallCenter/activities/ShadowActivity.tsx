@@ -74,7 +74,7 @@ export default function ShadowActivity({ refId, onDone, progressKey = `shadow:${
         {script.focus}
       </p>
       <ArabicNote>
-        اسمع الجملة، وفي الوقفة اللي بعدها قولها بنفس السرعة والنغمة كأنك صدى. مش مهم تفهم كل كلمة من أول مرة. لفّتين shadowing وبعدين سجّل نفسك.
+        استمع إلى الجملة، وفي الوقفة التي تليها قلها بالسرعة والنغمة نفسيهما كأنك صدى. لا يهم أن تفهم كل كلمة من أول مرة. جولتان من المحاكاة، ثم سجّل صوتك.
       </ArabicNote>
       <div className="flex flex-wrap items-center gap-2">
         {mode === 'idle' ? (
