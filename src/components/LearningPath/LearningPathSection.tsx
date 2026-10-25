@@ -12,6 +12,7 @@ import {
 import { COURSE_POSITIONS_KEY, COURSE_PROGRESS_KEY, dropPositions, resumeAt, setDone, type CourseProgress, type WatchPositions } from '../../lib/courseProgress';
 import { useDueSummary } from '../../lib/useDueSummary';
 import ShadowingMethod from '../English/ShadowingMethod';
+import RecommendedTools from '../English/RecommendedTools';
 import PathSettingsForm from './PathSettingsForm';
 import { dayTotal, formatMinutes } from './format';
 import { PlanTimeline, WeekGrid } from './PathPlan';
@@ -494,6 +495,8 @@ export default function LearningPathSection({ onOpenTab }: { onOpenTab: (tab: Hu
         <h2 id="path-roadmap-title" className="font-semibold text-ink">{t('path.roadmap')}</h2>
         <WeekGrid path={path} progress={progress} current={current} selected={selected} onGoTo={goTo} />
       </section>
+
+      <RecommendedTools />
 
       <details className="rounded-2xl border border-border-subtle bg-card p-4 sm:p-5 group">
         <summary className="cursor-pointer font-semibold text-ink flex items-center gap-2 list-none">

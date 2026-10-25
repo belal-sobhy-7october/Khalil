@@ -6,6 +6,7 @@ import { TYPING_TARGETS } from '../../lib/callCenter/quiz';
 import type { LevelId } from '../../data/callCenter/types';
 import { speakText } from '../../lib/callCenter/voice';
 import TypingTest from './TypingTest';
+import RecommendedTools from '../English/RecommendedTools';
 import { ArabicNote, Card, SpeakButton } from './ui';
 
 const CALL_FLOW: Array<{ step: string; say: string[] }> = [
@@ -116,6 +117,8 @@ export default function ToolkitView({ level }: { level: LevelId }) {
         </div>
         <TypingTest key={textId} textId={textId} target={TYPING_TARGETS[level]} />
       </Card>
+
+      <RecommendedTools />
 
       <Card className="space-y-2">
         <h3 className="font-semibold text-ink">Free tools</h3>

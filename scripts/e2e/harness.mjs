@@ -21,6 +21,8 @@ export async function openApp(browser, base, name, opts = {}) {
       sessionStorage.setItem('seeded', '1');
       localStorage.clear();
       localStorage.setItem('sb-localhost-auth-token', JSON.stringify(session));
+      // The section this tab is on (a reload stays there; a fresh visit opens the tasks page).
+      sessionStorage.setItem('khalil-active-section', section);
       localStorage.setItem('khalil-active-section', section);
       localStorage.setItem('khalil-theme', theme);
       localStorage.setItem('khalil-language', language);

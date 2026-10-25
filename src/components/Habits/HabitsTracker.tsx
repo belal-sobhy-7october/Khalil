@@ -32,6 +32,7 @@ import {
   GripVertical,
   Flame,
   Check,
+  Link2,
   type LucideIcon,
 } from 'lucide-react';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, TouchSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
@@ -55,6 +56,8 @@ import { getHabitWeekStart, addDaysToDateString, getToday } from '../../store/da
 import { canStepBack, habitPeriodStart, stepHabitPeriod, visibleHabitDates } from '../../store/habitPeriod';
 import { countEligibleDays, computeHabitStats, computeStreaks, isScheduledOn, weekdayOf, type HabitStreaks } from '../../store/habitStats';
 import type { Habit } from '../../types';
+import { useWirdItems } from '../../lib/wirdItems';
+import { linkHabit, linkOf, targetLabel, toggleHabit, unlinkHabit, useHabitEntries, useHabitLinks, wirdTargets } from '../../lib/wirdSync';
 
 const iconMap: Record<string, LucideIcon> = {
   star: Star,
@@ -178,7 +181,7 @@ const ROW_ACTION_VISIBILITY =
 
 type RowPopover = 'delete' | 'edit' | null;
 
-const SortableHabitRow = memo(function SortableHabitRow({ habit, dates, entrySet, entryDates, today, streaks, onToggle }: {
+const SortableHabitRow = memo(function SortableHabitRow({ habit, dates, entrySet, entryDates, today, streaks, onToggle, link }: {
   habit: Habit;
   dates: string[];
   entrySet: Set<string>;
@@ -186,8 +189,12 @@ const SortableHabitRow = memo(function SortableHabitRow({ habit, dates, entrySet
   today: string;
   streaks: HabitStreaks;
   onToggle: (habit: Habit, date: string) => void;
+  /** The wird target this habit is linked to, if any. */
+  link: string | null;
 }) {
   const { t, language } = useTranslation();
+  const [wirdItems] = useWirdItems();
+  const [draftLink, setDraftLink] = useState(link ?? '');
   const locale = language === 'ar' ? 'ar-EG' : 'en-US';
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: habit.id,
@@ -225,6 +232,7 @@ const SortableHabitRow = memo(function SortableHabitRow({ habit, dates, entrySet
   const openEdit = () => {
     setDraftStartDate(habit.startDate);
     setDraftSchedule(habit.scheduleDays);
+    setDraftLink(link ?? '');
     setPopover((p) => (p === 'edit' ? null : 'edit'));
   };
 
@@ -238,6 +246,12 @@ const SortableHabitRow = memo(function SortableHabitRow({ habit, dates, entrySet
     if (draftStartDate !== habit.startDate) data.startDate = draftStartDate;
     if (JSON.stringify(draftSchedule) !== JSON.stringify(habit.scheduleDays)) data.scheduleDays = draftSchedule;
     if (Object.keys(data).length > 0) useAppStore.getState().updateHabit(habit.id, data);
+    if (draftLink !== (link ?? '')) {
+      void (async () => {
+        if (link && !(await unlinkHabit(habit.id))) return;
+        if (draftLink) await linkHabit(habit.id, draftLink);
+      })();
+    }
     setPopover(null);
   };
 
@@ -269,7 +283,12 @@ const SortableHabitRow = memo(function SortableHabitRow({ habit, dates, entrySet
             {habit.name}
           </span>
           <span className="text-[11px] text-ink-lighter truncate">
-            {habit.scheduleDays
+            {link ? (
+              <span className="inline-flex items-center gap-1 text-clay-soft" title={t('habits.linkedTo').replace('{target}', targetLabel(link, wirdItems, t))}>
+                <Link2 size={11} className="shrink-0" />
+                {targetLabel(link, wirdItems, t)}
+              </span>
+            ) : habit.scheduleDays
               ? habit.scheduleDays.map((d) => weekdayName(d, locale, 'short')).join(' · ')
               : t('habits.since').replace('{date}', shortDate(habit.startDate, locale))}
           </span>
@@ -357,6 +376,19 @@ const SortableHabitRow = memo(function SortableHabitRow({ habit, dates, entrySet
                       {t('habits.startDateWarning').replace('{count}', String(excludedCount))}
                     </p>
                   )}
+                  <label className="block text-xs text-ink mb-1.5" htmlFor={`habit-link-${habit.id}`}>{t('habits.linkLabel')}</label>
+                  <select
+                    id={`habit-link-${habit.id}`}
+                    value={draftLink}
+                    onChange={(e) => setDraftLink(e.target.value)}
+                    className="w-full border border-border-subtle rounded-lg px-2 py-1.5 text-xs bg-ink/3 text-ink focus:outline-none focus:ring-1 focus:ring-clay-soft/30 mb-1"
+                  >
+                    <option value="">{t('habits.linkNone')}</option>
+                    {wirdTargets(wirdItems).map((target) => (
+                      <option key={target} value={target}>{targetLabel(target, wirdItems, t)}</option>
+                    ))}
+                  </select>
+                  <p className="text-[11px] text-ink-lighter mb-2">{t('habits.linkHint')}</p>
                   <div className="flex gap-1.5 justify-end">
                     <button
                       onClick={() => setPopover(null)}
@@ -436,8 +468,10 @@ export default function HabitsTracker() {
   const { t, isRTL, language } = useTranslation();
   const locale = language === 'ar' ? 'ar-EG' : 'en-US';
   const rawHabits = useAppStore((s) => s.habits);
-  const habitEntries = useAppStore((s) => s.habitEntries);
-  const toggleHabitEntry = useAppStore((s) => s.toggleHabitEntry);
+  // A habit linked to the wird reads its days from the wird (lib/wirdSync.ts).
+  const habitEntries = useHabitEntries();
+  const [habitLinks] = useHabitLinks();
+  const [wirdItems] = useWirdItems();
   const addHabit = useAppStore((s) => s.addHabit);
   const reorderHabits = useAppStore((s) => s.reorderHabits);
 
@@ -503,8 +537,8 @@ export default function HabitsTracker() {
     if (isChecking && date < habit.startDate) {
       void useAppStore.getState().updateHabit(habit.id, { startDate: date });
     }
-    void toggleHabitEntry(habit.id, date);
-  }, [entrySet, toggleHabitEntry]);
+    toggleHabit(habit, date, !isChecking);
+  }, [entrySet]);
   const [showAddForm, setShowAddForm] = useState(false);
   const [newHabitName, setNewHabitName] = useState('');
   const [newHabitIcon, setNewHabitIcon] = useState('star');
@@ -877,6 +911,7 @@ export default function HabitsTracker() {
                       today={today}
                       streaks={streaksByHabit.get(habit.id) ?? { current: 0, best: 0 }}
                       onToggle={handleToggle}
+                      link={linkOf(habit.id, habitLinks, wirdItems)}
                     />
                   ))}
                 </SortableContext>

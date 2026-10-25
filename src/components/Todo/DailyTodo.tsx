@@ -15,6 +15,11 @@ import { DndContext, closestCenter, PointerSensor, TouchSensor, useSensor, useSe
 import type { DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
 import { SortableTodoItem } from './SortableTodoItem';
+import { useArrangedTasks } from './useArrangedTasks';
+import HiddenDone from './HiddenDone';
+import TodayRecurring from './TodayRecurring';
+import { useTodayRows } from './useTodayRows';
+import { useTasksSettings } from '../../lib/tasksSettings';
 import { useAppStore } from '../../store/appStore';
 import { useTranslation } from '../../i18n/useTranslation';
 import { priorityColors } from '../../constants/priorityColors';
@@ -23,6 +28,11 @@ import type { Priority, DailyTodo as DailyTodoType } from '../../types';
 export default function DailyTodo() {
   const { t, isRTL } = useTranslation();
   const todos = useAppStore((s) => s.dailyTodos);
+  // Finished tasks stay, sink or hide, as the settings say (hidden ones are listed under "Finished").
+  const { shown, hidden } = useArrangedTasks(todos);
+  // Today's wird items and due habits, ticked here and in their own sections alike.
+  const todayRows = useTodayRows();
+  const [{ recurringPosition }] = useTasksSettings();
   const addTodo = useAppStore((s) => s.addDailyTodo);
   const toggleTodo = useAppStore((s) => s.toggleDailyTodo);
   const removeTodo = useAppStore((s) => s.removeDailyTodo);
@@ -58,14 +68,14 @@ export default function DailyTodo() {
   const handleDragEnd = useCallback((event: DragEndEvent) => {
     const { active, over } = event;
     if (over && active.id !== over.id) {
-      const oldIndex = todos.findIndex((t) => t.id === active.id);
-      const newIndex = todos.findIndex((t) => t.id === over.id);
-      const newOrder = arrayMove(todos, oldIndex, newIndex);
-      reorderDailyTodos(newOrder.map((t) => t.id));
+      const oldIndex = shown.findIndex((t) => t.id === active.id);
+      const newIndex = shown.findIndex((t) => t.id === over.id);
+      const newOrder = arrayMove(shown, oldIndex, newIndex);
+      reorderDailyTodos([...newOrder, ...hidden].map((t) => t.id));
     }
-  }, [todos, reorderDailyTodos]);
+  }, [shown, hidden, reorderDailyTodos]);
 
-  const itemIds = useMemo(() => todos.map((t) => t.id), [todos]);
+  const itemIds = useMemo(() => shown.map((t) => t.id), [shown]);
 
   return (
     <section id="section-todo">
@@ -121,10 +131,12 @@ export default function DailyTodo() {
           </div>
         </div>
 
+        {recurringPosition === 'top' && <TodayRecurring rows={todayRows} />}
+
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <div className="p-2">
             <AnimatePresence mode="popLayout">
-              {todos.length === 0 ? (
+              {shown.length === 0 && todayRows.length > 0 ? null : shown.length === 0 ? (
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -135,7 +147,7 @@ export default function DailyTodo() {
                 </motion.div>
               ) : (
                 <SortableContext items={itemIds} strategy={verticalListSortingStrategy}>
-                  {todos.map((todo) => (
+                  {shown.map((todo) => (
                     <SortableTodoItem key={todo.id} id={todo.id}>
                       <TodoItem
                         todo={todo}
@@ -152,6 +164,8 @@ export default function DailyTodo() {
             </AnimatePresence>
           </div>
         </DndContext>
+        <HiddenDone tasks={hidden} onToggle={toggleTodo} onRemove={removeTodo} />
+        {recurringPosition === 'bottom' && <TodayRecurring rows={todayRows} />}
       </div>
     </section>
   );
@@ -193,7 +207,7 @@ const TodoItem = memo(function TodoItem({
     >
       <button
         onClick={() => onToggle(todo.id)}
-        className="shrink-0 text-ink-lighter hover:text-clay-soft transition-colors"
+        className="shrink-0 p-0.5 -m-0.5 text-ink-lighter hover:text-clay-soft transition-colors"
         aria-label={t(todo.completed ? 'a11y.markIncomplete' : 'a11y.markComplete')}
       >
         {todo.completed ? (

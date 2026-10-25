@@ -137,7 +137,7 @@ describe('WirdSection', () => {
   it('steps qiyam and toggles rawatib for the selected day', () => {
     render(<WirdSection />);
     const today = getToday();
-    const qiyam = screen.getByRole('group', { name: 'Qiyam (rakaat)' });
+    const qiyam = screen.getByRole('group', { name: 'Qiyam' });
     fireEvent.click(within(qiyam).getByRole('button', { name: /\+$/ }));
     fireEvent.click(within(qiyam).getByRole('button', { name: /\+$/ }));
     fireEvent.click(screen.getByRole('button', { name: 'Before Dhuhr (4)' }));
@@ -150,6 +150,7 @@ describe('WirdSection', () => {
 describe('SettingsSection', () => {
   it('picking a theme applies it and switches to its preferred mode', () => {
     render(<SettingsSection />);
+    fireEvent.click(screen.getByRole('tab', { name: 'Appearance' }));
     fireEvent.click(screen.getByRole('button', { name: /Downtown Cairo/ }));
     expect(useAppearance.getState().id).toBe('downtown');
     expect(useAppStore.getState().theme).toBe('dark');
@@ -157,6 +158,7 @@ describe('SettingsSection', () => {
 
   it('picking a palette keeps the current mode', () => {
     render(<SettingsSection />);
+    fireEvent.click(screen.getByRole('tab', { name: 'Appearance' }));
     fireEvent.click(screen.getByRole('button', { name: /Royal Pine/ }));
     expect(useAppearance.getState().id).toBe('pine');
     expect(useAppStore.getState().theme).toBe('light');

@@ -119,6 +119,8 @@ interface AppStore {
   removeHabit: (id: string) => Promise<void>;
   reorderHabits: (ids: string[]) => Promise<void>;
   toggleHabitEntry: (habitId: string, date: string) => Promise<void>;
+  /** Makes a habit's done days exactly `dates` (unlinking it from the wird). Returns false if it couldn't be saved. */
+  setHabitEntryDates: (habitId: string, dates: string[]) => Promise<boolean>;
   setDailyMood: (date: string, data: { mood?: number | null; motivation?: number | null }) => Promise<void>;
 
   calendarEvents: CalendarEvent[];
@@ -535,15 +537,17 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     const todo = get().dailyTodos.find((t) => t.id === id);
     if (!todo) return;
     const previousCompleted = todo.completed;
+    // Also when it was ticked: the settings can hide finished tasks after a while.
+    const now = Date.now();
     // Optimistic update
     set((s) => ({
-      dailyTodos: s.dailyTodos.map((t) => (t.id === id ? { ...t, completed: !previousCompleted } : t)),
+      dailyTodos: s.dailyTodos.map((t) => (t.id === id ? { ...t, completed: !previousCompleted, updatedAt: now } : t)),
     }));
-    const { success } = await supabaseCall(supabase.from('todos').update({ completed: !previousCompleted, updated_at: Date.now() }).eq('id', id), 'toggleDailyTodo');
+    const { success } = await supabaseCall(supabase.from('todos').update({ completed: !previousCompleted, updated_at: now }).eq('id', id), 'toggleDailyTodo');
     if (!success) {
       // Rollback on failure
       set((s) => ({
-        dailyTodos: s.dailyTodos.map((t) => (t.id === id ? { ...t, completed: previousCompleted } : t)),
+        dailyTodos: s.dailyTodos.map((t) => (t.id === id ? { ...t, completed: previousCompleted, updatedAt: todo.updatedAt } : t)),
         error: 'errors.updateTodo',
       }));
     }
@@ -586,15 +590,17 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     const todo = get().weeklyTodos.find((t) => t.id === id);
     if (!todo) return;
     const previousCompleted = todo.completed;
+    // Also when it was ticked: the settings can hide finished tasks after a while.
+    const now = Date.now();
     // Optimistic update
     set((s) => ({
-      weeklyTodos: s.weeklyTodos.map((t) => (t.id === id ? { ...t, completed: !previousCompleted } : t)),
+      weeklyTodos: s.weeklyTodos.map((t) => (t.id === id ? { ...t, completed: !previousCompleted, updatedAt: now } : t)),
     }));
-    const { success } = await supabaseCall(supabase.from('todos').update({ completed: !previousCompleted, updated_at: Date.now() }).eq('id', id), 'toggleWeeklyTodo');
+    const { success } = await supabaseCall(supabase.from('todos').update({ completed: !previousCompleted, updated_at: now }).eq('id', id), 'toggleWeeklyTodo');
     if (!success) {
       // Rollback on failure
       set((s) => ({
-        weeklyTodos: s.weeklyTodos.map((t) => (t.id === id ? { ...t, completed: previousCompleted } : t)),
+        weeklyTodos: s.weeklyTodos.map((t) => (t.id === id ? { ...t, completed: previousCompleted, updatedAt: todo.updatedAt } : t)),
         error: 'errors.updateTodo',
       }));
     }
@@ -636,15 +642,17 @@ export const useAppStore = create<AppStore>()((set, get) => ({
     const todo = get().backlogTodos.find((t) => t.id === id);
     if (!todo) return;
     const previousCompleted = todo.completed;
+    // Also when it was ticked: the settings can hide finished tasks after a while.
+    const now = Date.now();
     // Optimistic update
     set((s) => ({
-      backlogTodos: s.backlogTodos.map((t) => (t.id === id ? { ...t, completed: !previousCompleted } : t)),
+      backlogTodos: s.backlogTodos.map((t) => (t.id === id ? { ...t, completed: !previousCompleted, updatedAt: now } : t)),
     }));
-    const { success } = await supabaseCall(supabase.from('todos').update({ completed: !previousCompleted, updated_at: Date.now() }).eq('id', id), 'toggleBacklogTodo');
+    const { success } = await supabaseCall(supabase.from('todos').update({ completed: !previousCompleted, updated_at: now }).eq('id', id), 'toggleBacklogTodo');
     if (!success) {
       // Rollback on failure
       set((s) => ({
-        backlogTodos: s.backlogTodos.map((t) => (t.id === id ? { ...t, completed: previousCompleted } : t)),
+        backlogTodos: s.backlogTodos.map((t) => (t.id === id ? { ...t, completed: previousCompleted, updatedAt: todo.updatedAt } : t)),
         error: 'errors.updateTodo',
       }));
     }
@@ -1499,6 +1507,27 @@ export const useAppStore = create<AppStore>()((set, get) => ({
         return;
       }
     }
+  },
+  setHabitEntryDates: async (habitId, dates) => {
+    const userId = get().session?.user?.id;
+    if (!userId) return false;
+    const previous = get().habitEntries;
+    const mine = previous.filter((e) => e.habitId === habitId);
+    const wanted = new Set(dates);
+    const stale = mine.filter((e) => !wanted.has(e.date));
+    const have = new Set(mine.map((e) => e.date));
+    const added = [...wanted].filter((d) => !have.has(d)).map((date) => ({ id: generateId(), habitId, date }));
+    const staleIds = new Set(stale.map((e) => e.id));
+    set({ habitEntries: [...previous.filter((e) => !staleIds.has(e.id)), ...added] });
+    const results = await Promise.all([
+      added.length
+        ? supabaseCall(supabase.from('habit_entries').insert(added.map((e) => ({ id: e.id, user_id: userId, habit_id: habitId, date: e.date }))), 'setHabitEntryDates insert')
+        : { success: true },
+      stale.length ? supabaseCall(supabase.from('habit_entries').delete().in('id', [...staleIds]), 'setHabitEntryDates delete') : { success: true },
+    ]);
+    if (results.every((r) => r.success)) return true;
+    set({ habitEntries: previous, error: 'errors.toggleHabitEntry' });
+    return false;
   },
   setDailyMood: async (date, data) => {
     const userId = get().session?.user?.id;

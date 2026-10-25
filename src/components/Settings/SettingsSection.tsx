@@ -1,10 +1,16 @@
-import { useState } from 'react';
-import { Check, Sun, Moon, Languages, Bell, Palette, Sparkles, WifiOff, Download, Loader2, CircleAlert } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Check, Sun, Moon, Languages, Bell, Palette, Sparkles, WifiOff, Download, Loader2, CircleAlert, Home, MessageCircle } from 'lucide-react';
 import { useTranslation } from '../../i18n/useTranslation';
 import { useAppStore } from '../../store/appStore';
 import { APPEARANCES, useAppearance, type Appearance } from '../../lib/appearance';
 import { notificationPermission, requestNotificationPermission } from '../../lib/systemNotify';
 import { useInstallPrompt, useOfflineReadiness } from '../../lib/offline';
+import { useTasksSettings } from '../../lib/tasksSettings';
+import { CONTACT_WHATSAPP_DISPLAY, whatsappLink } from '../../lib/contact';
+import TasksSettingsPanel from './TasksSettingsPanel';
+import WirdSettingsPanel from './WirdSettingsPanel';
+import { Segmented, SettingCard } from './controls';
+import { SETTINGS_TABS, SETTINGS_TAB_EVENT, readSettingsTab, rememberSettingsTab, type SettingsTab } from './settingsTabs';
 
 function ThemePreview({ a, mode }: { a: Appearance; mode: 'light' | 'dark' }) {
   const v = (mode === 'dark' ? a.dark : a.light) ?? {
@@ -68,6 +74,18 @@ export default function SettingsSection() {
   const appearanceId = useAppearance((a) => a.id);
   const setAppearance = useAppearance((a) => a.set);
   const [permission, setPermission] = useState(notificationPermission);
+  const [tasksSettings, setTasksSettings] = useTasksSettings();
+  const [tab, setTab] = useState<SettingsTab>(readSettingsTab);
+  const chooseTab = (next: SettingsTab) => {
+    setTab(next);
+    rememberSettingsTab(next);
+  };
+  // Another page can ask for a tab while Settings is already open ("Customize the wird").
+  useEffect(() => {
+    const onTab = (e: Event) => setTab((e as CustomEvent<SettingsTab>).detail);
+    window.addEventListener(SETTINGS_TAB_EVENT, onTab);
+    return () => window.removeEventListener(SETTINGS_TAB_EVENT, onTab);
+  }, []);
 
   const choose = (a: Appearance) => {
     setAppearance(a.id, userId);
@@ -79,128 +97,181 @@ export default function SettingsSection() {
   const themes = APPEARANCES.filter((a) => a.kind === 'theme');
 
   return (
-    <div className="max-w-5xl mx-auto p-6 space-y-8">
+    <div className="max-w-5xl mx-auto p-6 space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-ink mb-1">{t('settings.title')}</h1>
         <p className="text-sm text-ink-light">{t('settings.subtitle')}</p>
       </div>
 
-      {/* Mode & language */}
-      <section className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div className="rounded-xl border border-border-subtle bg-card p-4 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2 text-ink">
-            {theme === 'dark' ? <Moon size={18} className="text-clay-soft" /> : <Sun size={18} className="text-clay-soft" />}
-            <span className="font-medium">{t('settings.mode')}</span>
-          </div>
-          <div className="flex p-1 rounded-lg bg-ink/5">
-            {(['light', 'dark'] as const).map((m) => (
-              <button
-                key={m}
-                onClick={() => theme !== m && toggleTheme()}
-                aria-pressed={theme === m}
-                className={`px-3 py-1 rounded-md text-sm ${theme === m ? 'bg-card text-ink shadow-sm' : 'text-ink-light'}`}
-              >
-                {t(`settings.${m}`)}
-              </button>
-            ))}
-          </div>
-        </div>
-        <div className="rounded-xl border border-border-subtle bg-card p-4 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2 text-ink">
-            <Languages size={18} className="text-clay-soft" />
-            <span className="font-medium">{t('settings.language')}</span>
-          </div>
-          <button onClick={toggleLanguage} className="px-3 py-1.5 rounded-lg bg-ink/5 text-sm text-ink hover:bg-ink/10">
-            {language === 'ar' ? 'English' : 'العربية'}
+      <div role="tablist" aria-label={t('settings.title')} className="flex gap-1 overflow-x-auto border-b border-border-subtle -mx-1 px-1">
+        {SETTINGS_TABS.map((id) => (
+          <button
+            key={id}
+            role="tab"
+            id={`settings-tab-${id}`}
+            aria-selected={tab === id}
+            aria-controls="settings-panel"
+            onClick={() => chooseTab(id)}
+            className={`shrink-0 px-3 py-2 text-sm border-b-2 -mb-px transition-colors ${tab === id ? 'border-clay-soft text-ink font-medium' : 'border-transparent text-ink-light hover:text-ink'}`}
+          >
+            {t(`settings.tabs.${id}`)}
           </button>
-        </div>
-      </section>
+        ))}
+      </div>
 
-      <OfflineCard />
+      <div id="settings-panel" role="tabpanel" aria-labelledby={`settings-tab-${tab}`} className="space-y-8">
+        {tab === 'general' && (
+          <div className="space-y-4">
+            {/* Mode & language */}
+            <section className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="rounded-xl border border-border-subtle bg-card p-4 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2 text-ink">
+                  {theme === 'dark' ? <Moon size={18} className="text-clay-soft" /> : <Sun size={18} className="text-clay-soft" />}
+                  <span className="font-medium">{t('settings.mode')}</span>
+                </div>
+                <div className="flex p-1 rounded-lg bg-ink/5">
+                  {(['light', 'dark'] as const).map((m) => (
+                    <button
+                      key={m}
+                      onClick={() => theme !== m && toggleTheme()}
+                      aria-pressed={theme === m}
+                      className={`px-3 py-1 rounded-md text-sm ${theme === m ? 'bg-card text-ink shadow-sm' : 'text-ink-light'}`}
+                    >
+                      {t(`settings.${m}`)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="rounded-xl border border-border-subtle bg-card p-4 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2 text-ink">
+                  <Languages size={18} className="text-clay-soft" />
+                  <span className="font-medium">{t('settings.language')}</span>
+                </div>
+                <button onClick={toggleLanguage} className="px-3 py-1.5 rounded-lg bg-ink/5 text-sm text-ink hover:bg-ink/10">
+                  {language === 'ar' ? 'English' : 'العربية'}
+                </button>
+              </div>
+            </section>
 
-      {/* Colours */}
-      <section className="space-y-3">
-        <div>
-          <h2 className="text-xl font-semibold text-ink flex items-center gap-2"><Palette size={18} className="text-clay-soft" /> {t('settings.colors')}</h2>
-          <p className="text-sm text-ink-light">{t('settings.colorsHint')}</p>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-          {palettes.map((a) => {
-            const active = appearanceId === a.id;
-            return (
-              <button
-                key={a.id}
-                onClick={() => choose(a)}
-                aria-pressed={active}
-                className={`relative rounded-xl overflow-hidden border-2 text-start transition-transform hover:-translate-y-0.5 ${active ? 'border-clay-soft' : 'border-transparent'}`}
+
+            <SettingCard icon={<Home size={18} className="text-clay-soft" />} title={t('settings.startup.title')} hint={t('settings.startup.hint')}>
+              <Segmented
+                label={t('settings.startup.title')}
+                value={tasksSettings.startup}
+                onChange={(v) => setTasksSettings((prev) => ({ ...prev, startup: v }))}
+                options={[
+                  { value: 'tasks', label: t('settings.startup.tasks') },
+                  { value: 'last', label: t('settings.startup.last') },
+                ]}
+              />
+            </SettingCard>
+
+            <OfflineCard />
+
+            {/* Notifications */}
+            <section className="rounded-xl border border-border-subtle bg-card p-4 flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-2 text-ink">
+                <Bell size={18} className="text-clay-soft" />
+                <div>
+                  <div className="font-medium">{t('settings.notifications')}</div>
+                  <div className="text-xs text-ink-light">{t(`settings.notificationState.${permission}`)}</div>
+                </div>
+              </div>
+              {permission === 'default' && (
+                <button onClick={async () => setPermission(await requestNotificationPermission())} className="px-3 py-1.5 rounded-lg bg-clay-soft text-white text-sm">
+                  {t('focus.enableNotifications')}
+                </button>
+              )}
+            </section>
+
+            <SettingCard icon={<MessageCircle size={18} className="text-clay-soft" />} title={t('contact.title')} hint={t('contact.hint')}>
+              <a
+                href={whatsappLink(t('contact.message'))}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-clay-soft text-white text-sm hover:bg-clay-soft-dark"
               >
-                <div className="h-16 flex items-end p-2" style={{ backgroundColor: a.swatches[0] }}>
-                  <span className="text-sm font-bold font-amiri" style={{ color: a.swatches[1] }}>{t(`settings.names.${a.id}.dark`)}</span>
-                </div>
-                <div className="h-16 flex items-end p-2" style={{ backgroundColor: a.swatches[1] }}>
-                  <span className="text-sm font-bold font-amiri" style={{ color: a.swatches[0] }}>{t(`settings.names.${a.id}.light`)}</span>
-                </div>
-                <div className="absolute top-1.5 end-1.5 px-1.5 py-0.5 rounded bg-black/30 text-[11px] text-white font-mono" dir="ltr">{a.swatches[0]}</div>
-                {active && (
-                  <span className="absolute bottom-1.5 end-1.5 w-6 h-6 rounded-full bg-clay-soft text-white flex items-center justify-center shadow">
-                    <Check size={14} />
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* Themes */}
-      <section className="space-y-3">
-        <div>
-          <h2 className="text-xl font-semibold text-ink flex items-center gap-2"><Sparkles size={18} className="text-clay-soft" /> {t('settings.themes')}</h2>
-          <p className="text-sm text-ink-light">{t('settings.themesHint')}</p>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {themes.map((a) => {
-            const active = appearanceId === a.id;
-            return (
-              <button
-                key={a.id}
-                onClick={() => choose(a)}
-                aria-pressed={active}
-                className={`rounded-xl border-2 bg-card p-2.5 text-start space-y-2 transition-transform hover:-translate-y-0.5 ${active ? 'border-clay-soft' : 'border-border-subtle'}`}
-              >
-                <ThemePreview a={a} mode={a.preferredMode ?? theme} />
-                <div className="flex items-start justify-between gap-2 px-1">
-                  <div>
-                    <div className="font-semibold text-ink">{t(`settings.names.${a.id}.name`)}</div>
-                    <div className="text-xs text-ink-light">{t(`settings.names.${a.id}.desc`)}</div>
-                  </div>
-                  {active && (
-                    <span className="shrink-0 w-6 h-6 rounded-full bg-clay-soft text-white flex items-center justify-center">
-                      <Check size={14} />
-                    </span>
-                  )}
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* Notifications */}
-      <section className="rounded-xl border border-border-subtle bg-card p-4 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2 text-ink">
-          <Bell size={18} className="text-clay-soft" />
-          <div>
-            <div className="font-medium">{t('settings.notifications')}</div>
-            <div className="text-xs text-ink-light">{t(`settings.notificationState.${permission}`)}</div>
+                <MessageCircle size={15} /> {t('contact.button')} <bdi dir="ltr" className="tabular-nums">{CONTACT_WHATSAPP_DISPLAY}</bdi>
+              </a>
+            </SettingCard>
           </div>
-        </div>
-        {permission === 'default' && (
-          <button onClick={async () => setPermission(await requestNotificationPermission())} className="px-3 py-1.5 rounded-lg bg-clay-soft text-white text-sm">
-            {t('focus.enableNotifications')}
-          </button>
         )}
-      </section>
+
+        {tab === 'tasks' && <TasksSettingsPanel />}
+        {tab === 'wird' && <WirdSettingsPanel />}
+
+        {tab === 'look' && (
+          <div className="space-y-8">
+            {/* Colours */}
+            <section className="space-y-3">
+              <div>
+                <h2 className="text-xl font-semibold text-ink flex items-center gap-2"><Palette size={18} className="text-clay-soft" /> {t('settings.colors')}</h2>
+                <p className="text-sm text-ink-light">{t('settings.colorsHint')}</p>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+                {palettes.map((a) => {
+                  const active = appearanceId === a.id;
+                  return (
+                    <button
+                      key={a.id}
+                      onClick={() => choose(a)}
+                      aria-pressed={active}
+                      className={`relative rounded-xl overflow-hidden border-2 text-start transition-transform hover:-translate-y-0.5 ${active ? 'border-clay-soft' : 'border-transparent'}`}
+                    >
+                      <div className="h-16 flex items-end p-2" style={{ backgroundColor: a.swatches[0] }}>
+                        <span className="text-sm font-bold font-amiri" style={{ color: a.swatches[1] }}>{t(`settings.names.${a.id}.dark`)}</span>
+                      </div>
+                      <div className="h-16 flex items-end p-2" style={{ backgroundColor: a.swatches[1] }}>
+                        <span className="text-sm font-bold font-amiri" style={{ color: a.swatches[0] }}>{t(`settings.names.${a.id}.light`)}</span>
+                      </div>
+                      <div className="absolute top-1.5 end-1.5 px-1.5 py-0.5 rounded bg-black/30 text-[11px] text-white font-mono" dir="ltr">{a.swatches[0]}</div>
+                      {active && (
+                        <span className="absolute bottom-1.5 end-1.5 w-6 h-6 rounded-full bg-clay-soft text-white flex items-center justify-center shadow">
+                          <Check size={14} />
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+
+            {/* Themes */}
+            <section className="space-y-3">
+              <div>
+                <h2 className="text-xl font-semibold text-ink flex items-center gap-2"><Sparkles size={18} className="text-clay-soft" /> {t('settings.themes')}</h2>
+                <p className="text-sm text-ink-light">{t('settings.themesHint')}</p>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {themes.map((a) => {
+                  const active = appearanceId === a.id;
+                  return (
+                    <button
+                      key={a.id}
+                      onClick={() => choose(a)}
+                      aria-pressed={active}
+                      className={`rounded-xl border-2 bg-card p-2.5 text-start space-y-2 transition-transform hover:-translate-y-0.5 ${active ? 'border-clay-soft' : 'border-border-subtle'}`}
+                    >
+                      <ThemePreview a={a} mode={a.preferredMode ?? theme} />
+                      <div className="flex items-start justify-between gap-2 px-1">
+                        <div>
+                          <div className="font-semibold text-ink">{t(`settings.names.${a.id}.name`)}</div>
+                          <div className="text-xs text-ink-light">{t(`settings.names.${a.id}.desc`)}</div>
+                        </div>
+                        {active && (
+                          <span className="shrink-0 w-6 h-6 rounded-full bg-clay-soft text-white flex items-center justify-center">
+                            <Check size={14} />
+                          </span>
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

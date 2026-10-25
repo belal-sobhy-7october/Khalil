@@ -24,6 +24,34 @@ network at all):
 - `scripts/e2e/offline.mjs` checks all of this against a production build, on a desktop, two phones
   (iPhone SE, Galaxy S24) and a tablet (iPad Mini) with touch (`--device` picks others).
 
+## Tasks & Habits (the page Khalil opens on)
+
+The sidebar's first item (`todo`), in this order: Tasks & Habits, Focus, Learn Languages, Learn Skills,
+Calendar, Bookmarks, Analytics, Settings. Choosing an item closes the menu on every screen size. Khalil
+always opens on this page (a reload keeps the browser tab's page; Settings → General can open the last
+page instead). It holds the daily focus, today's and this week's tasks, the whole wird sheet, the habits
+(and tracking) and the backlog; Settings → Tasks & Habits orders and hides them (`src/lib/tasksSettings.ts`,
+`user_kv` `tasks-settings`). The old `wird` and `life` sections are parts of it (`App.tsx` jumps to
+`#section-wird` / `#section-life`).
+
+- **One fact, one owner** (`src/lib/wirdSync.ts`): a prayer, a juz or the adhkar live in the wird
+  (`wird_days`), a habit's day in `habit_entries`, a task in `todos`. Today's tasks list the wird items
+  marked "in today's tasks" and the habits due today as rows that read and write their owner, never as
+  copies (copying tasks into each day is what made the old rollover bring deleted ones back).
+- A habit can be linked to a wird target (`prayer:fajr`, `prayer:fajr:jamaah` or an item id), saved in
+  `user_kv` `habit-links`. While linked, its days are read from the wird (`useHabitEntries`, used by the
+  habits grid and Analytics) and ticking it writes the wird. Linking moves its past days into the wird;
+  unlinking writes the wird's days back as its own.
+- The wird is the user's own (`src/lib/wirdItems.ts`, `user_kv` `wird-items`): the built-in items (the
+  five prayers, rawatib, qiyam, Quran, adhkar) can be hidden, reordered and given goals, and the user's
+  own items (`c-…`, a count or done/not done) keep their values in `WirdDay.custom`. `wirdScore` weights
+  the shown items; with only the built-in ones it is the old score.
+- Finished tasks stay, sink or hide (at once, the next day, after 24 hours) by `settings.completed`; a
+  task's `updatedAt` is when it was ticked. Hidden ones are still saved, counted in Analytics and listed
+  under "Finished".
+- "Suggestion or problem?" (account menu, Settings, the sidebar) opens WhatsApp with the owner, on the
+  owner's request (`src/lib/contact.ts`).
+
 ## Learn Languages and Learn Skills
 
 Two sections in the sidebar hold the learning parts of Khalil, open to every account:

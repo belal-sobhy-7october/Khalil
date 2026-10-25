@@ -22,7 +22,7 @@ export const SortableTodoItem = memo(function SortableTodoItem({ id, children }:
         {...attributes}
         {...listeners}
         aria-label={t('a11y.reorder')}
-        className="shrink-0 opacity-20 group-hover/drag:opacity-60 hover:!opacity-100 cursor-grab active:cursor-grabbing p-1 text-ink-lighter transition-opacity touch-none"
+        className="shrink-0 opacity-20 group-hover/drag:opacity-60 hover:!opacity-100 cursor-grab active:cursor-grabbing p-[5px] text-ink-lighter transition-opacity touch-none"
       >
         <GripVertical size={14} />
       </div>

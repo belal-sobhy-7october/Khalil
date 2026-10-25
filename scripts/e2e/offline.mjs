@@ -84,7 +84,7 @@ async function run(browser, name) {
     if (sessionStorage.getItem('seeded')) return;
     sessionStorage.setItem('seeded', '1');
     localStorage.setItem('sb-localhost-auth-token', JSON.stringify(s));
-    localStorage.setItem('khalil-active-section', 'vocabulary');
+    sessionStorage.setItem('khalil-active-section', 'vocabulary');
     localStorage.setItem('khalil-language', 'ar');
   }, session);
   const page = await context.newPage();

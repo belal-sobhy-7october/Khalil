@@ -75,7 +75,7 @@ function PracticeTextCard({ index, text, done, onToggleDone, accent }: {
       <p className="text-ink leading-relaxed" dir="ltr">{text}</p>
       <div className="flex flex-wrap items-center gap-2">
         <button onClick={openNaturalReaders} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-clay-soft text-white text-xs hover:bg-clay-soft-dark">
-          <ExternalLink size={13} /> {t('vocabulary.challenge.openNaturalReaders')}
+          <ExternalLink size={13} /> {t('vocabulary.challenge.openNaturalReader')}
         </button>
         <button onClick={() => speakBrowser(text, accent, 0.9)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-ink/5 text-ink text-xs hover:bg-ink/10">
           <Volume2 size={13} /> {t('vocabulary.challenge.quickListen')}
