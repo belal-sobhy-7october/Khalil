@@ -10,6 +10,7 @@ import { QUESTION_GROUPS } from '../../data/callCenter/interview';
 import { COMPANIES, FREE_TOOLS, HIRING_STAGES, SALARY_GUIDE, TARGETS, WHERE_TO_APPLY, type StageId } from '../../data/callCenter/resources';
 import type { InterviewQuestion, LevelId, QuestionGroup } from '../../data/callCenter/types';
 import type { VocabUnit } from '../../data/callCenter/vocab';
+import { MEANINGS_AR, UNIT_TITLES_AR } from '../../data/callCenter/vocabAr';
 import { arCount, NOUNS } from '../arabicCount';
 import { clip, type Block, type Card, type Lang, type Page } from '../render';
 import { ROUTES, slugify } from '../routes';
@@ -90,11 +91,10 @@ function questionCard(q: InterviewQuestion, lang: Lang): Card {
 
 function unitCard(unit: VocabUnit, lang: Lang): Card {
   return {
-    href: ROUTES.vocabularyUnit(unitSlug(unit)),
-    title: `${unit.number}. ${unit.title}`,
+    href: ROUTES.vocabularyUnit(lang, unitSlug(unit)),
+    title: `${unit.number}. ${lang === 'ar' ? UNIT_TITLES_AR[unit.id] : unit.title}`,
     meta: lang === 'ar' ? arCount(unit.words.length, NOUNS.word) : `${unit.words.length} words`,
     text: unit.words.slice(0, 5).map((w) => w.word).join(' · '),
-    lang: lang === 'ar' ? 'en' : undefined,
   };
 }
 
@@ -170,8 +170,8 @@ function hubPage(lang: Lang, origin: string): Page {
         {
           kind: 'p',
           text: [
-            `${arCount(VOCAB_WORDS.length, NOUNS.word)} في ${arCount(VOCAB_UNITS.length, NOUNS.unit)}، كل كلمة بمعناها في المكالمة ومثال من مركز اتصال، وفي آخر كل وحدة نص قصير يجمع كلماتها. `,
-            { href: ROUTES.vocabulary, label: 'كل الوحدات' },
+            `${arCount(VOCAB_WORDS.length, NOUNS.word)} في ${arCount(VOCAB_UNITS.length, NOUNS.unit)}، كل كلمة بمعناها بالعربية وتعريفها ومثال من مركز اتصال، وفي آخر كل وحدة نص قصير يجمع كلماتها. `,
+            { href: ROUTES.vocabulary('ar'), label: 'كل الوحدات' },
             '.',
           ],
         },
@@ -246,7 +246,7 @@ function hubPage(lang: Lang, origin: string): Page {
         kind: 'p',
         text: [
           `${VOCAB_WORDS.length} words in ${VOCAB_UNITS.length} units, each in the meaning it has on a call with a call center example, and a short text that uses the unit’s words. `,
-          { href: ROUTES.vocabulary, label: 'All the units' },
+          { href: ROUTES.vocabulary('en'), label: 'All the units' },
           '.',
         ],
       },
@@ -360,8 +360,56 @@ function questionPage(q: InterviewQuestion, origin: string): Page {
   };
 }
 
-function vocabularyIndex(origin: string): Page {
-  const path = ROUTES.vocabulary;
+const POS_AR: Record<string, string> = {
+  noun: 'اسم',
+  verb: 'فعل',
+  adjective: 'صفة',
+  adverb: 'ظرف',
+  'phrasal verb': 'فعل مركّب',
+  idiom: 'تعبير اصطلاحي',
+  phrase: 'عبارة',
+};
+
+const VOCAB_ALTERNATES = { ar: ROUTES.vocabulary('ar'), en: ROUTES.vocabulary('en'), 'x-default': ROUTES.vocabulary('en') };
+const unitAlternates = (unit: VocabUnit) => ({
+  ar: ROUTES.vocabularyUnit('ar', unitSlug(unit)),
+  en: ROUTES.vocabularyUnit('en', unitSlug(unit)),
+  'x-default': ROUTES.vocabularyUnit('en', unitSlug(unit)),
+});
+
+function vocabularyIndex(lang: Lang, origin: string): Page {
+  const path = ROUTES.vocabulary(lang);
+  const units = VOCAB_UNITS.map((u) => ({ href: ROUTES.vocabularyUnit(lang, unitSlug(u)), label: lang === 'ar' ? UNIT_TITLES_AR[u.id] : u.title }));
+  const cta = (title: string, text: string, label: string): Block => ({ kind: 'cta', title, text, href: '/', label });
+
+  if (lang === 'ar') {
+    const crumbs = [
+      { href: ROUTES.home('ar'), label: 'الرئيسية' },
+      { href: ROUTES.callCenter('ar'), label: 'مراكز الاتصال' },
+    ];
+    const h1 = 'كلمات مراكز الاتصال بالإنجليزية ومعانيها بالعربية';
+    return {
+      path,
+      lang,
+      section: 'callcenter',
+      title: `كلمات إنجليزية لمراكز الاتصال بمعانيها بالعربية: ${arCount(VOCAB_WORDS.length, NOUNS.word)} | خليل`,
+      description: clip(
+        `${arCount(VOCAB_WORDS.length, NOUNS.word)} بالإنجليزية لمن يعمل في مراكز الاتصال (الكول سنتر)، في ${arCount(VOCAB_UNITS.length, NOUNS.unit)}: خدمة العملاء، والدعم الفني، والفواتير، والتحقق، ومراحل المكالمة. كل كلمة بمعناها بالعربية ومثال.`,
+        200
+      ),
+      h1,
+      crumb: 'الكلمات',
+      lead: 'وحدة كل يوم، فتتم الكلمات كلها في شهر. لكل كلمة معناها في المكالمة بالعربية، وتعريفها بالإنجليزية، ومثال من مركز اتصال، وفي آخر كل وحدة نص قصير يجمع كلماتها.',
+      crumbs,
+      alternates: VOCAB_ALTERNATES,
+      blocks: [
+        { kind: 'cards', items: VOCAB_UNITS.map((u) => unitCard(u, 'ar')) },
+        cta('احفظها ببطاقات المراجعة', 'في خليل تدخل كل وحدة إلى بطاقات مراجعة ذكية تذكّرك بموعد المراجعة، ولكل نص زر للاستماع إليه. مجانًا.', 'افتح خليل'),
+      ],
+      jsonLd: [itemList(origin, h1, units), breadcrumbs(crumbs, h1, path, origin)],
+    };
+  }
+
   const crumbs = [
     { href: ROUTES.home('en'), label: 'Home' },
     { href: ROUTES.callCenter('en'), label: 'Call center prep' },
@@ -369,7 +417,7 @@ function vocabularyIndex(origin: string): Page {
   const h1 = 'Call center vocabulary: English words for customer service and tech support';
   return {
     path,
-    lang: 'en',
+    lang,
     section: 'callcenter',
     title: `Call Center Vocabulary: ${VOCAB_WORDS.length} English Words in ${VOCAB_UNITS.length} Units | Khalil`,
     description: clip(
@@ -379,80 +427,90 @@ function vocabularyIndex(origin: string): Page {
     crumb: 'Vocabulary',
     lead: 'One unit a day, and the whole word bank is yours in a month. Every word has the meaning it has on a call and a call center example, and every unit ends with a short text that uses its words.',
     crumbs,
+    alternates: VOCAB_ALTERNATES,
     blocks: [
       { kind: 'cards', items: VOCAB_UNITS.map((u) => unitCard(u, 'en')) },
-      {
-        kind: 'cta',
-        title: 'Learn them with flashcards',
-        text: 'In Khalil every unit goes into smart flashcards that remind you when to review, and each text has a read-aloud bar. Free.',
-        href: '/',
-        label: 'Open Khalil',
-      },
+      cta('Learn them with flashcards', 'In Khalil every unit goes into smart flashcards that remind you when to review, and each text has a read-aloud bar. Free.', 'Open Khalil'),
     ],
-    jsonLd: [
-      itemList(origin, h1, VOCAB_UNITS.map((u) => ({ href: ROUTES.vocabularyUnit(unitSlug(u)), label: u.title }))),
-      breadcrumbs(crumbs, h1, path, origin),
-    ],
+    jsonLd: [itemList(origin, h1, units), breadcrumbs(crumbs, h1, path, origin)],
   };
 }
 
-function unitPage(unit: VocabUnit, origin: string): Page {
-  const path = ROUTES.vocabularyUnit(unitSlug(unit));
-  const crumbs = [
-    { href: ROUTES.home('en'), label: 'Home' },
-    { href: ROUTES.callCenter('en'), label: 'Call center prep' },
-    { href: ROUTES.vocabulary, label: 'Vocabulary' },
-  ];
+function unitPage(unit: VocabUnit, lang: Lang, origin: string): Page {
+  const path = ROUTES.vocabularyUnit(lang, unitSlug(unit));
+  const ar = lang === 'ar';
+  const name = ar ? UNIT_TITLES_AR[unit.id] : unit.title;
+  const crumbs = ar
+    ? [
+        { href: ROUTES.home('ar'), label: 'الرئيسية' },
+        { href: ROUTES.callCenter('ar'), label: 'مراكز الاتصال' },
+        { href: ROUTES.vocabulary('ar'), label: 'الكلمات' },
+      ]
+    : [
+        { href: ROUTES.home('en'), label: 'Home' },
+        { href: ROUTES.callCenter('en'), label: 'Call center prep' },
+        { href: ROUTES.vocabulary('en'), label: 'Vocabulary' },
+      ];
   const prev = VOCAB_UNITS.find((u) => u.number === unit.number - 1);
   const next = VOCAB_UNITS.find((u) => u.number === unit.number + 1);
-  const h1 = `Call center vocabulary: ${unit.title}`;
-  const description = clip(
-    `${unit.words.length} call center English words for ${unit.title.toLowerCase()} (unit ${unit.number} of ${VOCAB_UNITS.length}): ${unit.words
-      .slice(0, 6)
-      .map((w) => w.word)
-      .join(', ')} and more, each with its meaning on a call and an example.`
-  );
+  const first = unit.words.slice(0, 6).map((w) => w.word);
+  const h1 = ar ? `كلمات مراكز الاتصال بالإنجليزية: ${name}` : `Call center vocabulary: ${unit.title}`;
+  const description = ar
+    ? clip(`${arCount(unit.words.length, NOUNS.word)} بالإنجليزية عن «${name}» في مراكز الاتصال، كل كلمة بمعناها بالعربية وتعريفها ومثال من مكالمة: ${first.join('، ')}…`)
+    : clip(`${unit.words.length} call center English words for ${unit.title.toLowerCase()} (unit ${unit.number} of ${VOCAB_UNITS.length}): ${first.join(', ')} and more, each with its meaning on a call and an example.`);
+  const words = unit.words.map((w) => ({
+    word: w.word,
+    pos: ar ? POS_AR[w.pos] : w.pos,
+    definition: w.definition,
+    example: w.example,
+    meaning: ar ? MEANINGS_AR[w.word] : undefined,
+  }));
+  const neighbors = [prev, next]
+    .filter((u): u is VocabUnit => Boolean(u))
+    .map((u) => ({ ...unitCard(u, lang), meta: u.number < unit.number ? (ar ? 'الوحدة السابقة' : 'Previous unit') : ar ? 'الوحدة التالية' : 'Next unit' }));
   return {
     path,
-    lang: 'en',
+    lang,
     section: 'callcenter',
-    title: `Call Center Vocabulary: ${unit.title} (${unit.words.length} Words) | Khalil`,
+    title: ar ? `كلمات مراكز الاتصال: ${name} بالإنجليزية ومعانيها | خليل` : `Call Center Vocabulary: ${unit.title} (${unit.words.length} Words) | Khalil`,
     description,
     h1,
-    crumb: unit.title,
-    lead: `Unit ${unit.number} of ${VOCAB_UNITS.length}: ${unit.words.length} words, each in the meaning it has on a call, with a call center example.`,
+    crumb: name,
+    lead: ar
+      ? `الوحدة ${unit.number} من ${VOCAB_UNITS.length}: ${arCount(unit.words.length, NOUNS.word)}، لكل كلمة معناها في المكالمة بالعربية، وتعريفها بالإنجليزية، ومثال من مركز اتصال.`
+      : `Unit ${unit.number} of ${VOCAB_UNITS.length}: ${unit.words.length} words, each in the meaning it has on a call, with a call center example.`,
     crumbs,
+    alternates: unitAlternates(unit),
     blocks: [
-      { kind: 'words', items: unit.words.map((w) => ({ word: w.word, pos: w.pos, definition: w.definition, example: w.example })) },
-      { kind: 'h2', text: 'Read it aloud' },
-      { kind: 'p', text: 'This short text uses the unit’s words. Read it aloud twice, then retell it in your own words.' },
-      { kind: 'quote', text: unit.text },
+      { kind: 'words', items: words, lang: ar ? 'en' : undefined },
+      { kind: 'h2', text: ar ? 'اقرأه بصوت مرتفع' : 'Read it aloud' },
       {
-        kind: 'cta',
-        title: 'Learn this unit with flashcards',
-        text: 'Khalil puts these words into smart flashcards and reminds you when it’s time to review. Free, and it works offline.',
-        href: '/',
-        label: 'Open Khalil',
+        kind: 'p',
+        text: ar ? 'يجمع هذا النص القصير كلمات الوحدة. اقرأه بصوت مرتفع مرتين، ثم أعد حكايته بكلماتك.' : 'This short text uses the unit’s words. Read it aloud twice, then retell it in your own words.',
       },
-      {
-        kind: 'cards',
-        items: [prev, next]
-          .filter((u): u is VocabUnit => Boolean(u))
-          .map((u) => ({ ...unitCard(u, 'en'), meta: u.number < unit.number ? 'Previous unit' : 'Next unit' })),
-      },
+      { kind: 'quote', text: unit.text, lang: ar ? 'en' : undefined },
+      ar
+        ? { kind: 'cta', title: 'احفظ هذه الوحدة ببطاقات المراجعة', text: 'يضع خليل هذه الكلمات في بطاقات مراجعة ذكية ويذكّرك بموعد مراجعتها. مجانًا، ويعمل دون إنترنت.', href: '/', label: 'افتح خليل' }
+        : { kind: 'cta', title: 'Learn this unit with flashcards', text: 'Khalil puts these words into smart flashcards and reminds you when it’s time to review. Free, and it works offline.', href: '/', label: 'Open Khalil' },
+      { kind: 'cards', items: neighbors },
     ],
     ogType: 'article',
     jsonLd: [
       {
         '@context': 'https://schema.org',
         '@type': 'DefinedTermSet',
-        name: `Call center vocabulary: ${unit.title}`,
+        name: h1,
         description,
         url: `${origin}${path}`,
-        inLanguage: 'en',
-        hasDefinedTerm: unit.words.map((w) => ({ '@type': 'DefinedTerm', name: w.word, description: w.definition })),
+        inLanguage: lang,
+        hasDefinedTerm: unit.words.map((w) => ({
+          '@type': 'DefinedTerm',
+          name: w.word,
+          description: ar ? `${MEANINGS_AR[w.word]}: ${w.definition}` : w.definition,
+          inLanguage: 'en',
+        })),
       },
-      breadcrumbs(crumbs, h1, path, origin),
+      breadcrumbs(crumbs, name, path, origin),
     ],
   };
 }
@@ -463,7 +521,8 @@ export function callCenterPages(origin: string): Page[] {
     hubPage('en', origin),
     interviewIndex(origin),
     ...QUESTIONS.map((q) => questionPage(q, origin)),
-    vocabularyIndex(origin),
-    ...VOCAB_UNITS.map((u) => unitPage(u, origin)),
+    vocabularyIndex('ar', origin),
+    vocabularyIndex('en', origin),
+    ...VOCAB_UNITS.flatMap((u) => [unitPage(u, 'ar', origin), unitPage(u, 'en', origin)]),
   ];
 }

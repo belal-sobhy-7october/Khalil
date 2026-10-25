@@ -12,8 +12,9 @@ export const ROUTES = {
   callCenter: (lang: Lang) => `/${lang}/call-center`,
   interview: '/en/call-center/interview-questions',
   question: (id: string) => `/en/call-center/interview-questions/${id}`,
-  vocabulary: '/en/call-center/vocabulary',
-  vocabularyUnit: (slug: string) => `/en/call-center/vocabulary/${slug}`,
+  /** The word bank has an English page and an Arabic one (with Arabic meanings). */
+  vocabulary: (lang: Lang) => `/${lang}/call-center/vocabulary`,
+  vocabularyUnit: (lang: Lang, slug: string) => `/${lang}/call-center/vocabulary/${slug}`,
   /** The sales books are in Arabic, so they have one page each. */
   sales: '/ar/sales',
   chapter: (id: string) => `/ar/sales/${id.replace(/^k-/, '')}`,

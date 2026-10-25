@@ -38,7 +38,7 @@ export type Block =
   | { kind: 'p'; text: Rich; lang?: Lang; note?: boolean }
   | { kind: 'list'; items: Rich[]; ordered?: boolean; lang?: Lang }
   | { kind: 'quote'; text: string; lang?: Lang }
-  | { kind: 'words'; items: WordEntry[]; lang?: Lang; meaningLabel?: string }
+  | { kind: 'words'; items: WordEntry[]; lang?: Lang }
   | { kind: 'cards'; items: Card[] }
   | { kind: 'table'; head: string[]; rows: string[][]; lang?: Lang }
   | { kind: 'check'; title: string; reveal: string; items: Array<{ q: string; options: string[]; answer: number }> }
@@ -95,7 +95,6 @@ const UI = {
     menu: 'القائمة',
     footer: 'خليل تطبيق مجاني بالعربية والإنجليزية لتعلم الإنجليزية والمهارات وتنظيم اليوم، ويعمل دون إنترنت.',
     footerLinks: 'روابط',
-    meaning: 'المعنى بالعربية',
     example: 'مثال',
   },
   en: {
@@ -106,7 +105,6 @@ const UI = {
     menu: 'Menu',
     footer: 'Khalil is a free app in Arabic and English for learning English and new skills and planning your day. It works offline.',
     footerLinks: 'Links',
-    meaning: 'Arabic meaning',
     example: 'Example',
   },
 } as const;
@@ -157,14 +155,16 @@ function blockHtml(block: Block, page: Page): string {
     case 'quote':
       return `<blockquote${langAttrs(block.lang, lang)}><p>${escapeHtml(block.text)}</p></blockquote>`;
     case 'words': {
-      const ui = UI[lang];
+      // The word, its definition and example are in the block's language; the
+      // part of speech and the labels in the page's; the meaning in Arabic.
+      const text = langAttrs(block.lang, lang);
       const rows = block.items
         .map(
           (w) =>
-            `<li class="word"><p class="w"${langAttrs(block.lang, lang)}><strong>${escapeHtml(w.word)}</strong> <span class="pos">${escapeHtml(w.pos)}</span></p>` +
-            `<p${langAttrs(block.lang, lang)}>${escapeHtml(w.definition)}</p>` +
-            (w.meaning ? `<p class="meaning" lang="ar" dir="rtl"><span class="label">${escapeHtml(block.meaningLabel ?? UI.ar.meaning)}:</span> ${escapeHtml(w.meaning)}</p>` : '') +
-            `<p class="ex"${langAttrs(block.lang, lang)}><span class="label">${escapeHtml(block.lang === 'en' ? UI.en.example : ui.example)}:</span> ${escapeHtml(w.example)}</p></li>`
+            `<li class="word"><p class="w"><strong${text}>${escapeHtml(w.word)}</strong> <span class="pos">${escapeHtml(w.pos)}</span></p>` +
+            (w.meaning ? `<p class="meaning"${langAttrs('ar', lang)}>${escapeHtml(w.meaning)}</p>` : '') +
+            `<p${text}>${escapeHtml(w.definition)}</p>` +
+            `<p class="ex"><span class="label">${UI[lang].example}:</span> <span${text}>${escapeHtml(w.example)}</span></p></li>`
         )
         .join('');
       return `<ol class="words">${rows}</ol>`;
@@ -378,7 +378,7 @@ li{margin:.25em 0}
 .pos{font-size:.8rem;color:var(--soft);font-style:italic}
 .label{color:var(--soft);font-size:.9rem}
 .ex{color:var(--soft)}
-.meaning{color:var(--ink)}
+.meaning{color:var(--ink);font-weight:600}
 .cards{list-style:none;padding:0;display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(15rem,1fr))}
 .cards a{display:flex;flex-direction:column;gap:2px;height:100%;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;text-decoration:none;color:var(--ink)}
 .cards a:hover{border-color:var(--clay-bg)}
