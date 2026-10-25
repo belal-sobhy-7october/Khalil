@@ -127,17 +127,18 @@ export default function ResourcesModal({ onClose }: { onClose: () => void }) {
     const summary = ratings?.get(r.id);
     return (
       <div key={r.id} className={`p-4 rounded-xl border flex flex-col gap-2 ${featured ? 'border-gold-soft/50 bg-gold-soft/5' : 'border-border-subtle'}`} dir="ltr">
-        <div className="flex items-start justify-between gap-2">
+        {/* The badges drop under the name when the card is narrow, instead of covering it. */}
+        <div className="flex flex-wrap items-start justify-between gap-2">
           <a
             href={r.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="font-semibold text-ink hover:text-clay-soft flex items-center gap-1.5"
+            className="min-w-0 font-semibold text-ink hover:text-clay-soft flex items-center gap-1.5"
           >
             {r.name}
             <ExternalLink size={13} className="text-ink-lighter" />
           </a>
-          <span className="shrink-0 flex flex-wrap justify-end gap-1">
+          <span className="flex flex-wrap gap-1">
             {featured && <FeaturedBadge />}
             <span className="text-[11px] px-1.5 py-0.5 rounded bg-ink/5 text-ink-light" dir="auto">
               {categoryLabel(r.category)} · {t(`vocabulary.resources.${r.free === true ? 'free' : r.free === 'freemium' ? 'freemium' : 'paid'}`)}
@@ -215,7 +216,7 @@ export default function ResourcesModal({ onClose }: { onClose: () => void }) {
                 </h3>
                 <p className="text-xs text-ink-light">{t('vocabulary.resources.featured.hint')}</p>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">{FEATURED_RESOURCES.map((r) => renderCard(r, true))}</div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">{FEATURED_RESOURCES.map((r) => renderCard(r, true))}</div>
             </section>
           )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">

@@ -5,7 +5,7 @@ import { useKv } from '../../lib/useKv';
 import { useAppStore } from '../../store/appStore';
 import { getToday, localDateString } from '../../store/dateHelpers';
 import {
-  PATH_KV_KEY, PATH_LENGTH, PATH_SECTIONS, blockProgress, buildPath, currentDay, dayProgress, emptyPathState, finishedOn, isBlockDone,
+  PATH_KV_KEY, PATH_SECTIONS, blockProgress, buildPath, currentDay, dayProgress, emptyPathState, finishedOn, isBlockDone,
   isDayDone, isItemDone, packById, pathStats, scheduledDay, withDefaults, wordKey, wordsOf,
   type PathBlock, type PathDay, type PathProgress, type PathSettings, type PathState, type PlannedItem,
 } from '../../lib/learningPath';
@@ -78,7 +78,7 @@ function blockSource(b: PathBlock): string {
   return lesson?.kind === 'lesson' ? `${lesson.sourceName} · ${lesson.groupName}` : '';
 }
 
-/** The 90-day path, a tab of the English hub; `onOpenTab` switches to another of its sections. */
+/** The learning path, a tab of the English hub; `onOpenTab` switches to another of its sections. */
 export default function LearningPathSection({ onOpenTab }: { onOpenTab: (tab: HubTab) => void }) {
   const { t, tn, isRTL } = useTranslation();
   const [saved, setSaved] = useKv<PathState>(PATH_KV_KEY, emptyPathState());
@@ -163,13 +163,18 @@ export default function LearningPathSection({ onOpenTab }: { onOpenTab: (tab: Hu
   };
 
   const day = path[selected - 1];
-  const stats = pathStats(path, progress, today);
+  const stats = useMemo(() => pathStats(path, progress, today), [path, progress, today]);
   // The path's topic words already in the flashcards.
   const pathWords = useMemo(() => {
     const all = path.flatMap((d) => d.blocks[0].items.flatMap((i) => (i.item.kind === 'words' ? wordsOf(i.item) : [])));
     return { owned: all.filter((w) => words.has(wordKey(w.word))).length, total: all.length };
   }, [path, words]);
-  const allDone = stats.daysDone === PATH_LENGTH;
+  const allDone = stats.daysDone === path.length;
+  // The week you're working on, as days done of its days.
+  const week = useMemo(() => {
+    const days = path.filter((d) => d.week === path[current - 1].week);
+    return { done: days.filter((d) => isDayDone(d, progress)).length, total: days.length };
+  }, [path, current, progress]);
   const dayDone = isDayDone(day, progress);
 
   // What the hub's progress says alone, without the path's own ticks.
@@ -209,7 +214,7 @@ export default function LearningPathSection({ onOpenTab }: { onOpenTab: (tab: Hu
   };
 
   const goTo = (n: number) => {
-    const day = Math.max(1, Math.min(PATH_LENGTH, n));
+    const day = Math.max(1, Math.min(path.length, n));
     setSelected(day);
     setOpenBlock(firstLeft(path[day - 1], progress));
     setPlaying(null);
@@ -283,7 +288,7 @@ export default function LearningPathSection({ onOpenTab }: { onOpenTab: (tab: Hu
 
       <div className="flex flex-wrap items-center gap-2 text-sm">
         <span className="px-3 py-1 rounded-full bg-clay-soft/15 text-clay-soft font-semibold tabular-nums">
-          {t('path.dayOf').replace('{n}', String(current)).replace('{total}', String(PATH_LENGTH))}
+          {t('path.dayN').replace('{n}', String(current))}
         </span>
         <span className={`px-3 py-1 rounded-full ${gap > 0 ? 'bg-gold-soft/20 text-ink' : 'bg-sage-soft/15 text-ink'}`} data-testid="path-schedule">
           {schedule}
@@ -306,7 +311,7 @@ export default function LearningPathSection({ onOpenTab }: { onOpenTab: (tab: Hu
                 <span className="tabular-nums" data-testid="path-day-progress">{daily.done}/{daily.total}</span>
               </div>
             </div>
-            <button onClick={() => goTo(selected + 1)} disabled={selected === PATH_LENGTH} className="p-1.5 rounded-lg hover:bg-ink/5 text-ink-light disabled:opacity-30" aria-label={t('path.nextDay')}>
+            <button onClick={() => goTo(selected + 1)} disabled={selected === path.length} className="p-1.5 rounded-lg hover:bg-ink/5 text-ink-light disabled:opacity-30" aria-label={t('path.nextDay')}>
               <NextIcon size={18} />
             </button>
           </div>
@@ -330,7 +335,7 @@ export default function LearningPathSection({ onOpenTab }: { onOpenTab: (tab: Hu
                 </div>
                 {!allDone && selected < current && finishedOn(day, progress) === today && <div className="text-xs text-ink-light">{t('path.dayDoneHint')}</div>}
               </div>
-              {!allDone && selected < PATH_LENGTH && (
+              {!allDone && selected < path.length && (
                 <button onClick={() => goTo(selected < current ? current : selected + 1)} className="px-3 py-1.5 text-sm rounded-lg bg-clay-soft text-white hover:bg-clay-soft-dark">
                   {t('path.startDay').replace('{n}', String(selected < current ? current : selected + 1))}
                 </button>
@@ -445,21 +450,24 @@ export default function LearningPathSection({ onOpenTab }: { onOpenTab: (tab: Hu
           <h2 id="path-progress-title" className="font-semibold text-ink">{t('path.progress')}</h2>
           <div className="flex items-center gap-4">
             <div className="relative">
-              <Ring percent={stats.percent} />
-              <div className="absolute inset-0 flex items-center justify-center text-xl font-bold text-ink tabular-nums" data-testid="path-percent">{stats.percent}%</div>
+              <Ring percent={week.total ? (week.done / week.total) * 100 : 0} />
+              <div className="absolute inset-0 flex items-center justify-center text-xl font-bold text-ink tabular-nums" data-testid="path-week">{week.done}/{week.total}</div>
             </div>
-            <div className="text-sm text-ink-light">{tn('path.stats.items', stats.itemsDone).replace('{total}', String(stats.itemsTotal))}</div>
+            <div className="text-sm text-ink-light">
+              <div className="font-medium text-ink">{t('path.stats.week').replace('{n}', String(path[current - 1].week))}</div>
+              {tn('path.stats.daysOfWeek', week.done).replace('{total}', String(week.total))}
+            </div>
           </div>
           <dl className="grid grid-cols-2 gap-3">
             {[
-              { icon: CalendarDays, label: t('path.stats.days'), value: `${stats.daysDone}/${PATH_LENGTH}` },
-              { icon: Flame, label: t('path.stats.streak'), value: String(stats.streak) },
-              { icon: Clock, label: t('path.stats.time'), value: formatMinutes(stats.minutes, t) },
-              { icon: ListChecks, label: t('path.stats.words'), value: `${pathWords.owned}/${pathWords.total}` },
-            ].map(({ icon: Icon, label, value }) => (
-              <div key={label} className="rounded-xl bg-ink/3 p-3">
+              { id: 'days', icon: CalendarDays, label: t('path.stats.days'), value: String(stats.daysDone) },
+              { id: 'streak', icon: Flame, label: t('path.stats.streak'), value: String(stats.streak) },
+              { id: 'time', icon: Clock, label: t('path.stats.time'), value: formatMinutes(stats.minutes, t) },
+              { id: 'words', icon: ListChecks, label: t('path.stats.words'), value: `${pathWords.owned}/${pathWords.total}` },
+            ].map(({ id, icon: Icon, label, value }) => (
+              <div key={id} className="rounded-xl bg-ink/3 p-3">
                 <dt className="flex items-center gap-1 text-[11px] text-ink-light"><Icon size={12} className="text-clay-soft" /> {label}</dt>
-                <dd className="text-lg font-bold text-ink tabular-nums">{value}</dd>
+                <dd className="text-lg font-bold text-ink tabular-nums" data-testid={`path-stat-${id}`}>{value}</dd>
               </div>
             ))}
           </dl>

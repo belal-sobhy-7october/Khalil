@@ -28,7 +28,7 @@ export default function RecommendedTools({ className = '' }: { className?: strin
       <ul className="grid grid-cols-1 md:grid-cols-3 gap-3">
         {FEATURED_RESOURCES.map((r) => (
           <li key={r.id} className="rounded-xl border border-border-subtle bg-card p-3 flex flex-col gap-1.5">
-            <div className="flex items-start justify-between gap-2">
+            <div className="flex flex-wrap items-start justify-between gap-2">
               <a href={r.url} target="_blank" rel="noopener noreferrer" className="font-semibold text-ink hover:text-clay-soft inline-flex items-center gap-1.5" dir="ltr">
                 {r.name}
                 <ExternalLink size={13} className="text-ink-lighter" />

@@ -416,7 +416,7 @@ await flow('learning-path', { section: 'vocabulary', englishTab: 'path' }, async
   // Reload: the day finished today stays open and the progress stays.
   await reload();
   check(await visible(page.getByRole('heading', { level: 2, name: /Day 1/ })), 'after reload the day finished today should stay open');
-  check(await visible(page.getByText('1/90', { exact: true })), 'days-done count lost after reload');
+  check((await page.getByTestId('path-stat-days').textContent()) === '1', 'days-done count lost after reload');
 
   // A grammar point after Ibrahim Adel's course: its sentences are saved.
   await page.getByRole('button', { name: /^Day 60 \(/ }).click();

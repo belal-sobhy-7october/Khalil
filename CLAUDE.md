@@ -122,17 +122,23 @@ before changing it.** Progress is in `user_kv` (`sales-*` keys). Listening tasks
 
 ## Learning Path (مسار التعلم)
 
-A 90-day English roadmap, open to every account: the first tab of the English hub (`path`; the old
-`path` section redirects there). It isn't a separate course: every day has the same six blocks, one per
-hub section (Vocabulary, Pronunciation & Accent, Listening, Reading, Grammar, Shadowing), about 20
-minutes each (10/15/20/30 in its settings), and plays the hub's own lessons inside the block.
+Daily English practice from the learner's own level (A1 to C1), with no end date, open to every account:
+the first tab of the English hub (`path`; the old `path` section redirects there). It promises no level
+and no deadline (the owner's rule): it gives every day a little of every skill. It isn't a separate
+course: every day has the same six blocks, one per hub section (Vocabulary, Pronunciation & Accent,
+Listening, Reading, Grammar, Shadowing), about 20 minutes each (10/15/20/30 in its settings), and plays
+the hub's own lessons inside the block.
 
 - `src/lib/learningPath.ts` builds the days (`buildPath(settings)`): each section's lessons in study order,
-  packed into days by length × a study factor (`STUDY_FACTOR`), long lessons cut into parts. Vocabulary is
-  the flashcard review plus the words of the day's topic (`PATH_TOPICS`: all 90 Topic Library packs, one
-  a day, B1 → B2 → C1); Grammar is Ibrahim Adel's course, then the grammar point of the day's topic.
-- Settings choose the sources and levels: Listening VOA (American English, the default) or Ibrahim Adel,
-  Reading British Council (the default) or Ibrahim Adel, and the Shadowing level.
+  packed into days by length × a study factor (`STUDY_FACTOR`), long lessons cut into parts. The path lasts
+  as long as any section has lessons (about two years at 20 minutes) and grows by itself when content is
+  added; a section that ran out gives its time to "your choice" in its tab. Vocabulary is the flashcard
+  review plus the words of the day's topic (`PATH_TOPICS`, a topic a day from the learner's level up,
+  then the easier ones; the library has B1–C1 topics, so A1–A2 start with the easiest); Grammar is
+  Ibrahim Adel's course, then the grammar point of the day's topic (every topic's once).
+- Settings: "Your level" (`level`) sets where the topics start and, through `startsFor`, where every
+  section starts; then the sources (Listening VOA, the default, or Ibrahim Adel; Reading British Council,
+  the default, or Ibrahim Adel) and each section's own start can still be changed.
 - Lessons are ticked in the hub's progress (`english-course-progress`), so one finished here or in its tab
   is done in both. The path's own `user_kv` value (`learning-path-v2`) keeps the settings, what the hub
   can't know (reviews, grammar points, sound drills, parts of lessons) and notes, keyed by `itemKey`.

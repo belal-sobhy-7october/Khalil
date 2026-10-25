@@ -1,13 +1,15 @@
 /**
- * The 90-day learning path, the first tab of the English hub. Every day has
+ * The learning path, the first tab of the English hub: daily practice from the
+ * learner's own level (A1 to C1), with no end date. It runs for as long as there
+ * are lessons, and grows when new topics or episodes are added. Every day has
  * the same six blocks, one per section of the hub, each about the same length
  * (20 minutes by default):
  *
- *   Vocabulary              the flashcard review and the words of the day's topic (90 topics, one a day)
+ *   Vocabulary              the flashcard review and the words of the day's topic (a topic a day, from your level)
  *   Pronunciation & Accent  Ibrahim Adel's course, VOA's How to Pronounce, then sound drills
  *   Listening               VOA or Ibrahim Adel (you choose; the other follows)
  *   Reading                 British Council or Ibrahim Adel (the same), then Lovely English Stories
- *   Grammar                 Ibrahim Adel's course, then the grammar point of the day's topic
+ *   Grammar                 Ibrahim Adel's course, then the grammar point of the day's topic (every topic's once)
  *   Shadowing               Listening Time, from the level you choose
  *
  * The lessons are the hub's own, in study order, put into days by their length
@@ -24,7 +26,8 @@ import { getCourseSection, type CourseLesson, type CourseSectionId } from '../da
 import { addDaysToDateString, daysBetweenDateStrings } from '../store/dateHelpers';
 import type { CourseProgress, WatchPositions } from './courseProgress';
 
-export const PATH_LENGTH = 90;
+/** A ceiling, so a path never grows without bound (ten years of days). */
+const MAX_DAYS = 3650;
 export const PATH_KV_KEY = 'learning-path-v2';
 
 export type PathSection = 'vocabulary' | CourseSectionId;
@@ -37,8 +40,11 @@ export type ReadingSource = 'british-council' | 'ibrahim-adel';
 export type ListeningLevel = 'beginner' | 'intermediate' | 'advanced';
 export type ReadingLevel = 'A1' | 'A2' | 'B1' | 'B2' | 'C1';
 export type ShadowingLevel = 'A1' | 'A2' | 'B1' | 'B2';
+export type Level = 'A1' | 'A2' | 'B1' | 'B2' | 'C1';
 
 export interface PathSettings {
+  /** The learner's level: where the day's topic starts, and where the settings start each section. */
+  level: Level;
   /** Minutes of each section a day. */
   minutes: number;
   listening: ListeningSource;
@@ -54,6 +60,16 @@ export const MINUTE_CHOICES = [10, 15, 20, 30];
 export const LISTENING_LEVELS: ListeningLevel[] = ['beginner', 'intermediate', 'advanced'];
 export const READING_LEVELS: ReadingLevel[] = ['A1', 'A2', 'B1', 'B2', 'C1'];
 export const SHADOWING_LEVELS: ShadowingLevel[] = ['A1', 'A2', 'B1', 'B2'];
+export const LEVELS: Level[] = ['A1', 'A2', 'B1', 'B2', 'C1'];
+
+/** Where each section starts for a learner at `level` (each can still be changed on its own). */
+export function startsFor(level: Level): Pick<PathSettings, 'listeningLevel' | 'readingLevel' | 'shadowingLevel'> {
+  return {
+    listeningLevel: level === 'A1' || level === 'A2' ? 'beginner' : level === 'B1' ? 'intermediate' : 'advanced',
+    readingLevel: level,
+    shadowingLevel: level === 'C1' ? 'B2' : level,
+  };
+}
 
 const sourceOf = (section: CourseSectionId, id: string) => getCourseSection(section).sources.find((s) => s.id === id);
 
@@ -61,6 +77,7 @@ const sourceOf = (section: CourseSectionId, id: string) => getCourseSection(sect
 export const hasBritishCouncil = () => (sourceOf('reading', 'british-council')?.groups.length ?? 0) > 0;
 
 export const defaultSettings = (): PathSettings => ({
+  level: 'B1',
   minutes: 20,
   listening: 'voa',
   listeningLevel: 'intermediate',
@@ -101,7 +118,7 @@ const SOUND_MINUTES = 10;
 
 // ---- topics -----------------------------------------------------------------
 
-/** The Topic Library in the path's order: a topic a day, easier ones first. */
+/** The Topic Library from the easiest topic to the hardest (it has B1 to C1 topics for now). */
 export const PATH_TOPICS: string[] = [
   // B1
   'self-introduction', 'small-talk', 'family-and-relatives', 'describing-people', 'daily-routines',
@@ -131,17 +148,18 @@ export function packById(id: string | undefined): TopicPack | undefined {
   return id ? TOPIC_PACKS.find((p) => p.id === id) : undefined;
 }
 
-/** Each day's topic and its share of the topic's words (all of them once there is a topic for every day). */
-function topicDays(): Array<{ packId: string; from: number; to: number }> {
+const LEVEL_ORDER: Record<string, number> = { A1: 0, A2: 1, B1: 2, B2: 3, C1: 4, C2: 5 };
+
+/**
+ * A topic a day with all its words: from the learner's level up, then the
+ * easier topics they skipped. Below the easiest topics in the library, the
+ * path starts with those.
+ */
+function topicDays(level: Level): Array<{ packId: string; from: number; to: number }> {
   const topics = PATH_TOPICS.filter((id) => packById(id));
-  const out: Array<{ packId: string; from: number; to: number }> = [];
-  topics.forEach((packId, t) => {
-    const first = Math.floor((t * PATH_LENGTH) / topics.length);
-    const span = Math.floor(((t + 1) * PATH_LENGTH) / topics.length) - first;
-    const words = packById(packId)!.items.length;
-    for (let k = 0; k < span; k++) out.push({ packId, from: Math.floor((k * words) / span), to: Math.floor(((k + 1) * words) / span) });
-  });
-  return out;
+  const first = topics.findIndex((id) => LEVEL_ORDER[packById(id)!.level] >= LEVEL_ORDER[level]);
+  const ordered = first <= 0 ? topics : [...topics.slice(first), ...topics.slice(0, first)];
+  return ordered.map((packId) => ({ packId, from: 0, to: packById(packId)!.items.length }));
 }
 
 // ---- accent -----------------------------------------------------------------
@@ -305,9 +323,14 @@ const block = (section: PathSection, day: number, items: Array<{ item: PathItem;
   return { section, items: planned, minutes: planned.reduce((n, i) => n + i.minutes, 0) };
 };
 
+/**
+ * The days, for as long as any section has something planned: a section whose
+ * lessons ran out gives its time to your choice of lesson in its tab, and the
+ * flashcard review goes on every day.
+ */
 export function buildPath(settings: PathSettings = defaultSettings()): PathDay[] {
   const budget = Math.max(5, settings.minutes);
-  const topics = topicDays();
+  const topics = topicDays(settings.level);
   const [round1, again] = accentRounds();
   const sounds = (items: AccentItem[], round: number): Unit[] =>
     items.map((accent) => ({ item: { kind: 'sound', accent, round }, minutes: SOUND_MINUTES }));
@@ -327,32 +350,40 @@ export function buildPath(settings: PathSettings = defaultSettings()): PathDay[]
         ...[2, 3, 4, 5].map((round) => sounds(again, round))
       ),
       budget,
-      PATH_LENGTH
+      MAX_DAYS
     ),
-    listening: pack(settings.listening === 'voa' ? chain(voa, ibrahimListening) : chain(ibrahimListening, voa), budget, PATH_LENGTH),
+    listening: pack(settings.listening === 'voa' ? chain(voa, ibrahimListening) : chain(ibrahimListening, voa), budget, MAX_DAYS),
     reading: pack(
       settings.reading === 'british-council' ? chain(britishCouncil, ibrahimReading, stories) : chain(ibrahimReading, britishCouncil, stories),
       budget,
-      PATH_LENGTH
+      MAX_DAYS
     ),
     // After Ibrahim Adel's course the grammar point of each day's topic follows (below).
-    grammar: pack(lessonUnits('grammar', 'ibrahim-adel'), budget, PATH_LENGTH),
+    grammar: pack(lessonUnits('grammar', 'ibrahim-adel'), budget, MAX_DAYS),
     shadowing: pack(
       chain(lessonUnits('shadowing', 'listening-time', SHADOWING_START[settings.shadowingLevel]), lessonUnits('shadowing', 'listening-time')),
       budget,
-      PATH_LENGTH
+      MAX_DAYS
     ),
   };
 
+  // After the grammar course, the grammar point of the day's topic; once the topics run out, the
+  // points of the topics studied during the course follow, so every topic's point comes once.
+  const course = plans.grammar.length;
+  const points: string[] = [];
+  const skipped = topics.slice(0, course).map((t) => t.packId);
+  for (let day = course + 1; day <= course + topics.length; day++) points.push(topics[day - 1]?.packId ?? skipped.shift()!);
+  const length = Math.min(MAX_DAYS, Math.max(topics.length, course + points.length, ...Object.values(plans).map((p) => p.length)));
   const days: PathDay[] = [];
-  for (let day = 1; day <= PATH_LENGTH; day++) {
+  for (let day = 1; day <= length; day++) {
     const topic = topics[day - 1];
-    const vocabulary: Array<{ item: PathItem; minutes: number }> = [{ item: { kind: 'review' }, minutes: budget / 2 }];
+    const vocabulary: Array<{ item: PathItem; minutes: number }> = [{ item: { kind: 'review' }, minutes: topic ? budget / 2 : budget }];
     if (topic) vocabulary.push({ item: { kind: 'words', ...topic }, minutes: budget / 2 });
     const planned = (section: CourseSectionId) => {
       const items = plans[section][day - 1];
       if (items?.length) return items;
-      if (section === 'grammar' && topic) return [{ item: { kind: 'grammar' as const, packId: topic.packId, from: topic.from }, minutes: budget }];
+      const point = section === 'grammar' ? points[day - course - 1] : undefined;
+      if (point) return [{ item: { kind: 'grammar' as const, packId: point, from: 0 }, minutes: budget }];
       return [{ item: { kind: 'free' as const, section }, minutes: budget }];
     };
     days.push({
@@ -452,9 +483,9 @@ export function finishedOn(d: PathDay, p: PathProgress): string {
   return last;
 }
 
-/** Which day the calendar says you'd be on (1 on the start date). */
+/** Which day the calendar says you'd be on (1 on the start date, a day a day). */
 export function scheduledDay(startedAt: string, today: string): number {
-  return Math.max(1, Math.min(PATH_LENGTH, daysBetweenDateStrings(startedAt, today) + 1));
+  return Math.max(1, daysBetweenDateStrings(startedAt, today) + 1);
 }
 
 export interface PathStats {
@@ -511,6 +542,7 @@ export type SegmentWhat =
   | { kind: 'group'; source: string; group: string }
   | { kind: 'topics'; level: TopicPack['level'] }
   | { kind: 'grammar' }
+  | { kind: 'review' }
   | { kind: 'sounds'; round: number }
   | { kind: 'free' };
 
@@ -532,6 +564,8 @@ function blockWhat(b: PathBlock): SegmentWhat {
       return { kind: 'grammar' };
     case 'sound':
       return { kind: 'sounds', round: main.round };
+    case 'review':
+      return { kind: 'review' };
     default:
       return { kind: 'free' };
   }
