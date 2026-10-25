@@ -99,7 +99,7 @@ function LevelCard({ level, onOpenDay, defaultOpen }: { level: PlanLevel; onOpen
 
           {planned && level.outline && (
             <div className="space-y-2">
-              <ArabicNote>الليفل ده متخطط بالكامل في ROADMAP.md جوه المشروع. لما تخلّص ليفل 3، قول لـ Claude «ابدأ ليفل {level.number}» وهيكمل من هنا.</ArabicNote>
+              <ArabicNote>هذا المستوى مخطط بالكامل في ROADMAP.md داخل المشروع. حين تُنهي المستوى 3، قل لـ Claude «ابدأ المستوى {level.number}» وسيكمل من هنا.</ArabicNote>
               <ol className="space-y-1.5">
                 {level.outline.map((w, i) => (
                   <li key={w.title} className="text-sm">
@@ -212,7 +212,7 @@ export default function RoadmapView({ currentIndex, onOpenDay, onOpenVocab }: { 
   return (
     <div className="space-y-3">
       <ArabicNote>
-        الخطة: ليفل 0 تشخيص، 1 أساسيات، 2 مكالمات، 3 انترفيو (بعده تقدّم على الشغل). 4 و 5 للوصول لـ C1 و overqualified. كل ليفل في آخره امتحان، وكل أسبوع في آخره quiz.
+        الخطة: المستوى 0 للتشخيص، و1 للأساسيات، و2 للمكالمات، و3 للمقابلات (بعده تتقدم للوظائف)، و4 و5 للوصول إلى C1 وما فوق المطلوب. في آخر كل مستوى اختبار، وفي آخر كل أسبوع اختبار قصير.
       </ArabicNote>
       <VocabTrack onOpen={onOpenVocab} />
       {LEVELS.map((level) => (

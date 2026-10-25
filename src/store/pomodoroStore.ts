@@ -70,7 +70,10 @@ interface PomodoroState extends RunState {
   setPhase: (phase: Phase) => void;
   setLabel: (label: string) => void;
   updateSettings: (patch: Partial<PomodoroSettings>, userId?: string) => void;
+  /** The settings, as the app opens. */
   loadForUser: (userId: string) => Promise<void>;
+  /** The sessions of the last 400 days, when a page that shows them opens (Focus, Analytics). */
+  loadSessions: (userId: string) => Promise<void>;
   /** Called by the engine when the running phase reaches its end. */
   finishPhase: (userId?: string) => Promise<Phase>;
   addSession: (s: Omit<PomodoroSession, 'id'>, userId?: string) => Promise<void>;
@@ -187,6 +190,9 @@ export const usePomodoroStore = create<PomodoroState>((set, get) => {
     loadForUser: async (userId) => {
       const saved = await loadKv<Partial<PomodoroSettings>>(userId, SETTINGS_KEY, {});
       set((s) => ({ settings: { ...s.settings, ...saved } }));
+    },
+
+    loadSessions: async (userId) => {
       const since = new Date(Date.now() - 400 * 24 * 3600 * 1000).toISOString();
       const { data, error } = await supabase
         .from('pomodoro_sessions')

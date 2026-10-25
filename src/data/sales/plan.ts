@@ -25,7 +25,7 @@ const task = (dayId: string, kind: SalesTaskKind, ref: string, minutes: number):
  */
 function buildDays(weekId: string, spec: SalesWeekSpec, quizId: string): SalesDay[] {
   const { lessons, listens, drills, roleplays, mission, speaking, words, knowledge = [] } = spec.content;
-  const review = spec.lang === 'en' ? 'Review & weekly quiz' : 'مراجعة وكويز الأسبوع';
+  const review = spec.lang === 'en' ? 'Review & weekly quiz' : 'مراجعة واختبار الأسبوع';
   const plan: Array<(id: string) => SalesTask[]> = [
     (id) => [
       task(id, 'lesson', lessons[0].id, 15),
@@ -71,7 +71,7 @@ function examDay(level: SalesLevelId, title: string): SalesDay {
 
 const START_DAY: SalesDay = {
   id: 'S0-D1',
-  title: 'أول يوم',
+  title: 'اليوم الأول',
   tasks: [
     task('S0-D1', 'lesson', START_LESSON.id, 10),
     task('S0-D1', 'speak', BASELINE_SPEAK.id, 10),
@@ -86,8 +86,8 @@ export const LEVELS: SalesLevel[] = [
     number: 0,
     name: 'نقطة البداية',
     lang: 'ar',
-    goal: 'تعرف الخطة، تسجل «قبل»، وتقيس انت فين.',
-    exit: ['اختبار البداية (مش امتحان نجاح، بس عشان تقيس)'],
+    goal: 'أن تعرف الخطة، وتسجّل «قبل»، وتقيس أين أنت.',
+    exit: ['اختبار البداية (ليس امتحان نجاح، بل للقياس فقط)'],
     status: 'ready',
     weeks: [],
     extraDays: [START_DAY],
@@ -95,14 +95,14 @@ export const LEVELS: SalesLevel[] = [
   {
     id: 'S1',
     number: 1,
-    name: 'أساسيات السيلز',
+    name: 'أساسيات المبيعات',
     lang: 'ar',
-    goal: 'تفهم البيع صح، تسأل وتسمع، تعرض القيمة، ترد على الاعتراضات وتقفل. ومعاهم كتابين: «السيلز بجد» و«علم نفس القرار».',
+    goal: 'أن تفهم البيع فهمًا صحيحًا، وتسأل وتستمع، وتعرض القيمة، وترد على الاعتراضات وتُغلق. ومعها كتابان: «البيع على حقيقته» و«علم نفس القرار».',
     exit: [
-      'امتحان المستوى 80% أو أكتر',
-      'رول بلاي الامتحان 80% أو أكتر في التقييم',
-      'المهمات الأربعة في الحياة الحقيقية',
-      'فصول المعرفة بتاعة المستوى (السيلز بجد وعلم نفس القرار)',
+      'امتحان المستوى 80% أو أكثر',
+      'تمثيل الأدوار في الامتحان 80% أو أكثر في التقييم',
+      'المهمات الأربع في الحياة الحقيقية',
+      'فصول المعرفة الخاصة بالمستوى (البيع على حقيقته وعلم نفس القرار)',
     ],
     status: 'ready',
     weeks: buildWeeks('S1', LEVEL1_WEEKS),
@@ -112,14 +112,14 @@ export const LEVELS: SalesLevel[] = [
   {
     id: 'S2',
     number: 2,
-    name: 'السوق والماركتينج والتفاوض',
+    name: 'السوق والتسويق والتفاوض',
     lang: 'ar',
-    goal: 'تلاقي عملاء، تنظم شغلك بالأرقام، تفهم الماركتينج، وتتفاوض صح، وتجهز لأي شغلانة. ومعاهم كتابين: «الماركتينج» و«التفاوض».',
+    goal: 'أن تجد العملاء، وتنظم عملك بالأرقام، وتفهم التسويق، وتتفاوض بطريقة صحيحة، وتستعد لأي وظيفة. ومعها كتابان: «التسويق» و«التفاوض».',
     exit: [
-      'امتحان المستوى 80% أو أكتر',
-      'رول بلاي الامتحان 80% أو أكتر في التقييم',
-      'المهمات الأربعة في الحياة الحقيقية',
-      'فصول المعرفة بتاعة المستوى (الماركتينج والتفاوض)',
+      'امتحان المستوى 80% أو أكثر',
+      'تمثيل الأدوار في الامتحان 80% أو أكثر في التقييم',
+      'المهمات الأربع في الحياة الحقيقية',
+      'فصول المعرفة الخاصة بالمستوى (التسويق والتفاوض)',
     ],
     status: 'ready',
     weeks: buildWeeks('S2', LEVEL2_WEEKS),

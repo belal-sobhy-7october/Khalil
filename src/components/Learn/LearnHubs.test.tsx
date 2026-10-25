@@ -115,8 +115,8 @@ describe.each(['en', 'ar'] as const)('the hubs (%s)', (language) => {
     const go = vi.fn();
     render(<SkillsHub onNavigate={go} />);
     noRawKeys();
-    fireEvent.click(screen.getByRole('button', { name: new RegExp(language === 'en' ? 'Call Center Prep' : 'التحضير لكول سنتر انجلش') }));
-    fireEvent.click(screen.getByRole('button', { name: new RegExp(language === 'en' ? 'Sales Prep' : 'تعلّم السيلز') }));
+    fireEvent.click(screen.getByRole('button', { name: new RegExp(language === 'en' ? 'Call Center Prep' : 'الاستعداد لمراكز الاتصال بالإنجليزية') }));
+    fireEvent.click(screen.getByRole('button', { name: new RegExp(language === 'en' ? 'Sales Prep' : 'تعلّم المبيعات') }));
     expect(go.mock.calls.map((c) => c[0])).toEqual(['callcenter', 'sales']);
     const soon = screen.getByRole('region', { name: new RegExp(language === 'en' ? 'Coming soon' : 'قريبًا') });
     expect(within(soon).getAllByRole('listitem')).toHaveLength(24);

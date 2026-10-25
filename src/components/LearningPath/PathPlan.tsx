@@ -1,6 +1,8 @@
+import { useState } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useTranslation } from '../../i18n/useTranslation';
 import {
-  PATH_LENGTH, PATH_SECTIONS, dayProgress, sectionTimeline,
+  PATH_SECTIONS, dayProgress, sectionTimeline,
   type PathDay, type PathProgress, type PathSection, type SegmentWhat,
 } from '../../lib/learningPath';
 import { SECTION_META } from './sections';
@@ -17,6 +19,8 @@ function useWhatLabel() {
         return t('path.what.topics').replace('{level}', what.level);
       case 'grammar':
         return t('path.what.grammar');
+      case 'review':
+        return t('path.what.review');
       case 'sounds':
         return t(what.round === 1 ? 'path.what.sounds' : 'path.what.soundsAgain');
       default:
@@ -25,7 +29,7 @@ function useWhatLabel() {
   };
 }
 
-/** What each section covers on which days, as a bar of the 90 days. */
+/** What each section covers on which days, as a bar of all the path's days. */
 export function PlanTimeline({ path, current, onGoTo }: { path: PathDay[]; current: number; onGoTo: (day: number) => void }) {
   const { t } = useTranslation();
   const label = useWhatLabel();
@@ -41,9 +45,9 @@ export function PlanTimeline({ path, current, onGoTo }: { path: PathDay[]; curre
             </h3>
             <div className="relative flex h-3 rounded-full overflow-hidden bg-ink/5" dir="ltr" aria-hidden="true">
               {segments.map((s, i) => (
-                <span key={s.from} className={SEGMENT_COLORS[i % SEGMENT_COLORS.length]} style={{ width: `${((s.to - s.from + 1) / PATH_LENGTH) * 100}%` }} />
+                <span key={s.from} className={SEGMENT_COLORS[i % SEGMENT_COLORS.length]} style={{ width: `${((s.to - s.from + 1) / path.length) * 100}%` }} />
               ))}
-              <span className="absolute top-0 bottom-0 w-0.5 bg-ink" style={{ left: `${((current - 0.5) / PATH_LENGTH) * 100}%` }} />
+              <span className="absolute top-0 bottom-0 w-0.5 bg-ink" style={{ left: `${((current - 0.5) / path.length) * 100}%` }} />
             </div>
             <ul className="space-y-0.5">
               {segments.map((s, i) => (
@@ -70,7 +74,10 @@ export function PlanTimeline({ path, current, onGoTo }: { path: PathDay[]; curre
   );
 }
 
-/** The 13 weeks as squares, to see what's done and jump to any day. */
+/** Weeks shown at a time in the grid. */
+const WEEKS_A_PAGE = 12;
+
+/** The weeks as squares, a page of them at a time, to see what's done and jump to any day. */
 export function WeekGrid({ path, progress, current, selected, onGoTo }: {
   path: PathDay[];
   progress: PathProgress;
@@ -78,17 +85,42 @@ export function WeekGrid({ path, progress, current, selected, onGoTo }: {
   selected: number;
   onGoTo: (day: number) => void;
 }) {
-  const { t } = useTranslation();
-  const weeks = Array.from({ length: Math.ceil(PATH_LENGTH / 7) }, (_, w) => path.slice(w * 7, w * 7 + 7));
+  const { t, isRTL } = useTranslation();
+  const weeks = Array.from({ length: Math.ceil(path.length / 7) }, (_, w) => path.slice(w * 7, w * 7 + 7));
+  const pages = Math.ceil(weeks.length / WEEKS_A_PAGE);
+  const pageOf = (day: number) => Math.floor((Math.ceil(day / 7) - 1) / WEEKS_A_PAGE);
+  // Opens on the page of the selected day, and follows it when it moves to another page.
+  const [page, setPage] = useState(() => pageOf(selected));
+  const [followed, setFollowed] = useState(selected);
+  if (followed !== selected) {
+    setFollowed(selected);
+    setPage(pageOf(selected));
+  }
+  const shown = weeks.slice(page * WEEKS_A_PAGE, (page + 1) * WEEKS_A_PAGE);
+  const PrevIcon = isRTL ? ChevronRight : ChevronLeft;
+  const NextIcon = isRTL ? ChevronLeft : ChevronRight;
   return (
     <div className="space-y-3">
+      {pages > 1 && (
+        <div className="flex items-center justify-between gap-2 text-xs text-ink-light">
+          <button type="button" onClick={() => setPage(page - 1)} disabled={page === 0} className="p-1.5 rounded-lg hover:bg-ink/5 disabled:opacity-30" aria-label={t('path.prevWeeks')}>
+            <PrevIcon size={16} />
+          </button>
+          <span className="tabular-nums">
+            {t('path.weeksRange').replace('{from}', String(page * WEEKS_A_PAGE + 1)).replace('{to}', String(page * WEEKS_A_PAGE + shown.length))}
+          </span>
+          <button type="button" onClick={() => setPage(page + 1)} disabled={page === pages - 1} className="p-1.5 rounded-lg hover:bg-ink/5 disabled:opacity-30" aria-label={t('path.nextWeeks')}>
+            <NextIcon size={16} />
+          </button>
+        </div>
+      )}
       <div className="flex flex-wrap gap-3 text-[11px] text-ink-light">
         <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-sage-soft" /> {t('path.legend.done')}</span>
         <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-gold-soft/60" /> {t('path.legend.started')}</span>
         <span className="flex items-center gap-1"><span className="w-3 h-3 rounded ring-2 ring-clay-soft" /> {t('path.legend.current')}</span>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-1.5">
-        {weeks.map((w) => (
+        {shown.map((w) => (
           <div key={w[0].week} className="flex items-center gap-2">
             <span className="w-14 shrink-0 text-[11px] text-ink-lighter">{t('path.week').replace('{n}', String(w[0].week))}</span>
             <div className="flex gap-1">

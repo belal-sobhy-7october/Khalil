@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
-  PATH_LENGTH, PATH_SECTIONS, PATH_TOPICS, buildPath, currentDay, dayProgress, defaultSettings, isItemDone, packById, pathStats,
-  scheduledDay, sectionTimeline, withDefaults, wordKey, wordsOf, type PathDay, type PathItem, type PathProgress, type PathSettings,
+  PATH_SECTIONS, PATH_TOPICS, buildPath, currentDay, dayProgress, defaultSettings, isItemDone, packById, pathStats,
+  scheduledDay, sectionTimeline, startsFor, withDefaults, wordKey, wordsOf, type PathDay, type PathItem, type PathProgress, type PathSettings,
   type PlannedItem,
 } from './learningPath';
 import { getCourseSection } from '../data/courses';
@@ -24,8 +24,10 @@ const ibrahim = (section: 'grammar' | 'listening' | 'reading' | 'pronunciation')
   getCourseSection(section).sources.find((s) => s.id === 'ibrahim-adel')!.groups.flatMap((g) => g.lessons.map((l) => l.id));
 
 describe('the plan', () => {
-  it('has 90 days of the same six blocks, every item planned once', () => {
-    expect(path).toHaveLength(PATH_LENGTH);
+  it('runs for as long as the lessons last, the same six blocks every day, every item planned once', () => {
+    // No end date: far past the old 90 days, and a day for every topic at least.
+    expect(path.length).toBeGreaterThan(300);
+    expect(path.map((d) => d.day)).toEqual(path.map((_, i) => i + 1));
     const keys = new Set<string>();
     for (const d of path) {
       expect(d.blocks.map((b) => b.section)).toEqual(PATH_SECTIONS);
@@ -51,6 +53,23 @@ describe('the plan', () => {
       expect(words.flatMap((w) => (w.kind === 'words' ? wordsOf(w).map((x) => x.word) : []))).toEqual(packById(id)!.items.map((x) => x.word));
     }
     for (const d of path) expect(blockOf(d, 'vocabulary').items[0].item.kind).toBe('review');
+    // A topic a day while there are topics; after them the review goes on alone.
+    expect(path.slice(0, PATH_TOPICS.length).every((d) => d.packId)).toBe(true);
+    expect(path.slice(PATH_TOPICS.length).every((d) => !d.packId && blockOf(d, 'vocabulary').items.length === 1)).toBe(true);
+  });
+
+  it("starts the day's topic at the chosen level, and every section where that level starts", () => {
+    const levelOf = (p: PathDay[]) => packById(p[0].packId)!.level;
+    expect(levelOf(path)).toBe('B1');
+    expect(levelOf(buildPath(settings({ level: 'A1' })))).toBe('B1'); // the easiest topics there are
+    expect(levelOf(buildPath(settings({ level: 'B2' })))).toBe('B2');
+    const c1 = buildPath(settings({ level: 'C1' }));
+    expect(levelOf(c1)).toBe('C1');
+    // Every topic still comes once: the easier ones after.
+    expect(c1.filter((d) => d.packId).map((d) => d.packId).sort()).toEqual([...PATH_TOPICS].sort());
+    expect(startsFor('A1')).toEqual({ listeningLevel: 'beginner', readingLevel: 'A1', shadowingLevel: 'A1' });
+    expect(startsFor('B1')).toEqual({ listeningLevel: 'intermediate', readingLevel: 'B1', shadowingLevel: 'B1' });
+    expect(startsFor('C1')).toEqual({ listeningLevel: 'advanced', readingLevel: 'C1', shadowingLevel: 'B2' });
   });
 
   it("follows Ibrahim Adel's grammar course in order, then the grammar of the day's topic", () => {
@@ -58,10 +77,13 @@ describe('the plan', () => {
     expect([...new Set(lessons(path, 'grammar').map((l) => l.lesson.id))]).toEqual(course);
     const last = path.findIndex((d) => blockOf(d, 'grammar').items[0].item.kind === 'grammar');
     expect(last).toBeGreaterThan(30);
-    for (const d of path.slice(last)) {
+    for (const d of path.slice(last, PATH_TOPICS.length)) {
       const item = blockOf(d, 'grammar').items[0].item;
       expect(item).toMatchObject({ kind: 'grammar', packId: d.packId });
     }
+    // Then the points of the topics studied during the course: every topic's point once.
+    const points = path.flatMap((d) => blockOf(d, 'grammar').items.map((i) => i.item)).filter((i) => i.kind === 'grammar');
+    expect(points.map((p) => (p.kind === 'grammar' ? p.packId : '')).sort()).toEqual([...PATH_TOPICS].sort());
   });
 
   it('cuts a long lesson into parts that cover it', () => {
@@ -120,20 +142,28 @@ describe('the plan', () => {
     const timeline = sectionTimeline(path, 'pronunciation');
     expect(timeline[0]).toMatchObject({ from: 1, what: { kind: 'group', source: 'Ibrahim Adel' } });
     expect(timeline.some((s) => s.what.kind === 'group' && s.what.source === 'VOA How to Pronounce')).toBe(true);
-    expect(timeline.at(-1)!.what.kind).toBe('sounds');
+    // Then, once the drills are done, your choice of lesson.
+    expect(timeline.filter((s) => s.what.kind !== 'free').at(-1)!.what.kind).toBe('sounds');
   });
 
   it('plans less of each course a day with fewer minutes', () => {
     const end = (p: PathDay[]) => p.findIndex((d) => blockOf(d, 'grammar').items[0].item.kind === 'grammar');
     expect(end(buildPath(settings({ minutes: 30 })))).toBeLessThan(end(path));
-    expect(end(buildPath(settings({ minutes: 10 })))).toBe(-1); // the course lasts the 90 days
+    expect(end(buildPath(settings({ minutes: 10 })))).toBeGreaterThan(end(path));
   });
 
-  it('shows each section as consecutive segments over the 90 days', () => {
+  it("gives a section's time to your choice once its lessons run out", () => {
+    const last = path.at(-1)!;
+    const free = last.blocks.filter((b) => b.items[0].item.kind === 'free').map((b) => b.section);
+    expect(free.length).toBeGreaterThan(0);
+    expect(free).not.toContain('vocabulary');
+  });
+
+  it("shows each section as consecutive segments over all the path's days", () => {
     for (const section of PATH_SECTIONS) {
       const timeline = sectionTimeline(path, section);
       expect(timeline[0].from).toBe(1);
-      expect(timeline.at(-1)!.to).toBe(PATH_LENGTH);
+      expect(timeline.at(-1)!.to).toBe(path.length);
       for (let i = 1; i < timeline.length; i++) expect(timeline[i].from).toBe(timeline[i - 1].to + 1);
     }
   });

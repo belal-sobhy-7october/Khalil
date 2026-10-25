@@ -118,7 +118,7 @@ function Prep() {
               <NewWordButton />
             </div>
           </div>
-          <ArabicNote>من «اترفضت في الريكورد» لـ «overqualified». كل يوم خطوة، وكل خطوة متسجلة هنا. يلا بينا 💪</ArabicNote>
+          <ArabicNote>من «رُفضت بسبب التسجيل الصوتي» إلى «مؤهل أكثر من المطلوب». كل يوم خطوة، وكل خطوة مسجّلة هنا. هيا بنا 💪</ArabicNote>
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
             <Stat icon={Flame} value={`${streak} day${streak === 1 ? '' : 's'}`} label="Streak" />
             <Stat icon={Timer} value={`${minutes} min`} label="Studied today" />
@@ -175,7 +175,7 @@ function Prep() {
                   <span className="font-semibold">Extra, not part of the plan.</span> Ibrahim Adel's phonetics and American &amp; British accent course: watch it
                   whenever you like. Nothing here is a daily task or counts toward a level.
                 </p>
-                <ArabicNote>ده قسم إضافي للأكسنت، مش إجباري ومش داخل في المهام اليومية ولا في الليفلات. اتفرج عليه وقت ما تحب، وتقدمك فيه بيتحفظ.</ArabicNote>
+                <ArabicNote>هذا قسم إضافي للّكنة، ليس إجباريًا، ولا يدخل في المهام اليومية ولا في المستويات. شاهده متى شئت، ويُحفظ تقدّمك فيه.</ArabicNote>
               </div>
               <CourseSection section={CALL_CENTER_ACCENT_SECTION} loopPlayer />
             </div>

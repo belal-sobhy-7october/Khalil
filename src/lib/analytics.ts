@@ -7,7 +7,7 @@ import { isScheduledOn } from '../store/habitStats';
 import { addDaysToDateString, daysBetweenDateStrings } from '../store/dateHelpers';
 import type { PomodoroSession } from '../store/pomodoroStore';
 import { localDay } from './focusStats';
-import { PRAYERS, jamaahCount, wirdScore, type WirdDay } from './wird';
+import { PRAYERS, jamaahCount, wirdScore, type WirdDay, type WirdItem } from './wird';
 import type { PracticeLog } from './englishPractice';
 
 export interface DayPoint {
@@ -66,8 +66,8 @@ export function focusSeries(dates: string[], sessions: PomodoroSession[]): DayPo
   return dates.map((date) => ({ date, value: byDay.get(date) ?? 0 }));
 }
 
-export function wirdSeries(dates: string[], days: Record<string, WirdDay>): DayPoint[] {
-  return dates.map((date) => ({ date, value: days[date] ? wirdScore(days[date]) : 0 }));
+export function wirdSeries(dates: string[], days: Record<string, WirdDay>, items?: WirdItem[]): DayPoint[] {
+  return dates.map((date) => ({ date, value: days[date] ? wirdScore(days[date], items) : 0 }));
 }
 
 export function englishSeries(dates: string[], log: PracticeLog, items: VocabularyItem[]): { minutes: DayPoint[]; words: DayPoint[] } {

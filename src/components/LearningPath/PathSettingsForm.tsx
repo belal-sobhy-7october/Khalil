@@ -1,6 +1,6 @@
 import { useTranslation } from '../../i18n/useTranslation';
 import {
-  LISTENING_LEVELS, MINUTE_CHOICES, READING_LEVELS, SHADOWING_LEVELS, hasBritishCouncil,
+  LEVELS, LISTENING_LEVELS, MINUTE_CHOICES, READING_LEVELS, SHADOWING_LEVELS, hasBritishCouncil, startsFor,
   type ListeningSource, type PathSettings, type ReadingSource,
 } from '../../lib/learningPath';
 import { dayTotal } from './format';
@@ -56,7 +56,7 @@ function LevelSelect<T extends string>({ id, label, name, value, options, onChan
   );
 }
 
-/** Minutes a day, where Listening and Reading come from and where each one starts. */
+/** Your level, minutes a day, where Listening and Reading come from and where each section starts. */
 export default function PathSettingsForm({ settings, onChange }: { settings: PathSettings; onChange: (next: PathSettings) => void }) {
   const { t } = useTranslation();
   const set = <K extends keyof PathSettings>(key: K, value: PathSettings[K]) => onChange({ ...settings, [key]: value });
@@ -67,6 +67,24 @@ export default function PathSettingsForm({ settings, onChange }: { settings: Pat
 
   return (
     <div className="space-y-5">
+      <fieldset className="space-y-2">
+        <legend className="text-sm font-semibold text-ink mb-1">{t('path.settings.yourLevel')}</legend>
+        <p className="text-xs text-ink-light">{t('path.settings.yourLevelHint')}</p>
+        <div className="flex flex-wrap gap-2" dir="ltr">
+          {LEVELS.map((l) => (
+            <button
+              key={l}
+              type="button"
+              aria-pressed={settings.level === l}
+              onClick={() => onChange({ ...settings, level: l, ...startsFor(l) })}
+              className={`px-3 py-1.5 rounded-lg text-sm ${settings.level === l ? 'bg-clay-soft text-white' : 'bg-ink/5 text-ink hover:bg-ink/10'}`}
+            >
+              <span className="font-semibold">{l}</span> <bdi className="text-xs opacity-80">{t(`path.cefr.${l}`)}</bdi>
+            </button>
+          ))}
+        </div>
+      </fieldset>
+
       <fieldset className="space-y-2">
         <legend className="text-sm font-semibold text-ink mb-2">{t('path.settings.minutes')}</legend>
         <div className="flex flex-wrap items-center gap-2">

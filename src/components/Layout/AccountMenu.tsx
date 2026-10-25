@@ -1,8 +1,9 @@
 import { useState, useRef } from 'react';
-import { User, Settings, LogOut, ChevronDown } from 'lucide-react';
+import { User, Settings, LogOut, ChevronDown, MessageCircle } from 'lucide-react';
 import { useTranslation } from '../../i18n/useTranslation';
 import { useAppStore } from '../../store/appStore';
 import { supabase } from '../../lib/supabase';
+import { whatsappLink } from '../../lib/contact';
 import {
   useFloating,
   autoUpdate,
@@ -94,6 +95,15 @@ export default function AccountMenu() {
       icon: Settings,
       onClick: () => {
         window.dispatchEvent(new CustomEvent('khalil:navigate', { detail: 'settings' }));
+        handleOpenChange(false);
+      },
+    },
+    {
+      id: 'contact',
+      label: t('contact.menu'),
+      icon: MessageCircle,
+      onClick: () => {
+        window.open(whatsappLink(t('contact.message')), '_blank', 'noopener,noreferrer');
         handleOpenChange(false);
       },
     },

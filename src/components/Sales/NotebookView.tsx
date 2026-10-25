@@ -19,7 +19,7 @@ function noteLabel(task: SalesTask, part: number | null, lang: 'ar' | 'en'): str
     case 'mission':
       return getMission(task.ref)?.reflect[part ?? 0] ?? '';
     case 'journal': {
-      if (task.ref === 'start') return 'ليه عاوز تتعلم سيلز؟';
+      if (task.ref === 'start') return 'لماذا تريد أن تتعلم المبيعات؟';
       if (task.ref === 'exam') return lang === 'en' ? 'End of the level' : 'آخر المستوى';
       return JOURNAL_PROMPTS[lang][(Number(task.ref.slice(1)) - 1) % 5];
     }
@@ -71,7 +71,7 @@ export default function NotebookView() {
     <div className="space-y-4">
       <Card className="space-y-3">
         <h3 className="font-semibold text-ink">آخر أسبوعين</h3>
-        <div className="flex items-end gap-1 h-24" role="img" aria-label="دقايق المذاكرة كل يوم في آخر أسبوعين">
+        <div className="flex items-end gap-1 h-24" role="img" aria-label="دقائق المذاكرة كل يوم في آخر أسبوعين">
           {days.map((d) => (
             <div key={d.date} className="flex-1 flex flex-col items-center justify-end gap-1 h-full" title={`${d.date}: ${d.minutes} دقيقة`}>
               <div className={`w-full rounded-t ${d.date === today ? 'bg-clay-soft' : 'bg-sage-soft/70'}`} style={{ height: `${Math.max(d.minutes ? 6 : 2, (d.minutes / maxMinutes) * 100)}%` }} />
@@ -80,13 +80,13 @@ export default function NotebookView() {
         </div>
         <div className="flex justify-between text-[11px] text-ink-light tabular-nums">
           <span>{days[0].date.slice(5)}</span>
-          <span>النهارده</span>
+          <span>اليوم</span>
         </div>
       </Card>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Card className="space-y-2">
-          <h3 className="font-semibold text-ink">الكويزات والامتحانات</h3>
+          <h3 className="font-semibold text-ink">الاختبارات القصيرة والامتحانات</h3>
           {quizRows.length ? (
             <ul className="space-y-1.5">
               {quizRows.map((r) => (
@@ -102,11 +102,11 @@ export default function NotebookView() {
               ))}
             </ul>
           ) : (
-            <ArabicNote>لسه مفيش. أول كويز في أول يوم.</ArabicNote>
+            <ArabicNote>لا شيء بعد. أول اختبار قصير في اليوم الأول.</ArabicNote>
           )}
         </Card>
         <Card className="space-y-2">
-          <h3 className="font-semibold text-ink">الرول بلاي</h3>
+          <h3 className="font-semibold text-ink">تمثيل الأدوار</h3>
           {callRows.length ? (
             <ul className="space-y-1.5">
               {callRows.map((c) => (
@@ -122,15 +122,15 @@ export default function NotebookView() {
               ))}
             </ul>
           ) : (
-            <ArabicNote>لسه مفيش. أول رول بلاي في تاني يوم من الأسبوع الأول.</ArabicNote>
+            <ArabicNote>لا شيء بعد. أول تمثيل للأدوار في اليوم الثاني من الأسبوع الأول.</ArabicNote>
           )}
         </Card>
       </div>
 
       <Card className="space-y-3">
         <h3 className="font-semibold text-ink">دفترك</h3>
-        <ArabicNote>كل اللي كتبته في الخطة: سطور الدفتر، إجاباتك على الأسئلة، والتمارين. ارجعله قبل أي انترفيو.</ArabicNote>
-        {written.length === 0 && !fromKnowledge.length && <ArabicNote>لسه فاضي. أول سطر في أول يوم.</ArabicNote>}
+        <ArabicNote>كل ما كتبته في الخطة: سطور الدفتر، وإجاباتك عن الأسئلة، والتمارين. عُد إليه قبل أي مقابلة.</ArabicNote>
+        {written.length === 0 && !fromKnowledge.length && <ArabicNote>ما زال فارغًا. أول سطر في اليوم الأول.</ArabicNote>}
         {fromKnowledge.length > 0 && (
           <div className="rounded-xl border border-border-subtle p-3 space-y-2">
             <div className="text-sm font-semibold text-ink">من المعرفة</div>

@@ -78,7 +78,7 @@ export default function LessonActivity({ refId, lang, onDone }: { refId: string;
             {lesson.example.map((line, i) => (
               <div key={i} className={`flex items-start gap-2 ${line.who === 'seller' ? '' : 'opacity-90'}`}>
                 <span className={`shrink-0 mt-0.5 px-1.5 py-0.5 rounded text-[11px] font-semibold ${line.who === 'seller' ? 'bg-clay-soft/15 text-clay-soft-dark' : 'bg-ink/5 text-ink-light'}`}>
-                  {line.who === 'seller' ? pick(lang, 'انت', 'You') : pick(lang, 'العميل', 'Customer')}
+                  {line.who === 'seller' ? pick(lang, 'أنت', 'You') : pick(lang, 'العميل', 'Customer')}
                 </span>
                 <p className="flex-1 text-sm text-ink leading-relaxed">{line.text}</p>
                 {lang === 'en' && <SpeakButton text={line.text} compact />}
@@ -89,7 +89,7 @@ export default function LessonActivity({ refId, lang, onDone }: { refId: string;
       )}
       <div className="space-y-1">
         <div className="flex items-center gap-1.5 text-xs font-semibold text-ink-light">
-          <AlertTriangle size={13} /> {pick(lang, 'غلطات المبتدئين', 'Beginner mistakes')}
+          <AlertTriangle size={13} /> {pick(lang, 'أخطاء المبتدئين', 'Beginner mistakes')}
         </div>
         <ul className="list-disc ps-5 text-sm text-ink space-y-0.5">
           {lesson.mistakes.map((m) => (
@@ -98,13 +98,13 @@ export default function LessonActivity({ refId, lang, onDone }: { refId: string;
         </ul>
       </div>
       <div className="space-y-3 rounded-xl border border-dashed border-border-subtle p-3">
-        <div className="text-xs font-semibold text-ink-light">{pick(lang, 'اتأكد إنك فهمت', 'Check you got it')}</div>
+        <div className="text-xs font-semibold text-ink-light">{pick(lang, 'تأكد أنك فهمت', 'Check you got it')}</div>
         {lesson.check.map((c) => (
           <CheckQuestion key={c.q} choice={c} onAnswer={answer} />
         ))}
       </div>
       <details>
-        <summary className="cursor-pointer py-1 text-xs text-ink-light hover:text-ink">{pick(lang, 'اتمرن على الدرس ده مع الـ AI (اختياري)', 'Practice this lesson with an AI (optional)')}</summary>
+        <summary className="cursor-pointer py-1 text-xs text-ink-light hover:text-ink">{pick(lang, 'تدرّب على هذا الدرس مع الذكاء الاصطناعي (اختياري)', 'Practice this lesson with an AI (optional)')}</summary>
         <div className="mt-2">
           <AiButtons prompt={lessonPracticePrompt(lesson.title, lesson.summary, lang)} lang={lang} />
         </div>

@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import { X, ExternalLink, Star, Compass, Plus, Trash2, Loader2, Clock } from 'lucide-react';
+import { X, ExternalLink, Star, Compass, Plus, Trash2, Loader2, Clock, Sparkles } from 'lucide-react';
 import { useTranslation } from '../../i18n/useTranslation';
 import { useAppStore } from '../../store/appStore';
-import { ENGLISH_RESOURCES, RESOURCE_CATEGORIES, type ResourceCategory } from '../../data/englishResources';
+import { ENGLISH_RESOURCES, FEATURED_RESOURCES, RESOURCE_CATEGORIES, type EnglishResource, type ResourceCategory } from '../../data/englishResources';
 import {
   addSuggestion,
   deleteSuggestion,
@@ -14,6 +14,7 @@ import {
   type ResourceSuggestion,
 } from '../../lib/resourcesApi';
 import { useDialog } from '../../lib/useDialog';
+import { FeaturedBadge } from '../English/RecommendedTools';
 
 function StarRow({ value, onRate, label }: { value: number; onRate?: (n: number) => void; label: string }) {
   const [hover, setHover] = useState(0);
@@ -65,8 +66,9 @@ export default function ResourcesModal({ onClose }: { onClose: () => void }) {
     };
   }, [userId]);
 
+  // "All" opens with the recommended tools on top, so the list below leaves them out.
   const visible = useMemo(
-    () => ENGLISH_RESOURCES.filter((r) => category === 'all' || r.category === category),
+    () => ENGLISH_RESOURCES.filter((r) => (category === 'all' ? !r.featured : r.category === category)),
     [category]
   );
 
@@ -121,6 +123,59 @@ export default function ResourcesModal({ onClose }: { onClose: () => void }) {
 
   const dialog = useDialog(onClose);
 
+  const renderCard = (r: EnglishResource, featured = false) => {
+    const summary = ratings?.get(r.id);
+    return (
+      <div key={r.id} className={`p-4 rounded-xl border flex flex-col gap-2 ${featured ? 'border-gold-soft/50 bg-gold-soft/5' : 'border-border-subtle'}`} dir="ltr">
+        {/* The badges drop under the name when the card is narrow, instead of covering it. */}
+        <div className="flex flex-wrap items-start justify-between gap-2">
+          <a
+            href={r.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="min-w-0 font-semibold text-ink hover:text-clay-soft flex items-center gap-1.5"
+          >
+            {r.name}
+            <ExternalLink size={13} className="text-ink-lighter" />
+          </a>
+          <span className="flex flex-wrap gap-1">
+            {featured && <FeaturedBadge />}
+            <span className="text-[11px] px-1.5 py-0.5 rounded bg-ink/5 text-ink-light" dir="auto">
+              {categoryLabel(r.category)} · {t(`vocabulary.resources.${r.free === true ? 'free' : r.free === 'freemium' ? 'freemium' : 'paid'}`)}
+            </span>
+          </span>
+        </div>
+        {/* The recommended tools have a description in the app's language too. */}
+        <p className="text-sm text-ink-light flex-1" dir="auto">{featured ? t(`vocabulary.resources.featured.blurb.${r.id}`) : r.description}</p>
+        <div className="text-[11px] text-ink-lighter truncate">{new URL(r.url).hostname.replace(/^www\./, '')}</div>
+        {ratings !== null && (
+          <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-border-subtle">
+            <div className="flex items-center gap-1.5 text-xs text-ink-light">
+              <StarRow value={summary?.average ?? 0} label={t('vocabulary.resources.average')} />
+              {ratings === undefined ? (
+                <Loader2 size={12} className="animate-spin" />
+              ) : summary ? (
+                <span className="tabular-nums">{summary.average.toFixed(1)} ({summary.count})</span>
+              ) : (
+                <span dir="auto">{t('vocabulary.resources.noRatings')}</span>
+              )}
+            </div>
+            {ratings && userId && (
+              <div className="flex items-center gap-1 text-xs text-ink-light">
+                <span dir="auto">{t('vocabulary.resources.yourRating')}</span>
+                <StarRow
+                  value={summary?.mine ?? 0}
+                  onRate={(n) => void handleRate(r.id, n)}
+                  label={`${t('vocabulary.resources.yourRating')} ${r.name}`}
+                />
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="fixed inset-0 bg-ink/50 flex items-center justify-center z-50 p-4" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div {...dialog.props} className="bg-card border border-border-subtle rounded-2xl w-full max-w-4xl max-h-[90svh] overflow-hidden flex flex-col">
@@ -152,54 +207,20 @@ export default function ResourcesModal({ onClose }: { onClose: () => void }) {
         </div>
 
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
+          {category === 'all' && (
+            <section className="space-y-3" aria-labelledby="featured-resources-title">
+              <div>
+                <h3 id="featured-resources-title" className="font-semibold text-ink flex items-center gap-2">
+                  <Sparkles size={16} className="text-gold-soft" />
+                  {t('vocabulary.resources.featured.title')}
+                </h3>
+                <p className="text-xs text-ink-light">{t('vocabulary.resources.featured.hint')}</p>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">{FEATURED_RESOURCES.map((r) => renderCard(r, true))}</div>
+            </section>
+          )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {visible.map((r) => {
-              const summary = ratings?.get(r.id);
-              return (
-                <div key={r.id} className="p-4 rounded-xl border border-border-subtle flex flex-col gap-2" dir="ltr">
-                  <div className="flex items-start justify-between gap-2">
-                    <a
-                      href={r.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="font-semibold text-ink hover:text-clay-soft flex items-center gap-1.5"
-                    >
-                      {r.name}
-                      <ExternalLink size={13} className="text-ink-lighter" />
-                    </a>
-                    <span className="shrink-0 text-[11px] px-1.5 py-0.5 rounded bg-ink/5 text-ink-light" dir="auto">
-                      {categoryLabel(r.category)} · {t(r.free === true ? 'vocabulary.resources.free' : 'vocabulary.resources.freemium')}
-                    </span>
-                  </div>
-                  <p className="text-sm text-ink-light flex-1">{r.description}</p>
-                  <div className="text-[11px] text-ink-lighter truncate">{new URL(r.url).hostname.replace(/^www\./, '')}</div>
-                  {ratings !== null && (
-                    <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-border-subtle">
-                      <div className="flex items-center gap-1.5 text-xs text-ink-light">
-                        <StarRow value={summary?.average ?? 0} label={t('vocabulary.resources.average')} />
-                        {ratings === undefined ? (
-                          <Loader2 size={12} className="animate-spin" />
-                        ) : summary ? (
-                          <span className="tabular-nums">{summary.average.toFixed(1)} ({summary.count})</span>
-                        ) : (
-                          <span dir="auto">{t('vocabulary.resources.noRatings')}</span>
-                        )}
-                      </div>
-                      {ratings && userId && (
-                        <div className="flex items-center gap-1 text-xs text-ink-light">
-                          <span dir="auto">{t('vocabulary.resources.yourRating')}</span>
-                          <StarRow
-                            value={summary?.mine ?? 0}
-                            onRate={(n) => void handleRate(r.id, n)}
-                            label={`${t('vocabulary.resources.yourRating')} ${r.name}`}
-                          />
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+            {visible.map((r) => renderCard(r, !!r.featured))}
           </div>
 
           {ratings === null && (

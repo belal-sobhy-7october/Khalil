@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Plus,
   ChevronLeft,
@@ -48,6 +48,8 @@ const VIEW_BUTTONS: ViewButton[] = [
 export default function Calendar() {
   const { t, isRTL } = useTranslation();
   const calendarEvents = useAppStore((s) => s.calendarEvents);
+  const userId = useAppStore((s) => s.session?.user?.id);
+  const loadCalendarEvents = useAppStore((s) => s.loadCalendarEvents);
   const currentDate = useAppStore((s) => s.currentDate);
   const viewMode = useAppStore((s) => s.viewMode);
   const showCalendarOnboarding = useAppStore((s) => s.showCalendarOnboarding);
@@ -59,6 +61,11 @@ export default function Calendar() {
   const addCalendarEvent = useAppStore((s) => s.addCalendarEvent);
   const toggleCalendarEventComplete = useAppStore((s) => s.toggleCalendarEventComplete);
   const deleteCalendarEvent = useAppStore((s) => s.deleteCalendarEvent);
+
+  // The events load when the calendar opens (they aren't on the page Khalil opens on).
+  useEffect(() => {
+    if (userId) void loadCalendarEvents();
+  }, [userId, loadCalendarEvents]);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<typeof calendarEvents[0] | null>(null);

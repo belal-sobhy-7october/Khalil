@@ -83,18 +83,18 @@ export default function SpeakActivity({ refId, lang, onDone }: { refId: string; 
       <div className="flex flex-wrap items-center gap-3">
         {recording ? (
           <button type="button" onClick={finish} className={`${primaryBtn} bg-red-500 hover:bg-red-600`}>
-            <Square size={13} /> {pick(lang, 'وقّف', 'Stop')} · {clock(seconds)}
+            <Square size={13} /> {pick(lang, 'أوقف', 'Stop')} · {clock(seconds)}
           </button>
         ) : (
           <button type="button" onClick={() => void start().then(() => setSeconds(0))} className={primaryBtn}>
-            <Mic size={13} /> {url ? pick(lang, 'سجّل تاني', 'Record again') : pick(lang, 'سجّل', 'Record')}
+            <Mic size={13} /> {url ? pick(lang, 'سجّل مرة أخرى', 'Record again') : pick(lang, 'سجّل', 'Record')}
           </button>
         )}
         <span className="text-xs text-ink-light tabular-nums">
-          {pick(lang, `الهدف: حوالي ${s.seconds} ثانية`, `Target: about ${s.seconds} seconds`)}
+          {pick(lang, `الهدف: نحو ${s.seconds} ثانية`, `Target: about ${s.seconds} seconds`)}
         </span>
       </div>
-      {error && <p className="text-xs text-red-600">{pick(lang, 'المايك مش متاح. اسمح بيه من المتصفح، أو قولها بصوت عالي وعلّم إنها خلصت.', 'The microphone is not available. Allow it in the browser, or just say it out loud and mark it done.')}</p>}
+      {error && <p className="text-xs text-red-600">{pick(lang, 'الميكروفون غير متاح. اسمح به من المتصفح، أو قلها بصوت مرتفع وعلّمها منجزة.', 'The microphone is not available. Allow it in the browser, or just say it out loud and mark it done.')}</p>}
       {url && !recording && (
         <div className="space-y-1.5">
           <audio src={url} controls className="w-full max-w-md" />
@@ -103,27 +103,27 @@ export default function SpeakActivity({ refId, lang, onDone }: { refId: string; 
               <span className="tabular-nums">
                 {pick(lang, `${took} ثانية`, `${took} seconds`)}
                 {took > s.seconds * 1.3 ? pick(lang, ' · أطول من الهدف: اختصر', ' · longer than the target: cut it down') : ''}
-                {took < s.seconds * 0.5 ? pick(lang, ' · قصير: زوّد مثال', ' · short: add an example') : ''}
+                {took < s.seconds * 0.5 ? pick(lang, ' · قصير: أضف مثالًا', ' · short: add an example') : ''}
               </span>
             )}
             <a href={url} download={`${s.id}.webm`} className={secondaryBtn}>
               <Download size={13} /> {pick(lang, 'نزّل التسجيل', 'Download')}
             </a>
           </div>
-          <p className="text-[11px] text-ink-light">{pick(lang, 'التسجيل بيتحفظ على جهازك بس (أول مرة وآخر 5 مرات)، مش في الحساب.', 'Saved on this device only (your first take and the latest five), not in your account.')}</p>
+          <p className="text-[11px] text-ink-light">{pick(lang, 'يُحفظ التسجيل على جهازك فقط (أول مرة وآخر 5 مرات)، لا في الحساب.', 'Saved on this device only (your first take and the latest five), not in your account.')}</p>
         </div>
       )}
       {(before || takes.length > 0) && !recording && (
         <div className="space-y-2 rounded-xl border border-border-subtle p-3">
-          <div className="text-xs font-semibold text-ink-light">{pick(lang, 'تسجيلاتك على الجهاز ده', 'Your recordings on this device')}</div>
-          {before && <TakePlayer take={before} label={pick(lang, 'تسجيل أول يوم (قبل)', 'Your day-one recording (before)')} lang={lang} />}
+          <div className="text-xs font-semibold text-ink-light">{pick(lang, 'تسجيلاتك على هذا الجهاز', 'Your recordings on this device')}</div>
+          {before && <TakePlayer take={before} label={pick(lang, 'تسجيل اليوم الأول (قبل)', 'Your day-one recording (before)')} lang={lang} />}
           {takes[0] && <TakePlayer take={takes[0]} label={pick(lang, 'أول مرة هنا', 'First take')} lang={lang} />}
           {takes.length > 1 && <TakePlayer take={takes[takes.length - 1]} label={pick(lang, 'آخر مرة', 'Latest take')} lang={lang} />}
         </div>
       )}
       {s.model && (
         <details>
-          <summary className="cursor-pointer py-1 text-xs text-ink-light hover:text-ink">{pick(lang, 'شوف نموذج بعد ما تجرب', 'See a model after your try')}</summary>
+          <summary className="cursor-pointer py-1 text-xs text-ink-light hover:text-ink">{pick(lang, 'شاهد نموذجًا بعد أن تجرّب', 'See a model after your try')}</summary>
           <div className="mt-2 flex items-start gap-1 rounded-xl bg-sage-soft/8 border border-sage-soft/30 p-3">
             <p className="flex-1 text-sm text-ink leading-relaxed">{s.model}</p>
             {lang === 'en' && <SpeakButton text={s.model} />}
@@ -131,7 +131,7 @@ export default function SpeakActivity({ refId, lang, onDone }: { refId: string; 
         </details>
       )}
       <details>
-        <summary className="cursor-pointer py-1 text-xs text-ink-light hover:text-ink">{pick(lang, 'خد رأي الـ AI (اكتب اللي قلته)', 'Get AI feedback (type what you said)')}</summary>
+        <summary className="cursor-pointer py-1 text-xs text-ink-light hover:text-ink">{pick(lang, 'خذ رأي الذكاء الاصطناعي (اكتب ما قلته)', 'Get AI feedback (type what you said)')}</summary>
         <div className="mt-2">
           <AiButtons prompt={speakFeedbackPrompt(s, lang)} lang={lang} />
         </div>

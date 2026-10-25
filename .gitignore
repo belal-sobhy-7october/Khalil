@@ -26,3 +26,6 @@ dist-ssr
 .aider*
 backup_before_migrations_*.sql
 e2e-shots/
+# The load test's outputs (scripts/load)
+scripts/load/recorded.json
+scripts/load/results*.json

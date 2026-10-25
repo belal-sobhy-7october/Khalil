@@ -2,7 +2,8 @@
 // scripts. Writes are kept per browser context, so a reload shows what the app
 // saved. Supports the subset of PostgREST the app uses: eq/gte/lte/like filters,
 // order, limit/offset, single objects, insert, upsert (on_conflict), update
-// and delete.
+// and delete, and the `app_startup` function (with what its migration adds:
+// the server's `updated_at` on the four synced tables and their deletions).
 import crypto from 'node:crypto';
 
 export const SUPA = 'http://localhost:54321';
@@ -78,13 +79,50 @@ function applyOrder(rows, order) {
   });
 }
 
+// The lists the app keeps on the device, and each row's key
+// (supabase/migrations/20261025120000_sync_and_startup.sql).
+const SYNCED = {
+  vocabulary_items: (r) => r.id,
+  user_kv: (r) => r.key,
+  wird_days: (r) => r.date,
+  habit_entries: (r) => `${r.habit_id}|${r.date}`,
+};
+
+/** `app_startup`, as the migration defines it, over the fake's tables (one user, so no filtering by user). */
+function appStartup(tables, { since = null, kv_keys = [] } = {}) {
+  const sinceMs = since ? Date.parse(since) : NaN;
+  const after = sinceMs > Date.now() - 60 * 86400e3 ? new Date(sinceMs - 120e3).toISOString() : null;
+  const list = (t, order) => applyOrder(tables[t] ?? [], order);
+  const changed = (t, order) => list(t, order).filter((r) => !after || (r.updated_at ?? '') > after);
+  return {
+    now: new Date().toISOString(),
+    full: !after,
+    focus: list('daily_focus'),
+    todos: list('todos', 'sort_order.asc,id.asc'),
+    life_categories: list('life_categories', 'sort_order.asc'),
+    sub_tracks: list('sub_tracks', 'sort_order.asc'),
+    habits: list('habits', 'sort_order.asc'),
+    vocabulary_categories: list('vocabulary_categories', 'name.asc'),
+    sticky_notes: list('sticky_notes', 'sort_order.asc'),
+    todo_notes: list('todo_notes', 'sort_order.asc'),
+    kv: Object.fromEntries((tables.user_kv ?? []).filter((r) => kv_keys.includes(r.key)).map((r) => [r.key, r.value])),
+    words: changed('vocabulary_items', 'created_at.asc,id.asc'),
+    srs: changed('user_kv').filter((r) => r.key.startsWith('srs:')).map((r) => ({ key: r.key, value: r.value })),
+    habit_entries: changed('habit_entries', 'date.asc,id.asc'),
+    wird: changed('wird_days', 'date.asc').map((r) => ({ date: r.date, data: r.data })),
+    deleted: after ? (tables.sync_deletions ?? []).filter((d) => d.deleted_at > after).map((d) => ({ source: d.source, key: d.row_key })) : [],
+  };
+}
+
 /**
  * Creates a route handler bound to its own copy of `seed`. `log` collects every
- * write as { method, table, rows } so tests can assert on what was sent.
+ * write as { method, table, rows } (and each app_startup call, as 'RPC') so tests
+ * can assert on what was sent; `reads` every GET as { table, query }.
  */
-export function createFakeSupabase(seed) {
+export function createFakeSupabase(seed, { startup = true } = {}) {
   const tables = structuredClone(seed);
   const log = [];
+  const reads = [];
   const handle = async (route) => {
     const req = route.request();
     const url = new URL(req.url());
@@ -93,6 +131,18 @@ export function createFakeSupabase(seed) {
     if (url.pathname.startsWith('/auth/v1/token')) return route.fulfill({ json: session });
     if (url.pathname.startsWith('/auth/v1/')) return route.fulfill({ json: {} });
     if (!url.pathname.startsWith('/rest/v1/')) return route.fulfill({ status: 404, json: {} });
+    if (url.pathname === '/rest/v1/rpc/app_startup') {
+      // Without the migration, PostgREST answers that the function doesn't exist.
+      if (!startup) return route.fulfill({ status: 404, json: { code: 'PGRST202', message: 'Could not find the function public.app_startup(kv_keys, since) in the schema cache' } });
+      let args = {};
+      try {
+        args = JSON.parse(req.postData() ?? '{}') ?? {};
+      } catch {
+        // no arguments
+      }
+      log.push({ method: 'RPC', table: 'app_startup', rows: [args] });
+      return route.fulfill({ json: appStartup(tables, args) });
+    }
     const table = url.pathname.replace('/rest/v1/', '');
     const headers = req.headers();
     const accept = headers['accept'] ?? '';
@@ -114,6 +164,7 @@ export function createFakeSupabase(seed) {
     };
 
     if (method === 'GET' || method === 'HEAD') {
+      reads.push({ table, query: url.search });
       let list = applyOrder(applyFilters(rows, params), url.searchParams.get('order'));
       const offset = Number(url.searchParams.get('offset') ?? 0);
       const limit = url.searchParams.get('limit');
@@ -133,21 +184,28 @@ export function createFakeSupabase(seed) {
     }
     const wantRows = prefer.includes('return=representation');
     const now = new Date().toISOString();
+    // The migration's trigger: the server's clock, whatever the app sent.
+    const stamp = (row) => {
+      if (SYNCED[table]) row.updated_at = now;
+      return row;
+    };
 
     if (method === 'POST') {
       const incoming = (Array.isArray(body) ? body : [body]).filter(Boolean);
       const conflict = url.searchParams.get('on_conflict')?.split(',');
       const merge = prefer.includes('resolution=merge-duplicates');
+      const ignore = prefer.includes('resolution=ignore-duplicates');
       const saved = [];
       for (const row of incoming) {
         const key = conflict ?? ['id'];
         const existing = rows.find((r) => key.every((k) => row[k] !== undefined && String(r[k]) === String(row[k])));
         if (existing) {
+          if (ignore) continue; // ON CONFLICT DO NOTHING
           if (!merge && !conflict) return route.fulfill({ status: 409, json: { code: '23505', message: `duplicate key value violates unique constraint on ${table}` } });
-          Object.assign(existing, row, { updated_at: row.updated_at ?? now });
+          stamp(Object.assign(existing, row, { updated_at: row.updated_at ?? now }));
           saved.push(existing);
         } else {
-          const full = { id: crypto.randomUUID(), created_at: now, updated_at: now, ...row };
+          const full = stamp({ id: crypto.randomUUID(), created_at: now, updated_at: now, ...row });
           rows.push(full);
           saved.push(full);
         }
@@ -157,19 +215,22 @@ export function createFakeSupabase(seed) {
     }
     if (method === 'PATCH') {
       const matched = applyFilters(rows, params);
-      for (const r of matched) Object.assign(r, body);
+      for (const r of matched) stamp(Object.assign(r, body));
       log.push({ method, table, rows: matched });
       return wantRows ? reply(matched) : route.fulfill({ status: 204, body: '' });
     }
     if (method === 'DELETE') {
       const matched = new Set(applyFilters(rows, params));
       tables[table] = rows.filter((r) => !matched.has(r));
+      if (SYNCED[table]) {
+        (tables.sync_deletions ??= []).push(...[...matched].map((r) => ({ source: table, row_key: SYNCED[table](r), deleted_at: now })));
+      }
       log.push({ method, table, rows: [...matched] });
       return wantRows ? reply([...matched]) : route.fulfill({ status: 204, body: '' });
     }
     return route.fulfill({ status: 405, json: {} });
   };
-  return { handle, tables, log };
+  return { handle, tables, log, reads };
 }
 
 /** Fake dictionaryapi.dev so Quick add can fill in definitions offline. */

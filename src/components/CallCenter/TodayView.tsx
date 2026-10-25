@@ -93,7 +93,7 @@ function PowerHours({ dayIndex, onGoTab }: { dayIndex: number; onGoTab: GoTab })
         <Pill>optional</Pill>
       </div>
       <ArabicNote>
-        لو هتذاكر 6 ساعات: المهام اللي فوق حوالي ساعتين. الباقي هنا: كلام واستماع كتير، لأن الطلاقة بتيجي من الكمية. ابدأ بـ 3 ساعات في أول أسبوع وزوّد تدريجي عشان متتحرقش.
+        إن كنت ستذاكر 6 ساعات: المهام في الأعلى نحو ساعتين، والباقي هنا: كلام واستماع كثير، لأن الطلاقة تأتي من الكمّ. ابدأ بـ 3 ساعات في الأسبوع الأول وزِد تدريجيًا حتى لا تُنهك.
       </ArabicNote>
       <ul className="divide-y divide-border-subtle">
         {items.map((item) => (
@@ -190,7 +190,7 @@ export default function TodayView({ dayIndex, currentIndex, onSelectDay, onRunTe
           <PartyPopper size={28} className="text-gold-soft shrink-0" />
           <div className="flex-1">
             <div className="font-semibold text-ink">Day complete!</div>
-            <ArabicNote>عاش يا بطل 💪 يوم كمان أقرب للشغلانة. لو لسه عندك طاقة، كمّل في الـ power hours أو ابدأ اليوم اللي بعده.</ArabicNote>
+            <ArabicNote>أحسنت يا بطل 💪 يوم آخر يقرّبك من الوظيفة. إن بقيت لديك طاقة، فتابع في الـ power hours أو ابدأ اليوم التالي.</ArabicNote>
           </div>
           {next !== null && (
             <button type="button" onClick={() => onSelectDay(next)} className={primaryBtn}>

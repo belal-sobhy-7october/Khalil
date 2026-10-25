@@ -4,6 +4,8 @@ import { useTranslation } from '../../i18n/useTranslation';
 import { useAppStore } from '../../store/appStore';
 import { usePomodoroStore } from '../../store/pomodoroStore';
 import { useWirdStore } from '../../lib/wird';
+import { useWirdItems } from '../../lib/wirdItems';
+import { useHabitEntries } from '../../lib/wirdSync';
 import { useKv } from '../../lib/useKv';
 import { PRACTICE_LOG_KEY, type PracticeLog } from '../../lib/englishPractice';
 import { addDaysToDateString, getToday } from '../../store/dateHelpers';
@@ -26,13 +28,16 @@ export default function AnalyticsSection({ onNavigate }: { onNavigate?: (section
   const locale = language === 'ar' ? 'ar-EG' : 'en-US';
   const userId = useAppStore((s) => s.session?.user?.id);
   const habits = useAppStore((s) => s.habits);
-  const habitEntries = useAppStore((s) => s.habitEntries);
+  // A habit linked to the wird reads its days from the wird.
+  const habitEntries = useHabitEntries();
   const dailyTodos = useAppStore((s) => s.dailyTodos);
   const vocabularyItems = useAppStore((s) => s.vocabularyItems);
   const sessions = usePomodoroStore((s) => s.sessions);
+  const loadSessions = usePomodoroStore((s) => s.loadSessions);
   const focusGoal = usePomodoroStore((s) => s.settings.dailyGoal * s.settings.focus);
   const wirdDays = useWirdStore((s) => s.days);
   const loadWird = useWirdStore((s) => s.loadRange);
+  const [wirdItems] = useWirdItems();
   const [practiceLog] = useKv<PracticeLog>(PRACTICE_LOG_KEY, {});
   const [range, setRange] = useState<Range>(30);
 
@@ -44,6 +49,9 @@ export default function AnalyticsSection({ onNavigate }: { onNavigate?: (section
   useEffect(() => {
     if (userId) void loadWird(userId, addDaysToDateString(today, -(2 * 90)), today);
   }, [userId, loadWird, today]);
+  useEffect(() => {
+    if (userId) void loadSessions(userId);
+  }, [userId, loadSessions]);
 
   const data = useMemo(() => {
     const build = (start: string, end: string) => {
@@ -51,7 +59,7 @@ export default function AnalyticsSection({ onNavigate }: { onNavigate?: (section
       const habitsS = habitSeries(dates, habits, habitEntries);
       const tasks = taskSeries(dates, dailyTodos);
       const focus = focusSeries(dates, sessions);
-      const wird = wirdSeries(dates, wirdDays);
+      const wird = wirdSeries(dates, wirdDays, wirdItems);
       const english = englishSeries(dates, practiceLog, vocabularyItems);
       return { dates, habitsS, tasks, focus, wird, english };
     };
@@ -63,14 +71,14 @@ export default function AnalyticsSection({ onNavigate }: { onNavigate?: (section
     const heatTasks = taskSeries(heatDates, dailyTodos);
     const heat = dayScores(heatDates, {
       habits: habitSeries(heatDates, habits, habitEntries),
-      wird: wirdSeries(heatDates, wirdDays),
+      wird: wirdSeries(heatDates, wirdDays, wirdItems),
       focus: focusSeries(heatDates, sessions),
       focusGoalMinutes: focusGoal,
       tasksDone: heatTasks.done,
       tasksTotal: heatTasks.total,
     });
     return { cur, prev, score, heat, breakdown: habitBreakdown(cur.dates, habits, habitEntries) };
-  }, [from, today, prevFrom, prevTo, habits, habitEntries, dailyTodos, sessions, wirdDays, practiceLog, vocabularyItems, focusGoal]);
+  }, [from, today, prevFrom, prevTo, habits, habitEntries, dailyTodos, sessions, wirdDays, wirdItems, practiceLog, vocabularyItems, focusGoal]);
 
   const { cur, prev } = data;
   const wirdTracked = (s: typeof cur.wird) => s.filter((p) => (p.value ?? 0) > 0);

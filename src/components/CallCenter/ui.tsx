@@ -9,7 +9,7 @@ export function Card({ children, className = '' }: { children: ReactNode; classN
   return <div className={`rounded-2xl border border-border-subtle bg-card p-4 sm:p-5 ${className}`}>{children}</div>;
 }
 
-/** A short friendly line in Egyptian Arabic, right to left inside the English page. */
+/** A short friendly line in Modern Standard Arabic, right to left inside the English page. */
 export function ArabicNote({ children, className = '' }: { children: ReactNode; className?: string }) {
   return (
     <p dir="rtl" lang="ar" className={`text-sm leading-relaxed text-ink-light font-[inherit] ${className}`}>

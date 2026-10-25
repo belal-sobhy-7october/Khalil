@@ -1,7 +1,18 @@
 # Khalil — notes for agents
 
 Personal dashboard (React 19 + TypeScript + Vite + Tailwind + Zustand + Supabase). See
-`README.md` for setup and scripts. The owner uses the app in Arabic (Egyptian) and English.
+`README.md` for setup and scripts. The app is in Arabic and English.
+
+## Arabic is Fusha only (الفصحى فقط)
+
+**Every Arabic word in Khalil is Modern Standard Arabic (الفصحى): no Egyptian or any other dialect, ever.**
+This covers the interface (`translations.ts`), lessons and data, notes, prompts sent to the AI, docs, comments,
+tests and e2e scripts. Write simple, friendly Fusha (لماذا، الآن، لا، هذا، اليوم), and use Arabic words where they
+exist (تمثيل الأدوار، التسويق، المبيعات) instead of English ones spelled in Arabic letters.
+`src/i18n/fusha.test.ts` lists the dialect words to avoid and fails on them in `src`,
+`scripts`, `api`, `.claude` and the top-level docs. Its `NOT_OURS` list is only for text that isn't ours (YouTube
+titles as their channels wrote them, and the keywords that recognize what a user types); never add a file there to
+silence the test, rewrite the text instead.
 
 ## Adding English topics (Topic Library)
 
@@ -23,6 +34,53 @@ network at all):
   for supabase-js to fail refreshing the token.
 - `scripts/e2e/offline.mjs` checks all of this against a production build, on a desktop, two phones
   (iPhone SE, Galaxy S24) and a tablet (iPad Mini) with touch (`--device` picks others).
+
+## Opening the app (one request, only what changed)
+
+`appStore.loadUserData` asks `app_startup` (`supabase/migrations/20261025120000_sync_and_startup.sql`,
+`src/lib/startup.ts`) for everything the tasks page needs in one request: the small lists in full, the
+settings in `STARTUP_KV_KEYS`, and only the words, flashcard states, habit days and wird days that
+changed since this device's last visit. The rest comes from the device's copy (`src/lib/syncCache.ts`,
+IndexedDB, one record per account); a copy older than 60 days, or a `since` the server finds too old,
+loads everything again.
+
+- The migration stamps `updated_at` with the server's clock on those four tables, and its triggers write
+  every deletion to `sync_deletions` (kept 90 days), so another device drops it too. A new table that the
+  app keeps on the device needs the same triggers, a key in `applyChanges` and in the e2e fake.
+- Until the migration runs on a database, `app_startup` doesn't exist and the app loads table by table
+  (`loadTables`); the e2e scripts test that with `KHALIL_E2E_LEGACY=1`.
+- `loadKv` takes the startup's settings without a request (`prefetchKv`); other keys asked for at the
+  same moment go in one request, and a value loaded or saved less than a minute ago isn't asked for again.
+- The calendar, the bookmarks and the focus sessions load when their page opens (`loadCalendarEvents`,
+  `loadBookmarks`, `loadSessions`); moods and sub track entries aren't loaded (nothing shows them).
+
+## Tasks & Habits (the page Khalil opens on)
+
+The sidebar's first item (`todo`), in this order: Tasks & Habits, Focus, Learn Languages, Learn Skills,
+Calendar, Bookmarks, Analytics, Settings. Choosing an item closes the menu on every screen size. Khalil
+always opens on this page (a reload keeps the browser tab's page; Settings → General can open the last
+page instead). It holds the daily focus, today's and this week's tasks, the whole wird sheet, the habits
+(and tracking) and the backlog; Settings → Tasks & Habits orders and hides them (`src/lib/tasksSettings.ts`,
+`user_kv` `tasks-settings`). The old `wird` and `life` sections are parts of it (`App.tsx` jumps to
+`#section-wird` / `#section-life`).
+
+- **One fact, one owner** (`src/lib/wirdSync.ts`): a prayer, a juz or the adhkar live in the wird
+  (`wird_days`), a habit's day in `habit_entries`, a task in `todos`. Today's tasks list the wird items
+  marked "in today's tasks" and the habits due today as rows that read and write their owner, never as
+  copies (copying tasks into each day is what made the old rollover bring deleted ones back).
+- A habit can be linked to a wird target (`prayer:fajr`, `prayer:fajr:jamaah` or an item id), saved in
+  `user_kv` `habit-links`. While linked, its days are read from the wird (`useHabitEntries`, used by the
+  habits grid and Analytics) and ticking it writes the wird. Linking moves its past days into the wird;
+  unlinking writes the wird's days back as its own.
+- The wird is the user's own (`src/lib/wirdItems.ts`, `user_kv` `wird-items`): the built-in items (the
+  five prayers, rawatib, qiyam, Quran, adhkar) can be hidden, reordered and given goals, and the user's
+  own items (`c-…`, a count or done/not done) keep their values in `WirdDay.custom`. `wirdScore` weights
+  the shown items; with only the built-in ones it is the old score.
+- Finished tasks stay, sink or hide (at once, the next day, after 24 hours) by `settings.completed`; a
+  task's `updatedAt` is when it was ticked. Hidden ones are still saved, counted in Analytics and listed
+  under "Finished".
+- "Suggestion or problem?" (account menu, Settings, the sidebar) opens WhatsApp with the owner, on the
+  owner's request (`src/lib/contact.ts`).
 
 ## Learn Languages and Learn Skills
 
@@ -76,24 +134,30 @@ and their detailed plan is in `src/data/callCenter/ROADMAP.md`.
 ## Sales Prep (in Learn Skills)
 
 A section (`sales`), open to every account: sales, marketing and negotiation from zero, as knowledge for any job. Four
-Knowledge books (sales, psychology, marketing, negotiation) are daily tasks in Levels 1–2 (Egyptian Arabic),
+Knowledge books (sales, psychology, marketing, negotiation) are daily tasks in Levels 1–2 (Arabic, Fusha),
 then Level 3 is the same skills in English; Today shows only one day. Selling electronics (the owner's current
 job, learned inside the company) is an Extra tab outside the plan. **Read `src/data/sales/README.md`
 before changing it.** Progress is in `user_kv` (`sales-*` keys). Listening tasks link searches unless a video id is confirmed.
 
 ## Learning Path (مسار التعلم)
 
-A 90-day English roadmap, open to every account: the first tab of the English hub (`path`; the old
-`path` section redirects there). It isn't a separate course: every day has the same six blocks, one per
-hub section (Vocabulary, Pronunciation & Accent, Listening, Reading, Grammar, Shadowing), about 20
-minutes each (10/15/20/30 in its settings), and plays the hub's own lessons inside the block.
+Daily English practice from the learner's own level (A1 to C1), with no end date, open to every account:
+the first tab of the English hub (`path`; the old `path` section redirects there). It promises no level
+and no deadline (the owner's rule): it gives every day a little of every skill. It isn't a separate
+course: every day has the same six blocks, one per hub section (Vocabulary, Pronunciation & Accent,
+Listening, Reading, Grammar, Shadowing), about 20 minutes each (10/15/20/30 in its settings), and plays
+the hub's own lessons inside the block.
 
 - `src/lib/learningPath.ts` builds the days (`buildPath(settings)`): each section's lessons in study order,
-  packed into days by length × a study factor (`STUDY_FACTOR`), long lessons cut into parts. Vocabulary is
-  the flashcard review plus the words of the day's topic (`PATH_TOPICS`: all 90 Topic Library packs, one
-  a day, B1 → B2 → C1); Grammar is Ibrahim Adel's course, then the grammar point of the day's topic.
-- Settings choose the sources and levels: Listening VOA (American English, the default) or Ibrahim Adel,
-  Reading British Council (the default) or Ibrahim Adel, and the Shadowing level.
+  packed into days by length × a study factor (`STUDY_FACTOR`), long lessons cut into parts. The path lasts
+  as long as any section has lessons (about two years at 20 minutes) and grows by itself when content is
+  added; a section that ran out gives its time to "your choice" in its tab. Vocabulary is the flashcard
+  review plus the words of the day's topic (`PATH_TOPICS`, a topic a day from the learner's level up,
+  then the easier ones; the library has B1–C1 topics, so A1–A2 start with the easiest); Grammar is
+  Ibrahim Adel's course, then the grammar point of the day's topic (every topic's once).
+- Settings: "Your level" (`level`) sets where the topics start and, through `startsFor`, where every
+  section starts; then the sources (Listening VOA, the default, or Ibrahim Adel; Reading British Council,
+  the default, or Ibrahim Adel) and each section's own start can still be changed.
 - Lessons are ticked in the hub's progress (`english-course-progress`), so one finished here or in its tab
   is done in both. The path's own `user_kv` value (`learning-path-v2`) keeps the settings, what the hub
   can't know (reviews, grammar points, sound drills, parts of lessons) and notes, keyed by `itemKey`.

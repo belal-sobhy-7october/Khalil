@@ -158,8 +158,8 @@ export default function TestRunner({ testId, onClose, onFinish }: {
         )}
         <ArabicNote>
           {finished.passed || test.kind === 'diagnostic'
-            ? 'عاش! كمّل على نفس الريتم. وراجع الغلطات اللي فوق قبل ما تنساها.'
-            : 'مش مشكلة خالص. راجع الغلطات اللي فوق، اعمل الـ review، وجرّب تاني. كل محاولة بتجيلك أسئلة جديدة.'}
+            ? 'أحسنت! استمر على الإيقاع نفسه، وراجع الأخطاء في الأعلى قبل أن تنساها.'
+            : 'لا بأس إطلاقًا. راجع الأخطاء في الأعلى، وأدِّ المراجعة، ثم حاول مرة أخرى. ستأتيك أسئلة جديدة في كل محاولة.'}
         </ArabicNote>
         <div className="flex flex-wrap gap-2">
           <button type="button" onClick={restart} className={secondaryBtn}>

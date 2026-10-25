@@ -81,7 +81,7 @@ describe('TopicChallenge', () => {
     render(<TopicChallenge category={category} onClose={() => {}} />);
     fireEvent.click(await screen.findByRole('tab', { name: /Listen & repeat/ }));
     expect(screen.getByText(/My greatest strength is that I'm proactive/)).toBeInTheDocument();
-    expect(screen.getAllByRole('button', { name: /Copy & open NaturalReaders/ })).toHaveLength(1);
+    expect(screen.getAllByRole('button', { name: /Copy & open NaturalReader/ })).toHaveLength(1);
   });
 
   it('shadowing embeds a YouTube link and can be skipped', async () => {

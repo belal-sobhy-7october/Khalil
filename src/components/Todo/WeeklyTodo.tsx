@@ -14,6 +14,8 @@ import { DndContext, closestCenter, PointerSensor, TouchSensor, useSensor, useSe
 import type { DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
 import { SortableTodoItem } from './SortableTodoItem';
+import { useArrangedTasks } from './useArrangedTasks';
+import HiddenDone from './HiddenDone';
 import { useAppStore } from '../../store/appStore';
 import { useTranslation } from '../../i18n/useTranslation';
 import { priorityColors } from '../../constants/priorityColors';
@@ -22,6 +24,8 @@ import type { Priority, WeeklyTodo as WeeklyTodoType } from '../../types';
 export default function WeeklyTodo() {
   const { t, isRTL } = useTranslation();
   const todos = useAppStore((s) => s.weeklyTodos);
+  // Finished tasks stay, sink or hide, as the settings say (hidden ones are listed under "Finished").
+  const { shown, hidden } = useArrangedTasks(todos);
   const addTodo = useAppStore((s) => s.addWeeklyTodo);
   const toggleTodo = useAppStore((s) => s.toggleWeeklyTodo);
   const removeTodo = useAppStore((s) => s.removeWeeklyTodo);
@@ -57,14 +61,14 @@ export default function WeeklyTodo() {
   const handleDragEnd = useCallback((event: DragEndEvent) => {
     const { active, over } = event;
     if (over && active.id !== over.id) {
-      const oldIndex = todos.findIndex((t) => t.id === active.id);
-      const newIndex = todos.findIndex((t) => t.id === over.id);
-      const newOrder = arrayMove(todos, oldIndex, newIndex);
-      reorderWeeklyTodos(newOrder.map((t) => t.id));
+      const oldIndex = shown.findIndex((t) => t.id === active.id);
+      const newIndex = shown.findIndex((t) => t.id === over.id);
+      const newOrder = arrayMove(shown, oldIndex, newIndex);
+      reorderWeeklyTodos([...newOrder, ...hidden].map((t) => t.id));
     }
-  }, [todos, reorderWeeklyTodos]);
+  }, [shown, hidden, reorderWeeklyTodos]);
 
-  const itemIds = useMemo(() => todos.map((t) => t.id), [todos]);
+  const itemIds = useMemo(() => shown.map((t) => t.id), [shown]);
 
   return (
     <section>
@@ -123,7 +127,7 @@ export default function WeeklyTodo() {
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <div className="p-2">
             <AnimatePresence mode="popLayout">
-              {todos.length === 0 ? (
+              {shown.length === 0 ? (
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -134,7 +138,7 @@ export default function WeeklyTodo() {
                 </motion.div>
               ) : (
                 <SortableContext items={itemIds} strategy={verticalListSortingStrategy}>
-                  {todos.map((todo) => (
+                  {shown.map((todo) => (
                     <SortableTodoItem key={todo.id} id={todo.id}>
                       <WeeklyTodoItem
                         todo={todo}
@@ -151,6 +155,7 @@ export default function WeeklyTodo() {
             </AnimatePresence>
           </div>
         </DndContext>
+        <HiddenDone tasks={hidden} onToggle={toggleTodo} onRemove={removeTodo} />
       </div>
     </section>
   );
@@ -190,7 +195,7 @@ const WeeklyTodoItem = memo(function WeeklyTodoItem({
     >
       <button
         onClick={() => onToggle(todo.id)}
-        className="shrink-0 text-ink-lighter hover:text-gold-soft transition-colors"
+        className="shrink-0 p-0.5 -m-0.5 text-ink-lighter hover:text-gold-soft transition-colors"
         aria-label={t(todo.completed ? 'a11y.markIncomplete' : 'a11y.markComplete')}
       >
         {todo.completed ? (

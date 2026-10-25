@@ -63,7 +63,7 @@ const JOBS = Number(values('jobs')[0] ?? 3);
 const ONLY = values('section'); // e.g. --section calendar --section sales: only these (and not the menu checks)
 
 // The sidebar's items, in order (Sidebar.tsx), and the sections each hub opens.
-const SECTIONS = ['todo', 'calendar', 'life', 'bookmarks', 'languages', 'skills', 'focus', 'wird', 'analytics', 'settings'];
+const SECTIONS = ['todo', 'focus', 'languages', 'skills', 'calendar', 'bookmarks', 'analytics', 'settings'];
 const HUBS = { languages: ['vocabulary'], skills: ['callcenter', 'sales'] };
 // Buttons that open a dialog, by section and (for a hub section) tab: translation keys, or literal names.
 const DIALOGS = [
@@ -355,7 +355,7 @@ async function tap(run, locator, what) {
   }
 }
 
-const activeSection = (page) => page.evaluate(() => localStorage.getItem('khalil-active-section'));
+const activeSection = (page) => page.evaluate(() => sessionStorage.getItem('khalil-active-section'));
 
 /** Closes the menu if it stayed open (it does on screens 1024px and wider). */
 async function closeMenu(page) {
@@ -396,11 +396,11 @@ async function goSection(run, page, id) {
     await closeMenu(page);
   }
   if (!opened) await navigate(page, id);
-  else if ((await activeSection(page)) !== id && id !== 'life') {
+  else if ((await activeSection(page)) !== id) {
     record(run, 'errors', `the menu item for ${id} didn't open it`, run.screen);
     await navigate(page, id);
   }
-  return (await activeSection(page)) === id || id === 'life';
+  return (await activeSection(page)) === id;
 }
 
 /** Opens a section without the menu (the app's own navigation event). */
@@ -411,7 +411,7 @@ async function navigate(page, id) {
 
 /** Reloads the page on a section: a fresh start after a screen that broke the layout. */
 async function reloadOn(page, id) {
-  await page.evaluate((id) => localStorage.setItem('khalil-active-section', id), id);
+  await page.evaluate((id) => sessionStorage.setItem('khalil-active-section', id), id);
   await page.reload({ waitUntil: 'domcontentloaded' });
   await settle(page);
 }
@@ -618,7 +618,7 @@ browsers.webkit = await webkit.launch().catch(() => null);
 // Warm up the dev server: the first time a section's code is loaded, its styles arrive a moment later.
 {
   const { page, context } = await openApp(browsers.chromium, BASE, 'warm-up', {});
-  for (const id of ['todo', 'calendar', 'bookmarks', 'languages', 'skills', 'vocabulary', 'callcenter', 'sales', 'focus', 'wird', 'analytics', 'settings']) await navigate(page, id);
+  for (const id of ['todo', 'calendar', 'bookmarks', 'languages', 'skills', 'vocabulary', 'callcenter', 'sales', 'focus', 'analytics', 'settings']) await navigate(page, id);
   await context.close();
 }
 const jobs = chosen.flatMap((name) => LANGS.map((lang) => [name, lang]));

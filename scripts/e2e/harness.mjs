@@ -12,6 +12,8 @@ export const problems = [];
  */
 export async function openApp(browser, base, name, opts = {}) {
   const { section = 'todo', theme = 'light', appearance = 'default', language = 'ar', englishTab, viewport = { width: 1440, height: 900 }, device, local = {} } = opts;
+  // KHALIL_E2E_LEGACY=1: a database without the app_startup migration (the app loads table by table).
+  const startup = opts.startup ?? !process.env.KHALIL_E2E_LEGACY;
   // `device` is a Playwright device descriptor (size, pixel ratio, user agent, touch); it replaces `viewport`.
   const context = await browser.newContext({ ...(device ?? { viewport }), locale: language === 'en' ? 'en-US' : 'ar-EG' });
   await context.addInitScript(
@@ -21,6 +23,8 @@ export async function openApp(browser, base, name, opts = {}) {
       sessionStorage.setItem('seeded', '1');
       localStorage.clear();
       localStorage.setItem('sb-localhost-auth-token', JSON.stringify(session));
+      // The section this tab is on (a reload stays there; a fresh visit opens the tasks page).
+      sessionStorage.setItem('khalil-active-section', section);
       localStorage.setItem('khalil-active-section', section);
       localStorage.setItem('khalil-theme', theme);
       localStorage.setItem('khalil-language', language);
@@ -30,7 +34,7 @@ export async function openApp(browser, base, name, opts = {}) {
     },
     { session, section, theme, appearance, language, englishTab, local }
   );
-  const backend = createFakeSupabase(buildSeed());
+  const backend = createFakeSupabase(buildSeed(), { startup });
   await context.route('**/*', async (route) => {
     const url = new URL(route.request().url());
     if (url.origin === new URL(base).origin) return route.continue();

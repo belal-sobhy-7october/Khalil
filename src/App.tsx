@@ -18,24 +18,19 @@ import { useAppStore } from './store/appStore';
 import { useTranslation } from './i18n/useTranslation';
 import LoginPage from './components/Auth/LoginPage';
 import DashboardLayout from './components/Layout/DashboardLayout';
-import DailyFocus from './components/DailyFocus/DailyFocus';
-import DailyTodo from './components/Todo/DailyTodo';
-import WeeklyTodo from './components/Todo/WeeklyTodo';
-import BacklogTodo from './components/Todo/BacklogTodo';
+import TasksPage from './components/Home/TasksPage';
 import PomodoroEngine from './components/Focus/PomodoroEngine';
 import FocusChip from './components/Focus/FocusChip';
 import ReviewReminders from './components/Vocabulary/ReviewReminders';
-import ReviewNudge from './components/Vocabulary/ReviewNudge';
 import OfflineBanner from './components/Common/OfflineBanner';
 import { HubCrumb } from './components/Learn/ui';
 import SelectionWordMenu from './components/Vocabulary/SelectionWordMenu';
 import { applyAppearance, useAppearance } from './lib/appearance';
+import { getTasksSettings } from './lib/tasksSettings';
 
 import { createStickyNote, createTodoNote } from './components/Canvas/noteFactories';
 import type { StickyNoteData, TodoNoteData } from './types';
 
-const LifePillars = lazy(() => import('./components/LifePillars/LifePillars'));
-const HabitsTracker = lazy(() => import('./components/Habits/HabitsTracker'));
 const BookmarksVault = lazy(() => import('./components/Bookmarks/BookmarksVault'));
 const NotesPanel = lazy(() => import('./components/Layout/NotesPanel'));
 const Calendar = lazy(() => import('./components/Calendar/Calendar'));
@@ -45,9 +40,51 @@ const SalesPrep = lazy(() => import('./components/Sales/SalesPrep'));
 const LanguagesHub = lazy(() => import('./components/Learn/LanguagesHub'));
 const SkillsHub = lazy(() => import('./components/Learn/SkillsHub'));
 const FocusSection = lazy(() => import('./components/Focus/FocusSection'));
-const WirdSection = lazy(() => import('./components/Wird/WirdSection'));
 const AnalyticsSection = lazy(() => import('./components/Analytics/AnalyticsSection'));
 const SettingsSection = lazy(() => import('./components/Settings/SettingsSection'));
+
+const SECTION_KEY = 'khalil-active-section';
+
+/** Old sections that are now parts of the tasks page. */
+const PAGE_PARTS: Record<string, string> = { wird: 'todo', life: 'todo' };
+
+/** The page a section id opens (the wird and the habits open the tasks page). */
+function resolveSection(section: string): string {
+  return PAGE_PARTS[section] ?? section;
+}
+
+/**
+ * The page Khalil opens on: the tasks page, unless this browser tab was on
+ * another page (a reload stays there) or the settings say "the last page".
+ */
+function initialSection(): string {
+  if (typeof window === 'undefined') return 'todo';
+  let stored: string | null = null;
+  try {
+    stored = sessionStorage.getItem(SECTION_KEY) ?? (getTasksSettings().startup === 'last' ? localStorage.getItem(SECTION_KEY) : null);
+  } catch {
+    // storage blocked: open on the tasks page
+  }
+  // The learning path moved into the English hub.
+  if (stored === 'path') {
+    try {
+      localStorage.setItem('khalil-english-tab', 'path');
+    } catch {
+      // storage blocked
+    }
+    return 'vocabulary';
+  }
+  return stored ? resolveSection(stored) : 'todo';
+}
+
+function rememberSection(section: string) {
+  try {
+    sessionStorage.setItem(SECTION_KEY, section);
+    localStorage.setItem(SECTION_KEY, section);
+  } catch {
+    // storage blocked: the page just isn't remembered
+  }
+}
 
 function App() {
   const language = useAppStore((s) => s.language);
@@ -57,19 +94,7 @@ function App() {
   const setSession = useAppStore((s) => s.setSession);
   const loadUserData = useAppStore((s) => s.loadUserData);
   const { isRTL, t } = useTranslation();
-  const [activeSection, setActiveSection] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('khalil-active-section');
-      // The learning path moved into the English hub.
-      if (stored === 'path') {
-        localStorage.setItem('khalil-english-tab', 'path');
-        return 'vocabulary';
-      }
-      if (stored) return stored;
-    }
-    return 'todo';
-  });
-  const [lifeView, setLifeView] = useState<'tracking' | 'habits'>('habits');
+  const [activeSection, setActiveSection] = useState(initialSection);
   const stickyNotes = useAppStore((s) => s.stickyNotes);
   const todoNotes = useAppStore((s) => s.todoNotes);
   const addStickyNoteStore = useAppStore((s) => s.addStickyNote);
@@ -252,10 +277,16 @@ function App() {
   }, [loadUserData, setSession]);
 
   const handleSectionChange = useCallback((section: string) => {
-    setActiveSection(section);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('khalil-active-section', section);
-    }
+    const target = resolveSection(section);
+    setActiveSection(target);
+    rememberSection(target);
+    // The wird and the habits are parts of the tasks page: jump to them there.
+    // Any other page opens at its top.
+    window.setTimeout(() => {
+      const anchor = section !== target ? document.getElementById(`section-${section}`) : null;
+      if (anchor) anchor.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      else window.scrollTo({ top: 0 });
+    }, 50);
   }, []);
 
   // Other components (e.g. the account menu) can ask to open a section.
@@ -285,7 +316,7 @@ function App() {
       <DashboardLayout
         activeSection={activeSection}
         onSectionChange={handleSectionChange}
-        allowFullWidth={['calendar', 'bookmarks', 'languages', 'skills', 'vocabulary', 'callcenter', 'sales', 'focus', 'wird', 'analytics', 'settings'].includes(activeSection)}
+        allowFullWidth={['calendar', 'bookmarks', 'languages', 'skills', 'vocabulary', 'callcenter', 'sales', 'focus', 'analytics', 'settings'].includes(activeSection)}
         notesSlot={
           <Suspense fallback={null}>
             <NotesPanel
@@ -333,14 +364,13 @@ function App() {
           }>
             <BookmarksVault />
           </Suspense>
-        ) : ['focus', 'wird', 'analytics', 'settings'].includes(activeSection) ? (
+        ) : ['focus', 'analytics', 'settings'].includes(activeSection) ? (
           <Suspense fallback={
             <div className="min-h-screen flex items-center justify-center">
               <div className="w-8 h-8 border-2 border-clay-soft border-t-transparent rounded-full animate-spin" />
             </div>
           }>
             {activeSection === 'focus' && <FocusSection />}
-            {activeSection === 'wird' && <WirdSection />}
             {activeSection === 'analytics' && <AnalyticsSection onNavigate={handleSectionChange} />}
             {activeSection === 'settings' && <SettingsSection />}
           </Suspense>
@@ -372,53 +402,7 @@ function App() {
             <EnglishHub />
           </Suspense>
         ) : (
-          <>
-            <div className={`space-y-8 canvas-area max-w-[1800px] mx-auto`} style={{ position: 'relative' }}>
-              <div>
-                <DailyFocus />
-                <ReviewNudge />
-              </div>
-
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-                <div>
-                  <DailyTodo />
-                </div>
-                <div>
-                  <WeeklyTodo />
-                </div>
-              </div>
-
-              <div>
-                <BacklogTodo />
-              </div>
-
-              <Suspense fallback={<div className="h-32" />}>
-                <section id="section-life">
-                  <div className="space-y-8">
-                    <div className="flex items-center gap-2 mb-4">
-                      <button
-                        onClick={() => setLifeView('habits')}
-                        className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                          lifeView === 'habits' ? 'bg-clay-soft text-white' : 'bg-ink/5 text-ink-light hover:bg-ink/10'
-                        }`}
-                      >
-                        {t('habits.toggleHabits')}
-                      </button>
-                      <button
-                        onClick={() => setLifeView('tracking')}
-                        className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                          lifeView === 'tracking' ? 'bg-clay-soft text-white' : 'bg-ink/5 text-ink-light hover:bg-ink/10'
-                        }`}
-                      >
-                        {t('habits.toggleTracking')}
-                      </button>
-                    </div>
-                    {lifeView === 'tracking' ? <LifePillars /> : <HabitsTracker />}
-                  </div>
-                </section>
-              </Suspense>
-            </div>
-          </>
+          <TasksPage />
         )}
       </DashboardLayout>
 

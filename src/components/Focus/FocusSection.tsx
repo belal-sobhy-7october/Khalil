@@ -69,6 +69,12 @@ export default function FocusSection() {
   const recent = useMemo(() => [...s.sessions].reverse().slice(0, 8), [s.sessions]);
   const todaysTasks = dailyTodos.filter((td) => td.date === today && !td.completed);
 
+  // The sessions load when a page that shows them opens; until then, this device's copy.
+  const loadSessions = s.loadSessions;
+  useEffect(() => {
+    if (userId) void loadSessions(userId);
+  }, [userId, loadSessions]);
+
   // Keyboard: Space start/pause, R reset, S skip (ignored while typing).
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {

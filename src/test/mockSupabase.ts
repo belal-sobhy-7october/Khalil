@@ -19,6 +19,7 @@ const chainable = {
   delete: vi.fn().mockReturnThis(),
   eq: vi.fn().mockReturnThis(),
   neq: vi.fn().mockReturnThis(),
+  in: vi.fn().mockReturnThis(),
   lt: vi.fn().mockReturnThis(),
   lte: vi.fn().mockReturnThis(),
   gt: vi.fn().mockReturnThis(),

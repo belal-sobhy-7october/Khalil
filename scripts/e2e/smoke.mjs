@@ -25,11 +25,11 @@ async function visit(browser, name, opts, interact) {
 }
 
 const browser = await chromium.launch(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {});
-const sections = ['todo', 'calendar', 'life', 'bookmarks', 'languages', 'skills', 'vocabulary', 'focus', 'wird', 'analytics', 'settings'];
+const sections = ['todo', 'focus', 'languages', 'skills', 'vocabulary', 'calendar', 'bookmarks', 'analytics', 'settings'];
 for (const s of sections) await visit(browser, `ar-light-${s}`, { section: s });
 for (const tab of ['path', 'vocabulary', 'pronunciation', 'listening', 'reading', 'grammar', 'shadowing']) await visit(browser, `ar-light-english-${tab}`, { section: 'vocabulary', englishTab: tab });
 await visit(browser, 'en-dark-english-path', { section: 'vocabulary', englishTab: 'path', theme: 'dark', language: 'en' });
-for (const s of ['languages', 'skills', 'focus', 'wird', 'analytics', 'settings']) await visit(browser, `en-dark-${s}`, { section: s, theme: 'dark', language: 'en' });
+for (const s of ['todo', 'languages', 'skills', 'focus', 'analytics', 'settings']) await visit(browser, `en-dark-${s}`, { section: s, theme: 'dark', language: 'en' });
 const themes = [['downtown', 'dark'], ['pink', 'light'], ['andalusian', 'light'], ['autumn', 'dark'], ['black', 'dark'], ['wood', 'light'], ['pine', 'dark'], ['velvet', 'dark'], ['copper', 'light']];
 for (const [a, m] of themes) await visit(browser, `theme-${a}-${m}`, { section: 'analytics', theme: m, appearance: a });
 for (const [a, m] of themes.slice(0, 5)) await visit(browser, `theme-${a}-${m}-todo`, { section: 'todo', theme: m, appearance: a });
@@ -43,9 +43,9 @@ await visit(browser, 'flow-focus-start', { section: 'focus' }, async (page) => {
   const icon = await page.evaluate(() => document.querySelector('link[rel~="icon"]')?.getAttribute('href') ?? '');
   if (!icon.startsWith('data:image/png')) problems.push('[flow-focus-start] favicon not replaced with progress ring');
 });
-await visit(browser, 'flow-wird-click', { section: 'wird' }, async (page) => {
+await visit(browser, 'flow-wird-click', { section: 'todo' }, async (page) => {
   const before = await page.locator('text=%').count();
-  const cell = page.locator('button[aria-label^="الفجر 20"]:not([disabled])').last();
+  const cell = page.locator('#section-wird button[aria-label^="الفجر 20"]:not([disabled])').last();
   await cell.click();
   await page.waitForTimeout(300);
   if ((await page.locator('text=%').count()) < before) problems.push('[flow-wird-click] score cells disappeared');
@@ -63,9 +63,9 @@ await visit(browser, 'mobile-analytics', { section: 'analytics', viewport: { wid
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
   if (overflow > 2) problems.push(`[mobile-analytics] horizontal overflow ${overflow}px`);
 });
-await visit(browser, 'mobile-wird', { section: 'wird', viewport: { width: 390, height: 844 } }, async (page) => {
+await visit(browser, 'mobile-wird', { section: 'todo', viewport: { width: 390, height: 844 } }, async (page) => {
   const todayVisible = await page.evaluate(() => {
-    const btn = [...document.querySelectorAll('button')].find((b) => /text-clay-soft/.test(b.className) && b.querySelector('span'));
+    const btn = [...document.querySelectorAll('#section-wird button')].find((b) => /text-clay-soft/.test(b.className) && b.querySelector('span'));
     if (!btn) return 'no today header';
     const r = btn.getBoundingClientRect();
     return r.right > 0 && r.left < window.innerWidth ? 'yes' : `no (${Math.round(r.left)})`;
