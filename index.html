@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="ar" dir="rtl">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -15,24 +15,37 @@
       href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Tajawal:wght@300;400;500;700;900&family=Noto+Naskh+Arabic:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <title>Khalil — خليل</title>
+    <title>خليل Khalil | تعلّم الإنجليزية مجانًا ونظّم يومك وعاداتك</title>
     <meta
       name="description"
-      content="Khalil (خليل) is a free study and life dashboard: a 90-day English path with flashcards, pronunciation, listening, reading, grammar and shadowing, plus Call Center and Sales prep, habits and focus tools. In Arabic and English, and it works offline."
+      content="خليل تطبيق مجاني بالعربية والإنجليزية: مسار يومي لتعلم الإنجليزية من A1 إلى C1، وبطاقات مراجعة ذكية، ومواضيع للمحادثة، واستعداد لوظائف مراكز الاتصال والمبيعات، ومهام وعادات. ويعمل دون إنترنت."
     />
     <link rel="canonical" href="https://khalil-34xv.vercel.app/" />
+    <link rel="alternate" hreflang="ar" href="https://khalil-34xv.vercel.app/ar" />
+    <link rel="alternate" hreflang="en" href="https://khalil-34xv.vercel.app/en" />
+    <link rel="alternate" hreflang="x-default" href="https://khalil-34xv.vercel.app/" />
     <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="Khalil — خليل" />
-    <meta property="og:title" content="Khalil — خليل" />
+    <meta property="og:site_name" content="خليل Khalil" />
+    <meta property="og:title" content="خليل Khalil | تعلّم الإنجليزية مجانًا ونظّم يومك" />
     <meta
       property="og:description"
-      content="A 90-day English path, flashcards, Call Center and Sales prep, habits and focus tools, in Arabic and English. Free, and it works offline."
+      content="مسار يومي لتعلم الإنجليزية، وبطاقات مراجعة، والاستعداد لوظائف مراكز الاتصال والمبيعات، ومهام وعادات. مجاني، ويعمل دون إنترنت."
     />
     <meta property="og:url" content="https://khalil-34xv.vercel.app/" />
-    <meta property="og:image" content="https://khalil-34xv.vercel.app/icon-512.png" />
-    <meta name="twitter:card" content="summary" />
+    <meta property="og:locale" content="ar_EG" />
+    <meta property="og:locale:alternate" content="en_US" />
+    <meta property="og:image" content="https://khalil-34xv.vercel.app/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <style>
+      /* What #root shows before the app starts is for crawlers without JavaScript. */
+      .js #seo-landing { display: none; }
+      #seo-landing { max-width: 40rem; margin: 2rem auto; padding: 0 16px; font-family: system-ui, sans-serif; line-height: 1.8; }
+    </style>
     <script>
       (function() {
+        document.documentElement.classList.add('js');
         var theme = localStorage.getItem('khalil-theme');
         if (!theme) theme = 'dark';
         document.documentElement.classList.add(theme);
@@ -40,7 +53,7 @@
     </script>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root"><!--seo-landing--></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

@@ -6,9 +6,10 @@ import { useTranslation } from '../../i18n/useTranslation';
 import CalligraphyWatermark from '../Common/CalligraphyWatermark';
 import { StudyTopicsButton } from '../Common/OfflineBanner';
 import { useOnline } from '../../lib/offline';
+import { ROUTES } from '../../seo/routes';
 
 export default function LoginPage() {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const [loading, setLoading] = useState(false);
   const online = useOnline();
 
@@ -48,6 +49,7 @@ export default function LoginPage() {
               </motion.div>
               <h1 className="text-3xl font-bold font-amiri text-ink mb-1 leading-relaxed">{t('app.title')}</h1>
               <p className="text-ink-light text-sm">{t('app.subtitle')}</p>
+              <p className="text-ink-light text-sm leading-relaxed mt-3">{t('auth.about')}</p>
             </div>
           </div>
 
@@ -91,6 +93,16 @@ export default function LoginPage() {
             </p>
           </div>
         </div>
+
+        {/* The public lessons (src/seo): real links, so search engines find them from here too. */}
+        <nav aria-label={t('auth.freeLessons')} className="mt-5 text-center">
+          <p className="text-xs text-ink-lighter mb-2">{t('auth.freeLessons')}</p>
+          <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 text-sm">
+            <a href={ROUTES.topics(language)} className="text-clay-soft hover:underline">{t('auth.freeTopics')}</a>
+            <a href={ROUTES.callCenter(language)} className="text-clay-soft hover:underline">{t('auth.freeCallCenter')}</a>
+            <a href={ROUTES.sales} className="text-clay-soft hover:underline">{t('auth.freeSales')}</a>
+          </div>
+        </nav>
       </motion.div>
     </div>
   );
