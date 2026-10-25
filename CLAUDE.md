@@ -78,7 +78,9 @@ Every page has its own address (`src/lib/routes.ts`): `/tasks`, `/focus`, `/lang
 `/languages/english/<tab>` (the English hub's tab), `/skills`, `/skills/call-center`, `/skills/sales`,
 `/calendar`, `/bookmarks`, `/analytics`, `/settings`. Opening a page adds a history entry, so Back and
 Forward work; a reload, a bookmark or a link opens the page it names; the root (and an unknown address)
-opens the page this tab was on or the tasks page, then shows its address. The tab's title names the page
+opens the page this tab was on or the tasks page, then shows its address once signed in (the sign-in page
+keeps `/`, the address search engines know). `/ar` and `/en` belong to the public pages (Public pages
+above), never to the app. The tab's title names the page
 (`setPageTitle`; the focus timer's countdown takes the title while it runs and gives it back). Vercel
 (`vercel.json`) and the service worker (offline) answer every address with the app. In e2e scripts,
 open a section by its address or from the root (`reloadOn` in `devices.mjs`): a reload keeps the address.

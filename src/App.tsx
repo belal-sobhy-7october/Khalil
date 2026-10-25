@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, lazy, Suspense } from 'react';
+import { useEffect, useRef, useState, useCallback, lazy, Suspense } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { Plus, StickyNote as StickyNoteIcon, ListTodo } from 'lucide-react';
 import {
@@ -280,14 +280,18 @@ function App() {
     };
   }, [loadUserData, setSession]);
 
-  // The address the app opened on becomes the open page's (the root and an
-  // unknown address become /tasks, or the page this tab was on).
+  // Signed in, the address the app opened on becomes the open page's (the root
+  // and an unknown address become /tasks, or the page this tab was on). The
+  // sign-in page keeps its address: the root stays the one search engines know.
+  const addressShown = useRef(false);
   useEffect(() => {
+    if (!session || addressShown.current) return;
+    addressShown.current = true;
     showPage(activeSection, activeSection === 'vocabulary' ? readEnglishTab() : undefined, true);
     rememberSection(activeSection);
-    // Only once, on opening: later pages are shown by handleSectionChange and Back.
+    // Only once: later pages are shown by handleSectionChange and Back.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [session]);
 
   // Back and Forward: open the page the address names.
   useEffect(() => {

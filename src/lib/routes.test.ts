@@ -34,6 +34,12 @@ describe('routeOf and pathFor', () => {
     expect(routeOf('/%E0%A4%A')).toBeNull();
   });
 
+  it('leaves /ar and /en to the public pages', () => {
+    for (const section of SECTIONS) expect(pathFor(section)).not.toMatch(/^\/(ar|en)(\/|$)/);
+    expect(routeOf('/ar')).toBeNull();
+    expect(routeOf('/en/english-topics')).toBeNull();
+  });
+
   it('names no page for the root or an unknown address', () => {
     expect(routeOf('/')).toBeNull();
     expect(routeOf('')).toBeNull();
