@@ -111,6 +111,8 @@ async function run(browser, name) {
     await page.waitForTimeout(1500);
     check(!(await page.getByText('تسجيل الدخول بـ Google').count()), 'offline: login page shown instead of the app');
     check(await page.getByText('لا يوجد اتصال بالإنترنت').first().isVisible().catch(() => false), 'offline: no offline banner');
+    // The reload was on the English hub's own address (lib/routes.ts).
+    check(new URL(page.url()).pathname.startsWith('/languages/english/'), `offline: the reload is on ${new URL(page.url()).pathname}`);
     await fits('offline');
     await page.screenshot({ path: `${dir}/offline-app.png`, fullPage: true });
 
@@ -127,6 +129,12 @@ async function run(browser, name) {
     await press(page.getByRole('button', { name: 'علّمه مذاكَرًا' }));
     check(await page.evaluate(() => Object.keys(JSON.parse(localStorage.getItem('khalil-studied-topics') ?? '{}')).length === 1), 'offline: studied mark not saved');
     await page.screenshot({ path: `${dir}/offline-lesson.png` });
+
+    // 3b. Another page's own address, opened straight away with no network.
+    await page.goto(new URL('/focus', BASE).href, { waitUntil: 'domcontentloaded' });
+    await page.waitForTimeout(1200);
+    check(await page.getByRole('heading', { name: 'التركيز', exact: true }).isVisible().catch(() => false), 'offline: /focus did not open the Focus page');
+    check(new URL(page.url()).pathname === '/focus', `offline: /focus became ${new URL(page.url()).pathname}`);
 
     // 4. An expired token offline still opens the app quickly (no 30s wait, no login page).
     await page.evaluate((s) => localStorage.setItem('sb-localhost-auth-token', JSON.stringify(s)), expired);

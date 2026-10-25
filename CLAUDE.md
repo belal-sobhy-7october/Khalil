@@ -72,12 +72,23 @@ loads everything again.
 - The calendar, the bookmarks and the focus sessions load when their page opens (`loadCalendarEvents`,
   `loadBookmarks`, `loadSessions`); moods and sub track entries aren't loaded (nothing shows them).
 
+## Page addresses
+
+Every page has its own address (`src/lib/routes.ts`): `/tasks`, `/focus`, `/languages`,
+`/languages/english/<tab>` (the English hub's tab), `/skills`, `/skills/call-center`, `/skills/sales`,
+`/calendar`, `/bookmarks`, `/analytics`, `/settings`. Opening a page adds a history entry, so Back and
+Forward work; a reload, a bookmark or a link opens the page it names; the root (and an unknown address)
+opens the page this tab was on or the tasks page, then shows its address. The tab's title names the page
+(`setPageTitle`; the focus timer's countdown takes the title while it runs and gives it back). Vercel
+(`vercel.json`) and the service worker (offline) answer every address with the app. In e2e scripts,
+open a section by its address or from the root (`reloadOn` in `devices.mjs`): a reload keeps the address.
+
 ## Tasks & Habits (the page Khalil opens on)
 
 The sidebar's first item (`todo`), in this order: Tasks & Habits, Focus, Learn Languages, Learn Skills,
 Calendar, Bookmarks, Analytics, Settings. Choosing an item closes the menu on every screen size. Khalil
-always opens on this page (a reload keeps the browser tab's page; Settings → General can open the last
-page instead). It holds the daily focus, today's and this week's tasks, the whole wird sheet, the habits
+opens on this page from its root address (Settings → General can open the last page instead); a page's
+own address opens that page (see Page addresses). It holds the daily focus, today's and this week's tasks, the whole wird sheet, the habits
 (and tracking) and the backlog; Settings → Tasks & Habits orders and hides them (`src/lib/tasksSettings.ts`,
 `user_kv` `tasks-settings`). The old `wird` and `life` sections are parts of it (`App.tsx` jumps to
 `#section-wird` / `#section-life`).

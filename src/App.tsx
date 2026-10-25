@@ -27,6 +27,8 @@ import { HubCrumb } from './components/Learn/ui';
 import SelectionWordMenu from './components/Vocabulary/SelectionWordMenu';
 import { applyAppearance, useAppearance } from './lib/appearance';
 import { getTasksSettings } from './lib/tasksSettings';
+import { readEnglishTab, routeOf, setPageTitle, showPage, writeEnglishTab } from './lib/routes';
+import { ENGLISH_TAB_EVENT } from './lib/openReview';
 
 import { createStickyNote, createTodoNote } from './components/Canvas/noteFactories';
 import type { StickyNoteData, TodoNoteData } from './types';
@@ -54,11 +56,17 @@ function resolveSection(section: string): string {
 }
 
 /**
- * The page Khalil opens on: the tasks page, unless this browser tab was on
- * another page (a reload stays there) or the settings say "the last page".
+ * The page Khalil opens on: the one its address names (/focus, a reload, a
+ * bookmark); else the tasks page, unless this browser tab was on another page
+ * or the settings say "the last page".
  */
 function initialSection(): string {
   if (typeof window === 'undefined') return 'todo';
+  const route = routeOf(window.location.pathname);
+  if (route) {
+    if (route.tab) writeEnglishTab(route.tab);
+    return route.section;
+  }
   let stored: string | null = null;
   try {
     stored = sessionStorage.getItem(SECTION_KEY) ?? (getTasksSettings().startup === 'last' ? localStorage.getItem(SECTION_KEY) : null);
@@ -67,11 +75,7 @@ function initialSection(): string {
   }
   // The learning path moved into the English hub.
   if (stored === 'path') {
-    try {
-      localStorage.setItem('khalil-english-tab', 'path');
-    } catch {
-      // storage blocked
-    }
+    writeEnglishTab('path');
     return 'vocabulary';
   }
   return stored ? resolveSection(stored) : 'todo';
@@ -276,10 +280,55 @@ function App() {
     };
   }, [loadUserData, setSession]);
 
+  // The address the app opened on becomes the open page's (the root and an
+  // unknown address become /tasks, or the page this tab was on).
+  useEffect(() => {
+    showPage(activeSection, activeSection === 'vocabulary' ? readEnglishTab() : undefined, true);
+    rememberSection(activeSection);
+    // Only once, on opening: later pages are shown by handleSectionChange and Back.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Back and Forward: open the page the address names.
+  useEffect(() => {
+    const onPop = () => {
+      const route = routeOf(window.location.pathname);
+      const section = route?.section ?? 'todo';
+      if (route?.tab) {
+        writeEnglishTab(route.tab);
+        window.dispatchEvent(new CustomEvent(ENGLISH_TAB_EVENT, { detail: route.tab }));
+      }
+      setActiveSection(section);
+      rememberSection(section);
+    };
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, []);
+
+  // The tab's title names the open page ("التركيز — خليل"); the sign-in page keeps the app's name.
+  useEffect(() => {
+    const names: Record<string, string> = {
+      todo: t('nav.todo'),
+      focus: t('nav.focus'),
+      languages: t('nav.languages'),
+      skills: t('nav.skills'),
+      calendar: t('nav.calendar'),
+      bookmarks: t('nav.bookmarks'),
+      analytics: t('nav.analytics'),
+      settings: t('nav.settings'),
+      vocabulary: t('learn.language.english.name'),
+      callcenter: t('learn.skill.callCenter.name'),
+      sales: t('learn.skill.sales.name'),
+    };
+    const name = names[activeSection];
+    setPageTitle(session && name ? `${name} — ${t('app.title')}` : null);
+  }, [activeSection, session, t]);
+
   const handleSectionChange = useCallback((section: string) => {
     const target = resolveSection(section);
     setActiveSection(target);
     rememberSection(target);
+    showPage(target, target === 'vocabulary' ? readEnglishTab() : undefined);
     // The wird and the habits are parts of the tasks page: jump to them there.
     // Any other page opens at its top.
     window.setTimeout(() => {
