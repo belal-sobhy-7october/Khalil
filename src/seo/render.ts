@@ -34,7 +34,7 @@ export interface Card {
 
 export type Block =
   | { kind: 'h2'; text: string; id?: string; lang?: Lang }
-  | { kind: 'h3'; text: string; lang?: Lang }
+  | { kind: 'h3'; text: string; id?: string; lang?: Lang }
   | { kind: 'p'; text: Rich; lang?: Lang; note?: boolean }
   | { kind: 'list'; items: Rich[]; ordered?: boolean; lang?: Lang }
   | { kind: 'quote'; text: string; lang?: Lang }
@@ -145,7 +145,7 @@ function blockHtml(block: Block, page: Page): string {
     case 'h2':
       return `<h2${block.id ? ` id="${block.id}"` : ''}${langAttrs(block.lang, lang)}>${escapeHtml(block.text)}</h2>`;
     case 'h3':
-      return `<h3${langAttrs(block.lang, lang)}>${escapeHtml(block.text)}</h3>`;
+      return `<h3${block.id ? ` id="${block.id}"` : ''}${langAttrs(block.lang, lang)}>${escapeHtml(block.text)}</h3>`;
     case 'p':
       return `<p${block.note ? ' class="note"' : ''}${langAttrs(block.lang, lang)}>${richHtml(block.text)}</p>`;
     case 'list': {
@@ -396,5 +396,6 @@ details summary{cursor:pointer;color:var(--clay)}
 .foot{border-top:1px solid var(--line);color:var(--soft);font-size:.92rem;padding-block:16px 28px}
 .foot nav{display:flex;flex-wrap:wrap;gap:6px 16px}
 .crumbs{line-height:1.5}
+html[dir=rtl] main :is(h2,h3,p,blockquote)[dir=ltr]{text-align:right}
 @media (max-width:700px){.top .brand{margin-inline-end:auto}.top .btn{padding:6px 12px}.nav{order:3;flex:1 1 100%;flex-wrap:nowrap;overflow-x:auto;white-space:nowrap;font-size:.9rem;padding-bottom:2px}}
 `.trim();

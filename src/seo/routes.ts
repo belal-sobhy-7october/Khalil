@@ -10,7 +10,8 @@ export const ROUTES = {
   /** A lesson is written in English, so it has one page. */
   topic: (id: string) => `/en/english-topics/${id}`,
   callCenter: (lang: Lang) => `/${lang}/call-center`,
-  interview: '/en/call-center/interview-questions',
+  /** The questions in one page per language; each question's model answer is in English. */
+  interview: (lang: Lang) => `/${lang}/call-center/interview-questions`,
   question: (id: string) => `/en/call-center/interview-questions/${id}`,
   /** The word bank has an English page and an Arabic one (with Arabic meanings). */
   vocabulary: (lang: Lang) => `/${lang}/call-center/vocabulary`,

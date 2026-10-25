@@ -13,6 +13,7 @@ import { GRAMMAR_COURSES, getGrammarLesson } from './ibrahimAdel';
 import { CALL_CENTER_ACCENT_SECTION } from './library';
 import { VOCAB_UNITS, VOCAB_WORDS } from './vocab';
 import { MEANINGS_AR, UNIT_TITLES_AR } from './vocabAr';
+import { QUESTIONS_AR } from './interviewAr';
 import type { PlanTask, TestItem } from './types';
 
 const ARABIC = /[؀-ۿ]/;
@@ -66,6 +67,14 @@ describe('Call Center Prep content', () => {
       expect(s.lines.length, s.id).toBeGreaterThanOrEqual(6);
       expect(s.questions.length, s.id).toBe(3);
       for (const q of s.questions) expect(q.options[q.answer], q.q).toBeDefined();
+    }
+  });
+
+  it('translates every interview question into Arabic, with what it checks', () => {
+    expect(Object.keys(QUESTIONS_AR).sort()).toEqual(QUESTIONS.map((q) => q.id).sort());
+    for (const { q, why } of Object.values(QUESTIONS_AR)) {
+      expect(q).toMatch(ARABIC);
+      expect(why).toMatch(ARABIC);
     }
   });
 

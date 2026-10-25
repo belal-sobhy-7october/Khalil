@@ -11,6 +11,7 @@ import { COMPANIES, FREE_TOOLS, HIRING_STAGES, SALARY_GUIDE, TARGETS, WHERE_TO_A
 import type { InterviewQuestion, LevelId, QuestionGroup } from '../../data/callCenter/types';
 import type { VocabUnit } from '../../data/callCenter/vocab';
 import { MEANINGS_AR, UNIT_TITLES_AR } from '../../data/callCenter/vocabAr';
+import { QUESTIONS_AR } from '../../data/callCenter/interviewAr';
 import { arCount, NOUNS } from '../arabicCount';
 import { clip, type Block, type Card, type Lang, type Page } from '../render';
 import { ROUTES, slugify } from '../routes';
@@ -86,7 +87,8 @@ const questionTitle = (q: InterviewQuestion) => q.q.replace(/[.?!]+$/, '');
 const groupOf = (id: QuestionGroup) => QUESTION_GROUPS.find((g) => g.id === id)?.name ?? id;
 
 function questionCard(q: InterviewQuestion, lang: Lang): Card {
-  return { href: ROUTES.question(q.id), title: q.q, text: lang === 'en' ? q.why : undefined, lang: lang === 'ar' ? 'en' : undefined };
+  if (lang === 'ar') return { href: `${ROUTES.interview('ar')}#${q.id}`, title: QUESTIONS_AR[q.id].q, meta: q.q };
+  return { href: ROUTES.question(q.id), title: q.q, text: q.why };
 }
 
 function unitCard(unit: VocabUnit, lang: Lang): Card {
@@ -160,8 +162,8 @@ function hubPage(lang: Lang, origin: string): Page {
         {
           kind: 'p',
           text: [
-            `جمعنا ${arCount(QUESTIONS.length, NOUNS.question)} مما تسأله مراكز الاتصال. في صفحة كل سؤال: ماذا يقيس السؤال حقًا، وكيف تجيب، وإجابة نموذجية بالإنجليزية، وعبارات تستعملها، وأخطاء تتجنبها. `,
-            { href: ROUTES.interview, label: 'كل الأسئلة في صفحة واحدة' },
+            `جمعنا ${arCount(QUESTIONS.length, NOUNS.question)} مما تسأله مراكز الاتصال، مترجمة إلى العربية مع ما يقيسه كل سؤال، ولكل سؤال إجابة نموذجية بالإنجليزية، وعبارات تستعملها، وأخطاء تتجنبها. `,
+            { href: ROUTES.interview('ar'), label: 'كل الأسئلة بالعربية في صفحة واحدة' },
             '.',
           ],
         },
@@ -236,7 +238,7 @@ function hubPage(lang: Lang, origin: string): Page {
         kind: 'p',
         text: [
           `${QUESTIONS.length} questions call centers ask. Each page explains what the question really checks, how to answer, a model answer, phrases to reuse and mistakes to avoid. `,
-          { href: ROUTES.interview, label: 'See all the questions on one page' },
+          { href: ROUTES.interview('en'), label: 'See all the questions on one page' },
           '.',
         ],
       },
@@ -270,8 +272,72 @@ function hubPage(lang: Lang, origin: string): Page {
   };
 }
 
+const INTERVIEW_ALTERNATES = { ar: ROUTES.interview('ar'), en: ROUTES.interview('en'), 'x-default': ROUTES.interview('en') };
+
+function interviewIndexAr(origin: string): Page {
+  const path = ROUTES.interview('ar');
+  const crumbs = [
+    { href: ROUTES.home('ar'), label: 'الرئيسية' },
+    { href: ROUTES.callCenter('ar'), label: 'مراكز الاتصال' },
+  ];
+  const h1 = 'أسئلة مقابلات مراكز الاتصال بالإنجليزية، وماذا يقيس كل سؤال';
+  return {
+    path,
+    lang: 'ar',
+    section: 'callcenter',
+    title: `أسئلة مقابلة مراكز الاتصال بالإنجليزية وإجاباتها: ${arCount(QUESTIONS.length, NOUNS.question)} | خليل`,
+    description: clip(
+      `أشهر أسئلة مقابلات مراكز الاتصال (الكول سنتر) بالإنجليزية: ${arCount(QUESTIONS.length, NOUNS.question)} مترجمة إلى العربية، مع ما يقيسه كل سؤال، وطريقة STAR، وإجابة نموذجية بالإنجليزية لكل سؤال. مجانًا.`,
+      200
+    ),
+    h1,
+    crumb: 'أسئلة المقابلة',
+    lead: 'ما تسأله مراكز الاتصال بالإنجليزية، مع ترجمة كل سؤال إلى العربية وما يقيسه حقًا. ولكل سؤال صفحة فيها إجابة نموذجية بالإنجليزية، وعبارات تستعملها، وأخطاء تتجنبها.',
+    crumbs,
+    alternates: INTERVIEW_ALTERNATES,
+    blocks: [
+      { kind: 'h2', text: 'كيف تجيب عن أي سؤال؟', id: 'how' },
+      {
+        kind: 'list',
+        items: [
+          'لا تحفظ الإجابة حرفيًا، فمسؤول التوظيف يسمع الإجابة المحفوظة. احفظ ترتيبها، واحكها بقصتك أنت.',
+          'أجب في دقيقة إلى دقيقة ونصف، بجمل واضحة، ثم توقف.',
+          'في أسئلة «حدّثني عن مرة…» استعمل طريقة STAR: الموقف (Situation)، ثم المهمة (Task)، ثم ما فعلته (Action)، ثم النتيجة (Result).',
+          'اربط كل إجابة بالوظيفة: خدمة العملاء، أو الدعم الفني، أو العمل تحت الضغط.',
+          'تدرّب بصوت مرتفع وسجّل صوتك، فالمقابلة اختبار كلام لا اختبار كتابة.',
+        ],
+      },
+      ...QUESTION_GROUPS.flatMap(({ id }): Block[] => {
+        const list = QUESTIONS.filter((q) => q.group === id);
+        if (!list.length) return [];
+        return [
+          { kind: 'h2', text: `${AR.groups[id]} (${list.length})`, id },
+          ...list.flatMap((q): Block[] => [
+            { kind: 'h3', text: q.q, lang: 'en', id: q.id },
+            { kind: 'p', text: `بالعربية: ${QUESTIONS_AR[q.id].q}` },
+            { kind: 'p', text: `ماذا يقيس: ${QUESTIONS_AR[q.id].why}` },
+            ...(q.tipAr ? [{ kind: 'p', text: q.tipAr, note: true } as Block] : []),
+            { kind: 'p', text: [{ href: ROUTES.question(q.id), label: 'الإجابة النموذجية والعبارات بالإنجليزية' }] },
+          ]),
+        ];
+      }),
+      {
+        kind: 'cta',
+        title: 'تدرّب على إجاباتك بصوت مرتفع',
+        text: 'في خليل تدريب على أسئلة عشوائية، وتسجيل لإجابتك، وقياس لسرعة كلامك، ومقارنة بين محاولاتك. مجانًا.',
+        href: '/',
+        label: 'افتح خليل',
+      },
+    ],
+    jsonLd: [
+      itemList(origin, h1, QUESTIONS.map((q) => ({ href: ROUTES.question(q.id), label: q.q }))),
+      breadcrumbs(crumbs, 'أسئلة المقابلة', path, origin),
+    ],
+  };
+}
+
 function interviewIndex(origin: string): Page {
-  const path = ROUTES.interview;
+  const path = ROUTES.interview('en');
   const crumbs = [
     { href: ROUTES.home('en'), label: 'Home' },
     { href: ROUTES.callCenter('en'), label: 'Call center prep' },
@@ -289,6 +355,7 @@ function interviewIndex(origin: string): Page {
     crumb: 'Interview questions',
     lead: 'What English call centers ask, what they are really checking, and a model answer to learn from. Adapt each answer to your own story: recruiters can hear a memorized one.',
     crumbs,
+    alternates: INTERVIEW_ALTERNATES,
     blocks: [
       ...QUESTION_GROUPS.flatMap(({ id, name }): Block[] => {
         const list = QUESTIONS.filter((q) => q.group === id);
@@ -314,7 +381,7 @@ function questionPage(q: InterviewQuestion, origin: string): Page {
   const crumbs = [
     { href: ROUTES.home('en'), label: 'Home' },
     { href: ROUTES.callCenter('en'), label: 'Call center prep' },
-    { href: ROUTES.interview, label: 'Interview questions' },
+    { href: ROUTES.interview('en'), label: 'Interview questions' },
   ];
   const others = QUESTIONS.filter((x) => x.group === q.group && x.id !== q.id).slice(0, 6);
   const description = clip(`${q.why} How to answer "${questionTitle(q)}" in a call center interview, with a model answer, phrases and mistakes to avoid.`);
@@ -519,6 +586,7 @@ export function callCenterPages(origin: string): Page[] {
   return [
     hubPage('ar', origin),
     hubPage('en', origin),
+    interviewIndexAr(origin),
     interviewIndex(origin),
     ...QUESTIONS.map((q) => questionPage(q, origin)),
     vocabularyIndex('ar', origin),

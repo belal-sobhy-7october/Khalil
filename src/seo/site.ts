@@ -157,7 +157,8 @@ export function rootLanding(): string {
     { href: ROUTES.home('en'), label: 'Khalil in English', lang: 'en' },
     { href: ROUTES.topics('en'), label: 'English conversation topics', lang: 'en' },
     { href: ROUTES.callCenter('en'), label: 'Call center job prep', lang: 'en' },
-    { href: ROUTES.interview, label: 'Call center interview questions', lang: 'en' },
+    { href: ROUTES.interview('ar'), label: 'أسئلة مقابلات مراكز الاتصال', lang: 'ar' },
+    { href: ROUTES.interview('en'), label: 'Call center interview questions', lang: 'en' },
   ];
   return [
     '<div id="seo-landing">',
