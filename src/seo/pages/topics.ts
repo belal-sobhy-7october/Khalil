@@ -1,9 +1,12 @@
 /**
  * The Topic Library in public: an index in each language, and a page for each
- * lesson (written in English, so one page). Every lesson follows the course
- * method: warm-up → words → grammar → discussion → speaking task → paragraph.
+ * lesson in each language. The lesson is in English on both; the Arabic page
+ * adds each word's Arabic meaning (src/data/topicPacks/arabic.ts). Every
+ * lesson follows the course method: warm-up → words → grammar → discussion →
+ * speaking task → paragraph.
  */
 import { TOPIC_PACKS, type PackGroup, type TopicPack } from '../../data/topicPacks';
+import { MEANINGS_AR, TOPIC_TITLES_AR } from '../../data/topicPacks/arabic';
 import { arCount, NOUNS } from '../arabicCount';
 import { clip, type Block, type Card, type Lang, type Page } from '../render';
 import { ROUTES } from '../routes';
@@ -16,11 +19,26 @@ const GROUP_NAME: Record<Lang, Record<PackGroup, string>> = {
   ar: { work: 'العمل', talk: 'المحادثة', life: 'الحياة اليومية', society: 'المجتمع والأفكار' },
 };
 
-const LEVEL_NAME: Record<TopicPack['level'], string> = {
-  B1: 'B1 (intermediate)',
-  B2: 'B2 (upper intermediate)',
-  C1: 'C1 (advanced)',
+const LEVEL_NAME: Record<Lang, Record<TopicPack['level'], string>> = {
+  en: { B1: 'B1 (intermediate)', B2: 'B2 (upper intermediate)', C1: 'C1 (advanced)' },
+  ar: { B1: 'B1 (متوسط)', B2: 'B2 (فوق المتوسط)', C1: 'C1 (متقدم)' },
 };
+
+const POS_AR: Record<string, string> = {
+  noun: 'اسم',
+  verb: 'فعل',
+  adjective: 'صفة',
+  adverb: 'ظرف',
+  'phrasal verb': 'فعل مركّب',
+  idiom: 'تعبير اصطلاحي',
+  phrase: 'عبارة',
+};
+
+const topicAlternates = (pack: TopicPack) => ({
+  ar: ROUTES.topic('ar', pack.id),
+  en: ROUTES.topic('en', pack.id),
+  'x-default': ROUTES.topic('en', pack.id),
+});
 
 /** Other lessons to read next: the same group, the same level first. */
 function related(pack: TopicPack): TopicPack[] {
@@ -29,17 +47,19 @@ function related(pack: TopicPack): TopicPack[] {
 }
 
 function card(pack: TopicPack, lang: Lang): Card {
-  return {
-    href: ROUTES.topic(pack.id),
-    title: pack.title,
-    meta: `${pack.level} · ${pack.items.length} words`,
-    text: pack.description,
-    lang: lang === 'ar' ? 'en' : undefined,
-  };
+  if (lang === 'ar') {
+    return {
+      href: ROUTES.topic('ar', pack.id),
+      title: TOPIC_TITLES_AR[pack.id],
+      meta: `${pack.level} · ${pack.title}`,
+      text: pack.items.slice(0, 4).map((w) => w.word).join(' · '),
+    };
+  }
+  return { href: ROUTES.topic('en', pack.id), title: pack.title, meta: `${pack.level} · ${pack.items.length} words`, text: pack.description };
 }
 
 function topicPage(pack: TopicPack, origin: string): Page {
-  const path = ROUTES.topic(pack.id);
+  const path = ROUTES.topic('en', pack.id);
   const crumbs = [
     { href: ROUTES.home('en'), label: 'Home' },
     { href: ROUTES.topics('en'), label: 'English topics' },
@@ -49,7 +69,7 @@ function topicPage(pack: TopicPack, origin: string): Page {
     `Free ${pack.level} English lesson on ${pack.title}: ${pack.items.length} key words with examples, ${pack.discussion.length} conversation questions, a speaking task and grammar: ${pack.grammar.title}.`
   );
   const blocks: Block[] = [
-    { kind: 'p', text: `Level ${LEVEL_NAME[pack.level]} · ${GROUP_NAME.en[pack.group]} · ${pack.items.length} words · ${pack.discussion.length} questions`, note: true },
+    { kind: 'p', text: `Level ${LEVEL_NAME.en[pack.level]} · ${GROUP_NAME.en[pack.group]} · ${pack.items.length} words · ${pack.discussion.length} questions`, note: true },
     { kind: 'h2', text: 'Warm-up', id: 'warm-up' },
     { kind: 'list', items: pack.warmUp },
     { kind: 'h2', text: `Key words (${pack.items.length})`, id: 'words' },
@@ -90,6 +110,7 @@ function topicPage(pack: TopicPack, origin: string): Page {
     crumb: pack.title,
     lead: pack.description,
     crumbs,
+    alternates: topicAlternates(pack),
     blocks,
     ogType: 'article',
     jsonLd: [
@@ -133,7 +154,7 @@ function indexPage(lang: Lang, origin: string): Page {
       { kind: 'cards', items: packs.map((p) => card(p, lang)) },
     ];
   });
-  const lessons = TOPIC_PACKS.map((p) => ({ href: ROUTES.topic(p.id), label: p.title }));
+  const lessons = TOPIC_PACKS.map((p) => ({ href: ROUTES.topic(lang, p.id), label: lang === 'ar' ? TOPIC_TITLES_AR[p.id] : p.title }));
   const path = ROUTES.topics(lang);
   const alternates = { ar: ROUTES.topics('ar'), en: ROUTES.topics('en'), 'x-default': ROUTES.topics('en') };
 
@@ -154,7 +175,7 @@ function indexPage(lang: Lang, origin: string): Page {
       crumbs,
       alternates,
       blocks: [
-        { kind: 'p', text: `المستويات: ${byLevel('B1')} في B1 (متوسط)، و${byLevel('B2')} في B2 (فوق المتوسط)، و${byLevel('C1')} في C1 (متقدم). الدروس مكتوبة بالإنجليزية الأمريكية.`, note: true },
+        { kind: 'p', text: `المستويات: ${byLevel('B1')} في B1 (متوسط)، و${byLevel('B2')} في B2 (فوق المتوسط)، و${byLevel('C1')} في C1 (متقدم). الدروس مكتوبة بالإنجليزية الأمريكية، ومع كل كلمة معناها بالعربية.`, note: true },
         { kind: 'h2', text: 'كيف تذاكر الموضوع؟' },
         {
           kind: 'list',
@@ -222,6 +243,108 @@ function indexPage(lang: Lang, origin: string): Page {
   };
 }
 
+function topicPageAr(pack: TopicPack, origin: string): Page {
+  const path = ROUTES.topic('ar', pack.id);
+  const name = TOPIC_TITLES_AR[pack.id];
+  const crumbs = [
+    { href: ROUTES.home('ar'), label: 'الرئيسية' },
+    { href: ROUTES.topics('ar'), label: 'مواضيع المحادثة' },
+  ];
+  const h1 = `كلمات إنجليزية عن ${name}، بمعانيها وأسئلة للمحادثة`;
+  const first = pack.items.slice(0, 5).map((w) => w.word);
+  const description = clip(
+    `${arCount(pack.items.length, NOUNS.word)} بالإنجليزية عن ${name} بمعانيها بالعربية وأمثلتها: ${first.join('، ')}… مع قاعدة نحوية، وأسئلة للمحادثة، ومهمة كلام. درس مجاني بمستوى ${pack.level}.`,
+    200
+  );
+  const blocks: Block[] = [
+    {
+      kind: 'p',
+      text: `المستوى ${LEVEL_NAME.ar[pack.level]} · ${GROUP_NAME.ar[pack.group]} · ${arCount(pack.items.length, NOUNS.word)} · ${arCount(pack.discussion.length, NOUNS.question)} للمحادثة`,
+      note: true,
+    },
+    { kind: 'h2', text: 'أسئلة تمهيدية', id: 'warm-up' },
+    { kind: 'list', items: pack.warmUp, lang: 'en' },
+    { kind: 'h2', text: `الكلمات (${pack.items.length})`, id: 'words' },
+    { kind: 'p', text: 'لكل كلمة معناها في هذا الموضوع بالعربية، وتعريفها بالإنجليزية، ومثال بالمعنى نفسه.' },
+    {
+      kind: 'words',
+      lang: 'en',
+      items: pack.items.map((w) => ({ word: w.word, pos: POS_AR[w.pos], meaning: MEANINGS_AR[w.word], definition: w.definition, example: w.example })),
+    },
+    { kind: 'h2', text: 'القاعدة النحوية', id: 'grammar' },
+    { kind: 'p', text: pack.grammar.title, lang: 'en' },
+    ...pack.grammar.points.flatMap((point): Block[] => [
+      { kind: 'h3', text: point.form, lang: 'en' },
+      { kind: 'p', text: point.use, lang: 'en' },
+      { kind: 'quote', text: point.example, lang: 'en' },
+    ]),
+    ...(pack.grammar.tip ? ([{ kind: 'h3', text: 'القاعدة الذهبية' }, { kind: 'p', text: pack.grammar.tip, lang: 'en', note: true }] as Block[]) : []),
+    { kind: 'h2', text: 'أسئلة للمحادثة', id: 'discussion' },
+    { kind: 'list', items: pack.discussion, ordered: true, lang: 'en' },
+    { kind: 'h2', text: 'مهمة كلام مدتها دقيقة', id: 'speaking' },
+    { kind: 'p', text: pack.task.prompt, lang: 'en' },
+    { kind: 'list', items: pack.task.points, lang: 'en' },
+    { kind: 'h2', text: 'فقرة نموذجية', id: 'paragraph' },
+    { kind: 'p', text: 'استمع إليها، واقرأها بصوت مرتفع، ثم قلها بكلماتك.' },
+    { kind: 'quote', text: pack.paragraph, lang: 'en' },
+    {
+      kind: 'cta',
+      title: 'ذاكر هذا الموضوع في خليل',
+      text: 'أضف الكلمات إلى بطاقات المراجعة الذكية، ويذكّرك خليل بموعد مراجعتها، وسجّل إجابتك في دقيقة، وذاكر دون إنترنت. مجانًا.',
+      href: '/',
+      label: 'افتح خليل',
+    },
+    { kind: 'h2', text: `مواضيع أخرى في ${GROUP_NAME.ar[pack.group]}` },
+    { kind: 'cards', items: related(pack).map((p) => card(p, 'ar')) },
+  ];
+  return {
+    path,
+    lang: 'ar',
+    section: 'topics',
+    title: `كلمات إنجليزية عن ${name} بمعانيها وأسئلة محادثة (${pack.level}) | خليل`,
+    description,
+    h1,
+    crumb: name,
+    lead: `درس «${pack.title}» بالإنجليزية، بمستوى ${pack.level}: الكلمات التي تحتاج إليها لتتكلم عن ${name}، بمعانيها بالعربية وأمثلتها، ثم قاعدة نحوية، وأسئلة نقاش، ومهمة كلام مدتها دقيقة.`,
+    crumbs,
+    alternates: topicAlternates(pack),
+    blocks,
+    ogType: 'article',
+    jsonLd: [
+      {
+        '@context': 'https://schema.org',
+        '@type': 'LearningResource',
+        name: h1,
+        description,
+        url: `${origin}${path}`,
+        inLanguage: 'ar',
+        learningResourceType: 'Lesson',
+        isAccessibleForFree: true,
+        educationalLevel: pack.level,
+        educationalAlignment: {
+          '@type': 'AlignmentObject',
+          alignmentType: 'educationalLevel',
+          educationalFramework: 'CEFR',
+          targetName: pack.level,
+        },
+        teaches: [`${pack.title} vocabulary`, pack.grammar.title],
+        keywords: pack.items.map((w) => w.word).join(', '),
+        hasPart: {
+          '@type': 'DefinedTermSet',
+          name: `كلمات إنجليزية عن ${name}`,
+          hasDefinedTerm: pack.items.map((w) => ({ '@type': 'DefinedTerm', name: w.word, description: `${MEANINGS_AR[w.word]}: ${w.definition}`, inLanguage: 'en' })),
+        },
+        isPartOf: { '@type': 'WebSite', name: 'خليل', url: `${origin}/` },
+      },
+      breadcrumbs(crumbs, name, path, origin),
+    ],
+  };
+}
+
 export function topicPages(origin: string): Page[] {
-  return [indexPage('ar', origin), indexPage('en', origin), ...TOPIC_PACKS.map((p) => topicPage(p, origin))];
+  return [
+    indexPage('ar', origin),
+    indexPage('en', origin),
+    ...TOPIC_PACKS.flatMap((p) => [topicPageAr(p, origin), topicPage(p, origin)]),
+  ];
 }

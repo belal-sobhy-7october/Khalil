@@ -79,7 +79,10 @@ Rules, all of them important:
    ```bash
    grep -hE '^(n|v|adj|adv|pv|i|p) \|' src/data/topicPacks/*.ts | cut -d'|' -f2 | sort
    ```
-6. **English only** inside packs (no Arabic letters; the test checks).
+6. **English only** inside packs (no Arabic letters; the test checks). The Arabic lives in
+   `arabic.ts`: add the topic's Arabic name to `TOPIC_TITLES_AR` and each word's meaning in this
+   topic to `MEANINGS_AR` (short Fusha; the test checks that none is missing). The public Arabic
+   page of the topic shows them.
 7. Write the word in its base form. Spell out `someone` / `something` (`meet someone halfway`),
    don't use `sb` / `sth`. Avoid `/` alternatives.
 8. Use **American English**, like the rest of the packs: the spelling (neighbor, color, practice
