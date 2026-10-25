@@ -1,8 +1,25 @@
 {
   "rewrites": [
+    { "source": "/:p1(ar|en)", "destination": "/:p1/index.html" },
+    { "source": "/:p1(ar|en)/:p2", "destination": "/:p1/:p2/index.html" },
+    { "source": "/:p1(ar|en)/:p2/:p3", "destination": "/:p1/:p2/:p3/index.html" },
+    { "source": "/:p1(ar|en)/:p2/:p3/:p4", "destination": "/:p1/:p2/:p3/:p4/index.html" },
     {
       "source": "/((?!api/).*)",
       "destination": "/index.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*).md",
+      "headers": [
+        { "key": "Content-Type", "value": "text/markdown; charset=utf-8" },
+        { "key": "X-Robots-Tag", "value": "noindex" }
+      ]
+    },
+    {
+      "source": "/llms.txt",
+      "headers": [{ "key": "Content-Type", "value": "text/plain; charset=utf-8" }]
     }
   ]
 }

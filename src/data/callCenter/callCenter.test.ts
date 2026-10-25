@@ -12,6 +12,8 @@ import { VOCAB_CHECK_ID } from './plan';
 import { GRAMMAR_COURSES, getGrammarLesson } from './ibrahimAdel';
 import { CALL_CENTER_ACCENT_SECTION } from './library';
 import { VOCAB_UNITS, VOCAB_WORDS } from './vocab';
+import { MEANINGS_AR, UNIT_TITLES_AR } from './vocabAr';
+import { QUESTIONS_AR } from './interviewAr';
 import type { PlanTask, TestItem } from './types';
 
 const ARABIC = /[؀-ۿ]/;
@@ -65,6 +67,14 @@ describe('Call Center Prep content', () => {
       expect(s.lines.length, s.id).toBeGreaterThanOrEqual(6);
       expect(s.questions.length, s.id).toBe(3);
       for (const q of s.questions) expect(q.options[q.answer], q.q).toBeDefined();
+    }
+  });
+
+  it('translates every interview question into Arabic, with what it checks', () => {
+    expect(Object.keys(QUESTIONS_AR).sort()).toEqual(QUESTIONS.map((q) => q.id).sort());
+    for (const { q, why } of Object.values(QUESTIONS_AR)) {
+      expect(q).toMatch(ARABIC);
+      expect(why).toMatch(ARABIC);
     }
   });
 
@@ -229,6 +239,12 @@ describe('the word bank', () => {
       expect(w.example.split(' ').length, w.word).toBeGreaterThanOrEqual(4);
       expect(ARABIC.test(JSON.stringify(w)), w.word).toBe(false);
     }
+  });
+
+  it('gives every word and unit its Arabic meaning, and nothing more', () => {
+    for (const w of VOCAB_WORDS) expect(MEANINGS_AR[w.word], w.word).toMatch(ARABIC);
+    expect(Object.keys(MEANINGS_AR).sort()).toEqual(VOCAB_WORDS.map((w) => w.word).sort());
+    expect(Object.keys(UNIT_TITLES_AR).sort()).toEqual(VOCAB_UNITS.map((u) => u.id).sort());
   });
 
   it('has a text for each unit that uses its words', () => {

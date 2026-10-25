@@ -2,9 +2,10 @@ import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { offlinePlugin } from './scripts/offlinePlugin'
+import { seoPlugin } from './scripts/seoPlugin'
 
 export default defineConfig({
-  plugins: [react(), tailwindcss(), offlinePlugin()],
+  plugins: [react(), tailwindcss(), seoPlugin(), offlinePlugin()],
   test: {
     environment: 'jsdom',
     globals: true,

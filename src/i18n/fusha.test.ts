@@ -13,7 +13,7 @@ import { describe, expect, it } from 'vitest';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 
 /** Where Khalil's own Arabic is written. */
-const SCAN = ['src', 'scripts', 'api', 'CLAUDE.md', 'README.md', '.claude'];
+const SCAN = ['src', 'scripts', 'api', 'docs', 'CLAUDE.md', 'README.md', '.claude'];
 const EXTENSIONS = /\.(ts|tsx|mjs|js|md)$/;
 
 /**

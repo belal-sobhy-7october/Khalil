@@ -92,3 +92,12 @@ npm run dev
 | `npm test` | Run the test suite once (Vitest) |
 | `npm run test:watch` | Run tests in watch mode |
 | `node scripts/sync-courses.mjs` | Refresh the English hub's course episodes from YouTube (`src/data/courseCatalog.ts` lists the playlists) |
+| `node scripts/og-image.mjs` | Redraw `public/og-image.png`, the picture shown when a link to Khalil is shared |
+
+## Public pages and search engines
+
+`npm run build` also writes Khalil's free lessons as plain public pages (`/ar`, `/en`, the English topics,
+the call center guide and the sales chapters), with `sitemap.xml`, `robots.txt` and `llms.txt`. They are built
+from the app's own data, so new lessons get their pages automatically. `npm run preview` serves them as
+Vercel does. The plan and what the owner still has to do (Search Console, a domain) are in
+[`docs/seo/README.md`](docs/seo/README.md).
