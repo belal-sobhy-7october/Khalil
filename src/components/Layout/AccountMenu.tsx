@@ -1,9 +1,10 @@
 import { useState, useRef } from 'react';
-import { User, Settings, LogOut, ChevronDown, MessageCircle } from 'lucide-react';
+import { User, Settings, LogOut, ChevronDown, MessageCircle, Compass } from 'lucide-react';
 import { useTranslation } from '../../i18n/useTranslation';
 import { useAppStore } from '../../store/appStore';
 import { supabase } from '../../lib/supabase';
 import { whatsappLink } from '../../lib/contact';
+import { useGuide } from '../../lib/guide';
 import {
   useFloating,
   autoUpdate,
@@ -20,6 +21,7 @@ import {
 export default function AccountMenu() {
   const { t, isRTL } = useTranslation();
   const session = useAppStore((s) => s.session);
+  const startGuide = useGuide((g) => g.start);
   const [isOpen, setIsOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const listRef = useRef<Array<HTMLButtonElement | null>>([]);
@@ -108,6 +110,15 @@ export default function AccountMenu() {
       },
     },
     {
+      id: 'guide',
+      label: t('guide.replay'),
+      icon: Compass,
+      onClick: () => {
+        handleOpenChange(false);
+        startGuide();
+      },
+    },
+    {
       id: 'logout',
       label: t('auth.logout'),
       icon: LogOut,
@@ -127,6 +138,7 @@ export default function AccountMenu() {
         })}
         className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-ink-light hover:text-ink border border-transparent hover:border-border-subtle transition-all focus:outline-none focus:ring-2 focus:ring-clay-soft/50"
         aria-label={t('a11y.accountMenu')}
+        data-guide="account"
         aria-expanded={isOpen}
         aria-haspopup="true"
       >

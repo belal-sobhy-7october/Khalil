@@ -5,6 +5,7 @@ import { useAppStore } from '../../store/appStore';
 import { useTranslation } from '../../i18n/useTranslation';
 import CalligraphyWatermark from '../Common/CalligraphyWatermark';
 import { getToday } from '../../store/dateHelpers';
+import QuickFocus from '../Focus/QuickFocus';
 
 export default function DailyFocus() {
   const { t, isRTL } = useTranslation();
@@ -52,11 +53,16 @@ export default function DailyFocus() {
       <div className="relative bg-card border border-border-subtle rounded-xl p-4 md:p-5 overflow-hidden">
         <CalligraphyWatermark character="خ" opacity={0.04} />
         <div className="relative z-10">
-          <div className="flex items-center justify-center gap-2 mb-1">
-            <Target size={16} className="text-clay-soft" />
-            <span className="text-[11px] uppercase tracking-[0.15em] text-ink-light font-medium">
-              {t('dailyFocus.subtitle')}
-            </span>
+          {/* The focus shortcut: beside the title on wider screens, under the date on phones. */}
+          <div className="mb-1 sm:grid sm:grid-cols-[1fr_auto_1fr] sm:items-center sm:gap-2">
+            <span className="hidden sm:block" />
+            <div className="flex items-center justify-center gap-2">
+              <Target size={16} className="text-clay-soft" />
+              <span className="text-[11px] uppercase tracking-[0.15em] text-ink-light font-medium">
+                {t('dailyFocus.subtitle')}
+              </span>
+            </div>
+            <QuickFocus className="hidden sm:flex justify-self-end" />
           </div>
 
           <div className="flex items-start gap-4">
@@ -134,6 +140,7 @@ export default function DailyFocus() {
               </p>
             </div>
           </div>
+          <QuickFocus className="mt-2 justify-center sm:hidden" />
         </div>
       </div>
     </section>

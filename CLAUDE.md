@@ -72,6 +72,25 @@ loads everything again.
 - The calendar, the bookmarks and the focus sessions load when their page opens (`loadCalendarEvents`,
   `loadBookmarks`, `loadSessions`); moods and sub track entries aren't loaded (nothing shows them).
 
+## Guests, the account buttons and Khalil's tour
+
+Khalil opens without signing in (`src/lib/guest.ts`): a visitor gets an anonymous Supabase account, so
+everything works and saves, in that browser only. The header shows "Create account" (links Google to that
+same account, `linkIdentity`, so nothing is lost) and "Sign in" (an account made before) instead of the
+account menu. After the guest's first change (`src/lib/writes.ts` hears every write the Supabase client
+sends) Khalil asks them to create an account. With anonymous sign-ins off in Supabase, or no internet, the
+visitor browses with nothing saved, and a store action that needs an account opens "Create account"
+(`askForAccount`). Search engines get the welcome page (`LoginPage`), not an account. README → Setup →
+step 4 has the Supabase switches.
+
+- Khalil is also a character: his poses are `src/assets/mascot/<pose>.webp` (`Mascot`, `mascotPoses.ts`);
+  a pose without its picture shows "خ". **Read `docs/mascot/README.md`** (the prompts and the 14 poses).
+- His tour (`src/components/Guide/`, `src/lib/guide.ts`) opens once for a new guest; "Skip this part"
+  and "Skip the tour"; anyone can take it again from the sidebar or the account menu. A step points at
+  an element by `data-guide="…"`, `#section-…` or another selector; keep those when moving things.
+- `scripts/e2e/guest.mjs` checks all of it (guest account, tour, the save prompt, linking, a crawler,
+  browsing with no account).
+
 ## Tasks & Habits (the page Khalil opens on)
 
 The sidebar's first item (`todo`), in this order: Tasks & Habits, Focus, Learn Languages, Learn Skills,
@@ -99,6 +118,8 @@ page instead). It holds the daily focus, today's and this week's tasks, the whol
   under "Finished".
 - "Suggestion or problem?" (account menu, Settings, the sidebar) opens WhatsApp with the owner, on the
   owner's request (`src/lib/contact.ts`).
+- The day's focus card has a focus shortcut (`QuickFocus`): one click starts a session with the timer's
+  settings; the Focus page has the rest.
 
 ## Learn Languages and Learn Skills
 
@@ -205,7 +226,8 @@ End to end (Playwright, against a fake Supabase), with a dev server on port 5173
 (`VITE_SUPABASE_URL=http://localhost:54321 VITE_SUPABASE_ANON_KEY=fake npx vite --port 5173`):
 `node scripts/e2e/smoke.mjs http://localhost:5173 <dir>` (every section, both languages and themes),
 `node scripts/e2e/flows.mjs …` (add, edit, delete, reload), `node scripts/e2e/callcenter.mjs …` (every
-tab, and progress kept after a reload) and `node scripts/e2e/sales.mjs …` (the same for Sales Prep).
+tab, and progress kept after a reload), `node scripts/e2e/sales.mjs …` (the same for Sales Prep) and
+`node scripts/e2e/guest.mjs …` (opening without an account).
 `scripts/e2e/offline.mjs` runs against a production build (see Offline).
 
 Phones and tablets: `node scripts/e2e/devices.mjs http://localhost:5173 <dir>` goes through every

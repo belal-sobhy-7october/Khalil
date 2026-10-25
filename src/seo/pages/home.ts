@@ -35,8 +35,8 @@ export function homePages(origin: string): Page[] {
     'A focus timer, a calendar, bookmarks and analytics that show your progress.',
   ];
 
-  const arDescription = `تطبيق مجاني بالعربية والإنجليزية: مسار يومي لتعلم الإنجليزية من A1 إلى C1، وبطاقات مراجعة ذكية، و${arCount(topics, NOUNS.topic)} للمحادثة، واستعداد لوظائف مراكز الاتصال والمبيعات. ويعمل دون إنترنت.`;
-  const enDescription = `A free app in Arabic and English: a daily English path from A1 to C1, smart flashcards, ${topics} conversation topics, call center and sales prep, tasks and habits. Works offline.`;
+  const arDescription = `تطبيق مجاني بالعربية والإنجليزية: مسار يومي لتعلم الإنجليزية من A1 إلى C1، وبطاقات مراجعة ذكية، و${arCount(topics, NOUNS.topic)} للمحادثة، واستعداد لوظائف مراكز الاتصال والمبيعات، ومهام وعادات. جرّبه دون تسجيل.`;
+  const enDescription = `A free app in Arabic and English: a daily English path from A1 to C1, smart flashcards, ${topics} conversation topics, call center and sales prep, tasks and habits. Try it without signing up.`;
 
   const ar: Page = {
     path: ROUTES.home('ar'),
@@ -45,11 +45,11 @@ export function homePages(origin: string): Page[] {
     title: 'خليل | تعلّم الإنجليزية مجانًا ونظّم يومك وعاداتك',
     description: arDescription,
     h1: 'خليل: تعلّم الإنجليزية والمهارات، ونظّم يومك، مجانًا',
-    lead: 'خليل رفيق يومي بالعربية والإنجليزية: يعطيك كل يوم قليلًا من كل مهارة في الإنجليزية، ويعدّك لوظيفة، وينظّم مهامك وعاداتك وورْدك. مجاني، ويعمل في المتصفح على الهاتف والحاسوب، حتى دون إنترنت.',
+    lead: 'خليل رفيق يومي بالعربية والإنجليزية: يعطيك كل يوم قليلًا من كل مهارة في الإنجليزية، ويعدّك لوظيفة، وينظّم مهامك وعاداتك وورْدك. مجاني، ويعمل في المتصفح على الهاتف والحاسوب، ودروسه المكتوبة تفتح حتى دون إنترنت.',
     crumbs: [],
     alternates: HOME_ALTERNATES,
     blocks: [
-      { kind: 'cta', title: 'ابدأ الآن مجانًا', text: 'سجّل الدخول بحساب Google، فتُحفظ بياناتك في حسابك وتجدها على كل أجهزتك.', href: '/', label: 'افتح خليل' },
+      { kind: 'cta', title: 'ابدأ الآن مجانًا', text: 'افتح خليل وجرّبه دون تسجيل، ثم أنشئ حسابًا بـ Google لتُحفظ بياناتك وتجدها على كل أجهزتك.', href: '/', label: 'افتح خليل' },
       { kind: 'h2', text: 'ماذا تجد في خليل؟' },
       { kind: 'list', items: arFeatures },
       { kind: 'h2', text: 'دروس مجانية تقرؤها الآن دون تسجيل' },
@@ -63,9 +63,9 @@ export function homePages(origin: string): Page[] {
       },
       { kind: 'h2', text: 'أسئلة شائعة' },
       { kind: 'h3', text: 'هل خليل مجاني؟' },
-      { kind: 'p', text: 'نعم، كل ما فيه مجاني، ويكفيك حساب Google لتسجيل الدخول.' },
+      { kind: 'p', text: 'نعم، كل ما فيه مجاني. تستطيع أن تجربه دون حساب، ويكفيك حساب Google لتحفظ بياناتك.' },
       { kind: 'h3', text: 'هل يعمل دون إنترنت؟' },
-      { kind: 'p', text: 'نعم. بعد أول فتح يحفظ خليل نفسه على جهازك، فيفتح وتستطيع مذاكرة المواضيع حتى دون إنترنت.' },
+      { kind: 'p', text: 'جزء منه. بعد أول فتح يحفظ خليل نفسه على جهازك، فيفتح دون إنترنت وتقرأ فيه مواضيع الإنجليزية ودروس مركز الاتصال والمبيعات. أما المقاطع وحفظ ما تفعله ومزامنته فتحتاج إلى إنترنت.' },
       { kind: 'h3', text: 'هل أحتاج إلى تثبيت تطبيق؟' },
       { kind: 'p', text: 'لا. يعمل خليل في المتصفح على الهاتف والحاسوب، ويمكنك إضافته إلى الشاشة الرئيسية ليفتح كأنه تطبيق.' },
       { kind: 'h3', text: 'بأي لغة يعمل؟' },
@@ -83,11 +83,11 @@ export function homePages(origin: string): Page[] {
     title: 'Khalil: Learn English for Free, Plan Your Day and Habits',
     description: enDescription,
     h1: 'Khalil: learn English and new skills, and plan your day, for free',
-    lead: 'Khalil is a daily companion in Arabic and English. It gives you a little of every English skill each day, prepares you for a job, and organizes your tasks, habits and wird. It’s free and runs in the browser on your phone or computer, even offline.',
+    lead: 'Khalil is a daily companion in Arabic and English. It gives you a little of every English skill each day, prepares you for a job, and organizes your tasks, habits and wird. It’s free and runs in the browser on your phone or computer, and its written lessons open even offline.',
     crumbs: [],
     alternates: HOME_ALTERNATES,
     blocks: [
-      { kind: 'cta', title: 'Start now, for free', text: 'Sign in with Google: your data is saved to your account, so you find it on all your devices.', href: '/', label: 'Open Khalil' },
+      { kind: 'cta', title: 'Start now, for free', text: 'Open Khalil and try it without signing up, then create an account with Google to keep your data on all your devices.', href: '/', label: 'Open Khalil' },
       { kind: 'h2', text: 'What’s in Khalil?' },
       { kind: 'list', items: enFeatures },
       { kind: 'h2', text: 'Free lessons you can read now, no sign-in needed' },
@@ -101,9 +101,9 @@ export function homePages(origin: string): Page[] {
       },
       { kind: 'h2', text: 'Questions people ask' },
       { kind: 'h3', text: 'Is Khalil free?' },
-      { kind: 'p', text: 'Yes, everything in it is free. You only need a Google account to sign in.' },
+      { kind: 'p', text: 'Yes, everything in it is free. You can try it without an account, and a Google account is all you need to keep your data.' },
       { kind: 'h3', text: 'Does it work offline?' },
-      { kind: 'p', text: 'Yes. After the first visit, Khalil saves itself on your device, so it opens and you can study the topics with no internet.' },
+      { kind: 'p', text: 'Partly. After the first visit, Khalil saves itself on your device, so it opens with no internet and you can study the English topics and the call center and sales lessons. Videos, and saving and syncing what you do, need a connection.' },
       { kind: 'h3', text: 'Do I need to install an app?' },
       { kind: 'p', text: 'No. Khalil runs in the browser on phones and computers, and you can add it to your home screen so it opens like an app.' },
       { kind: 'h3', text: 'Which languages does it support?' },

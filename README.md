@@ -41,7 +41,28 @@ In your Supabase project:
    from (the client passes `redirectTo: window.location.origin`), e.g.
    `http://localhost:5173` for local dev and your production URL once deployed.
 
-### 4. Apply database migrations
+### 4. Let visitors try it without an account
+
+Khalil opens for a visitor straight away, as a guest (`src/lib/guest.ts`): an anonymous Supabase
+account, so everything works and saves, in that browser only. "Create account" links Google to the
+same account (nothing is lost); "Sign in" opens an account made before. In your Supabase project:
+
+1. **Authentication → Sign In / Providers → Allow anonymous sign-ins**: on. Without it the visitor
+   still browses every page, but nothing is saved until they sign in.
+2. **Authentication → Sign In / Providers → Allow manual linking**: on. Without it "Create account"
+   signs in with Google instead, and what the guest did stays behind.
+3. **Authentication → Rate Limits → anonymous sign-ins** is 30 an hour per IP address; raise it if
+   many visitors share one (a mobile network often does).
+
+Search engines get the welcome page and no account. Guest accounts nobody kept can be removed from
+time to time (SQL editor; it deletes their rows too, through `on delete cascade`):
+
+```sql
+delete from auth.users
+where is_anonymous and coalesce(last_sign_in_at, created_at) < now() - interval '60 days';
+```
+
+### 5. Apply database migrations
 
 The schema lives in `supabase/migrations/` as timestamped SQL files managed by the
 [Supabase CLI](https://supabase.com/docs/guides/local-development/cli/getting-started)
@@ -75,7 +96,7 @@ and will wipe the target database.
 SQL Editor at some point in the project's history (not through the CLI) — it's historical
 documentation, not something you need to run.
 
-### 5. Run the app
+### 6. Run the app
 
 ```bash
 npm run dev

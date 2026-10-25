@@ -1,7 +1,7 @@
 // End-to-end check that Khalil works with no internet: opens the production
 // build once online (the service worker saves it), then stops the server and
 // cuts the network, and checks that the app still opens — signed in, even with
-// an expired token, and from the login page — and that the Topic Library works.
+// an expired token, and for a guest who never signed in — and that the Topic Library works.
 // It does it on a desktop, a small and a usual phone and a tablet (with touch),
 // and checks that each of those screens fits the device.
 //
@@ -149,15 +149,20 @@ async function run(browser, name) {
     await fits('back online');
     await page.screenshot({ path: `${dir}/offline-back-online.png`, fullPage: true });
 
-    // 6. Never signed in on this device, offline: the login page offers the topics.
+    // 6. Never signed in on this device, offline: Khalil opens for a guest (nothing is
+    // saved until they sign in) and the topics work.
     stopServer(server);
     networkUp = false;
     await context.setOffline(true);
-    await page.evaluate(() => localStorage.removeItem('sb-localhost-auth-token'));
+    await page.evaluate(() => {
+      localStorage.removeItem('sb-localhost-auth-token');
+      localStorage.setItem('khalil-guide-done', '1');
+    });
     await page.reload({ waitUntil: 'domcontentloaded' });
     await page.waitForTimeout(1500);
-    check(await page.getByText('تسجيل الدخول بـ Google').count(), 'offline, signed out: login page not shown');
-    await press(page.getByRole('button', { name: 'ذاكر المواضيع' }));
+    check(!(await page.getByText('تسجيل الدخول بـ Google').count()), 'offline, signed out: the welcome page instead of the app');
+    check(await page.getByTestId('guest-browse-banner').isVisible().catch(() => false), 'offline, signed out: no "browsing as a guest" banner');
+    await press(page.getByRole('button', { name: 'ذاكر المواضيع' }).first());
     await page.waitForTimeout(600);
     check((await packCards.count()) >= 20, 'offline, signed out: topic library did not open');
     check(!(await page.getByText('أضف إلى').count()), 'offline, signed out: add-to-list controls shown');

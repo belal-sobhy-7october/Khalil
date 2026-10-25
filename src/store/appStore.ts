@@ -8,6 +8,7 @@ import { deleteSrsCard, fetchSrsCards, mergeSrs, readLocalSrs, saveSrsCard, writ
 import { loadStartup, STARTUP_KV_KEYS, type StartupData } from '../lib/startup';
 import { prefetchKv } from '../lib/userKv';
 import { useWirdStore } from '../lib/wird';
+import { askForAccount } from '../lib/guest';
 import type {
   Language,
   Priority,
@@ -512,7 +513,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   showCalendarOnboarding: false,
   setDailyFocus: async (focus) => {
     const userId = get().session?.user?.id;
-    if (!userId) return;
+    if (!userId) return askForAccount();
     const previousFocus = get().dailyFocus;
     // Optimistic update
     set({ dailyFocus: focus });
@@ -530,7 +531,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   },
   clearDailyFocus: async () => {
     const userId = get().session?.user?.id;
-    if (!userId) return;
+    if (!userId) return askForAccount();
     const previousFocus = get().dailyFocus;
     // Optimistic update
     set({ dailyFocus: { text: '', date: getToday() } });
@@ -544,7 +545,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   dailyTodos: [],
   addDailyTodo: async (text, priority) => {
     const userId = get().session?.user?.id;
-    if (!userId) return { success: false };
+    if (!userId) return askForAccount({ success: false });
     const id = generateId();
     const maxSortOrder = get().dailyTodos.reduce((max, t) => Math.max(max, t.sortOrder), -1);
     const sortOrder = maxSortOrder + 1;
@@ -596,7 +597,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   weeklyTodos: [],
   addWeeklyTodo: async (text, priority) => {
     const userId = get().session?.user?.id;
-    if (!userId) return { success: false };
+    if (!userId) return askForAccount({ success: false });
     const id = generateId();
     const maxSortOrder = get().weeklyTodos.reduce((max, t) => Math.max(max, t.sortOrder), -1);
     const sortOrder = maxSortOrder + 1;
@@ -649,7 +650,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   backlogTodos: [],
   addBacklogTodo: async (text, priority) => {
     const userId = get().session?.user?.id;
-    if (!userId) return { success: false };
+    if (!userId) return askForAccount({ success: false });
     const id = generateId();
     const maxSortOrder = get().backlogTodos.reduce((max, t) => Math.max(max, t.sortOrder), -1);
     const sortOrder = maxSortOrder + 1;
@@ -699,7 +700,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   },
   reorderDailyTodos: async (ids) => {
     const userId = get().session?.user?.id;
-    if (!userId) return;
+    if (!userId) return askForAccount();
     const previousItems = get().dailyTodos;
     const nextItems = applyReorder(previousItems, ids);
     set({ dailyTodos: nextItems });
@@ -710,7 +711,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   },
   reorderWeeklyTodos: async (ids) => {
     const userId = get().session?.user?.id;
-    if (!userId) return;
+    if (!userId) return askForAccount();
     const previousItems = get().weeklyTodos;
     const nextItems = applyReorder(previousItems, ids);
     set({ weeklyTodos: nextItems });
@@ -721,7 +722,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   },
   reorderBacklogTodos: async (ids) => {
     const userId = get().session?.user?.id;
-    if (!userId) return;
+    if (!userId) return askForAccount();
     const previousItems = get().backlogTodos;
     const nextItems = applyReorder(previousItems, ids);
     set({ backlogTodos: nextItems });
@@ -973,7 +974,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   lifeCategories: [],
   addLifeCategory: async (cat) => {
     const userId = get().session?.user?.id;
-    if (!userId) return;
+    if (!userId) return askForAccount();
     const id = cat.id || generateId();
     const { success } = await supabaseCall(supabase.from('life_categories').insert({ id, user_id: userId, name: cat.name, name_key: cat.nameKey, icon: cat.icon, color: cat.color, sort_order: cat.sortOrder }), 'addLifeCategory');
     if (!success) {
@@ -1009,7 +1010,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   },
   addPillar: async (name, icon = 'heart', colorTheme = 'terracotta') => {
     const userId = get().session?.user?.id;
-    if (!userId) return;
+    if (!userId) return askForAccount();
     const sortOrder = get().lifeCategories.length + 1;
     const { data, success } = await supabaseCall<{ id: string }>(
       supabase.from('life_categories').insert({
@@ -1027,7 +1028,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   },
   updatePillar: async (id, newName) => {
     const userId = get().session?.user?.id;
-    if (!userId) return;
+    if (!userId) return askForAccount();
     const previousCategory = get().lifeCategories.find((c) => c.id === id);
     if (!previousCategory) return;
     // Optimistic update
@@ -1045,7 +1046,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   },
   deletePillar: async (id) => {
     const userId = get().session?.user?.id;
-    if (!userId) return;
+    if (!userId) return askForAccount();
     const deletedCategory = get().lifeCategories.find((c) => c.id === id);
     const deletedTracks = get().subTracks.filter((t) => t.categoryId === id);
     const deletedEntries = get().subTrackEntries.filter((e) => deletedTracks.some((t) => t.id === e.trackId));
@@ -1083,7 +1084,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   subTracks: [],
   addSubTrack: async (track) => {
     const userId = get().session?.user?.id;
-    if (!userId) return;
+    if (!userId) return askForAccount();
     const { data, success } = await supabaseCall(
       supabase.from('sub_tracks').insert({
         user_id: userId, category_id: track.categoryId, name: track.name, name_key: track.nameKey, icon: track.icon, progress_type: track.progressType, target: track.target, unit: track.unit, current_value: track.currentValue, sort_order: track.sortOrder,
@@ -1096,7 +1097,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   },
   removeSubTrack: async (id) => {
     const userId = get().session?.user?.id;
-    if (!userId) return;
+    if (!userId) return askForAccount();
     const { success } = await supabaseCall(supabase.from('sub_tracks').delete().eq('id', id).eq('user_id', userId), 'removeSubTrack');
     if (!success) {
       set({ error: 'errors.removeSubTrack' });
@@ -1170,7 +1171,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   },
   toggleSubTrackHabit: async (id) => {
     const userId = get().session?.user?.id;
-    if (!userId) return;
+    if (!userId) return askForAccount();
     const today = getToday();
     const { data, success } = await supabaseCall<{ is_on: boolean; new_value: number; entry_id: string | null }[]>(
       supabase.rpc('toggle_sub_track_habit', { p_track_id: id, p_user_id: userId, p_date: today }),
@@ -1203,7 +1204,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   subTrackEntries: [],
   addSubTrackEntry: async (entry) => {
     const userId = get().session?.user?.id;
-    if (!userId) return;
+    if (!userId) return askForAccount();
     const id = entry.id || generateId();
     const { success } = await supabaseCall(supabase.from('sub_track_entries').insert({ id, user_id: userId, track_id: entry.trackId, value: entry.value, date: entry.date, note: entry.note }), 'addSubTrackEntry');
     if (!success) return;
@@ -1230,7 +1231,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   vocabularyReviews: [],
   addBookmarkCategory: async (category) => {
     const userId = get().session?.user?.id;
-    if (!userId) return;
+    if (!userId) return askForAccount();
     const id = generateId();
     const { success } = await supabaseCall(
       supabase.from('bookmark_categories').insert({
@@ -1258,7 +1259,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   },
   addBookmark: async (bookmark) => {
     const userId = get().session?.user?.id;
-    if (!userId) return;
+    if (!userId) return askForAccount();
     const id = generateId();
     const { success } = await supabaseCall(
       supabase.from('bookmarks').insert({
@@ -1291,7 +1292,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   addStickyNote: async (note) => {
     const userId = get().session?.user?.id;
     if (import.meta.env.DEV) console.log('[addStickyNote]', note.id, note.title);
-    if (!userId) return;
+    if (!userId) return askForAccount();
     const sortOrder = get().stickyNotes.length;
     const { success } = await supabaseCall(
       supabase.from('sticky_notes').insert({
@@ -1342,7 +1343,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
 
   reorderStickyNotes: async (ids) => {
     const userId = get().session?.user?.id;
-    if (!userId) return;
+    if (!userId) return askForAccount();
     const previousItems = get().stickyNotes;
     const nextItems = applyReorder(previousItems, ids);
     set({ stickyNotes: nextItems });
@@ -1355,7 +1356,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   addTodoNote: async (note) => {
     const userId = get().session?.user?.id;
     if (import.meta.env.DEV) console.log('[addTodoNote]', note.id, note.title);
-    if (!userId) return;
+    if (!userId) return askForAccount();
     const sortOrder = get().todoNotes.length;
     const { success } = await supabaseCall(
       supabase.from('todo_notes').insert({
@@ -1406,7 +1407,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
 
   reorderTodoNotes: async (ids) => {
     const userId = get().session?.user?.id;
-    if (!userId) return;
+    if (!userId) return askForAccount();
     const previousItems = get().todoNotes;
     const nextItems = applyReorder(previousItems, ids);
     set({ todoNotes: nextItems });
@@ -1418,7 +1419,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
 
   addHabit: async (name, icon = 'star', startDate, scheduleDays = null) => {
     const userId = get().session?.user?.id;
-    if (!userId) return { success: false };
+    if (!userId) return askForAccount({ success: false });
     const id = generateId();
     const maxSortOrder = get().habits.reduce((max, h) => Math.max(max, h.sortOrder), -1);
     const sortOrder = maxSortOrder + 1;
@@ -1446,7 +1447,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   },
   updateHabit: async (id, data) => {
     const userId = get().session?.user?.id;
-    if (!userId) return { success: false };
+    if (!userId) return askForAccount({ success: false });
     const previousHabit = get().habits.find((h) => h.id === id);
     if (!previousHabit) return { success: false };
     const nextHabit: Habit = { ...previousHabit, ...data };
@@ -1472,7 +1473,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   },
   removeHabit: async (id) => {
     const userId = get().session?.user?.id;
-    if (!userId) return;
+    if (!userId) return askForAccount();
     const deletedHabit = get().habits.find((h) => h.id === id);
     const deletedEntries = get().habitEntries.filter((e) => e.habitId === id);
     set((s) => ({
@@ -1491,7 +1492,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   },
   reorderHabits: async (ids) => {
     const userId = get().session?.user?.id;
-    if (!userId) return;
+    if (!userId) return askForAccount();
     const previousItems = get().habits;
     const nextItems = applyReorder(previousItems, ids);
     set({ habits: nextItems });
@@ -1502,7 +1503,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   },
   toggleHabitEntry: async (habitId, date) => {
     const userId = get().session?.user?.id;
-    if (!userId) return;
+    if (!userId) return askForAccount();
     const existingEntry = get().habitEntries.find((e) => e.habitId === habitId && e.date === date);
     if (existingEntry) {
       // Optimistic delete
@@ -1545,7 +1546,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   },
   setHabitEntryDates: async (habitId, dates) => {
     const userId = get().session?.user?.id;
-    if (!userId) return false;
+    if (!userId) return askForAccount(false);
     const previous = get().habitEntries;
     const mine = previous.filter((e) => e.habitId === habitId);
     const wanted = new Set(dates);
@@ -1572,7 +1573,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   },
   setDailyMood: async (date, data) => {
     const userId = get().session?.user?.id;
-    if (!userId) return;
+    if (!userId) return askForAccount();
     const existingMood = get().dailyMoods.find((m) => m.date === date);
     const updatedMood: DailyMood = {
       date,
@@ -1606,7 +1607,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
 
   addCalendarEvent: async (event) => {
     const userId = get().session?.user?.id;
-    if (!userId) return { success: false };
+    if (!userId) return askForAccount({ success: false });
     const id = generateId();
     const now = Date.now();
     const newEvent: CalendarEvent = {
@@ -1642,7 +1643,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   },
   updateCalendarEvent: async (id, data) => {
     const userId = get().session?.user?.id;
-    if (!userId) return { success: false };
+    if (!userId) return askForAccount({ success: false });
     const previousEvent = get().calendarEvents.find((e) => e.id === id);
     if (!previousEvent) return { success: false };
     const now = Date.now();
@@ -1693,7 +1694,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   },
   deleteCalendarEvent: async (id) => {
     const userId = get().session?.user?.id;
-    if (!userId) return;
+    if (!userId) return askForAccount();
     const { success } = await supabaseCall(supabase.from('calendar_events').delete().eq('id', id).eq('user_id', userId), 'deleteCalendarEvent');
     if (!success) {
       set({ error: 'errors.deleteCalendarEvent' });
@@ -1730,7 +1731,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
 
   addVocabularyCategory: async (category) => {
     const userId = get().session?.user?.id;
-    if (!userId) return;
+    if (!userId) return askForAccount();
     const id = generateId();
     const now = new Date().toISOString();
     const { success } = await supabaseCall(
@@ -1776,7 +1777,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   },
   addVocabularyItem: async (item) => {
     const userId = get().session?.user?.id;
-    if (!userId) return;
+    if (!userId) return askForAccount();
     const id = generateId();
     const now = new Date().toISOString();
     const { success } = await supabaseCall(
@@ -1832,7 +1833,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   },
   submitVocabularyReview: async (itemId, result, timeTaken, srsCard) => {
     const userId = get().session?.user?.id;
-    if (!userId) return;
+    if (!userId) return askForAccount();
     const id = generateId();
     const now = new Date().toISOString();
     const item = get().vocabularyItems.find((i) => i.id === itemId);
@@ -1911,7 +1912,7 @@ export const useAppStore = create<AppStore>()((set, get) => ({
   },
   importVocabularyItems: async (items, options) => {
     const userId = get().session?.user?.id;
-    if (!userId) return { inserted: 0, updated: 0, skipped: 0, failed: items.length };
+    if (!userId) return askForAccount({ inserted: 0, updated: 0, skipped: 0, failed: items.length });
     
     const { duplicateMode, categoryForAll, typeForAll } = options;
     const now = new Date().toISOString();
