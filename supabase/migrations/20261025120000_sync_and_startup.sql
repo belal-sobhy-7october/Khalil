@@ -10,6 +10,8 @@
 
 -- 1. When a row last changed, by the server's clock (a device's clock can be wrong).
 alter table public.habit_entries add column if not exists updated_at timestamptz not null default now();
+-- Every row has one (the startup below reads by it); the trigger keeps it so.
+update public.vocabulary_items set updated_at = coalesce(created_at, now()) where updated_at is null;
 
 create or replace function public.touch_updated_at() returns trigger
 language plpgsql
@@ -94,36 +96,40 @@ create trigger record_sync_deletion after delete on public.habit_entries for eac
 -- save that committed late), and `deleted` what was deleted. Without `since`,
 -- or when it is older than 60 days (deletions are kept 90), everything comes and
 -- `full` is true. `kv_keys`: the settings to bring.
-create or replace function public.app_startup(since timestamptz default null, kv_keys text[] default '{}')
-returns jsonb
+-- json, not jsonb: Postgres builds it 3–4 times faster (a heavy user's first visit is 1.3 MB).
+drop function if exists public.app_startup(timestamptz, text[]);
+create function public.app_startup(since timestamptz default null, kv_keys text[] default '{}')
+returns json
 language sql
 stable
 set search_path = ''
 as $$
   with me as (select auth.uid() as id),
-  after_ as (select case when since > now() - interval '60 days' then since - interval '2 minutes' end as t)
-  select jsonb_build_object(
+  after_ as (select case when since > now() - interval '60 days' then since - interval '2 minutes' end as t),
+  -- The lower bound of updated_at (all rows when everything comes), so the (user_id, updated_at) indexes read only the rows asked for.
+  from_ as (select coalesce((select t from after_), '-infinity'::timestamptz) as t)
+  select json_build_object(
     'now', now(),
     'full', (select t from after_) is null,
-    'focus', (select coalesce(jsonb_agg(to_jsonb(f)), '[]') from public.daily_focus f where f.user_id = (select id from me)),
-    'todos', (select coalesce(jsonb_agg(to_jsonb(t) order by t.sort_order, t.id), '[]') from public.todos t where t.user_id = (select id from me)),
-    'life_categories', (select coalesce(jsonb_agg(to_jsonb(c) order by c.sort_order), '[]') from public.life_categories c where c.user_id = (select id from me)),
-    'sub_tracks', (select coalesce(jsonb_agg(to_jsonb(s) order by s.sort_order), '[]') from public.sub_tracks s where s.user_id = (select id from me)),
-    'habits', (select coalesce(jsonb_agg(to_jsonb(h) order by h.sort_order), '[]') from public.habits h where h.user_id = (select id from me)),
-    'vocabulary_categories', (select coalesce(jsonb_agg(to_jsonb(v) order by v.name), '[]') from public.vocabulary_categories v where v.user_id = (select id from me)),
-    'sticky_notes', (select coalesce(jsonb_agg(to_jsonb(n) order by n.sort_order), '[]') from public.sticky_notes n where n.user_id = (select id from me)),
-    'todo_notes', (select coalesce(jsonb_agg(to_jsonb(n) order by n.sort_order), '[]') from public.todo_notes n where n.user_id = (select id from me)),
-    'kv', (select coalesce(jsonb_object_agg(k.key, k.value), '{}') from public.user_kv k where k.user_id = (select id from me) and k.key = any (kv_keys)),
-    'words', (select coalesce(jsonb_agg(to_jsonb(w) order by w.created_at, w.id), '[]') from public.vocabulary_items w
-              where w.user_id = (select id from me) and ((select t from after_) is null or w.updated_at > (select t from after_))),
-    'srs', (select coalesce(jsonb_agg(jsonb_build_object('key', k.key, 'value', k.value)), '[]') from public.user_kv k
-            where k.user_id = (select id from me) and k.key like 'srs:%' and ((select t from after_) is null or k.updated_at > (select t from after_))),
-    'habit_entries', (select coalesce(jsonb_agg(to_jsonb(e) order by e.date, e.id), '[]') from public.habit_entries e
-                      where e.user_id = (select id from me) and ((select t from after_) is null or e.updated_at > (select t from after_))),
-    'wird', (select coalesce(jsonb_agg(jsonb_build_object('date', d.date, 'data', d.data) order by d.date), '[]') from public.wird_days d
-             where d.user_id = (select id from me) and ((select t from after_) is null or d.updated_at > (select t from after_))),
-    'deleted', case when (select t from after_) is null then '[]'::jsonb else
-      (select coalesce(jsonb_agg(jsonb_build_object('source', x.source, 'key', x.row_key)), '[]') from public.sync_deletions x
+    'focus', (select coalesce(json_agg(row_to_json(f)), '[]'::json) from public.daily_focus f where f.user_id = (select id from me)),
+    'todos', (select coalesce(json_agg(row_to_json(t) order by t.sort_order, t.id), '[]'::json) from public.todos t where t.user_id = (select id from me)),
+    'life_categories', (select coalesce(json_agg(row_to_json(c) order by c.sort_order), '[]'::json) from public.life_categories c where c.user_id = (select id from me)),
+    'sub_tracks', (select coalesce(json_agg(row_to_json(s) order by s.sort_order), '[]'::json) from public.sub_tracks s where s.user_id = (select id from me)),
+    'habits', (select coalesce(json_agg(row_to_json(h) order by h.sort_order), '[]'::json) from public.habits h where h.user_id = (select id from me)),
+    'vocabulary_categories', (select coalesce(json_agg(row_to_json(v) order by v.name), '[]'::json) from public.vocabulary_categories v where v.user_id = (select id from me)),
+    'sticky_notes', (select coalesce(json_agg(row_to_json(n) order by n.sort_order), '[]'::json) from public.sticky_notes n where n.user_id = (select id from me)),
+    'todo_notes', (select coalesce(json_agg(row_to_json(n) order by n.sort_order), '[]'::json) from public.todo_notes n where n.user_id = (select id from me)),
+    'kv', (select coalesce(json_object_agg(k.key, k.value), '{}'::json) from public.user_kv k where k.user_id = (select id from me) and k.key = any (kv_keys)),
+    'words', (select coalesce(json_agg(row_to_json(w) order by w.created_at, w.id), '[]'::json) from public.vocabulary_items w
+              where w.user_id = (select id from me) and w.updated_at > (select t from from_)),
+    'srs', (select coalesce(json_agg(json_build_object('key', k.key, 'value', k.value)), '[]'::json) from public.user_kv k
+            where k.user_id = (select id from me) and k.key like 'srs:%' and k.updated_at > (select t from from_)),
+    'habit_entries', (select coalesce(json_agg(row_to_json(e) order by e.date, e.id), '[]'::json) from public.habit_entries e
+                      where e.user_id = (select id from me) and e.updated_at > (select t from from_)),
+    'wird', (select coalesce(json_agg(json_build_object('date', d.date, 'data', d.data) order by d.date), '[]'::json) from public.wird_days d
+             where d.user_id = (select id from me) and d.updated_at > (select t from from_)),
+    'deleted', case when (select t from after_) is null then '[]'::json else
+      (select coalesce(json_agg(json_build_object('source', x.source, 'key', x.row_key)), '[]'::json) from public.sync_deletions x
        where x.user_id = (select id from me) and x.deleted_at > (select t from after_)) end
   )
 $$;

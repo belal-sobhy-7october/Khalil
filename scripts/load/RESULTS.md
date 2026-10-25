@@ -94,19 +94,43 @@ All three are done (`supabase/migrations/20261025120000_sync_and_startup.sql`, `
 states, habit days and wird days on the device and asks only for what changed since its last visit,
 and the calendar, bookmarks and focus sessions load when their page opens.
 
+### One app open
+
 What the real app sends when it opens now (`record.mjs`, production build):
 
 | | Requests | First visit on a device | Opening it again a minute later | A day later ¹ |
 |---|---|---|---|---|
-| A heavy user | 26 → **1** | 1.27 MB | **60 KB** | 118 KB |
-| A medium user | 26 → **1** | 194 KB | 20 KB | 32 KB |
+| A heavy user | 26 → **1** | 1.23 MB | **56 KB** | 113 KB |
+| A medium user | 26 → **1** | 187 KB | 19 KB | 34 KB |
 | A light user | 26 → **1** | 9 KB | 3 KB | 3 KB |
-| The mix online (half heavy) | 26 → **1** | 0.71 MB | **39 KB** | 72 KB |
+| The mix online (half heavy) | 26 → **1** | 0.69 MB | **36 KB** | 70 KB |
 
 ¹ `app_startup` with `since` a day back: what a heavy user changes in a day (about 60 words and
 flashcard states) plus the small lists, which always come whole (the tasks are most of it: 45 KB
 for 150 tasks).
 
-The first visit on a device costs what it did; every visit after it costs about a tenth. Each page
-that loads its own data asks once when it opens: the calendar (11 KB), the focus sessions (50 KB, on
-Focus and Analytics), the English hub's progress (one request for all its values).
+The first visit on a device costs what it did; every visit after it costs about a tenth. A page that
+loads its own data asks once when it opens: the calendar (11 KB), the focus sessions (50 KB, on Focus
+and Analytics), the English hub's progress (one request for all its values).
+
+### The load test again (`OPEN=startup`, 1 open in 10 on a device with no copy yet)
+
+| | Before (26 requests) | After (1 request) |
+|---|---|---|
+| 2,000 people at once | p50 8 · p95 33 · p99 167 ms | p50 2.7 · p95 **7.2** · p99 **17** ms |
+| 3,000 people at once | **overloaded** (p50 2.2 s) | p50 2.7 · p95 9.2 · p99 137 ms |
+| 4,000 people at once | **overloaded** (p50 7 s) | p50 2.8 · p95 17 · p99 517 ms |
+| 50 app opens a second | app loaded in p50 20 · p95 75 · p99 150 ms | p50 8.3 · p95 37 · p99 49 ms |
+| 100 app opens a second | **collapsed** (a burst of 100 a second) | p50 7.9 · p95 36 · p99 50 ms |
+| 200 app opens a second | — | p50 8.7 · p95 36 · p99 55 ms |
+| 50 a second, all on new devices (`FIRST=1`) | (as 50 above) | p50 21 · p95 52 · p99 66 ms |
+
+No errors in any run. The work moved: Postgres now builds the response (PostgREST used to), so on a
+first visit it does more than before; the function returns `json`, not `jsonb`, which Postgres builds
+3–4 times faster (a heavy user's first visit: 17–23 ms instead of 57–86 ms). A returning visit reads only
+the changed rows through the `(user_id, updated_at)` indexes: about 3 ms in Postgres.
+
+What it means for 20,000 users: the machine that reached its limit at 2,000–2,500 people at once now
+serves 4,000 with room to spare, and **egress** falls with the size of a visit: at 5,000 opens a day,
+1 in 10 on a new device (0.69 MB) and the rest a day after the last (70 KB), about 0.65 GB a day
+(≈ 20 GB a month) instead of 3.5 GB a day (≈ 100 GB a month); within Supabase Pro's 250 GB.
