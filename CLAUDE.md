@@ -10,7 +10,7 @@ This covers the interface (`translations.ts`), lessons and data, notes, prompts 
 tests and e2e scripts. Write simple, friendly Fusha (لماذا، الآن، لا، هذا، اليوم), and use Arabic words where they
 exist (تمثيل الأدوار، التسويق، المبيعات) instead of English ones spelled in Arabic letters.
 `src/i18n/fusha.test.ts` lists the dialect words to avoid and fails on them in `src`,
-`scripts`, `api`, `.claude` and the top-level docs. Its `NOT_OURS` list is only for text that isn't ours (YouTube
+`scripts`, `api`, `docs`, `.claude` and the top-level docs. Its `NOT_OURS` list is only for text that isn't ours (YouTube
 titles as their channels wrote them, and the keywords that recognize what a user types); never add a file there to
 silence the test, rewrite the text instead.
 
@@ -34,6 +34,24 @@ network at all):
   for supabase-js to fail refreshing the token.
 - `scripts/e2e/offline.mjs` checks all of this against a production build, on a desktop, two phones
   (iPhone SE, Galaxy S24) and a tablet (iPad Mini) with touch (`--device` picks others).
+
+## Public pages (search engines)
+
+The app is behind a sign-in, so search engines only saw a login screen. The build now writes ~225 public
+pages from the app's own data: home pages (`/ar`, `/en`), the Topic Library (`/{ar,en}/english-topics`, a page
+per lesson in English), Call Center Prep (`/{ar,en}/call-center`, the interview questions in Arabic and English
+and a page per question, the word bank in Arabic and English) and the Arabic sales chapters (`/ar/sales`).
+**Read `docs/seo/README.md` before changing them** (the plan for the owner, in Arabic, then notes for developers).
+
+- `src/seo/` describes the pages (`pages/*.ts`) and writes them as HTML and Markdown (`render.ts`), with
+  `sitemap.xml`, `robots.txt`, `llms.txt`, `sitemap.md` and `404.html` (`site.ts`); `scripts/seoPlugin.ts`
+  writes them into `dist/` and makes `vite preview` serve them like `vercel.json` does. New content in the
+  data shows up as pages by itself; `src/seo/site.test.ts` checks titles, hreflang, links and routing.
+- Never rename a published address: it comes from a topic's `id`, a question's `id`, a chapter's `id` and a
+  vocabulary unit's **title** (`vocab.ts`).
+- The Arabic word meanings and question translations are in `src/data/callCenter/vocabAr.ts` and
+  `interviewAr.ts`; a new word or question needs its line there (the data test checks).
+- The service worker doesn't save these files (`isSeoFile`); they aren't part of the app.
 
 ## Opening the app (one request, only what changed)
 
