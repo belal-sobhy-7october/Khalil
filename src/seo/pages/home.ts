@@ -18,7 +18,7 @@ export function homePages(origin: string): Page[] {
   const arFeatures = [
     'مسار التعلم: يبدأ من مستواك (من A1 إلى C1)، ويعطيك كل يوم قليلًا من كل مهارة: المفردات، والنطق، والاستماع، والقراءة، والقواعد، والتظليل (Shadowing). وتختار مدة كل فقرة بنفسك.',
     'بطاقات مراجعة ذكية: تراجع كل كلمة في الوقت المناسب بخوارزمية FSRS التي يستخدمها Anki، ويذكّرك خليل بموعد المراجعة.',
-    `مكتبة المواضيع: ${arCount(topics, NOUNS.lesson)} للمحادثة، في كل درس 12 كلمة بمعناها في الموضوع ومثال، وقاعدة نحوية، وأسئلة نقاش، ومهمة كلام مدتها دقيقة.`,
+    `مكتبة المواضيع: ${arCount(topics, NOUNS.lesson)} للمحادثة، في كل درس نحو 12 كلمة بمعناها في الموضوع ومثال، وقاعدة نحوية، وأسئلة نقاش، ومهمة كلام مدتها دقيقة.`,
     `الاستعداد لمراكز الاتصال: خطة من B1 إلى C1، و${arCount(words, NOUNS.word)}، و${arCount(questions, NOUNS.question)} من أسئلة المقابلات بإجابات نموذجية، ورسائل صوتية واختبارات.`,
     `تعلّم المبيعات: المبيعات والتسويق والتفاوض وعلم نفس القرار من الصفر، في ${arCount(KNOWLEDGE.length, NOUNS.book)} و${arCount(chapters, NOUNS.chapter)} بالعربية، ثم بالإنجليزية.`,
     'المهام والعادات: تركيز اليوم، ومهام اليوم والأسبوع، وتتبع العادات، والورد اليومي (الصلوات والقرآن والأذكار).',
@@ -28,7 +28,7 @@ export function homePages(origin: string): Page[] {
   const enFeatures = [
     'Learning Path: starts at your level (A1 to C1) and gives you a little of every skill each day: vocabulary, pronunciation, listening, reading, grammar and shadowing. You choose how long each part takes.',
     'Smart flashcards: review every word at the right moment with FSRS, the algorithm Anki uses, with review reminders.',
-    `Topic Library: ${topics} conversation lessons, each with 12 words in the meaning they have in the topic, an example, a grammar point, discussion questions and a one-minute speaking task.`,
+    `Topic Library: ${topics} conversation lessons, each with about 12 words in the meaning they have in the topic, an example, a grammar point, discussion questions and a one-minute speaking task.`,
     `Call Center Prep: a plan from B1 to C1, ${words} call center words, ${questions} interview questions with model answers, voice notes and tests.`,
     `Sales Prep: sales, marketing, negotiation and the psychology of decisions from zero, in ${KNOWLEDGE.length} short books (${chapters} chapters) in Arabic, then in English.`,
     'Tasks and habits: a daily focus, today’s and this week’s tasks, habit tracking and the daily wird (prayers, Quran and adhkar).',

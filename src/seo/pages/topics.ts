@@ -146,11 +146,11 @@ function indexPage(lang: Lang, origin: string): Page {
       section: 'topics',
       title: `مواضيع محادثة بالإنجليزية مجانًا: ${arCount(count, NOUNS.lesson)} بالكلمات والأسئلة | خليل`,
       description: clip(
-        `${arCount(count, NOUNS.topic)} للمحادثة بالإنجليزية من B1 إلى C1: في كل موضوع 12 كلمة بمعناها ومثال، وقاعدة نحوية، وأسئلة نقاش، ومهمة كلام مدتها دقيقة، وفقرة نموذجية. مجانًا.`
+        `${arCount(count, NOUNS.topic)} للمحادثة بالإنجليزية من B1 إلى C1: في كل موضوع نحو 12 كلمة بمعناها ومثال، وقاعدة نحوية، وأسئلة نقاش، ومهمة كلام مدتها دقيقة، وفقرة نموذجية. مجانًا.`
       ),
       h1,
       crumb: 'مواضيع المحادثة',
-      lead: 'كل موضوع درس كامل يسير على طريقة واحدة: أسئلة تمهيدية، ثم 12 كلمة بالمعنى الذي تحمله في هذا الموضوع مع مثال، ثم قاعدة نحوية واحدة تخدمه، ثم أسئلة نقاش، ثم مهمة كلام مدتها دقيقة، ثم فقرة نموذجية تقرؤها بصوت مرتفع.',
+      lead: 'كل موضوع درس كامل يسير على طريقة واحدة: أسئلة تمهيدية، ثم نحو 12 كلمة بالمعنى الذي تحمله في هذا الموضوع مع مثال، ثم قاعدة نحوية واحدة تخدمه، ثم أسئلة نقاش، ثم مهمة كلام مدتها دقيقة، ثم فقرة نموذجية تقرؤها بصوت مرتفع.',
       crumbs,
       alternates,
       blocks: [
@@ -188,11 +188,11 @@ function indexPage(lang: Lang, origin: string): Page {
     section: 'topics',
     title: `English Conversation Topics: ${count} Free Lessons (B1–C1) | Khalil`,
     description: clip(
-      `${count} free English conversation lessons from B1 to C1. Each topic: 12 key words with meanings and examples, a grammar point, discussion questions, a one-minute speaking task and a model paragraph.`
+      `${count} free English conversation lessons from B1 to C1. Each topic: about 12 key words with meanings and examples, a grammar point, discussion questions, a one-minute speaking task and a model paragraph.`
     ),
     h1,
     crumb: 'English topics',
-    lead: 'Every topic is a full lesson with the same steps: warm-up questions, 12 words in the meaning they have in the topic with an example, one grammar point that serves it, discussion questions, a one-minute speaking task and a model paragraph to read aloud.',
+    lead: 'Every topic is a full lesson with the same steps: warm-up questions, about 12 words in the meaning they have in the topic with an example, one grammar point that serves it, discussion questions, a one-minute speaking task and a model paragraph to read aloud.',
     crumbs,
     alternates,
     blocks: [
