@@ -11,7 +11,10 @@
 //
 // Options (env): REST (PostgREST, default http://127.0.0.1:54331), USERS (seeded, default 20000),
 // THINK (mean seconds between a person's actions, default 10), RAMP (seconds over which the people
-// of a steady run arrive, default 60), OUT (a JSON file for the results).
+// of a steady run arrive, default 60), OUT (a JSON file for the results), OPEN (how the app opens:
+// `startup`, the default, is one app_startup request; `old` replays the 26 requests the app sent
+// before it), FIRST (with `startup`: the share of opens on a device with no copy yet, which load
+// everything; the others last opened the app 1–48 hours ago; default 0.1).
 import http from 'node:http';
 import fs from 'node:fs';
 import { execFileSync } from 'node:child_process';
@@ -23,6 +26,8 @@ import { idOf, tierOf } from './users.mjs';
 const REST = new URL(process.env.REST ?? 'http://127.0.0.1:54331');
 const USERS = Number(process.env.USERS ?? 20000);
 const THINK = Number(process.env.THINK ?? 10);
+const OPEN = process.env.OPEN ?? 'startup';
+const FIRST = Number(process.env.FIRST ?? 0.1);
 const agent = new http.Agent({ keepAlive: true, maxSockets: 2048 });
 
 // ---- one request ------------------------------------------------------------
@@ -206,8 +211,31 @@ async function paged(stats, name, token, path, parse = false) {
   }
 }
 
-/** What the app sends when it opens (record.mjs): in parallel, as the browser does. */
+/** The settings the app reads as it opens (src/lib/startup.ts). */
+const STARTUP_KV_KEYS = ['appearance', 'srs-settings', 'tasks-settings', 'wird-items', 'habit-links', 'pomodoro-settings'];
+
+/**
+ * What the app sends when it opens (record.mjs): one app_startup request, with
+ * only what changed since this device's last visit (or everything, on a device
+ * that has no copy yet).
+ */
 async function openApp(stats, user) {
+  if (OPEN === 'old') return openAppOld(stats, user);
+  const first = Math.random() < FIRST;
+  const since = first ? null : new Date(Date.now() - (1 + Math.random() * 47) * 3600e3).toISOString();
+  const r = await call(stats, first ? 'open: app_startup (first visit)' : 'open: app_startup (returning)', 'POST', '/rpc/app_startup', {
+    token: user.token, body: { since, kv_keys: STARTUP_KV_KEYS }, parse: true,
+  });
+  const data = r.json ?? {};
+  user.todos = data.todos ?? [];
+  user.entries = (data.habit_entries ?? []).filter((e) => e.date === today);
+  user.habits = data.habits ?? [];
+  const count = { light: 10, medium: 150, heavy: 1000 }[tierOf(user.n)];
+  user.words = Array.from({ length: count }, (_, k) => ({ id: idFrom(`word-${user.n}-${k + 1}`), review_count: 0 }));
+}
+
+/** What the app sent when it opened before app_startup (26 requests, in parallel as the browser does). */
+async function openAppOld(stats, user) {
   const { id, token } = user;
   const u = `user_id=eq.${id}`;
   const kv = (key) => call(stats, 'open: user_kv key', 'GET', `/user_kv?select=value&${u}&key=eq.${enc(key)}`, { token });
@@ -300,8 +328,12 @@ const ACTIONS = [
   }],
   [3, 'open analytics', (stats, u) =>
     Promise.all([
-      call(stats, 'analytics: user_kv', 'GET', `/user_kv?select=value&user_id=eq.${u.id}&key=eq.english-practice-log`, { token: u.token }),
+      OPEN === 'old'
+        ? call(stats, 'analytics: user_kv', 'GET', `/user_kv?select=value&user_id=eq.${u.id}&key=eq.english-practice-log`, { token: u.token })
+        : call(stats, 'analytics: user_kv', 'GET', `/user_kv?select=key,value&user_id=eq.${u.id}&key=in.(english-practice-log)`, { token: u.token }),
       call(stats, 'analytics: wird_days', 'GET', `/wird_days?select=date,data&user_id=eq.${u.id}&date=gte.${daysAgo(180)}&date=lte.${today}`, { token: u.token }),
+      // The focus sessions now load when a page that shows them opens, not at startup.
+      OPEN !== 'old' && call(stats, 'analytics: pomodoro_sessions', 'GET', `/pomodoro_sessions?select=id,started_at,ended_at,minutes,label&user_id=eq.${u.id}&started_at=gte.${daysAgo(400)}T00:00:00.000Z&order=started_at.asc`, { token: u.token }),
     ])],
 ];
 const WEIGHT = ACTIONS.reduce((t, [w]) => t + w, 0);

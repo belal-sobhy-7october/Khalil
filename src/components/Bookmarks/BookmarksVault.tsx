@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Bookmark,
   Plus,
@@ -69,6 +69,13 @@ export default function BookmarksVault() {
   const removeCategory = useAppStore((s) => s.removeBookmarkCategory);
   const addBookmark = useAppStore((s) => s.addBookmark);
   const removeBookmark = useAppStore((s) => s.removeBookmark);
+  const userId = useAppStore((s) => s.session?.user?.id);
+  const loadBookmarks = useAppStore((s) => s.loadBookmarks);
+
+  // The bookmarks load when this page opens (they aren't on the page Khalil opens on).
+  useEffect(() => {
+    if (userId) void loadBookmarks();
+  }, [userId, loadBookmarks]);
 
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [showCategoryForm, setShowCategoryForm] = useState(false);

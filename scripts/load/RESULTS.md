@@ -77,7 +77,7 @@ about 3.5 GB a day, around 100 GB a month, before any compression. Supabase's Fr
 5 GB a month and Pro 250 GB, then $0.09 per GB
 ([Supabase: managing egress](https://supabase.com/docs/guides/platform/manage-your-usage/egress)).
 
-## What would help most
+## What would help most (before the changes below)
 
 1. **Don't download again what the device already has.** The words, flashcard states, habit days
    and wird days are kept on the device; fetching only what changed since the last visit
@@ -86,3 +86,27 @@ about 3.5 GB a day, around 100 GB a month, before any compression. Supabase's Fr
    them together): 26 requests → about 8. Needs a migration.
 3. **Load a page's data when the page opens**: focus sessions, the calendar, moods, bookmarks and
    notes aren't on the tasks page.
+
+## After: one request, only what changed (same day, same machine)
+
+All three are done (`supabase/migrations/20261025120000_sync_and_startup.sql`, `src/lib/startup.ts`,
+`src/lib/syncCache.ts`): the app opens with one `app_startup` request, keeps the words, flashcard
+states, habit days and wird days on the device and asks only for what changed since its last visit,
+and the calendar, bookmarks and focus sessions load when their page opens.
+
+What the real app sends when it opens now (`record.mjs`, production build):
+
+| | Requests | First visit on a device | Opening it again a minute later | A day later ¹ |
+|---|---|---|---|---|
+| A heavy user | 26 → **1** | 1.27 MB | **60 KB** | 118 KB |
+| A medium user | 26 → **1** | 194 KB | 20 KB | 32 KB |
+| A light user | 26 → **1** | 9 KB | 3 KB | 3 KB |
+| The mix online (half heavy) | 26 → **1** | 0.71 MB | **39 KB** | 72 KB |
+
+¹ `app_startup` with `since` a day back: what a heavy user changes in a day (about 60 words and
+flashcard states) plus the small lists, which always come whole (the tasks are most of it: 45 KB
+for 150 tasks).
+
+The first visit on a device costs what it did; every visit after it costs about a tenth. Each page
+that loads its own data asks once when it opens: the calendar (11 KB), the focus sessions (50 KB, on
+Focus and Analytics), the English hub's progress (one request for all its values).

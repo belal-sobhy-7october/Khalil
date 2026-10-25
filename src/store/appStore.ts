@@ -5,6 +5,9 @@ import { getToday, getWeekStart, stepCalendarDate } from './dateHelpers';
 import { isHardWord, applyReviewResult } from './vocabularyHard';
 import { DEFAULT_SRS_SETTINGS, cardOf, gradeItem, isDue, masteryOf } from '../lib/srs';
 import { deleteSrsCard, fetchSrsCards, mergeSrs, readLocalSrs, saveSrsCard, writeLocalSrs } from '../lib/srsSync';
+import { loadStartup, STARTUP_KV_KEYS, type StartupData } from '../lib/startup';
+import { prefetchKv } from '../lib/userKv';
+import { useWirdStore } from '../lib/wird';
 import type {
   Language,
   Priority,
@@ -42,6 +45,10 @@ interface AppStore {
   isLoading: boolean;
   setSession: (session: Session | null) => void;
   loadUserData: () => Promise<void>;
+  /** The calendar's events (loaded when the calendar opens). */
+  loadCalendarEvents: () => Promise<void>;
+  /** The bookmarks and their groups (loaded when the bookmarks page opens). */
+  loadBookmarks: () => Promise<void>;
 
   error: string | null;
   clearError: () => void;
@@ -88,6 +95,7 @@ interface AppStore {
   decrementSubTrack: (id: string, value?: number) => Promise<void>;
   toggleSubTrackHabit: (id: string) => Promise<void>;
 
+  /** Not loaded when the app opens: nothing shows them now (the life pillars count through toggle_sub_track_habit). */
   subTrackEntries: SubTrackEntry[];
   addSubTrackEntry: (entry: SubTrackEntry) => Promise<void>;
   removeSubTrackEntry: (id: string) => Promise<void>;
@@ -113,6 +121,7 @@ interface AppStore {
 
   habits: Habit[];
   habitEntries: HabitEntry[];
+  /** Not loaded when the app opens: nothing shows them now. */
   dailyMoods: DailyMood[];
   addHabit: (name: string, icon?: string, startDate?: string, scheduleDays?: number[] | null) => Promise<{ success: boolean }>;
   updateHabit: (id: string, data: Partial<Pick<Habit, 'name' | 'icon' | 'startDate' | 'scheduleDays'>>) => Promise<{ success: boolean }>;
@@ -245,6 +254,62 @@ async function fetchAll<T = Record<string, unknown>>(
   return { data: rows, error: null };
 }
 
+/** What the app opens with, when the startup request isn't available: table by table, as before it. */
+async function loadTables(userId: string): Promise<{ data: StartupData; failed: Array<{ table: string; error: unknown }> }> {
+  // Tables that can grow past a single PostgREST page (max_rows in
+  // supabase/config.toml) are paged via fetchAll so rows past the first 1000
+  // aren't silently dropped.
+  const [dailyFocusRes, todosRes, lifeCategoryRes, subTrackRes, habitsRes, habitEntriesRes, vocabularyCategoriesRes, vocabularyItemsRes, sRes, tRes, srsRemote] = await Promise.all([
+    supabase.from('daily_focus').select('*').eq('user_id', userId).limit(1),
+    fetchAll('todos', userId, ['sort_order', 'id']),
+    supabase.from('life_categories').select('*').eq('user_id', userId).order('sort_order'),
+    supabase.from('sub_tracks').select('*').eq('user_id', userId).order('sort_order'),
+    supabase.from('habits').select('*').eq('user_id', userId).order('sort_order'),
+    fetchAll('habit_entries', userId, ['date', 'id']),
+    supabase.from('vocabulary_categories').select('*').eq('user_id', userId).order('name'),
+    fetchAll('vocabulary_items', userId, ['created_at', 'id']),
+    supabaseCall(supabase.from('sticky_notes').select('*').eq('user_id', userId).order('sort_order'), 'load sticky_notes'),
+    supabaseCall(supabase.from('todo_notes').select('*').eq('user_id', userId).order('sort_order'), 'load todo_notes'),
+    fetchSrsCards(userId),
+  ]);
+  const failed = [
+    { table: 'daily_focus', error: dailyFocusRes.error },
+    { table: 'todos', error: todosRes.error },
+    { table: 'life_categories', error: lifeCategoryRes.error },
+    { table: 'sub_tracks', error: subTrackRes.error },
+    { table: 'habits', error: habitsRes.error },
+    { table: 'habit_entries', error: habitEntriesRes.error },
+    { table: 'vocabulary_categories', error: vocabularyCategoriesRes.error },
+    { table: 'vocabulary_items', error: vocabularyItemsRes.error },
+  ].filter((check) => check.error != null);
+  type Rows = Record<string, unknown>[];
+  return {
+    failed,
+    data: {
+      focus: (dailyFocusRes.data as Rows | null)?.[0] ?? null,
+      todos: (todosRes.data ?? []) as Rows,
+      lifeCategories: (lifeCategoryRes.data ?? []) as Rows,
+      subTracks: (subTrackRes.data ?? []) as Rows,
+      habits: (habitsRes.data ?? []) as Rows,
+      habitEntries: (habitEntriesRes.data ?? []) as Rows,
+      vocabularyCategories: (vocabularyCategoriesRes.data ?? []) as Rows,
+      words: (vocabularyItemsRes.data ?? []) as Rows,
+      stickyNotes: (sRes.success ? sRes.data ?? [] : []) as Rows,
+      todoNotes: (tRes.success ? tRes.data ?? [] : []) as Rows,
+      kv: {},
+      // null: the states couldn't be read, so this device's copy is used (mergeSrs).
+      srs: srsRemote,
+      wird: [],
+    },
+  };
+}
+
+/** A list read from the server, plus the items added on this device while it was being read. */
+function withAddedMeanwhile<T extends { id: string }>(loaded: T[], current: T[], before: Set<string>): T[] {
+  const ids = new Set(loaded.map((item) => item.id));
+  return [...loaded, ...current.filter((item) => !before.has(item.id) && !ids.has(item.id))];
+}
+
 function applyReorder<T extends { id: string; sortOrder: number }>(
   currentList: T[],
   ids: string[]
@@ -327,109 +392,49 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       // Disabled rollover to prevent deleted todos from reappearing on refresh
       // await rolloverStaleTodos(userId);
 
-      // Load core tables — these must exist. Tables that can grow past a single
-      // PostgREST page (max_rows in supabase/config.toml) are paged via fetchAll
-      // so rows past the first 1000 aren't silently dropped.
-      const [dailyFocusRes, todosRes, lifeCategoryRes, subTrackRes, subTrackEntryRes, bookmarkCategoryRes, bookmarkRes, habitsRes, habitEntriesRes, dailyMoodsRes, calendarEventsRes, vocabularyCategoriesRes, vocabularyItemsRes] = await Promise.all([
-        supabase.from('daily_focus').select('*').eq('user_id', userId).limit(1),
-        fetchAll('todos', userId, ['sort_order', 'id']),
-        supabase.from('life_categories').select('*').eq('user_id', userId).order('sort_order'),
-        supabase.from('sub_tracks').select('*').eq('user_id', userId).order('sort_order'),
-        fetchAll('sub_track_entries', userId, ['date', 'id']),
-        supabase.from('bookmark_categories').select('*').eq('user_id', userId).order('name'),
-        supabase.from('bookmarks').select('*').eq('user_id', userId).order('created_at'),
-        supabase.from('habits').select('*').eq('user_id', userId).order('sort_order'),
-        fetchAll('habit_entries', userId, ['date', 'id']),
-        fetchAll('daily_mood', userId, ['date', 'id']),
-        fetchAll('calendar_events', userId, ['date', 'id']),
-        supabase.from('vocabulary_categories').select('*').eq('user_id', userId).order('name'),
-        fetchAll('vocabulary_items', userId, ['created_at', 'id']),
-      ]);
-
-      const coreTableErrors = [
-        { table: 'daily_focus', error: dailyFocusRes.error },
-        { table: 'todos', error: todosRes.error },
-        { table: 'life_categories', error: lifeCategoryRes.error },
-        { table: 'sub_tracks', error: subTrackRes.error },
-        { table: 'sub_track_entries', error: subTrackEntryRes.error },
-        { table: 'bookmark_categories', error: bookmarkCategoryRes.error },
-        { table: 'bookmarks', error: bookmarkRes.error },
-        { table: 'habits', error: habitsRes.error },
-        { table: 'habit_entries', error: habitEntriesRes.error },
-        { table: 'daily_mood', error: dailyMoodsRes.error },
-        { table: 'calendar_events', error: calendarEventsRes.error },
-        { table: 'vocabulary_categories', error: vocabularyCategoriesRes.error },
-        { table: 'vocabulary_items', error: vocabularyItemsRes.error },
-      ].filter((check) => check.error != null);
-      coreTableErrors.forEach(({ table, error }) => console.error(`[loadUserData] ${table} error:`, error));
-
-      const dailyFocusRows = dailyFocusRes.data;
-      const todosRows = todosRes.data;
-      const lifeCategoryRows = lifeCategoryRes.data;
-      const subTrackRows = subTrackRes.data;
-      const subTrackEntryRows = subTrackEntryRes.data;
-      const bookmarkCategoryRows = bookmarkCategoryRes.data;
-      const bookmarkRows = bookmarkRes.data;
-      const habitsRows = habitsRes.data;
-      const habitEntriesRows = habitEntriesRes.data;
-      const dailyMoodsRows = dailyMoodsRes.data;
-      const calendarEventsRows = calendarEventsRes.data;
-      const vocabularyCategoriesRows = vocabularyCategoriesRes.data;
-      const vocabularyItemsRows = vocabularyItemsRes.data;
+      // One request, with only what changed since this device's last visit
+      // (lib/startup.ts). The settings read on opening come with it, and so
+      // does the whole wird. Without it (the migration hasn't run, or it
+      // failed), everything loads table by table.
+      const startup = loadStartup(userId);
+      prefetchKv(userId, STARTUP_KV_KEYS, startup.then((s) => s?.kv ?? null));
+      void useWirdStore.getState().loadAll(userId, startup.then((s) => s?.wird ?? null));
+      const fromStartup = await startup;
+      const { data, failed } = fromStartup ? { data: fromStartup, failed: [] } : await loadTables(userId);
+      failed.forEach(({ table, error }) => console.error(`[loadUserData] ${table} error:`, error));
 
       // Split todos by gate
-      type TodoRow = { gate: string; date?: string; week_start?: string };
-      const dailyTodoRows = todosRows?.filter((row) => (row as TodoRow).gate === 'daily') || [];
-      const weeklyTodoRows = todosRows?.filter((row) => (row as TodoRow).gate === 'weekly') || [];
-      const backlogTodoRows = todosRows?.filter((row) => (row as TodoRow).gate === 'backlog') || [];
+      type TodoRow = { gate: string };
+      const dailyTodoRows = data.todos.filter((row) => (row as TodoRow).gate === 'daily');
+      const weeklyTodoRows = data.todos.filter((row) => (row as TodoRow).gate === 'weekly');
+      const backlogTodoRows = data.todos.filter((row) => (row as TodoRow).gate === 'backlog');
 
       if (import.meta.env.DEV) {
         console.log('[loadUserData] Fetched rows:', {
-          dailyFocus: dailyFocusRows?.length ?? 0,
-          todos: todosRows?.length ?? 0,
-          dailyTodos: dailyTodoRows.length,
-          weeklyTodos: weeklyTodoRows.length,
-          backlogTodos: backlogTodoRows.length,
-          lifeCategories: lifeCategoryRows?.length ?? 0,
-          subTracks: subTrackRows?.length ?? 0,
-          subTrackEntries: subTrackEntryRows?.length ?? 0,
-          bookmarkCategories: bookmarkCategoryRows?.length ?? 0,
-          bookmarks: bookmarkRows?.length ?? 0,
-          habits: habitsRows?.length ?? 0,
-          habitEntries: habitEntriesRows?.length ?? 0,
-          dailyMoods: dailyMoodsRows?.length ?? 0,
-          vocabularyCategories: vocabularyCategoriesRows?.length ?? 0,
-          vocabularyItems: vocabularyItemsRows?.length ?? 0,
+          startup: !!fromStartup,
+          todos: data.todos.length,
+          habits: data.habits.length,
+          habitEntries: data.habitEntries.length,
+          vocabularyItems: data.words.length,
         });
       }
 
-      const focusRow = dailyFocusRows && dailyFocusRows.length > 0 ? dailyFocusRows[0] : null;
+      const focusRow = data.focus;
       const validFocus = focusRow && focusRow.date === getToday() ? focusRow : null;
 
-      // ── Notes loading ──
-
-      let notesStickyData: Record<string, unknown>[] = [];
-      let notesTodoData: Record<string, unknown>[] = [];
-      const [sRes, tRes, srsRemote] = await Promise.all([
-        supabaseCall(supabase.from('sticky_notes').select('*').eq('user_id', userId).order('sort_order'), 'load sticky_notes'),
-        supabaseCall(supabase.from('todo_notes').select('*').eq('user_id', userId).order('sort_order'), 'load todo_notes'),
-        fetchSrsCards(userId),
-      ]);
       // The words' spaced-repetition states: the newer of the server's and this device's copy.
-      const srs = mergeSrs(srsRemote, readLocalSrs());
+      const srs = mergeSrs(data.srs, readLocalSrs());
       writeLocalSrs(srs.cards);
-      const vocabularyItems = (vocabularyItemsRows || []).map(mapVocabularyItem).map((item) => (srs.cards[item.id] ? { ...item, srs: srs.cards[item.id] } : item));
+      const vocabularyItems = data.words.map(mapVocabularyItem).map((item) => (srs.cards[item.id] ? { ...item, srs: srs.cards[item.id] } : item));
       for (const itemId of srs.toSend) if (vocabularyItems.some((i) => i.id === itemId)) void saveSrsCard(userId, itemId, srs.cards[itemId]);
-      if (sRes.success) notesStickyData = (sRes.data || []) as Record<string, unknown>[];
-      if (tRes.success) notesTodoData = (tRes.data || []) as Record<string, unknown>[];
 
-      const stickyNotes = notesStickyData.map((r) => ({
+      const stickyNotes = data.stickyNotes.map((r) => ({
         id: r.id as string,
         title: (r.title as string) || '',
         text: r.text as string,
         sortOrder: (r.sort_order as number) ?? 0,
       }));
-      const todoNotes = notesTodoData.map((r) => ({
+      const todoNotes = data.todoNotes.map((r) => ({
         id: r.id as string,
         title: r.title as string,
         items: (r.items as { id: string; text: string; done: boolean }[]) || [],
@@ -438,30 +443,25 @@ export const useAppStore = create<AppStore>()((set, get) => ({
 
       set({
         dailyFocus: validFocus
-          ? { text: validFocus.text, date: validFocus.date }
+          ? { text: validFocus.text as string, date: validFocus.date as string }
           : { text: '', date: getToday() },
-        dailyTodos: (dailyTodoRows || []).map(mapDailyTodo),
-        weeklyTodos: (weeklyTodoRows || []).map(mapWeeklyTodo),
-        backlogTodos: (backlogTodoRows || []).map(mapBacklogTodo),
-        lifeCategories: (lifeCategoryRows || []).map(mapLifeCategory),
-        subTracks: (subTrackRows || []).map(mapSubTrack),
-        subTrackEntries: (subTrackEntryRows || []).map(mapSubTrackEntry),
-        bookmarkCategories: (bookmarkCategoryRows || []).map(mapBookmarkCategory),
-        bookmarks: (bookmarkRows || []).map(mapBookmark),
+        dailyTodos: dailyTodoRows.map(mapDailyTodo),
+        weeklyTodos: weeklyTodoRows.map(mapWeeklyTodo),
+        backlogTodos: backlogTodoRows.map(mapBacklogTodo),
+        lifeCategories: data.lifeCategories.map(mapLifeCategory),
+        subTracks: data.subTracks.map(mapSubTrack),
         stickyNotes,
         todoNotes,
-        habits: (habitsRows || []).map(mapHabit),
-        habitEntries: (habitEntriesRows || []).map(mapHabitEntry),
-        dailyMoods: (dailyMoodsRows || []).map(mapDailyMood),
-        calendarEvents: (calendarEventsRows || []).map(mapCalendarEvent),
-        vocabularyCategories: (vocabularyCategoriesRows || []).map(mapVocabularyCategory),
+        habits: data.habits.map(mapHabit),
+        habitEntries: data.habitEntries.map(mapHabitEntry),
+        vocabularyCategories: data.vocabularyCategories.map(mapVocabularyCategory),
         vocabularyItems,
         vocabularyReviews: [],
         currentDate: getToday(),
         viewMode: 'week',
         showCalendarOnboarding: !localStorage.getItem('khalil-calendar-onboarding-dismissed'),
         isLoading: false,
-        error: coreTableErrors.length > 0
+        error: failed.length > 0
           ? 'errors.loadUserDataPartial'
           : null,
       });
@@ -471,6 +471,38 @@ export const useAppStore = create<AppStore>()((set, get) => ({
       console.error('[loadUserData] Failed to load user data:', err);
       set({ isLoading: false, error: 'errors.loadUserData' });
     }
+  },
+
+  // The calendar and the bookmarks load when their page opens (they aren't on the page Khalil opens on).
+  loadCalendarEvents: async () => {
+    const userId = get().session?.user?.id;
+    if (!userId) return;
+    const before = new Set(get().calendarEvents.map((e) => e.id));
+    const { data, error } = await fetchAll('calendar_events', userId, ['date', 'id']);
+    if (error || !data) {
+      set({ error: 'errors.loadUserDataPartial' });
+      return;
+    }
+    set((s) => ({ calendarEvents: withAddedMeanwhile(data.map(mapCalendarEvent), s.calendarEvents, before) }));
+  },
+
+  loadBookmarks: async () => {
+    const userId = get().session?.user?.id;
+    if (!userId) return;
+    const beforeCategories = new Set(get().bookmarkCategories.map((c) => c.id));
+    const beforeBookmarks = new Set(get().bookmarks.map((b) => b.id));
+    const [categoriesRes, bookmarksRes] = await Promise.all([
+      supabase.from('bookmark_categories').select('*').eq('user_id', userId).order('name'),
+      supabase.from('bookmarks').select('*').eq('user_id', userId).order('created_at'),
+    ]);
+    if (categoriesRes.error || bookmarksRes.error) {
+      set({ error: 'errors.loadUserDataPartial' });
+      return;
+    }
+    set((s) => ({
+      bookmarkCategories: withAddedMeanwhile((categoriesRes.data ?? []).map(mapBookmarkCategory), s.bookmarkCategories, beforeCategories),
+      bookmarks: withAddedMeanwhile((bookmarksRes.data ?? []).map(mapBookmark), s.bookmarks, beforeBookmarks),
+    }));
   },
 
   dailyFocus: { text: '', date: getToday() },
@@ -2152,10 +2184,6 @@ function mapSubTrack(row: Record<string, unknown>): SubTrack {
   return { id: row.id as string, categoryId: row.category_id as string, name: row.name as string, nameKey: (row.name_key as string) || '', icon: row.icon as string, progressType: row.progress_type as SubTrack['progressType'], target: row.target as number, unit: row.unit as string, currentValue: row.current_value as number, sortOrder: row.sort_order as number };
 }
 
-function mapSubTrackEntry(row: Record<string, unknown>): SubTrackEntry {
-  return { id: row.id as string, trackId: row.track_id as string, value: row.value as number, date: row.date as string, note: (row.note as string) || '' };
-}
-
 function mapBookmarkCategory(row: Record<string, unknown>): BookmarkCategory {
   return { id: row.id as string, name: row.name as string, icon: (row.icon as string) || 'general', color: (row.color as string) || 'terracotta' };
 }
@@ -2170,10 +2198,6 @@ function mapHabit(row: Record<string, unknown>): Habit {
 
 function mapHabitEntry(row: Record<string, unknown>): HabitEntry {
   return { id: row.id as string, habitId: row.habit_id as string, date: row.date as string };
-}
-
-function mapDailyMood(row: Record<string, unknown>): DailyMood {
-  return { date: row.date as string, mood: (row.mood as number | null) ?? null, motivation: (row.motivation as number | null) ?? null };
 }
 
 function mapCalendarEvent(row: Record<string, unknown>): CalendarEvent {

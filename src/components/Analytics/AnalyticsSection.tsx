@@ -33,6 +33,7 @@ export default function AnalyticsSection({ onNavigate }: { onNavigate?: (section
   const dailyTodos = useAppStore((s) => s.dailyTodos);
   const vocabularyItems = useAppStore((s) => s.vocabularyItems);
   const sessions = usePomodoroStore((s) => s.sessions);
+  const loadSessions = usePomodoroStore((s) => s.loadSessions);
   const focusGoal = usePomodoroStore((s) => s.settings.dailyGoal * s.settings.focus);
   const wirdDays = useWirdStore((s) => s.days);
   const loadWird = useWirdStore((s) => s.loadRange);
@@ -48,6 +49,9 @@ export default function AnalyticsSection({ onNavigate }: { onNavigate?: (section
   useEffect(() => {
     if (userId) void loadWird(userId, addDaysToDateString(today, -(2 * 90)), today);
   }, [userId, loadWird, today]);
+  useEffect(() => {
+    if (userId) void loadSessions(userId);
+  }, [userId, loadSessions]);
 
   const data = useMemo(() => {
     const build = (start: string, end: string) => {

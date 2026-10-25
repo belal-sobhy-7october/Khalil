@@ -1,6 +1,7 @@
 // Opens the real app against the local stack as one seeded user, goes through
 // the main pages, and writes every request it sends to the data API: what a
-// person's visit costs the server, and the recipe the load test replays.
+// person's visit costs the server, and the recipe the load test replays. Its
+// last step opens the app again on the same device (a returning visit).
 // It also fails on any request the real PostgREST refuses (a column the app
 // asks for that the migrations don't have, a policy that blocks it…).
 //
@@ -72,16 +73,20 @@ for (const [name, label] of [['languages', 'تعلم اللغات'], ['skills', 
 }
 await open('english', async () => {
   await go('تعلم اللغات');
-  await page.getByRole('button', { name: /الإنجليزية|English/ }).first().click();
+  // The card in the page (the header's language button is also named "English").
+  await page.getByRole('main').getByRole('button', { name: /الإنجليزية/ }).first().click();
 });
 
 // A few things a person does: tick a task, tick a prayer.
 await open('tick-task', async () => {
   await go('المهام والعادات');
   await page.waitForTimeout(1500);
-  const box = page.getByRole('button', { name: /علّمها منجزة|Mark as complete|علّمها/ }).first();
+  const box = page.getByRole('button', { name: /تحديد كمكتملة|Mark as complete/ }).first();
   if (await box.isVisible().catch(() => false)) await box.click();
 });
+
+// The same person opening the app again on the same device: only what changed comes (lib/startup.ts).
+await open('return', () => page.reload({ waitUntil: 'domcontentloaded' }));
 
 await browser.close();
 

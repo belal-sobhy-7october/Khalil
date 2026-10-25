@@ -35,6 +35,25 @@ network at all):
 - `scripts/e2e/offline.mjs` checks all of this against a production build, on a desktop, two phones
   (iPhone SE, Galaxy S24) and a tablet (iPad Mini) with touch (`--device` picks others).
 
+## Opening the app (one request, only what changed)
+
+`appStore.loadUserData` asks `app_startup` (`supabase/migrations/20261025120000_sync_and_startup.sql`,
+`src/lib/startup.ts`) for everything the tasks page needs in one request: the small lists in full, the
+settings in `STARTUP_KV_KEYS`, and only the words, flashcard states, habit days and wird days that
+changed since this device's last visit. The rest comes from the device's copy (`src/lib/syncCache.ts`,
+IndexedDB, one record per account); a copy older than 60 days, or a `since` the server finds too old,
+loads everything again.
+
+- The migration stamps `updated_at` with the server's clock on those four tables, and its triggers write
+  every deletion to `sync_deletions` (kept 90 days), so another device drops it too. A new table that the
+  app keeps on the device needs the same triggers, a key in `applyChanges` and in the e2e fake.
+- Until the migration runs on a database, `app_startup` doesn't exist and the app loads table by table
+  (`loadTables`); the e2e scripts test that with `KHALIL_E2E_LEGACY=1`.
+- `loadKv` takes the startup's settings without a request (`prefetchKv`); other keys asked for at the
+  same moment go in one request, and a value loaded or saved less than a minute ago isn't asked for again.
+- The calendar, the bookmarks and the focus sessions load when their page opens (`loadCalendarEvents`,
+  `loadBookmarks`, `loadSessions`); moods and sub track entries aren't loaded (nothing shows them).
+
 ## Tasks & Habits (the page Khalil opens on)
 
 The sidebar's first item (`todo`), in this order: Tasks & Habits, Focus, Learn Languages, Learn Skills,

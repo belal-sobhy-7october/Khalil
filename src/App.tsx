@@ -27,7 +27,6 @@ import { HubCrumb } from './components/Learn/ui';
 import SelectionWordMenu from './components/Vocabulary/SelectionWordMenu';
 import { applyAppearance, useAppearance } from './lib/appearance';
 import { getTasksSettings } from './lib/tasksSettings';
-import { useWirdStore } from './lib/wird';
 
 import { createStickyNote, createTodoNote } from './components/Canvas/noteFactories';
 import type { StickyNoteData, TodoNoteData } from './types';
@@ -186,11 +185,6 @@ function App() {
   useEffect(() => {
     if (sessionUserId) void loadAppearance(sessionUserId);
   }, [sessionUserId, loadAppearance]);
-
-  // The whole wird: habits linked to it read their history from it.
-  useEffect(() => {
-    if (sessionUserId && isOnline()) void useWirdStore.getState().loadAll(sessionUserId);
-  }, [sessionUserId]);
 
   useEffect(() => {
     let dataLoaded = false;

@@ -476,9 +476,9 @@ await flow('srs-review', { section: 'vocabulary', englishTab: 'vocabulary' }, as
 });
 
 await flow('review-nudge', { section: 'todo' }, async ({ page, backend, check, reload }) => {
-  // A word reviewed ten days ago at level 2 is due again.
+  // A word reviewed ten days ago at level 2 is due again (changed now, as the server stamps every write).
   const word = backend.tables.vocabulary_items[1];
-  Object.assign(word, { mastery_level: 2, review_count: 3, last_reviewed_at: new Date(Date.now() - 10 * 86400000).toISOString() });
+  Object.assign(word, { mastery_level: 2, review_count: 3, last_reviewed_at: new Date(Date.now() - 10 * 86400000).toISOString(), updated_at: new Date().toISOString() });
   await reload();
   const nudge = page.getByTestId('review-nudge');
   check(await visible(nudge), 'no review reminder on the day page');
@@ -558,6 +558,51 @@ await flow('finished-tasks-setting', { section: 'settings' }, async ({ page, che
   check(!(await page.getByText('E2E hide me').isVisible()), 'a finished task stayed in the list with "Hide at once"');
   await page.getByRole('button', { name: /^Finished \(\d+\)$/ }).first().click();
   check(await visible(page.getByText('E2E hide me')), 'the finished task is not under "Finished"');
+});
+
+// Opening the app: one request, then only what changed (lib/startup.ts).
+await flow('startup-requests', { section: 'todo', startup: true }, async ({ backend, check }) => {
+  // The dev server's StrictMode runs the app's startup twice; a production build sends one (scripts/load/record.mjs).
+  const calls = backend.log.filter((l) => l.method === 'RPC');
+  check(calls.length >= 1 && calls.length <= 2 && calls.every((c) => c.rows[0].since === null), `the first visit made ${calls.length} startup requests, since=${calls[0]?.rows[0].since}`);
+  // What the startup request brings, and what loads only when its page opens.
+  const notNow = ['todos', 'habits', 'habit_entries', 'vocabulary_items', 'vocabulary_categories', 'wird_days', 'sticky_notes', 'todo_notes',
+    'calendar_events', 'bookmarks', 'bookmark_categories', 'daily_mood', 'sub_track_entries', 'pomodoro_sessions'];
+  const extra = backend.reads.filter((r) => notNow.includes(r.table));
+  check(extra.length === 0, `the tasks page also read: ${extra.map((r) => r.table).join(', ')}`);
+  const kv = backend.reads.filter((r) => r.table === 'user_kv');
+  check(kv.length <= 1, `the tasks page read user_kv ${kv.length} times: ${kv.map((r) => decodeURIComponent(r.query)).join(' | ')}`);
+});
+
+await flow('startup-sync', { section: 'vocabulary', englishTab: 'vocabulary', startup: true }, async ({ page, backend, check, reload }) => {
+  check(await visible(page.getByText('Clumsy', { exact: true })), 'the seeded words are not shown');
+  // Another device deletes one word, renames another and adds a third.
+  const now = new Date().toISOString();
+  const words = backend.tables.vocabulary_items;
+  const gone = words.find((w) => w.word === 'Clumsy');
+  backend.tables.vocabulary_items = words.filter((w) => w !== gone);
+  (backend.tables.sync_deletions ??= []).push({ source: 'vocabulary_items', row_key: gone.id, deleted_at: now });
+  Object.assign(words.find((w) => w.word === 'Ambitious'), { word: 'Driven', updated_at: now });
+  backend.tables.vocabulary_items.push({ ...structuredClone(words[0]), id: crypto.randomUUID(), word: 'Serendipity', created_at: now, updated_at: now });
+  const firstVisit = backend.log.filter((l) => l.method === 'RPC').length;
+  await reload();
+  const second = backend.log.filter((l) => l.method === 'RPC')[firstVisit]?.rows[0];
+  check(second?.since, 'the second visit did not ask only for what changed');
+  check(await visible(page.getByText('Serendipity', { exact: true })), 'a word added on another device is missing');
+  check(await visible(page.getByText('Driven', { exact: true })), 'a word renamed on another device is not renamed');
+  check(!(await page.getByText('Ambitious', { exact: true }).count()), 'the old name of a renamed word is still shown');
+  check(!(await page.getByText('Clumsy', { exact: true }).count()), 'a word deleted on another device is still shown');
+  // Not in the changes: it comes from this device's copy.
+  check(await visible(page.getByText('Receipt', { exact: true })), 'a word kept from the last visit is missing');
+});
+
+// A database without the app_startup migration: the app loads table by table, as before.
+await flow('startup-legacy', { section: 'vocabulary', englishTab: 'vocabulary', startup: false }, async ({ page, backend, check, reload }) => {
+  check(await visible(page.getByText('Clumsy', { exact: true })), 'the words are not shown without the startup request');
+  check(backend.reads.some((r) => r.table === 'vocabulary_items'), 'the words were not loaded table by table');
+  check(backend.reads.some((r) => r.table === 'wird_days'), 'the wird was not loaded without the startup request');
+  await reload();
+  check(await visible(page.getByText('Receipt', { exact: true })), 'the words are not shown after a reload');
 });
 
 await flow('learn-hubs', { section: 'todo' }, async ({ page, check, reload }) => {

@@ -39,8 +39,9 @@ notes and bookmarks. User *n*'s id is `md5('khalil-load-user-n')`.
 ## What one visit sends (`record.mjs`)
 
 `record.mjs` opens the **real app** (a production build pointed at the gateway) as one
-seeded user, goes through the main pages and lists every request; it fails if the real
-PostgREST refuses any of them. `run.mjs` replays the same requests.
+seeded user, goes through the main pages, then opens the app again on the same device (a
+returning visit), and lists every request; it fails if the real PostgREST refuses any of them.
+`run.mjs` replays the same requests.
 
 ```bash
 KEY=$(node -e "import('./scripts/load/jwt.mjs').then((m) => console.log(m.ANON_KEY))")
@@ -51,8 +52,10 @@ node scripts/load/record.mjs http://localhost:5175 10    # user 10 is a heavy us
 
 ## The test (`run.mjs`)
 
-Each simulated person opens the app (all its startup requests, in parallel like a
-browser), then does 5–15 things with pauses of about `THINK` seconds (10 by default):
+Each simulated person opens the app (one `app_startup` request: everything on a device
+with no copy yet, `FIRST` of the opens, 1 in 10 by default; for the others, what changed
+since they last opened it 1–48 hours ago; `OPEN=old` replays the 26 requests the app sent
+before `app_startup`), then does 5–15 things with pauses of about `THINK` seconds (10 by default):
 ticks a task, a prayer or a habit, reviews flashcards, saves lesson progress, adds a
 task, opens the tasks page or Analytics. Then they leave and someone else arrives. Of
 the people online, about half are heavy users, 4 in 10 medium and 1 in 10 light.

@@ -170,12 +170,16 @@ function writeLocal(days: Record<string, WirdDay>) {
 }
 
 type DayPatch = Partial<WirdDay> | ((d: WirdDay) => Partial<WirdDay>);
+type WirdRow = { date: string; data: Partial<WirdDay> };
 
 interface WirdState {
   days: Record<string, WirdDay>;
   loadRange: (userId: string, from: string, to: string) => Promise<void>;
-  /** Every day the account has (the habits linked to the wird read their whole history from it). */
-  loadAll: (userId: string) => Promise<void>;
+  /**
+   * Every day the account has (the habits linked to the wird read their whole
+   * history from it): `rows` when the startup request brought them, else from the table.
+   */
+  loadAll: (userId: string, rows?: Promise<WirdRow[] | null>) => Promise<void>;
   updateDay: (userId: string | undefined, date: string, patch: DayPatch) => void;
   /** Changes many days at once and saves them in one request (linking a habit fills in its past days). */
   updateDays: (userId: string | undefined, patches: Record<string, DayPatch>) => Promise<void>;
@@ -210,6 +214,21 @@ function writeUnsynced() {
 const saveTimers = new Map<string, number>();
 let pendingUserId: string | undefined;
 
+// Every day was loaded (or is loading): a range asked for meanwhile, or within a
+// minute after, needs no request of its own.
+let loadingAll: Promise<boolean> | null = null;
+let loadedAllAt = 0;
+
+async function fetchAllRows(userId: string): Promise<WirdRow[] | null> {
+  const rows: WirdRow[] = [];
+  for (let offset = 0; ; offset += PAGE) {
+    const { data, error } = await supabase.from('wird_days').select('date, data').eq('user_id', userId).order('date').range(offset, offset + PAGE - 1);
+    if (error || !data) return null;
+    rows.push(...(data as WirdRow[]));
+    if (data.length < PAGE) return rows;
+  }
+}
+
 async function persistDay(userId: string, date: string, data: WirdDay) {
   const { error } = await supabase
     .from('wird_days')
@@ -229,20 +248,22 @@ export const useWirdStore = create<WirdState>((set, get) => ({
   days: readLocal(),
 
   loadRange: async (userId, from, to) => {
+    if (loadingAll && (await loadingAll) && Date.now() - loadedAllAt < 60_000) return;
     const { data, error } = await supabase.from('wird_days').select('date, data').eq('user_id', userId).gte('date', from).lte('date', to);
     if (error || !data) return;
-    mergeRows(userId, data as Array<{ date: string; data: Partial<WirdDay> }>, from, to);
+    mergeRows(userId, data as WirdRow[], from, to);
   },
 
-  loadAll: async (userId) => {
-    const rows: Array<{ date: string; data: Partial<WirdDay> }> = [];
-    for (let offset = 0; ; offset += PAGE) {
-      const { data, error } = await supabase.from('wird_days').select('date, data').eq('user_id', userId).order('date').range(offset, offset + PAGE - 1);
-      if (error || !data) return;
-      rows.push(...(data as typeof rows));
-      if (data.length < PAGE) break;
-    }
-    mergeRows(userId, rows, '0000-01-01', '9999-12-31');
+  loadAll: async (userId, given) => {
+    const loading = (async () => {
+      const rows = (await given?.catch(() => null)) ?? (await fetchAllRows(userId).catch(() => null));
+      if (!rows) return false;
+      mergeRows(userId, rows, '0000-01-01', '9999-12-31');
+      loadedAllAt = Date.now();
+      return true;
+    })();
+    loadingAll = loading;
+    await loading;
   },
 
   updateDay: (userId, date, patch) => {
@@ -296,7 +317,7 @@ export const useWirdStore = create<WirdState>((set, get) => ({
  * Takes rows from the server into the store, except days edited here that the
  * server hasn't confirmed yet (those are newer, and are sent again).
  */
-function mergeRows(userId: string, rows: Array<{ date: string; data: Partial<WirdDay> }>, from: string, to: string) {
+function mergeRows(userId: string, rows: WirdRow[], from: string, to: string) {
   const days = { ...useWirdStore.getState().days };
   for (const row of rows) {
     if (saveTimers.has(row.date) || unsynced.has(row.date)) continue;

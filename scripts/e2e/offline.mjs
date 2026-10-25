@@ -68,7 +68,7 @@ async function run(browser, name) {
     for (const p of await screenProblems(page)) check(false, `${screen}: ${p}`);
   };
   let networkUp = true;
-  const backend = createFakeSupabase(buildSeed());
+  const backend = createFakeSupabase(buildSeed(), { startup: !process.env.KHALIL_E2E_LEGACY });
   const supabaseReads = [];
   await context.route('**/*', async (route) => {
     const url = new URL(route.request().url());
@@ -144,7 +144,8 @@ async function run(browser, name) {
     await page.waitForFunction(() => !document.body.innerText.includes('لا يوجد اتصال بالإنترنت'), null, { timeout: 10000 }).catch(() => {});
     await page.waitForTimeout(2500);
     check(!(await page.getByText('لا يوجد اتصال بالإنترنت').count()), 'back online: offline banner still shown');
-    check(supabaseReads.slice(before).some((p) => p.endsWith('/vocabulary_items')), 'back online: the data was not loaded');
+    // One app_startup request (or, without it, the tables one by one: KHALIL_E2E_LEGACY=1).
+    check(supabaseReads.slice(before).some((p) => p.endsWith('/rpc/app_startup') || p.endsWith('/vocabulary_items')), 'back online: the data was not loaded');
     await fits('back online');
     await page.screenshot({ path: `${dir}/offline-back-online.png`, fullPage: true });
 
