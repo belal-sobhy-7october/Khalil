@@ -876,14 +876,16 @@ export default function HabitsTracker() {
                   <div
                     key={date}
                     data-today={date === today || undefined}
-                    className={`text-center py-1 w-full h-(--cell-w) border border-border-subtle flex items-center justify-center ${
+                    className={`text-center py-1 w-full min-h-(--cell-w) border border-border-subtle flex items-center justify-center ${
                       date === today ? 'bg-clay-soft/10 ring-1 ring-inset ring-clay-soft/40' : date > today ? 'opacity-60' : ''
                     }`}
                   >
                     <div className="flex flex-col items-center gap-px leading-none text-ink-lighter">
                       {/* The 1st of a month (after the first column) names the month, so the jump from 31 to 1 reads clearly. */}
+                      {/* Drawn over its column without widening it: every column is as wide as the widest (1fr), so a long
+                          name like "ديسمبر" used to make two months' cells wider than one month's. */}
                       {date.endsWith('-01') && date !== gridDates[0] && gridDates.length > 7 ? (
-                        <span className="text-[11px] font-semibold text-clay-soft">{monthShort(date, locale)}</span>
+                        <span className="w-0 flex justify-center whitespace-nowrap text-[11px] font-semibold text-clay-soft">{monthShort(date, locale)}</span>
                       ) : (
                         gridDates.length <= 31 && (
                           <span className="text-[11px]">

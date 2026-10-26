@@ -675,6 +675,21 @@ await flow('page-addresses', { section: 'todo' }, async ({ page, check, reload }
   await at('/tasks', 'opening the wird');
 });
 
+// The habits grid: the longer the range, the narrower its cells, also when a month's name
+// (a long one in Arabic, like "ديسمبر") sits over the 1st (HabitsTracker's header).
+await flow('habits-range-widths', { section: 'todo', language: 'ar', viewport: { width: 526, height: 893 } }, async ({ page, backend, check, reload }) => {
+  // Habits that began 12 days ago: the month and two-month windows then reach past the next 1sts.
+  for (const h of backend.tables.habits) h.start_date = dayStr(new Date(Date.now() - 12 * 864e5));
+  await reload();
+  const widths = [];
+  for (const name of ['أسبوع', 'شهر', 'شهران']) {
+    await page.getByRole('button', { name, exact: true }).click();
+    await page.waitForTimeout(400);
+    widths.push(await page.locator('[data-today="true"]').first().evaluate((el) => Math.round(el.getBoundingClientRect().width)));
+  }
+  check(widths[0] > widths[1] && widths[1] > widths[2], `cell widths for week, month, two months: ${widths.join(', ')}`);
+});
+
 await flow('learn-hubs', { section: 'todo' }, async ({ page, check, reload }) => {
   const nav = (name) => page.locator('aside nav button', { hasText: name });
   // Choosing an item closes the menu by itself.
