@@ -13,6 +13,8 @@ export interface GuideStep {
   section?: string;
   /** What the step points at (lit up and scrolled into view), when it's on the page. */
   target?: string;
+  /** The target stays at the bottom of the screen (a fixed button): the card goes to the top. */
+  low?: true;
   /** For a guest account, someone browsing with no account, or a signed-in account only. */
   only?: 'guest' | 'browsing' | 'member';
 }
@@ -26,8 +28,8 @@ export const GUIDE_STEPS: GuideStep[] = [
   { id: 'languages', part: 'learn', pose: 'languages', section: 'languages' },
   { id: 'skills', part: 'learn', pose: 'skills', section: 'skills' },
   { id: 'menu', part: 'tools', pose: 'analytics', section: 'todo', target: '[data-guide="menu"]' },
-  { id: 'notes', part: 'tools', pose: 'explain', section: 'todo', target: '[data-guide="add-note"]' },
-  { id: 'help', part: 'tools', pose: 'thinking', section: 'todo', target: '[data-guide="help"]' },
+  { id: 'notes', part: 'tools', pose: 'explain', section: 'todo', target: '[data-guide="add-note"]', low: true },
+  { id: 'help', part: 'tools', pose: 'thinking', section: 'todo', target: '[data-guide="help"]', low: true },
   { id: 'guest', part: 'finish', pose: 'save', target: '[data-guide="account"]', only: 'guest' },
   { id: 'guestBrowse', part: 'finish', pose: 'save', target: '[data-guide="account"]', only: 'browsing' },
   { id: 'account', part: 'finish', pose: 'explain', target: '[data-guide="account"]', only: 'member' },

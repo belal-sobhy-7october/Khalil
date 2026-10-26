@@ -11,7 +11,7 @@
 //   node scripts/e2e/guest.mjs http://localhost:5173 ./e2e-shots
 import { chromium, devices } from 'playwright';
 import fs from 'node:fs';
-import { SUPA, guestSession, createFakeSupabase } from './fakeSupabase.mjs';
+import { SUPA, guestSession, session, createFakeSupabase } from './fakeSupabase.mjs';
 import { screenProblems } from './harness.mjs';
 
 const BASE = process.argv[2] ?? 'http://localhost:5173';
@@ -212,6 +212,16 @@ for (const [label, device] of [['desktop', undefined], ['iphone-se', devices['iP
   } catch (e) {
     problems.push(`[${name}] threw: ${String(e.message ?? e).split('\n')[0]}`);
   }
+  await context.close();
+}
+
+// 10. An account made today (signed up with Google, never a guest here) gets the tour too; an old one doesn't.
+for (const [name, createdAt, wanted] of [['new-account', new Date().toISOString(), true], ['old-account', '2026-06-01T09:00:00.000Z', false]]) {
+  const signedIn = { ...session, user: { ...session.user, created_at: createdAt } };
+  const { page, context, backend, check } = await visit(name, { local: { 'sb-localhost-auth-token': JSON.stringify(signedIn), 'khalil-local-owner': signedIn.user.id } });
+  check(!backend.auth.some((a) => a.kind === 'signup'), 'a guest account was made for a signed-in visitor');
+  check((await visible(page.getByTestId('guide-tour'))) === wanted, wanted ? 'a new account did not get the tour' : 'an old account got the tour');
+  if (wanted) await page.screenshot({ path: `${OUT}/${name}-tour.png` });
   await context.close();
 }
 

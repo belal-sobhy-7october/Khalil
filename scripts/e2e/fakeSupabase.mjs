@@ -13,7 +13,8 @@ const b64 = (o) => Buffer.from(JSON.stringify(o)).toString('base64url');
 const exp = Math.floor(Date.now() / 1000) + 3600 * 24;
 export const user = {
   id: USER_ID, aud: 'authenticated', role: 'authenticated', email: 'belal@example.com',
-  user_metadata: { full_name: 'Belal' }, app_metadata: { provider: 'email' }, created_at: new Date().toISOString(),
+  // An account made long ago: a new one gets Khalil's tour (App.tsx), which would cover the screens under test.
+  user_metadata: { full_name: 'Belal' }, app_metadata: { provider: 'email' }, created_at: '2026-06-01T09:00:00.000Z',
 };
 const accessToken = `${b64({ alg: 'HS256', typ: 'JWT' })}.${b64({ sub: USER_ID, exp, role: 'authenticated', aud: 'authenticated', email: user.email })}.sig`;
 export const session = { access_token: accessToken, refresh_token: 'refresh', token_type: 'bearer', expires_in: 86400, expires_at: exp, user };

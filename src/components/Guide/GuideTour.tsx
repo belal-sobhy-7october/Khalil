@@ -32,7 +32,9 @@ function useTargetBox(selector: string | undefined, stepKey: string): Box | null
       if (el && rect) {
         if (!scrolled) {
           scrolled = true;
-          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          // Near the top, under the header, so the card at the bottom leaves it in view.
+          const fixed = getComputedStyle(el).position === 'fixed' || !!el.closest('header');
+          if (!fixed) window.scrollTo({ top: rect.top + window.scrollY - 76, behavior: 'smooth' });
         }
         setFound((prev) =>
           prev && prev.key === stepKey && prev.box.top === rect.top && prev.box.left === rect.left && prev.box.width === rect.width && prev.box.height === rect.height
@@ -96,8 +98,11 @@ export default function GuideTour({ onNavigate }: { onNavigate: (section: string
     return () => window.removeEventListener('keydown', onKey);
   });
 
-  // The card sits at the bottom, or at the top when what it points at is down there.
-  const cardOnTop = !!box && box.top + box.height > window.innerHeight - 280;
+  // The card sits at the bottom, or at the top when what it points at is down there (the + button, the help).
+  // (Other targets are scrolled up under the header.)
+  const cardOnTop = !!step.low;
+  const fill = (text: string) =>
+    text.replace('{part}', String(partIndex + 1)).replace('{parts}', String(parts.length)).replace('{name}', t(`guide.parts.${step.part}`));
 
   return (
     <>
@@ -112,73 +117,91 @@ export default function GuideTour({ onNavigate }: { onNavigate: (section: string
             left: box.left - PAD,
             width: box.width + PAD * 2,
             height: box.height + PAD * 2,
-            boxShadow: '0 0 0 9999px rgb(0 0 0 / 0.45)',
+            boxShadow: '0 0 0 9999px rgb(0 0 0 / 0.55)',
           }}
         />
       ) : (
-        <div aria-hidden="true" className="fixed inset-0 z-[91] bg-black/45 pointer-events-none" />
+        <div aria-hidden="true" className="fixed inset-0 z-[91] bg-black/55 pointer-events-none" />
       )}
 
+      {/* Khalil stands beside his card (wider screens) or on it (phones), bigger than it, like a game's guide. */}
       <div
         {...dialog.props}
-        className={`fixed z-[95] inset-x-4 sm:inset-x-auto sm:end-6 sm:w-[26rem] ${cardOnTop ? 'top-20' : 'bottom-4 sm:bottom-6'}`}
+        className={`fixed z-[95] inset-x-3 sm:inset-x-auto sm:end-8 sm:w-[42rem] sm:max-w-[calc(100vw-4rem)] ${
+          cardOnTop ? 'top-16 sm:top-[9.5rem]' : 'bottom-3 sm:bottom-6'
+        }`}
         data-testid="guide-tour"
       >
-        <AnimatePresence mode="wait">
+        <div className="relative">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={step.pose + step.id}
+              aria-hidden="true"
+              initial={{ opacity: 0, y: 40, scale: 0.85 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 20, scale: 0.9 }}
+              transition={{ type: 'spring', stiffness: 260, damping: 18 }}
+              className={`absolute z-10 end-3 sm:end-auto sm:start-2 sm:bottom-0 sm:top-auto pointer-events-none ${
+                cardOnTop ? 'top-[calc(100%+0.25rem)]' : 'bottom-[calc(100%-1.25rem)]'
+              }`}
+              style={{ filter: 'drop-shadow(0 12px 18px rgb(0 0 0 / 0.35))' }}
+            >
+              <motion.div animate={{ y: [0, -6, 0] }} transition={{ duration: 3.2, repeat: Infinity, ease: 'easeInOut' }}>
+                <Mascot pose={step.pose} size={210} className="sm:hidden max-h-[30svh]" />
+                <Mascot pose={step.pose} size={390} className="hidden sm:block max-h-[58svh] max-w-[16.5rem]" />
+              </motion.div>
+            </motion.div>
+          </AnimatePresence>
+
           <motion.div
             key={step.id}
-            initial={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -6 }}
-            transition={{ duration: 0.18 }}
-            className="rounded-2xl border border-border-subtle bg-card shadow-2xl p-4 sm:p-5"
+            transition={{ duration: 0.22, delay: 0.08 }}
+            className="relative rounded-3xl border-2 border-clay-soft/40 bg-card shadow-2xl p-5 sm:p-6 sm:ps-[17.5rem] sm:min-h-[16rem] flex flex-col"
           >
-            <div className="flex items-start gap-3 sm:gap-4">
-              <Mascot pose={step.pose} size={136} className="shrink-0 -my-1" />
-              <div className="flex-1 min-w-0">
-                <div className="flex items-start gap-2">
-                  <p className="flex-1 min-w-0 pt-0.5 text-[11px] text-clay-soft font-medium">
-                    {t('guide.progress')
-                      .replace('{part}', String(partIndex + 1))
-                      .replace('{parts}', String(parts.length))
-                      .replace('{name}', t(`guide.parts.${step.part}`))}
-                  </p>
-                  <button onClick={finish} className="-mt-1 -me-1 shrink-0 px-2 py-1 text-xs text-ink-light hover:text-ink rounded-lg hover:bg-ink/5">
-                    {t('guide.skipAll')}
-                  </button>
-                </div>
-                <h2 id={dialog.titleId} className="mt-0.5 text-base font-bold text-ink">
-                  {t(`guide.steps.${step.id}.title`)}
-                </h2>
-                <p className="mt-1 text-sm text-ink-light leading-relaxed">{t(`guide.steps.${step.id}.text`)}</p>
-              </div>
+            {/* The speech bubble's tail, toward Khalil. */}
+            <span aria-hidden="true" className="hidden sm:block absolute top-12 start-[16.9rem] w-4 h-4 rotate-45 bg-card border-s-2 border-b-2 border-clay-soft/40 rtl:border-s-0 rtl:border-e-2" />
+            {/* On a phone Khalil's feet stand on this row's end. */}
+            <div className={`flex items-start gap-2 ${cardOnTop ? '' : 'pe-20 sm:pe-0'}`}>
+              <p className="flex-1 min-w-0 pt-1 text-xs sm:text-sm text-clay-soft font-semibold">
+                <span className="sm:hidden">{fill(t('guide.progressShort'))}</span>
+                <span className="hidden sm:inline">{fill(t('guide.progress'))}</span>
+              </p>
+              <button onClick={finish} className="-mt-1 -me-1 shrink-0 px-2.5 py-1.5 text-xs sm:text-sm text-ink-light hover:text-ink rounded-lg hover:bg-ink/5">
+                {t('guide.skipAll')}
+              </button>
             </div>
+            <h2 id={dialog.titleId} className="mt-2 text-xl sm:text-2xl font-bold text-ink leading-snug">
+              {t(`guide.steps.${step.id}.title`)}
+            </h2>
+            <p className="mt-2 text-base sm:text-lg text-ink-light leading-relaxed">{t(`guide.steps.${step.id}.text`)}</p>
 
             {inPart.length > 1 && (
-              <div className="mt-3 flex justify-center gap-1.5" aria-hidden="true">
+              <div className="mt-4 flex justify-center gap-1.5" aria-hidden="true">
                 {inPart.map((s) => (
-                  <span key={s.id} className={`h-1.5 rounded-full transition-all ${s.id === step.id ? 'w-5 bg-clay-soft' : 'w-1.5 bg-ink/15'}`} />
+                  <span key={s.id} className={`h-2 rounded-full transition-all ${s.id === step.id ? 'w-7 bg-clay-soft' : 'w-2 bg-ink/15'}`} />
                 ))}
               </div>
             )}
 
-            <div className="mt-4 flex flex-wrap items-center justify-end gap-2">
+            <div className="mt-auto pt-5 flex flex-wrap items-center justify-end gap-2">
               {!last && skipTo > 0 && (
-                <button onClick={skipPart} className="me-auto px-3 py-1.5 text-xs text-ink-light hover:text-ink rounded-lg border border-border-subtle hover:bg-ink/5">
+                <button onClick={skipPart} className="me-auto px-3 py-2 text-xs sm:text-sm text-ink-light hover:text-ink rounded-xl border border-border-subtle hover:bg-ink/5">
                   {t('guide.skipPart')}
                 </button>
               )}
               {index > 0 && (
-                <button onClick={back} className="px-3 py-1.5 text-sm text-ink rounded-lg bg-ink/5 hover:bg-ink/10">
+                <button onClick={back} className="px-4 py-2 text-sm sm:text-base text-ink rounded-xl bg-ink/5 hover:bg-ink/10">
                   {t('guide.back')}
                 </button>
               )}
-              <button onClick={next} autoFocus className="px-4 py-1.5 text-sm font-medium text-white rounded-lg bg-clay-soft hover:bg-clay-soft-dark">
+              <button onClick={next} autoFocus className="px-6 py-2 text-sm sm:text-base font-semibold text-white rounded-xl bg-clay-soft hover:bg-clay-soft-dark shadow-md">
                 {t(last ? 'guide.done' : 'guide.next')}
               </button>
             </div>
           </motion.div>
-        </AnimatePresence>
+        </div>
       </div>
     </>
   );

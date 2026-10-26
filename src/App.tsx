@@ -509,7 +509,7 @@ function App() {
       <ReviewReminders />
       <AuthDialog />
       {guest && <GuestSavePrompt />}
-      <GuideAutoStart enabled={guest || browsing} />
+      <GuideAutoStart enabled={guest || browsing || isNewAccount(session)} />
       {touring && (
         <Suspense fallback={null}>
           <GuideTour onNavigate={handleSectionChange} />
@@ -567,7 +567,13 @@ function App() {
   );
 }
 
-/** A new guest gets Khalil's tour once, a moment after the page opens. */
+/** An account made in the last few days (signed up with Google, maybe never a guest here). */
+function isNewAccount(session: Session | null): boolean {
+  const created = Date.parse(session?.user?.created_at ?? '');
+  return Number.isFinite(created) && Date.now() - created < 3 * 24 * 60 * 60 * 1000;
+}
+
+/** A new guest or a new account gets Khalil's tour once in this browser, a moment after the page opens. */
 function GuideAutoStart({ enabled }: { enabled: boolean }) {
   const start = useGuide((g) => g.start);
   useEffect(() => {
