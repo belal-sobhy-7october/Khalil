@@ -27,6 +27,7 @@ export const GUIDE_STEPS: GuideStep[] = [
   { id: 'skills', part: 'learn', pose: 'skills', section: 'skills' },
   { id: 'menu', part: 'tools', pose: 'analytics', section: 'todo', target: '[data-guide="menu"]' },
   { id: 'notes', part: 'tools', pose: 'explain', section: 'todo', target: '[data-guide="add-note"]' },
+  { id: 'help', part: 'tools', pose: 'thinking', section: 'todo', target: '[data-guide="help"]' },
   { id: 'guest', part: 'finish', pose: 'save', target: '[data-guide="account"]', only: 'guest' },
   { id: 'guestBrowse', part: 'finish', pose: 'save', target: '[data-guide="account"]', only: 'browsing' },
   { id: 'account', part: 'finish', pose: 'explain', target: '[data-guide="account"]', only: 'member' },

@@ -185,6 +185,36 @@ for (const [label, device] of [['desktop', undefined], ['iphone-se', devices['iP
   await context.close();
 }
 
+// 9. "Ask Khalil": search the help, open an answer, and "Open it" goes to that page (phone and desktop).
+for (const [label, device] of [['desktop', undefined], ['iphone-se', devices['iPhone SE']]]) {
+  const name = `help-${label}`;
+  const { page, context, check, fits } = await visit(name, { device, local: { 'khalil-guide-done': '1' } });
+  const press = (locator) => (device?.hasTouch ? locator.first().tap() : locator.first().click());
+  try {
+    await press(page.getByRole('button', { name: 'اسأل خليل' }));
+    const panel = page.getByTestId('help-panel');
+    check(await visible(panel), 'the help did not open');
+    check(await visible(panel.getByRole('button', { name: 'كيف أضيف مهمة؟' })), 'no common questions before typing');
+    await panel.getByRole('searchbox').fill('بومودورو');
+    await page.waitForTimeout(300);
+    await press(panel.getByRole('button', { name: /جلسة تركيز/ }));
+    check(await visible(panel.getByText('تركيز 25 دقيقة')), 'the focus answer did not open');
+    await fits('help answer');
+    await page.screenshot({ path: `${OUT}/${name}.png` });
+    await press(panel.getByRole('button', { name: 'افتحه' }));
+    await page.waitForTimeout(800);
+    check(new URL(page.url()).pathname === '/focus', `"Open it" went to ${page.url()}, not the Focus page`);
+    check(!(await visible(panel)), 'the help stayed open after "Open it"');
+    // Nonsense: no answer, and a way to write to us.
+    await press(page.getByRole('button', { name: 'اسأل خليل' }));
+    await page.getByTestId('help-panel').getByRole('searchbox').fill('zzqx');
+    check(await visible(page.getByTestId('help-panel').getByText('لم أجد جوابًا')), 'no "not found" text for nonsense');
+  } catch (e) {
+    problems.push(`[${name}] threw: ${String(e.message ?? e).split('\n')[0]}`);
+  }
+  await context.close();
+}
+
 // 8. Before Khalil's pictures are in, a new guest gets no tour, and it isn't offered in the menu.
 const picturesIn = (() => {
   try {
