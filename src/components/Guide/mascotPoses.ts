@@ -12,8 +12,6 @@ export const MASCOT_POSES = [
   'focus',
   'languages',
   'skills',
-  'callcenter',
-  'sales',
   'analytics',
   'save',
   'celebrate',

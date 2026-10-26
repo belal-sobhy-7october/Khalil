@@ -84,7 +84,7 @@ visitor browses with nothing saved, and a store action that needs an account ope
 step 4 has the Supabase switches.
 
 - Khalil is also a character: his poses are `src/assets/mascot/<pose>.webp` (`Mascot`, `mascotPoses.ts`);
-  a pose without its picture shows "خ". **Read `docs/mascot/README.md`** (the prompts and the 14 poses).
+  a pose without its picture shows "خ". **Read `docs/mascot/README.md`** (the prompts and the 12 poses; one for Learn Skills, none for Call Center or Sales).
 - His tour (`src/components/Guide/`, `src/lib/guide.ts`) opens once for a new guest; "Skip this part"
   and "Skip the tour"; anyone can take it again from the sidebar or the account menu. It is the last step
   of the character's work, so it waits for his pictures: until every pose it shows has one, it neither opens

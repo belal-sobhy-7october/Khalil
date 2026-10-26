@@ -7,7 +7,7 @@
 العمل على مرحلتين:
 
 1. **نختار الشكل**: جرّب البرومتات الأربعة في القسم الأول، واختر صورة واحدة.
-2. **نرسم الأوضاع**: من الصورة المختارة نصنع «ورقة الشخصية»، ثم الصور الأربع عشرة في القسم الثالث.
+2. **نرسم الأوضاع**: من الصورة المختارة نصنع «ورقة الشخصية»، ثم الصور الاثنتي عشرة في القسم الثالث.
 
 البرومتات بالإنجليزية لأن أدوات الصور تفهمها أدق. أفضل الأدوات لثبات الشخصية بين الصور: ChatGPT
 (إنشاء الصور) أو Gemini، لأنهما يأخذان صورة مرجعية ويحافظان على الوجه واللبس. وفي Midjourney استخدم
@@ -19,7 +19,7 @@
 
 كل برومت كامل، انسخه كما هو. الاتجاهان (أ) و(ج) مجسّمان مثل أفلام الرسوم الحديثة، و(ب) و(د) رسم مسطح
 يناسب واجهة التطبيق أكثر ويسهل تثبيته بين الصور. **اقتراحي: (ب) أو (د)**، لأن الرسم المسطح يبقى متطابقًا
-في 14 صورة أكثر من المجسّم، ويندمج مع ألوان خليل الدافئة.
+في 12 صورة أكثر من المجسّم، ويندمج مع ألوان خليل الدافئة.
 
 ### (أ) الفخامة الهادئة، مجسّم
 
@@ -81,7 +81,9 @@ Keep exactly the same face, hair, facial hair (or none), skin tone, outfit, colo
 
 ---
 
-## 3. الأوضاع: 14 صورة
+## 3. الأوضاع: 12 صورة
+
+لقسم «تعلّم المهارات» صورة واحدة (`skills`) كما لقسم «تعلّم اللغات» صورة واحدة (`languages`)، ولا صور خاصة لمركز الاتصال والمبيعات.
 
 أرفق **ورقة الشخصية** مع كل برومت، وابدأ كل برومت بهذا السطر الثابت ثم أضف وصف الوضع:
 
@@ -97,21 +99,19 @@ Use the attached character sheet as the exact reference for Khalil: same face, h
 | 4 | `wird` | الورد اليومي | `Pose: gently holding a wooden misbaha (prayer beads) in one hand, serene peaceful smile, soft warm dawn light on him. Calm and respectful.` |
 | 5 | `focus` | التركيز (بومودورو) | `Pose: holding a small tomato-shaped kitchen timer, focused calm determined look, over-ear headphones resting around his neck.` |
 | 6 | `languages` | تعلّم اللغات والإنجليزية | `Pose: holding an open book, a small round enamel pin on his chest showing the Latin letter "A" and the Arabic letter "ع", two small empty speech bubbles floating beside his head, curious happy face.` |
-| 7 | `skills` | تعلّم المهارات | `Pose: holding an open laptop on one forearm, sleeves slightly pushed up, confident smile, a small gear and a lightbulb icon floating near him.` |
-| 8 | `callcenter` | الاستعداد لمركز الاتصال | `Pose: wearing a sleek over-ear headset with a microphone, speaking kindly, one hand raised a little as if helping a customer.` |
-| 9 | `sales` | تعلّم المبيعات | `Pose: reaching out for a confident friendly handshake, a small upward-trending bar chart icon floating beside him.` |
-| 10 | `analytics` | التحليلات | `Pose: holding a tablet that shows a simple rising bar chart, proud smile, pointing at the chart.` |
-| 11 | `save` | «احفظ ما فعلته» وإنشاء الحساب | `Pose: holding a golden key in one hand, a small soft cloud with a padlock floating beside him, reassuring smile.` |
-| 12 | `celebrate` | نهاية الجولة، إنجاز مهام اليوم | `Pose: both arms raised in joy, big happy smile, a little confetti in burgundy, camel and off-white around him.` |
-| 13 | `thinking` | المساعد «خليل» لاحقًا، والمساعدة | `Pose: hand on his chin, thoughtful kind smile, eyes looking up, a small lightbulb above his head.` |
-| 14 | `avatar` | الصورة الصغيرة المستديرة (زر المساعد، الشريط العلوي) | `Head and shoulders portrait only (not full body), facing the viewer, friendly smile, centered so it fits inside a circle.` |
+| 7 | `skills` | تعلّم المهارات (ومنها مركز الاتصال والمبيعات) | `Pose: holding an open laptop on one forearm, sleeves slightly pushed up, confident smile, a small gear and a lightbulb icon floating near him.` |
+| 8 | `analytics` | التحليلات | `Pose: holding a tablet that shows a simple rising bar chart, proud smile, pointing at the chart.` |
+| 9 | `save` | «احفظ ما فعلته» وإنشاء الحساب | `Pose: holding a golden key in one hand, a small soft cloud with a padlock floating beside him, reassuring smile.` |
+| 10 | `celebrate` | نهاية الجولة، إنجاز مهام اليوم | `Pose: both arms raised in joy, big happy smile, a little confetti in burgundy, camel and off-white around him.` |
+| 11 | `thinking` | المساعد «خليل» لاحقًا، والمساعدة | `Pose: hand on his chin, thoughtful kind smile, eyes looking up, a small lightbulb above his head.` |
+| 12 | `avatar` | الصورة الصغيرة المستديرة (زر المساعد، الشريط العلوي) | `Head and shoulders portrait only (not full body), facing the viewer, friendly smile, centered so it fits inside a circle.` |
 
 **إن تغيّر شيء بين صورة وأخرى** (لون، أو تفصيلة في اللبس)، فأعد الصورة نفسها وأضف:
 `Match the reference exactly; keep the same outfit details and colors.`
 
 ### بعد الرسم
 
-- أرسل الصور الأربع عشرة بهذه الأسماء نفسها (PNG بخلفية شفافة إن أمكن). سأحوّلها إلى WebP وأضعها في
+- أرسل الصور الاثنتي عشرة بهذه الأسماء نفسها (PNG بخلفية شفافة إن أمكن). سأحوّلها إلى WebP وأضعها في
   `src/assets/mascot/<الاسم>.webp`، فتظهر في مكانها تلقائيًا: كل وضع لم تُضف صورته بعد يظهر مكانه حرف «خ».
 - الخلفية الشفافة تجعل الصورة تصلح للوضع الفاتح والداكن معًا، فتجنّب الحواف البيضاء حول الشخصية.
 - **الجولة تنتظر الصور**: لا تفتح للزوار ولا تظهر في القائمة حتى تُضاف صور كل الأوضاع التي تستخدمها.
