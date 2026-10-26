@@ -91,8 +91,13 @@ step 4 has the Supabase switches.
   of the character's work, so it waits for his pictures: until every pose it shows has one, it neither opens
   nor is offered, except in a browser with localStorage `khalil-guide-preview` = `1` (`guideAvailable`). A step points at
   an element by `data-guide="…"`, `#section-…` or another selector; keep those when moving things.
+- "Ask Khalil" (`src/components/Help/HelpAssistant.tsx`, the round face above the + button) is help without
+  AI, on the owner's request (no key, no cost, works offline): short answers in `src/data/help.ts`, searched on
+  the device by `src/lib/helpSearch.ts` (Arabic without harakat, hamza forms or "ال"); an answer can open its
+  section or a Settings tab. A new feature needs its answer there, in Fusha and English, with the words people
+  would type.
 - `scripts/e2e/guest.mjs` checks all of it (guest account, tour, the save prompt, linking, a crawler,
-  browsing with no account).
+  browsing with no account, Ask Khalil).
 
 ## Page addresses
 

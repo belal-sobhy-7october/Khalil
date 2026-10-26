@@ -49,6 +49,7 @@ const FocusSection = lazy(() => import('./components/Focus/FocusSection'));
 const AnalyticsSection = lazy(() => import('./components/Analytics/AnalyticsSection'));
 const SettingsSection = lazy(() => import('./components/Settings/SettingsSection'));
 const GuideTour = lazy(() => import('./components/Guide/GuideTour'));
+const HelpAssistant = lazy(() => import('./components/Help/HelpAssistant'));
 
 const SECTION_KEY = 'khalil-active-section';
 
@@ -514,6 +515,9 @@ function App() {
           <GuideTour onNavigate={handleSectionChange} />
         </Suspense>
       )}
+      <Suspense fallback={null}>
+        <HelpAssistant />
+      </Suspense>
       {activeSection !== 'focus' && <FocusChip onOpen={() => handleSectionChange('focus')} />}
 
       <div
