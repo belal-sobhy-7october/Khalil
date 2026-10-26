@@ -76,7 +76,7 @@ Plain warm off-white background, centered, square 1:1. No text, no logo.
 
 ```text
 Use the attached image as the exact reference for this character, Khalil. Create a character reference sheet of the SAME character: front view, three-quarter view, side view and back view, full body, side by side, all at the same scale; plus four head close-ups with expressions: warm smile, thinking, excited, calm.
-Keep exactly the same face, hair, beard, skin tone, outfit, colors and art style. Plain light background, even lighting, no text, no labels.
+Keep exactly the same face, hair, facial hair (or none), skin tone, outfit, colors and art style. Plain light background, even lighting, no text, no labels.
 ```
 
 ---
@@ -86,7 +86,7 @@ Keep exactly the same face, hair, beard, skin tone, outfit, colors and art style
 أرفق **ورقة الشخصية** مع كل برومت، وابدأ كل برومت بهذا السطر الثابت ثم أضف وصف الوضع:
 
 ```text
-Use the attached character sheet as the exact reference for Khalil: same face, hair, beard, skin tone, outfit, colors and art style. Full body (unless said otherwise), centered, the character filling about 85% of the height, same scale and same light direction as the sheet. Transparent background (or a plain flat background), square 1024x1024. No text, no logo.
+Use the attached character sheet as the exact reference for Khalil: same face, hair, facial hair (or none), skin tone, outfit, colors and art style. Full body (unless said otherwise), centered, the character filling about 85% of the height, same scale and same light direction as the sheet. Transparent background (or a plain flat background), square 1024x1024. No text, no logo.
 ```
 
 | # | اسم الملف | أين يظهر | الوضع (أضفه بعد السطر الثابت) |
