@@ -268,6 +268,7 @@ export const translations = {
       skipPart: 'Skip this part',
       skipAll: 'Skip the tour',
       progress: 'Part {part} of {parts}: {name}',
+      progressShort: '{part}/{parts} · {name}',
       parts: { welcome: 'Welcome', tasks: 'Tasks & Habits', learn: 'Learning', tools: 'Tools', finish: 'Your account' },
       steps: {
         hello: { title: "Hi, I'm Khalil", text: "I'm your companion here. Let me show you around in two minutes. You can skip any part, or the whole tour." },
@@ -1592,6 +1593,7 @@ export const translations = {
       skipPart: 'تخطَّ هذا الجزء',
       skipAll: 'تخطَّ الجولة',
       progress: 'الجزء {part} من {parts}: {name}',
+      progressShort: '{part}/{parts} · {name}',
       parts: { welcome: 'الترحيب', tasks: 'المهام والعادات', learn: 'التعلّم', tools: 'الأدوات', finish: 'حسابك' },
       steps: {
         hello: { title: 'مرحبًا، أنا خليل', text: 'أنا رفيقك هنا. سأريك التطبيق في دقيقتين، وتستطيع أن تتخطى أي جزء أو الجولة كلها.' },
