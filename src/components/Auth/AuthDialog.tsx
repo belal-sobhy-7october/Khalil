@@ -56,7 +56,7 @@ function AuthDialogBody({ mode }: { mode: AuthDialogMode }) {
         >
           <X size={16} />
         </button>
-        <Mascot pose={mode === 'signup' ? 'save' : 'welcome'} size={88} className="mx-auto mb-3" />
+        <Mascot pose={mode === 'signup' ? 'save' : 'welcome'} size={150} className="mx-auto mb-3" />
         <h2 id={dialog.titleId} className="text-lg font-bold text-ink mb-2">{title}</h2>
         <p className="text-sm text-ink-light leading-relaxed">{text}</p>
         {mode === 'signin' && guest && <p className="mt-2 text-xs text-ink-light leading-relaxed">{t('auth.dialog.signinGuestWarning')}</p>}

@@ -134,7 +134,7 @@ export default function GuideTour({ onNavigate }: { onNavigate: (section: string
             className="rounded-2xl border border-border-subtle bg-card shadow-2xl p-4 sm:p-5"
           >
             <div className="flex items-start gap-3 sm:gap-4">
-              <Mascot pose={step.pose} size={72} className="shrink-0" />
+              <Mascot pose={step.pose} size={136} className="shrink-0 -my-1" />
               <div className="flex-1 min-w-0">
                 <div className="flex items-start gap-2">
                   <p className="flex-1 min-w-0 pt-0.5 text-[11px] text-clay-soft font-medium">

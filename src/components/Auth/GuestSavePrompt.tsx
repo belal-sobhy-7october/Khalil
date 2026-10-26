@@ -76,7 +76,7 @@ export function GuestSavePrompt() {
             <X size={14} />
           </button>
           <div className="flex gap-3">
-            <Mascot pose="save" size={56} />
+            <Mascot pose="save" size={96} />
             <div className="flex-1 min-w-0 pe-5">
               <p className="text-sm font-semibold text-ink">{t('auth.save.title')}</p>
               <p className="mt-1 text-xs text-ink-light leading-relaxed">{t('auth.save.text')}</p>
