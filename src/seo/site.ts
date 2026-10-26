@@ -82,7 +82,7 @@ function llmsTxt(pages: Page[], origin: string): string {
   });
   return `# Khalil (خليل)
 
-> Khalil is a free web app in Arabic and English: a daily English path from A1 to C1 with smart flashcards and conversation lessons, preparation for English call center jobs in Egypt, sales lessons in Arabic, and tasks, habits and a daily wird. It works offline. Sign in at ${origin}/ with a Google account.
+> Khalil is a free web app in Arabic and English: a daily English path from A1 to C1 with smart flashcards and conversation lessons, preparation for English call center jobs in Egypt, sales lessons in Arabic, and tasks, habits and a daily wird. Its written lessons also open offline. Open ${origin}/ to try it without an account; a Google account keeps the data.
 
 Every public page below has a Markdown copy at the same address plus \`.md\`; the links here go straight to those copies. The full map, with the HTML addresses too, is ${origin}/sitemap.md.
 

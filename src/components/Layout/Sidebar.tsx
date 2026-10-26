@@ -8,6 +8,8 @@ import {
   BarChart3,
   Settings,
   MessageCircle,
+  UserPlus,
+  Compass,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from '../../i18n/useTranslation';
@@ -16,6 +18,9 @@ import { whatsappLink } from '../../lib/contact';
 import { useDueSummary } from '../../lib/useDueSummary';
 import { hubOf } from '../../data/learnCatalog';
 import { HUB_ICONS } from '../Learn/icons';
+import { useAppStore } from '../../store/appStore';
+import { isGuestSession, useGuest } from '../../lib/guest';
+import { guideAvailable, useGuide } from '../../lib/guide';
 
 interface NavItem {
   id: string;
@@ -40,6 +45,9 @@ export default function Sidebar({
   const { due } = useDueSummary();
   const LanguagesIcon = HUB_ICONS.languages;
   const SkillsIcon = HUB_ICONS.skills;
+  const guest = useAppStore((s) => !s.session || isGuestSession(s.session));
+  const openDialog = useGuest((g) => g.openDialog);
+  const startGuide = useGuide((g) => g.start);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -134,13 +142,38 @@ export default function Sidebar({
             <MessageCircle size={14} />
             <span>{t('contact.menu')}</span>
           </a>
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center gap-2 px-3 py-2 text-xs text-ink-lighter hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-lg transition-all"
-          >
-            <LogOut size={14} />
-            <span>{t('auth.logout')}</span>
-          </button>
+          {guideAvailable() && (
+            <button
+              onClick={() => {
+                onToggle();
+                startGuide();
+              }}
+              className="w-full flex items-center gap-2 px-3 py-2 text-xs text-ink-light hover:text-ink hover:bg-ink/5 rounded-lg transition-all"
+            >
+              <Compass size={14} />
+              <span>{t('guide.replay')}</span>
+            </button>
+          )}
+          {guest ? (
+            <button
+              onClick={() => {
+                onToggle();
+                openDialog('signup');
+              }}
+              className="w-full flex items-center gap-2 px-3 py-2 text-xs text-clay-soft hover:bg-clay-soft/10 rounded-lg transition-all"
+            >
+              <UserPlus size={14} />
+              <span>{t('auth.signUp')}</span>
+            </button>
+          ) : (
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center gap-2 px-3 py-2 text-xs text-ink-lighter hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-lg transition-all"
+            >
+              <LogOut size={14} />
+              <span>{t('auth.logout')}</span>
+            </button>
+          )}
         </div>
       </motion.aside>
     </>

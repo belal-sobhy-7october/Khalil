@@ -14,6 +14,8 @@ import {
 import { supabase } from './lib/supabase';
 import { claimLocalData } from './lib/localOwner';
 import { isOnline, readStoredSession } from './lib/offline';
+import { isCrawler, isGuestSession, startGuest, takeAuthRedirectError, useGuest } from './lib/guest';
+import { guideAvailable, guideSeen, useGuide } from './lib/guide';
 import { useAppStore } from './store/appStore';
 import { useTranslation } from './i18n/useTranslation';
 import LoginPage from './components/Auth/LoginPage';
@@ -23,6 +25,8 @@ import PomodoroEngine from './components/Focus/PomodoroEngine';
 import FocusChip from './components/Focus/FocusChip';
 import ReviewReminders from './components/Vocabulary/ReviewReminders';
 import OfflineBanner from './components/Common/OfflineBanner';
+import AuthDialog from './components/Auth/AuthDialog';
+import { GuestBrowseBanner, GuestSavePrompt } from './components/Auth/GuestSavePrompt';
 import { HubCrumb } from './components/Learn/ui';
 import SelectionWordMenu from './components/Vocabulary/SelectionWordMenu';
 import { applyAppearance, useAppearance } from './lib/appearance';
@@ -44,6 +48,7 @@ const SkillsHub = lazy(() => import('./components/Learn/SkillsHub'));
 const FocusSection = lazy(() => import('./components/Focus/FocusSection'));
 const AnalyticsSection = lazy(() => import('./components/Analytics/AnalyticsSection'));
 const SettingsSection = lazy(() => import('./components/Settings/SettingsSection'));
+const GuideTour = lazy(() => import('./components/Guide/GuideTour'));
 
 const SECTION_KEY = 'khalil-active-section';
 
@@ -112,6 +117,11 @@ function App() {
   const appError = useAppStore((s) => s.error);
   const clearAppError = useAppStore((s) => s.clearError);
   const [menuOpen, setMenuOpen] = useState(false);
+  const browsing = useGuest((g) => g.browsing);
+  const guest = !!session && isGuestSession(session);
+  // In the app (signed in, a guest, or browsing with no account), not on the welcome page.
+  const inApp = !!session || browsing;
+  const touring = useGuide((g) => g.active);
 
   const { refs, floatingStyles, context } = useFloating({
     placement: isRTL ? 'left-start' : 'right-start',
@@ -195,6 +205,7 @@ function App() {
     let sessionResolved = false;
     // Showing the session saved on this device while there is no internet.
     let usingStored = false;
+    let guestStarting = false;
 
     // Another account's local copy must not show or upload: clear it and start fresh.
     const switchedAccount = (session: Session | null) => {
@@ -219,12 +230,41 @@ function App() {
       });
     };
 
+    // No account: open Khalil as a guest (lib/guest.ts). Search engines get the
+    // welcome page; with no guest account (switched off, or no internet) the
+    // visitor browses and nothing is saved until they sign in.
+    const openAsGuest = () => {
+      if (isCrawler()) {
+        useAppStore.setState({ isLoading: false });
+        return;
+      }
+      const browse = () => {
+        useGuest.setState({ browsing: true });
+        useAppStore.setState({ isLoading: false });
+      };
+      if (!isOnline()) return browse();
+      if (guestStarting) return;
+      guestStarting = true;
+      // The spinner, not the welcome page, while the guest account opens (e.g. right after signing out).
+      useAppStore.setState({ isLoading: true });
+      void startGuest().then((ok) => {
+        guestStarting = false;
+        // Signed in: onAuthStateChange shows the guest's session.
+        if (!ok) browse();
+      });
+    };
+
     const showSession = (session: Session | null) => {
       if (switchedAccount(session)) return;
       setSession(session);
-      if (session) loadData();
-      else useAppStore.setState({ isLoading: false });
+      if (session) {
+        useGuest.setState({ browsing: false });
+        loadData();
+      } else openAsGuest();
     };
+
+    // Back from Google with that account already used by another Khalil account.
+    if (takeAuthRedirectError() === 'identity_already_exists') useGuest.getState().openDialog('exists');
 
     // With no internet, supabase-js retries refreshing an expired token for
     // ~30s and then reports no session, which would show the login page. The
@@ -266,7 +306,11 @@ function App() {
     // Back online: refreshing the saved session also loads the data.
     const onOnline = () => {
       void supabase.auth.getSession().then(({ data: { session } }) => {
-        if (!session) return;
+        if (!session) {
+          // Browsing with no account because there was no internet: try a guest account now.
+          if (useGuest.getState().browsing) openAsGuest();
+          return;
+        }
         usingStored = false;
         showSession(session);
       });
@@ -285,13 +329,13 @@ function App() {
   // sign-in page keeps its address: the root stays the one search engines know.
   const addressShown = useRef(false);
   useEffect(() => {
-    if (!session || addressShown.current) return;
+    if (!inApp || addressShown.current) return;
     addressShown.current = true;
     showPage(activeSection, activeSection === 'vocabulary' ? readEnglishTab() : undefined, true);
     rememberSection(activeSection);
     // Only once: later pages are shown by handleSectionChange and Back.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session]);
+  }, [inApp]);
 
   // Back and Forward: open the page the address names.
   useEffect(() => {
@@ -325,8 +369,8 @@ function App() {
       sales: t('learn.skill.sales.name'),
     };
     const name = names[activeSection];
-    setPageTitle(session && name ? `${name} — ${t('app.title')}` : null);
-  }, [activeSection, session, t]);
+    setPageTitle(inApp && name ? `${name} — ${t('app.title')}` : null);
+  }, [activeSection, inApp, t]);
 
   const handleSectionChange = useCallback((section: string) => {
     const target = resolveSection(section);
@@ -360,7 +404,7 @@ function App() {
     );
   }
 
-  if (!session) {
+  if (!inApp) {
     return <LoginPage />;
   }
 
@@ -394,6 +438,7 @@ function App() {
           </div>
         )}
         <OfflineBanner />
+        {browsing && <GuestBrowseBanner />}
         <SelectionWordMenu />
         {activeSection === 'calendar' ? (
           <Suspense fallback={
@@ -461,6 +506,14 @@ function App() {
 
       <PomodoroEngine />
       <ReviewReminders />
+      <AuthDialog />
+      {guest && <GuestSavePrompt />}
+      <GuideAutoStart enabled={guest || browsing} />
+      {touring && (
+        <Suspense fallback={null}>
+          <GuideTour onNavigate={handleSectionChange} />
+        </Suspense>
+      )}
       {activeSection !== 'focus' && <FocusChip onOpen={() => handleSectionChange('focus')} />}
 
       <div
@@ -501,12 +554,24 @@ function App() {
           menuOpen ? 'rotate-45' : ''
         }`}
         aria-label={t('notes.addMenu')}
+        data-guide="add-note"
         {...getReferenceProps()}
       >
         <Plus size={22} />
       </button>
     </>
   );
+}
+
+/** A new guest gets Khalil's tour once, a moment after the page opens. */
+function GuideAutoStart({ enabled }: { enabled: boolean }) {
+  const start = useGuide((g) => g.start);
+  useEffect(() => {
+    if (!enabled || guideSeen() || !guideAvailable()) return;
+    const timer = window.setTimeout(start, 900);
+    return () => window.clearTimeout(timer);
+  }, [enabled, start]);
+  return null;
 }
 
 export default App;

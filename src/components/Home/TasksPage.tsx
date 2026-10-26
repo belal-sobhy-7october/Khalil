@@ -29,7 +29,7 @@ export default function TasksPage() {
       </div>
     ),
     tasks: (
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start" data-guide="tasks">
         <div>
           <DailyTodo />
         </div>

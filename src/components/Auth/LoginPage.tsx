@@ -1,17 +1,26 @@
 import { useState } from 'react';
-import { LogIn, WifiOff } from 'lucide-react';
+import { LogIn, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { supabase } from '../../lib/supabase';
 import { useTranslation } from '../../i18n/useTranslation';
 import CalligraphyWatermark from '../Common/CalligraphyWatermark';
-import { StudyTopicsButton } from '../Common/OfflineBanner';
-import { useOnline } from '../../lib/offline';
+import { startGuest, useGuest } from '../../lib/guest';
 import { ROUTES } from '../../seo/routes';
 
+/**
+ * The welcome page. Visitors open Khalil as guests (lib/guest.ts), so this is
+ * what search engines see; a visitor taken for one can still try it as a guest.
+ */
 export default function LoginPage() {
   const { t, language } = useTranslation();
   const [loading, setLoading] = useState(false);
-  const online = useOnline();
+  const [trying, setTrying] = useState(false);
+
+  const tryAsGuest = async () => {
+    setTrying(true);
+    // A guest account opens the app by itself (App.tsx); without one, browse.
+    if (!(await startGuest())) useGuest.setState({ browsing: true });
+  };
 
   const handleLogin = async () => {
     setLoading(true);
@@ -75,16 +84,14 @@ export default function LoginPage() {
               <span>{t('auth.login')}</span>
             </button>
 
-            {/* Signing in needs internet; the topic lessons don't. */}
-            <div className={`mt-3 rounded-xl ${online ? '' : 'p-3 border border-clay-soft/40 bg-clay-soft/5'}`}>
-              {!online && (
-                <p className="flex items-center justify-center gap-1.5 text-xs text-ink mb-2">
-                  <WifiOff size={14} className="text-clay-soft shrink-0" />
-                  {t('offline.loginOffline')}
-                </p>
-              )}
-              <StudyTopicsButton className="w-full py-2" subtle={online} />
-            </div>
+            <button
+              onClick={tryAsGuest}
+              disabled={trying}
+              className="mt-3 w-full flex items-center justify-center gap-2 px-6 py-2 rounded-xl text-sm text-ink-light hover:text-ink hover:bg-ink/5 disabled:opacity-60 transition-all"
+            >
+              <Sparkles size={16} className="text-clay-soft" />
+              <span>{t('auth.tryGuest')}</span>
+            </button>
           </div>
 
           <div className="px-8 pb-6 text-center">

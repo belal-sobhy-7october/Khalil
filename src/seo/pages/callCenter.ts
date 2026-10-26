@@ -557,8 +557,8 @@ function unitPage(unit: VocabUnit, lang: Lang, origin: string): Page {
       },
       { kind: 'quote', text: unit.text, lang: ar ? 'en' : undefined },
       ar
-        ? { kind: 'cta', title: 'احفظ هذه الوحدة ببطاقات المراجعة', text: 'يضع خليل هذه الكلمات في بطاقات مراجعة ذكية ويذكّرك بموعد مراجعتها. مجانًا، ويعمل دون إنترنت.', href: '/', label: 'افتح خليل' }
-        : { kind: 'cta', title: 'Learn this unit with flashcards', text: 'Khalil puts these words into smart flashcards and reminds you when it’s time to review. Free, and it works offline.', href: '/', label: 'Open Khalil' },
+        ? { kind: 'cta', title: 'احفظ هذه الوحدة ببطاقات المراجعة', text: 'يضع خليل هذه الكلمات في بطاقات مراجعة ذكية ويذكّرك بموعد مراجعتها. مجانًا، وتجربه دون تسجيل.', href: '/', label: 'افتح خليل' }
+        : { kind: 'cta', title: 'Learn this unit with flashcards', text: 'Khalil puts these words into smart flashcards and reminds you when it’s time to review. Free, and you can try it without signing up.', href: '/', label: 'Open Khalil' },
       { kind: 'cards', items: neighbors },
     ],
     ogType: 'article',

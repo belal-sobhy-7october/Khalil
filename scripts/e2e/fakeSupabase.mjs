@@ -18,6 +18,15 @@ export const user = {
 const accessToken = `${b64({ alg: 'HS256', typ: 'JWT' })}.${b64({ sub: USER_ID, exp, role: 'authenticated', aud: 'authenticated', email: user.email })}.sig`;
 export const session = { access_token: accessToken, refresh_token: 'refresh', token_type: 'bearer', expires_in: 86400, expires_at: exp, user };
 
+// A guest: the anonymous account Khalil opens for a visitor (src/lib/guest.ts).
+export const GUEST_ID = '00000000-0000-4000-8000-0000000000a1';
+export const guestUser = {
+  id: GUEST_ID, aud: 'authenticated', role: 'authenticated', email: '', is_anonymous: true,
+  user_metadata: {}, app_metadata: { provider: 'anonymous', providers: [] }, created_at: new Date().toISOString(),
+};
+const guestToken = `${b64({ alg: 'HS256', typ: 'JWT' })}.${b64({ sub: GUEST_ID, exp, role: 'authenticated', aud: 'authenticated', is_anonymous: true })}.sig`;
+export const guestSession = { access_token: guestToken, refresh_token: 'guest-refresh', token_type: 'bearer', expires_in: 86400, expires_at: exp, user: guestUser };
+
 function parseValue(raw) {
   if (raw === 'null') return null;
   if (raw === 'true') return true;
@@ -119,16 +128,32 @@ function appStartup(tables, { since = null, kv_keys = [] } = {}) {
  * write as { method, table, rows } (and each app_startup call, as 'RPC') so tests
  * can assert on what was sent; `reads` every GET as { table, query }.
  */
-export function createFakeSupabase(seed, { startup = true } = {}) {
+export function createFakeSupabase(seed, { startup = true, anonymous = true } = {}) {
   const tables = structuredClone(seed);
   const log = [];
   const reads = [];
+  // Sign-ins: anonymous ('signup'), linking Google to a guest ('link') and Google itself ('oauth').
+  const auth = [];
   const handle = async (route) => {
     const req = route.request();
     const url = new URL(req.url());
     const method = req.method();
-    if (url.pathname.startsWith('/auth/v1/user')) return route.fulfill({ json: user });
-    if (url.pathname.startsWith('/auth/v1/token')) return route.fulfill({ json: session });
+    const asGuest = (req.headers()['authorization'] ?? '').includes(guestToken);
+    if (url.pathname === '/auth/v1/signup' && method === 'POST') {
+      auth.push({ kind: 'signup' });
+      if (!anonymous) return route.fulfill({ status: 422, json: { code: 422, error_code: 'anonymous_provider_disabled', msg: 'Anonymous sign-ins are disabled' } });
+      return route.fulfill({ json: guestSession });
+    }
+    if (url.pathname === '/auth/v1/user/identities/authorize') {
+      auth.push({ kind: 'link', provider: url.searchParams.get('provider'), guest: asGuest });
+      return route.fulfill({ json: { url: `${SUPA}/fake-google?link=1` } });
+    }
+    if (url.pathname === '/auth/v1/authorize' || url.pathname === '/fake-google') {
+      if (url.pathname === '/auth/v1/authorize') auth.push({ kind: 'oauth', provider: url.searchParams.get('provider') });
+      return route.fulfill({ contentType: 'text/html', body: '<!doctype html><title>Google</title><h1>Google</h1>' });
+    }
+    if (url.pathname.startsWith('/auth/v1/user')) return route.fulfill({ json: asGuest ? guestUser : user });
+    if (url.pathname.startsWith('/auth/v1/token')) return route.fulfill({ json: (req.postData() ?? '').includes('guest-refresh') ? guestSession : session });
     if (url.pathname.startsWith('/auth/v1/')) return route.fulfill({ json: {} });
     if (!url.pathname.startsWith('/rest/v1/')) return route.fulfill({ status: 404, json: {} });
     if (url.pathname === '/rest/v1/rpc/app_startup') {
@@ -230,7 +255,7 @@ export function createFakeSupabase(seed, { startup = true } = {}) {
     }
     return route.fulfill({ status: 405, json: {} });
   };
-  return { handle, tables, log, reads };
+  return { handle, tables, log, reads, auth };
 }
 
 /** Fake dictionaryapi.dev so Quick add can fill in definitions offline. */
