@@ -4,6 +4,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { TOPIC_PACKS } from '.';
+import { MEANINGS_AR, TOPIC_TITLES_AR } from './arabic';
 
 const DIR = path.dirname(fileURLToPath(import.meta.url));
 
@@ -38,6 +39,12 @@ describe('TOPIC_PACKS', () => {
         .map((w) => `${p.id}: ${w}`)
     );
     expect(found).toEqual([]);
+  });
+
+  it('gives every topic its Arabic name and every word its Arabic meaning, and nothing more', () => {
+    expect(Object.keys(TOPIC_TITLES_AR).sort()).toEqual(TOPIC_PACKS.map((p) => p.id).sort());
+    expect(Object.keys(MEANINGS_AR).sort()).toEqual(TOPIC_PACKS.flatMap((p) => p.items.map((i) => i.word)).sort());
+    for (const text of [...Object.values(TOPIC_TITLES_AR), ...Object.values(MEANINGS_AR)]) expect(text).toMatch(/[؀-ۿ]/);
   });
 
   it('includes the eight lessons from the course', () => {

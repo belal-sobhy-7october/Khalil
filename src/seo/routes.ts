@@ -7,8 +7,8 @@ import type { Lang } from './render';
 export const ROUTES = {
   home: (lang: Lang) => `/${lang}`,
   topics: (lang: Lang) => `/${lang}/english-topics`,
-  /** A lesson is written in English, so it has one page. */
-  topic: (id: string) => `/en/english-topics/${id}`,
+  /** A lesson's English page, and its Arabic page with the words' Arabic meanings. */
+  topic: (lang: Lang, id: string) => `/${lang}/english-topics/${id}`,
   callCenter: (lang: Lang) => `/${lang}/call-center`,
   /** The questions in one page per language; each question's model answer is in English. */
   interview: (lang: Lang) => `/${lang}/call-center/interview-questions`,
