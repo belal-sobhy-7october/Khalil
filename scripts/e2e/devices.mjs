@@ -409,10 +409,14 @@ async function navigate(page, id) {
   await settle(page);
 }
 
-/** Reloads the page on a section: a fresh start after a screen that broke the layout. */
+/**
+ * Reloads the page on a section: a fresh start after a screen that broke the layout.
+ * From the root address, which opens the page this tab was on (each page's own
+ * address would win over it, lib/routes.ts).
+ */
 async function reloadOn(page, id) {
   await page.evaluate((id) => sessionStorage.setItem('khalil-active-section', id), id);
-  await page.reload({ waitUntil: 'domcontentloaded' });
+  await page.goto(new URL('/', page.url()).href, { waitUntil: 'domcontentloaded' });
   await settle(page);
 }
 

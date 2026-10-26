@@ -214,6 +214,16 @@ function writeUnsynced() {
 const saveTimers = new Map<string, number>();
 let pendingUserId: string | undefined;
 
+// One clock for loads and for each day's last edit or save here. An answer to
+// a load asked for before a day was edited, or before its save reached the
+// server, may be older than what this device has, even when it arrives after
+// that save (and the day is no longer unsynced): it must not overwrite the day.
+let clock = 0;
+const touchedAt = new Map<string, number>();
+function touch(date: string) {
+  touchedAt.set(date, ++clock);
+}
+
 // Every day was loaded (or is loading): a range asked for meanwhile, or within a
 // minute after, needs no request of its own.
 let loadingAll: Promise<boolean> | null = null;
@@ -237,6 +247,8 @@ async function persistDay(userId: string, date: string, data: WirdDay) {
     console.error('save wird day', error);
     return;
   }
+  // A load asked for before this save may not have it.
+  touch(date);
   // Confirmed — unless the day changed again while this was in flight.
   if (useWirdStore.getState().days[date] === data && !saveTimers.has(date)) {
     unsynced.delete(date);
@@ -249,16 +261,18 @@ export const useWirdStore = create<WirdState>((set, get) => ({
 
   loadRange: async (userId, from, to) => {
     if (loadingAll && (await loadingAll) && Date.now() - loadedAllAt < 60_000) return;
+    const asked = ++clock;
     const { data, error } = await supabase.from('wird_days').select('date, data').eq('user_id', userId).gte('date', from).lte('date', to);
     if (error || !data) return;
-    mergeRows(userId, data as WirdRow[], from, to);
+    mergeRows(userId, data as WirdRow[], from, to, asked);
   },
 
   loadAll: async (userId, given) => {
+    const asked = ++clock;
     const loading = (async () => {
       const rows = (await given?.catch(() => null)) ?? (await fetchAllRows(userId).catch(() => null));
       if (!rows) return false;
-      mergeRows(userId, rows, '0000-01-01', '9999-12-31');
+      mergeRows(userId, rows, '0000-01-01', '9999-12-31', asked);
       loadedAllAt = Date.now();
       return true;
     })();
@@ -272,6 +286,7 @@ export const useWirdStore = create<WirdState>((set, get) => ({
     const days = { ...get().days, [date]: next };
     set({ days });
     writeLocal(days);
+    touch(date);
     if (!userId) return;
     pendingUserId = userId;
     unsynced.add(date);
@@ -296,6 +311,7 @@ export const useWirdStore = create<WirdState>((set, get) => ({
     set({ days });
     writeLocal(days);
     const dates = Object.keys(patches);
+    for (const date of dates) touch(date);
     if (!userId || dates.length === 0) return;
     for (const date of dates) unsynced.add(date);
     writeUnsynced();
@@ -308,6 +324,7 @@ export const useWirdStore = create<WirdState>((set, get) => ({
       console.error('save wird days', error);
       return;
     }
+    for (const date of dates) touch(date);
     for (const date of dates) if (get().days[date] === days[date] && !saveTimers.has(date)) unsynced.delete(date);
     writeUnsynced();
   },
@@ -315,12 +332,13 @@ export const useWirdStore = create<WirdState>((set, get) => ({
 
 /**
  * Takes rows from the server into the store, except days edited here that the
- * server hasn't confirmed yet (those are newer, and are sent again).
+ * server hasn't confirmed yet (those are newer, and are sent again) and days
+ * edited or saved after the rows were asked for (`asked`: the clock then).
  */
-function mergeRows(userId: string, rows: WirdRow[], from: string, to: string) {
+function mergeRows(userId: string, rows: WirdRow[], from: string, to: string, asked: number) {
   const days = { ...useWirdStore.getState().days };
   for (const row of rows) {
-    if (saveTimers.has(row.date) || unsynced.has(row.date)) continue;
+    if (saveTimers.has(row.date) || unsynced.has(row.date) || (touchedAt.get(row.date) ?? 0) > asked) continue;
     days[row.date] = { ...EMPTY_DAY, ...row.data };
   }
   useWirdStore.setState({ days });

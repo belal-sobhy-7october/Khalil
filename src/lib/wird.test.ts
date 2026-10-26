@@ -68,4 +68,49 @@ describe('wird saving', () => {
     await Promise.resolve();
     expect(JSON.parse(localStorage.getItem('khalil-wird-unsynced') ?? '[]')).toEqual([]);
   });
+  it('keeps an edit made while the days were loading, even once the edit is saved', async () => {
+    vi.useRealTimers();
+    let answer!: (value: unknown) => void;
+    const late = new Promise((resolve) => (answer = resolve));
+    const query = { select: () => query, eq: () => query, gte: () => query, lte: () => late, upsert: vi.fn(async () => ({ error: null })) };
+    mockSupabase.from.mockImplementation(() => query);
+    try {
+      useWirdStore.setState({ days: { '2026-10-15': { ...EMPTY_DAY } } });
+      // The days are asked for, then the evening adhkar is ticked and saved before the answer comes.
+      const loading = useWirdStore.getState().loadRange('u1', '2026-10-01', '2026-10-31');
+      useWirdStore.getState().updateDay('u1', '2026-10-15', { adhkarPM: true });
+      flushWirdSaves();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(query.upsert).toHaveBeenCalledTimes(1);
+      expect(JSON.parse(localStorage.getItem('khalil-wird-unsynced') ?? '[]')).toEqual([]);
+      // The answer to the earlier request, without the tick, arrives late.
+      answer({ data: [{ date: '2026-10-15', data: { ...EMPTY_DAY } }], error: null });
+      await loading;
+      expect(useWirdStore.getState().days['2026-10-15'].adhkarPM).toBe(true);
+      expect(JSON.parse(localStorage.getItem('khalil-wird-days') ?? '{}')['2026-10-15'].adhkarPM).toBe(true);
+    } finally {
+      mockSupabase.from.mockReturnThis();
+    }
+  });
+  it('keeps a saved edit when a load sent after it was answered before the save arrived', async () => {
+    vi.useRealTimers();
+    let answer!: (value: unknown) => void;
+    const late = new Promise((resolve) => (answer = resolve));
+    const query = { select: () => query, eq: () => query, gte: () => query, lte: () => late, upsert: vi.fn(async () => ({ error: null })) };
+    mockSupabase.from.mockImplementation(() => query);
+    try {
+      useWirdStore.setState({ days: { '2026-10-16': { ...EMPTY_DAY } } });
+      // Tick first, then the page asks for the days (the server answers from before the save) and the save lands.
+      useWirdStore.getState().updateDay('u1', '2026-10-16', { adhkarAM: true });
+      const loading = useWirdStore.getState().loadRange('u1', '2026-10-01', '2026-10-31');
+      flushWirdSaves();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(JSON.parse(localStorage.getItem('khalil-wird-unsynced') ?? '[]')).toEqual([]);
+      answer({ data: [{ date: '2026-10-16', data: { ...EMPTY_DAY } }], error: null });
+      await loading;
+      expect(useWirdStore.getState().days['2026-10-16'].adhkarAM).toBe(true);
+    } finally {
+      mockSupabase.from.mockReturnThis();
+    }
+  });
 });

@@ -341,15 +341,13 @@ await flow('bookmarks-add', { section: 'bookmarks' }, async ({ page, backend, ch
   await page.getByRole('button', { name: 'Add Category' }).click();
   await page.getByPlaceholder('Category name').fill('E2E Cat');
   await page.getByPlaceholder('Category name').press('Enter');
-  await page.waitForTimeout(500);
-  check(backend.tables.bookmark_categories?.some((c) => c.name === 'E2E Cat'), 'category not saved');
+  check(await until(() => backend.tables.bookmark_categories?.some((c) => c.name === 'E2E Cat')), 'category not saved');
   await page.getByRole('button', { name: 'E2E Cat', exact: true }).click();
   await page.getByRole('button', { name: 'Add Bookmark' }).first().click();
   await page.getByPlaceholder('Title').fill('E2E Link');
   await page.getByPlaceholder('https://...').fill('https://example.com');
   await page.getByRole('button', { name: 'Save', exact: true }).last().click();
-  await page.waitForTimeout(500);
-  check(backend.tables.bookmarks?.some((b) => b.title === 'E2E Link'), 'bookmark not saved');
+  check(await until(() => backend.tables.bookmarks?.some((b) => b.title === 'E2E Link')), 'bookmark not saved');
   await reload();
   check(await visible(page.getByText('E2E Link')), 'bookmark missing after reload');
 });
@@ -603,6 +601,78 @@ await flow('startup-legacy', { section: 'vocabulary', englishTab: 'vocabulary', 
   check(backend.reads.some((r) => r.table === 'wird_days'), 'the wird was not loaded without the startup request');
   await reload();
   check(await visible(page.getByText('Receipt', { exact: true })), 'the words are not shown after a reload');
+});
+
+// Every page has its own address: opening it, Back and Forward, a reload, a link (lib/routes.ts).
+await flow('page-addresses', { section: 'todo' }, async ({ page, check, reload }) => {
+  const path = () => new URL(page.url()).pathname;
+  const at = async (expected, msg) => {
+    for (let i = 0; i < 20 && path() !== expected; i++) await page.waitForTimeout(100);
+    return check(path() === expected, `${msg}: the address is ${path()}, not ${expected}`);
+  };
+  const nav = (name) => page.locator('aside nav button', { hasText: name });
+  const open = async (name) => {
+    await page.getByRole('button', { name: 'Toggle sidebar' }).click();
+    await nav(name).click();
+    await page.waitForTimeout(600);
+  };
+  const origin = new URL(page.url()).origin;
+  const english = page.getByRole('navigation', { name: 'Where you are' });
+
+  // The root opens the tasks page and shows its address and title.
+  await at('/tasks', 'the root did not become /tasks');
+  check((await page.title()) === 'Tasks & Habits — Khalil', `title on the tasks page: ${await page.title()}`);
+
+  // The menu: each page its own address and title.
+  await open('Focus');
+  await at('/focus', 'Focus');
+  check(await visible(page.getByRole('heading', { name: 'Focus', exact: true })), 'Focus did not open');
+  check((await page.title()) === 'Focus (Pomodoro) — Khalil', `title on Focus: ${await page.title()}`);
+  await open('Learn Languages');
+  await at('/languages', 'Learn Languages');
+  await page.getByRole('button', { name: /English/ }).first().click();
+  await page.waitForTimeout(600);
+  await at('/languages/english/path', 'English (its first tab)');
+  await page.getByRole('tab', { name: 'Listening' }).click();
+  await at('/languages/english/listening', 'the Listening tab');
+
+  // Back and Forward walk the same pages, tabs included.
+  await page.goBack();
+  await at('/languages/english/path', 'Back from Listening');
+  check(await visible(page.getByRole('tab', { name: 'Learning Path', selected: true })), 'Back did not return to the Learning Path tab');
+  await page.goBack();
+  await at('/languages', 'Back to Learn Languages');
+  check(await visible(page.getByRole('heading', { name: 'Learn Languages' })), 'Back did not open Learn Languages');
+  await page.goBack();
+  await at('/focus', 'Back to Focus');
+  check(await visible(page.getByRole('heading', { name: 'Focus', exact: true })), 'Back did not open Focus');
+  await page.goForward();
+  await at('/languages', 'Forward to Learn Languages');
+  check(await visible(page.getByRole('heading', { name: 'Learn Languages' })), 'Forward did not open Learn Languages');
+
+  // A link straight to a page, a tab, a skill.
+  await page.goto(`${origin}/languages/english/grammar`, { waitUntil: 'domcontentloaded' });
+  check(await visible(page.getByRole('tab', { name: 'Grammar', selected: true }), 8000), 'a link to the Grammar tab did not open it');
+  await page.goto(`${origin}/skills/sales`, { waitUntil: 'domcontentloaded' });
+  check(await visible(page.getByRole('heading', { name: 'تعلّم المبيعات' }), 8000), 'a link to Sales Prep did not open it');
+  check(await visible(english.getByRole('button', { name: 'Learn Skills' })), 'Sales Prep has no way back to Learn Skills');
+  await english.getByRole('button', { name: 'Learn Skills' }).click();
+  await at('/skills', 'the way back to Learn Skills');
+
+  // A reload stays on the page; an unknown address is read like the root: the page this tab was on.
+  await page.goto(`${origin}/calendar`, { waitUntil: 'domcontentloaded' });
+  await reload();
+  await at('/calendar', 'a reload on the calendar');
+  check((await page.title()) === 'Calendar — Khalil', `title on the calendar: ${await page.title()}`);
+  await page.goto(`${origin}/no-such-page`, { waitUntil: 'domcontentloaded' });
+  await page.waitForTimeout(1500);
+  await at('/calendar', 'an unknown address');
+
+  // The wird is part of the tasks page: opening it shows /tasks.
+  await page.goto(`${origin}/settings`, { waitUntil: 'domcontentloaded' });
+  await page.waitForTimeout(1200);
+  await page.evaluate(() => window.dispatchEvent(new CustomEvent('khalil:navigate', { detail: 'wird' })));
+  await at('/tasks', 'opening the wird');
 });
 
 await flow('learn-hubs', { section: 'todo' }, async ({ page, check, reload }) => {
