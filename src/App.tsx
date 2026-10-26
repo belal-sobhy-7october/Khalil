@@ -15,7 +15,7 @@ import { supabase } from './lib/supabase';
 import { claimLocalData } from './lib/localOwner';
 import { isOnline, readStoredSession } from './lib/offline';
 import { isCrawler, isGuestSession, startGuest, takeAuthRedirectError, useGuest } from './lib/guest';
-import { guideSeen, useGuide } from './lib/guide';
+import { guideAvailable, guideSeen, useGuide } from './lib/guide';
 import { useAppStore } from './store/appStore';
 import { useTranslation } from './i18n/useTranslation';
 import LoginPage from './components/Auth/LoginPage';
@@ -512,7 +512,7 @@ function App() {
 function GuideAutoStart({ enabled }: { enabled: boolean }) {
   const start = useGuide((g) => g.start);
   useEffect(() => {
-    if (!enabled || guideSeen()) return;
+    if (!enabled || guideSeen() || !guideAvailable()) return;
     const timer = window.setTimeout(start, 900);
     return () => window.clearTimeout(timer);
   }, [enabled, start]);

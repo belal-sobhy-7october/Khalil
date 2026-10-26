@@ -86,7 +86,9 @@ step 4 has the Supabase switches.
 - Khalil is also a character: his poses are `src/assets/mascot/<pose>.webp` (`Mascot`, `mascotPoses.ts`);
   a pose without its picture shows "خ". **Read `docs/mascot/README.md`** (the prompts and the 14 poses).
 - His tour (`src/components/Guide/`, `src/lib/guide.ts`) opens once for a new guest; "Skip this part"
-  and "Skip the tour"; anyone can take it again from the sidebar or the account menu. A step points at
+  and "Skip the tour"; anyone can take it again from the sidebar or the account menu. It is the last step
+  of the character's work, so it waits for his pictures: until every pose it shows has one, it neither opens
+  nor is offered, except in a browser with localStorage `khalil-guide-preview` = `1` (`guideAvailable`). A step points at
   an element by `data-guide="…"`, `#section-…` or another selector; keep those when moving things.
 - `scripts/e2e/guest.mjs` checks all of it (guest account, tour, the save prompt, linking, a crawler,
   browsing with no account).

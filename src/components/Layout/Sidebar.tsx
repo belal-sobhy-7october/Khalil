@@ -20,7 +20,7 @@ import { hubOf } from '../../data/learnCatalog';
 import { HUB_ICONS } from '../Learn/icons';
 import { useAppStore } from '../../store/appStore';
 import { isGuestSession, useGuest } from '../../lib/guest';
-import { useGuide } from '../../lib/guide';
+import { guideAvailable, useGuide } from '../../lib/guide';
 
 interface NavItem {
   id: string;
@@ -142,16 +142,18 @@ export default function Sidebar({
             <MessageCircle size={14} />
             <span>{t('contact.menu')}</span>
           </a>
-          <button
-            onClick={() => {
-              onToggle();
-              startGuide();
-            }}
-            className="w-full flex items-center gap-2 px-3 py-2 text-xs text-ink-light hover:text-ink hover:bg-ink/5 rounded-lg transition-all"
-          >
-            <Compass size={14} />
-            <span>{t('guide.replay')}</span>
-          </button>
+          {guideAvailable() && (
+            <button
+              onClick={() => {
+                onToggle();
+                startGuide();
+              }}
+              className="w-full flex items-center gap-2 px-3 py-2 text-xs text-ink-light hover:text-ink hover:bg-ink/5 rounded-lg transition-all"
+            >
+              <Compass size={14} />
+              <span>{t('guide.replay')}</span>
+            </button>
+          )}
           {guest ? (
             <button
               onClick={() => {

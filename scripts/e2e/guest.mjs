@@ -61,7 +61,8 @@ const visible = (locator) => locator.first().isVisible().catch(() => false);
 // 1. A new visitor: a guest account, the app, the account buttons and the tour.
 for (const [label, device] of [['desktop', undefined], ['iphone-se', devices['iPhone SE']]]) {
   const name = `guest-${label}`;
-  const { page, context, backend, check, fits } = await visit(name, { device });
+  // The tour waits for Khalil's pictures; this browser asks to try it (lib/guide.ts).
+  const { page, context, backend, check, fits } = await visit(name, { device, local: { 'khalil-guide-preview': '1' } });
   const press = (locator) => (device?.hasTouch ? locator.first().tap() : locator.first().click());
   try {
     check(backend.auth.some((a) => a.kind === 'signup'), 'no guest account was made');
@@ -181,6 +182,25 @@ for (const [label, device] of [['desktop', undefined], ['iphone-se', devices['iP
   await input.press('Enter');
   await page.waitForTimeout(500);
   check(await visible(page.getByRole('dialog', { name: 'أنشئ حسابك في خليل' })), 'adding a task with no account did not ask to create one');
+  await context.close();
+}
+
+// 8. Before Khalil's pictures are in, a new guest gets no tour, and it isn't offered in the menu.
+const picturesIn = (() => {
+  try {
+    return fs.readdirSync(new URL('../../src/assets/mascot/', import.meta.url)).some((f) => f.endsWith('.webp'));
+  } catch {
+    return false; // no folder yet
+  }
+})();
+if (!picturesIn) {
+  const name = 'guest-no-pictures';
+  const { page, context, check } = await visit(name);
+  await page.waitForTimeout(800);
+  check(!(await visible(page.getByTestId('guide-tour'))), 'the tour opened before its pictures are in');
+  await page.locator('[data-guide="menu"]').click();
+  await page.waitForTimeout(400);
+  check(!(await page.getByRole('button', { name: 'جولة مع خليل' }).count()), 'the menu offers the tour before its pictures are in');
   await context.close();
 }
 

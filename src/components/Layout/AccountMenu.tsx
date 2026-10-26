@@ -4,7 +4,7 @@ import { useTranslation } from '../../i18n/useTranslation';
 import { useAppStore } from '../../store/appStore';
 import { supabase } from '../../lib/supabase';
 import { whatsappLink } from '../../lib/contact';
-import { useGuide } from '../../lib/guide';
+import { guideAvailable, useGuide } from '../../lib/guide';
 import {
   useFloating,
   autoUpdate,
@@ -109,15 +109,20 @@ export default function AccountMenu() {
         handleOpenChange(false);
       },
     },
-    {
-      id: 'guide',
-      label: t('guide.replay'),
-      icon: Compass,
-      onClick: () => {
-        handleOpenChange(false);
-        startGuide();
-      },
-    },
+    // Khalil's tour, once his pictures are in (lib/guide.ts).
+    ...(guideAvailable()
+      ? [
+          {
+            id: 'guide',
+            label: t('guide.replay'),
+            icon: Compass,
+            onClick: () => {
+              handleOpenChange(false);
+              startGuide();
+            },
+          },
+        ]
+      : []),
     {
       id: 'logout',
       label: t('auth.logout'),
