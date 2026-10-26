@@ -37,9 +37,9 @@ network at all):
 
 ## Public pages (search engines)
 
-The app is behind a sign-in, so search engines only saw a login screen. The build now writes ~225 public
+The app is behind a sign-in, so search engines only saw a login screen. The build now writes ~315 public
 pages from the app's own data: home pages (`/ar`, `/en`), the Topic Library (`/{ar,en}/english-topics`, a page
-per lesson in English), Call Center Prep (`/{ar,en}/call-center`, the interview questions in Arabic and English
+per lesson in each language; the Arabic one adds each word's Arabic meaning), Call Center Prep (`/{ar,en}/call-center`, the interview questions in Arabic and English
 and a page per question, the word bank in Arabic and English) and the Arabic sales chapters (`/ar/sales`).
 **Read `docs/seo/README.md` before changing them** (the plan for the owner, in Arabic, then notes for developers).
 
@@ -49,8 +49,9 @@ and a page per question, the word bank in Arabic and English) and the Arabic sal
   data shows up as pages by itself; `src/seo/site.test.ts` checks titles, hreflang, links and routing.
 - Never rename a published address: it comes from a topic's `id`, a question's `id`, a chapter's `id` and a
   vocabulary unit's **title** (`vocab.ts`).
-- The Arabic word meanings and question translations are in `src/data/callCenter/vocabAr.ts` and
-  `interviewAr.ts`; a new word or question needs its line there (the data test checks).
+- The Arabic word meanings and question translations are in `src/data/topicPacks/arabic.ts` (the topics'
+  names and words), `src/data/callCenter/vocabAr.ts` and `interviewAr.ts`; a new topic, word or question
+  needs its line there (the data tests check).
 - The service worker doesn't save these files (`isSeoFile`); they aren't part of the app.
 
 ## Opening the app (one request, only what changed)
@@ -93,12 +94,25 @@ step 4 has the Supabase switches.
 - `scripts/e2e/guest.mjs` checks all of it (guest account, tour, the save prompt, linking, a crawler,
   browsing with no account).
 
+## Page addresses
+
+Every page has its own address (`src/lib/routes.ts`): `/tasks`, `/focus`, `/languages`,
+`/languages/english/<tab>` (the English hub's tab), `/skills`, `/skills/call-center`, `/skills/sales`,
+`/calendar`, `/bookmarks`, `/analytics`, `/settings`. Opening a page adds a history entry, so Back and
+Forward work; a reload, a bookmark or a link opens the page it names; the root (and an unknown address)
+opens the page this tab was on or the tasks page, then shows its address once signed in (the sign-in page
+keeps `/`, the address search engines know). `/ar` and `/en` belong to the public pages (Public pages
+above), never to the app. The tab's title names the page
+(`setPageTitle`; the focus timer's countdown takes the title while it runs and gives it back). Vercel
+(`vercel.json`) and the service worker (offline) answer every address with the app. In e2e scripts,
+open a section by its address or from the root (`reloadOn` in `devices.mjs`): a reload keeps the address.
+
 ## Tasks & Habits (the page Khalil opens on)
 
 The sidebar's first item (`todo`), in this order: Tasks & Habits, Focus, Learn Languages, Learn Skills,
 Calendar, Bookmarks, Analytics, Settings. Choosing an item closes the menu on every screen size. Khalil
-always opens on this page (a reload keeps the browser tab's page; Settings → General can open the last
-page instead). It holds the daily focus, today's and this week's tasks, the whole wird sheet, the habits
+opens on this page from its root address (Settings → General can open the last page instead); a page's
+own address opens that page (see Page addresses). It holds the daily focus, today's and this week's tasks, the whole wird sheet, the habits
 (and tracking) and the backlog; Settings → Tasks & Habits orders and hides them (`src/lib/tasksSettings.ts`,
 `user_kv` `tasks-settings`). The old `wird` and `life` sections are parts of it (`App.tsx` jumps to
 `#section-wird` / `#section-life`).

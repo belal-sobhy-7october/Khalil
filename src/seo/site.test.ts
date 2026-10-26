@@ -20,7 +20,7 @@ const paths = new Set(pages.map((p) => p.path));
 
 describe('public pages', () => {
   it('has a page for every lesson, question, unit and chapter', () => {
-    for (const p of TOPIC_PACKS) expect(paths).toContain(`/en/english-topics/${p.id}`);
+    for (const p of TOPIC_PACKS) for (const lang of ['ar', 'en']) expect(paths).toContain(`/${lang}/english-topics/${p.id}`);
     for (const q of QUESTIONS) expect(paths).toContain(`/en/call-center/interview-questions/${q.id}`);
     expect(pages.filter((p) => p.path.startsWith('/en/call-center/vocabulary/'))).toHaveLength(VOCAB_UNITS.length);
     expect(pages.filter((p) => p.path.startsWith('/ar/sales/'))).toHaveLength(ALL_CHAPTERS.length);
