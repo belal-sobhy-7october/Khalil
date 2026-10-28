@@ -35,14 +35,14 @@ export function homePages(origin: string): Page[] {
     'A focus timer, a calendar, bookmarks and analytics that show your progress.',
   ];
 
-  const arDescription = `تطبيق مجاني بالعربية والإنجليزية: مسار يومي لتعلم الإنجليزية من A1 إلى C1، وبطاقات مراجعة ذكية، و${arCount(topics, NOUNS.topic)} للمحادثة، واستعداد لوظائف مراكز الاتصال والمبيعات، ومهام وعادات. جرّبه دون تسجيل.`;
-  const enDescription = `A free app in Arabic and English: a daily English path from A1 to C1, smart flashcards, ${topics} conversation topics, call center and sales prep, tasks and habits. Try it without signing up.`;
+  const arDescription = `تطبيق مجاني بالعربية والإنجليزية: تعلّم اللغات والمهارات، واستعد لوظيفتك، ونظّم يومك وعاداتك. مسار يومي لتعلم الإنجليزية من A1 إلى C1، وبطاقات مراجعة ذكية، و${arCount(topics, NOUNS.topic)} للمحادثة. جرّبه دون تسجيل.`;
+  const enDescription = `A free app in Arabic and English: learn languages and skills, get ready for your job, and plan your day and habits. A daily English path from A1 to C1, smart flashcards and ${topics} conversation topics.`;
 
   const ar: Page = {
     path: ROUTES.home('ar'),
     lang: 'ar',
     section: 'home',
-    title: 'خليل | تعلّم الإنجليزية مجانًا ونظّم يومك وعاداتك',
+    title: 'خليل | تعلّم اللغات والمهارات مجانًا، واستعد لوظيفتك',
     description: arDescription,
     h1: 'خليل: تعلّم الإنجليزية والمهارات، ونظّم يومك، مجانًا',
     lead: 'خليل رفيق يومي بالعربية والإنجليزية: يعطيك كل يوم قليلًا من كل مهارة في الإنجليزية، ويعدّك لوظيفة، وينظّم مهامك وعاداتك وورْدك. مجاني، ويعمل في المتصفح على الهاتف والحاسوب، ودروسه المكتوبة تفتح حتى دون إنترنت.',
@@ -80,7 +80,7 @@ export function homePages(origin: string): Page[] {
     path: ROUTES.home('en'),
     lang: 'en',
     section: 'home',
-    title: 'Khalil: Learn English for Free, Plan Your Day and Habits',
+    title: 'Khalil: Learn Languages and Skills for Free, Get Job-Ready',
     description: enDescription,
     h1: 'Khalil: learn English and new skills, and plan your day, for free',
     lead: 'Khalil is a daily companion in Arabic and English. It gives you a little of every English skill each day, prepares you for a job, and organizes your tasks, habits and wird. It’s free and runs in the browser on your phone or computer, and its written lessons open even offline.',

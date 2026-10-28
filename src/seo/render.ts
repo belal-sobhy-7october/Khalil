@@ -237,7 +237,7 @@ export function renderHtml(page: Page, origin: string): string {
     `<meta property="og:description" content="${escapeHtml(page.description)}">`,
     `<meta property="og:url" content="${url}">`,
     `<meta property="og:locale" content="${OG_LOCALE[lang]}">`,
-    `<meta property="og:image" content="${origin}/og-image.png">`,
+    `<meta property="og:image" content="${origin}/og-image.png?v=2">`,
     '<meta property="og:image:width" content="1200">',
     '<meta property="og:image:height" content="630">',
     '<meta name="twitter:card" content="summary_large_image">',

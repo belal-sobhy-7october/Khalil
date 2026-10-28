@@ -30,8 +30,8 @@ const html = `<!doctype html>
   <div class="mark">خ</div>
   <div class="name"><h1>خليل</h1><p>Khalil</p></div>
   <div class="bar"></div>
-  <div class="ar">تعلّم الإنجليزية مجانًا، واستعد لوظيفتك،<br>ونظّم يومك وعاداتك. ويعمل دون إنترنت.</div>
-  <div class="en"><b>Free</b> · Learn English · Call center &amp; sales prep · Tasks &amp; habits · Works offline</div>
+  <div class="ar">تعلّم اللغات والمهارات، واستعد لوظيفتك،<br>ونظّم يومك وعاداتك. مجانًا.</div>
+  <div class="en"><b>Free</b> · Learn languages &amp; skills · Get ready for your job · Tasks &amp; habits</div>
 </body></html>`;
 
 const browser = await chromium.launch();
