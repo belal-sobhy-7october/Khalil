@@ -53,6 +53,8 @@ and a page per question, the word bank in Arabic and English) and the Arabic sal
   names and words), `src/data/callCenter/vocabAr.ts` and `interviewAr.ts`; a new topic, word or question
   needs its line there (the data tests check).
 - The service worker doesn't save these files (`isSeoFile`); they aren't part of the app.
+- The call center and sales pages stay public while those app sections are closed (Learn Skills below):
+  their button (`pages/openKhalil.ts`) opens Khalil itself and promises nothing the sections hold.
 
 ## Opening the app (one request, only what changed)
 

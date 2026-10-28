@@ -8,6 +8,7 @@ import { arCount, NOUNS } from '../arabicCount';
 import { clip, type Block, type Page } from '../render';
 import { ROUTES } from '../routes';
 import { article, breadcrumbs, itemList } from '../schema';
+import { openKhalil } from './openKhalil';
 
 const HUB_CRUMBS = [{ href: ROUTES.home('ar'), label: 'الرئيسية' }];
 
@@ -32,13 +33,7 @@ function hubPage(origin: string): Page {
         { kind: 'p', text: book.intro },
         { kind: 'cards', items: book.chapters.map((c) => ({ href: ROUTES.chapter(c.id), title: c.title, text: c.idea })) },
       ]),
-      {
-        kind: 'cta',
-        title: 'ادرسها يومًا بيوم في خليل',
-        text: 'خطة يومية من الصفر: فصل من هذه الكتب، وتدريب على الكلام، وتمثيل أدوار، واختبارات قصيرة، ثم المهارات نفسها بالإنجليزية. مجانًا.',
-        href: '/',
-        label: 'افتح خليل',
-      },
+      openKhalil('ar'),
     ],
     jsonLd: [
       itemList(origin, h1, ALL_CHAPTERS.map((c) => ({ href: ROUTES.chapter(c.id), label: c.title }))),
@@ -69,13 +64,7 @@ function chapterPage(chapter: KnowledgeChapter, book: KnowledgeBook, origin: str
     { kind: 'h2', text: 'من أين جاءت الفكرة؟' },
     { kind: 'p', text: chapter.source },
     ...(chapter.check.length ? [{ kind: 'check', title: 'اختبر فهمك', reveal: 'الإجابة', items: chapter.check } as Block] : []),
-    {
-      kind: 'cta',
-      title: 'تعلّم المبيعات من الصفر في خليل',
-      text: 'خطة يومية: فصل من هذه الكتب، وتدريب على الكلام، وتمثيل أدوار، واختبارات قصيرة. مجانًا.',
-      href: '/',
-      label: 'افتح خليل',
-    },
+    openKhalil('ar'),
     {
       kind: 'cards',
       items: [
