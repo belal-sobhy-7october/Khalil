@@ -73,7 +73,7 @@ export function article(opts: { origin: string; path: string; lang: Lang; headli
     url: `${opts.origin}${opts.path}`,
     mainEntityOfPage: `${opts.origin}${opts.path}`,
     isAccessibleForFree: true,
-    image: `${opts.origin}/og-image.png`,
+    image: `${opts.origin}/og-image.png?v=2`,
     author: publisher(opts.origin),
     publisher: publisher(opts.origin),
     ...(opts.about ? { about: opts.about } : {}),
