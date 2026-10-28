@@ -7,7 +7,11 @@ import { HELP_TOPICS, type HelpTopic } from '../../data/help';
 import { whatsappLink } from '../../lib/contact';
 import { guideAvailable, useGuide } from '../../lib/guide';
 import { openSettingsTab } from '../Settings/settingsTabs';
+import { isClosedSection, useClosedSkillsAccess } from '../../lib/skillAccess';
 import Mascot from '../Guide/Mascot';
+
+/** An answer that opens a section closed for now (src/lib/skillAccess.ts). */
+const closedTopic = (topic: HelpTopic) => !!topic.open && 'section' in topic.open && isClosedSection(topic.open.section);
 
 function openPart(topic: HelpTopic) {
   if (!topic.open) return;
@@ -48,7 +52,10 @@ function HelpPanel({ onClose }: { onClose: () => void }) {
   const [query, setQuery] = useState('');
   const [chosen, setChosen] = useState<HelpTopic | null>(null);
   const input = useRef<HTMLInputElement>(null);
-  const results = useMemo(() => searchHelp(query), [query]);
+  // Call Center and Sales are closed for now: their answers only for the accounts that open them.
+  const closedOpen = useClosedSkillsAccess() === true;
+  const shown = (topic: HelpTopic) => closedOpen || !closedTopic(topic);
+  const results = useMemo(() => searchHelp(query).filter((topic) => closedOpen || !closedTopic(topic)), [query, closedOpen]);
   const lang = language === 'ar' ? 'ar' : 'en';
   const Back = isRTL ? ArrowRight : ArrowLeft;
 
@@ -133,7 +140,7 @@ function HelpPanel({ onClose }: { onClose: () => void }) {
               <details className="mt-4">
                 <summary className="cursor-pointer text-xs text-clay-soft">{t('help.all')}</summary>
                 <ul className="mt-2 space-y-1">
-                  {HELP_TOPICS.filter((x) => !x.popular).map((topic) => (
+                  {HELP_TOPICS.filter((x) => !x.popular && shown(x)).map((topic) => (
                     <li key={topic.id}>
                       <button onClick={() => setChosen(topic)} className="w-full text-start px-3 py-1.5 rounded-lg hover:bg-ink/5 text-sm text-ink-light hover:text-ink">
                         {topic.q[lang]}

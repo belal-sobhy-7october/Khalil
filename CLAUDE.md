@@ -149,7 +149,12 @@ Two sections in the sidebar hold the learning parts of Khalil, open to every acc
 (`skills`: Call Center Prep and Sales Prep, plus 24 money-making skills marked Soon, nothing haram and
 no trading). `src/data/learnCatalog.ts` lists them: an item with a `section` opens that section (English
 is still `vocabulary`, then `callcenter` and `sales`), the rest are Soon. Names and one-line blurbs are
-`learn.*` keys in `translations.ts`, icons are in `src/components/Learn/icons.ts`. The sidebar marks the
+`learn.*` keys in `translations.ts`, icons are in `src/components/Learn/icons.ts`.
+**Call Center Prep and Sales Prep are closed for now**, on the owner's request, while Learn Skills is rebuilt
+around the essential skills with experts (`src/lib/skillAccess.ts`): only the accounts listed there open them,
+kept as SHA-256 hashes of their email (the repo is public; the file says how to add one). For everyone else
+they show among the skills to come, their addresses open Learn Skills, and Ask Khalil hides their answers.
+The e2e harness opens them on the dev server (localStorage `khalil-closed-skills-preview`, dev builds only). The sidebar marks the
 hub of the open section (`hubOf`), and each open section has a way back (`HubCrumb`, in `App.tsx`). To
 open a Soon item, build its section and give it a `section` in the catalog.
 
@@ -175,7 +180,7 @@ Reading, Grammar, Shadowing), named in English in both languages on the owner's 
 
 ## Call Center Prep (in Learn Skills)
 
-A section (`callcenter`), open to every account: a plan from B1 to C1 and an English call center job in
+A section (`callcenter`), closed for now to all but the accounts in `src/lib/skillAccess.ts` (see Learn Skills): a plan from B1 to C1 and an English call center job in
 Egypt, first written for the owner. **Read `src/data/callCenter/README.md` before changing it**; Levels 4–5 are still to build,
 and their detailed plan is in `src/data/callCenter/ROADMAP.md`.
 
@@ -193,7 +198,7 @@ and their detailed plan is in `src/data/callCenter/ROADMAP.md`.
 
 ## Sales Prep (in Learn Skills)
 
-A section (`sales`), open to every account: sales, marketing and negotiation from zero, as knowledge for any job. Four
+A section (`sales`), closed for now like Call Center Prep (`src/lib/skillAccess.ts`): sales, marketing and negotiation from zero, as knowledge for any job. Four
 Knowledge books (sales, psychology, marketing, negotiation) are daily tasks in Levels 1–2 (Arabic, Fusha),
 then Level 3 is the same skills in English; Today shows only one day. Selling electronics (the owner's current
 job, learned inside the company) is an Extra tab outside the plan. **Read `src/data/sales/README.md`

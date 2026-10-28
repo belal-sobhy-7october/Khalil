@@ -226,8 +226,8 @@ export const HELP_TOPICS: HelpTopic[] = [
     id: 'soon',
     q: { ar: 'ماذا تعني «قريبًا» على بعض اللغات والمهارات؟', en: 'What does "Soon" on some languages and skills mean?' },
     a: {
-      ar: 'هي أقسام نعمل عليها ولم تُفتح بعد. المفتوح الآن: الإنجليزية، والاستعداد لمركز الاتصال، والمبيعات.',
-      en: "They're sections we're still building. Open now: English, Call Center Prep and Sales Prep.",
+      ar: 'هي أقسام نعمل عليها مع متخصصين ولم تُفتح بعد، وكل قسم يُفتح حين يكتمل. المفتوح الآن من اللغات: الإنجليزية.',
+      en: "They're sections we're building with specialists; each opens when it's ready. Open now among the languages: English.",
     },
     keywords: ['قريبا', 'قريبًا', 'لغات', 'مهارات', 'soon', 'languages', 'skills', 'coming'],
     open: { section: 'skills' },

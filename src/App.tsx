@@ -33,6 +33,7 @@ import { applyAppearance, useAppearance } from './lib/appearance';
 import { getTasksSettings } from './lib/tasksSettings';
 import { readEnglishTab, routeOf, setPageTitle, showPage, writeEnglishTab } from './lib/routes';
 import { ENGLISH_TAB_EVENT } from './lib/openReview';
+import { isClosedSection, useClosedSkillsAccess } from './lib/skillAccess';
 
 import { createStickyNote, createTodoNote } from './components/Canvas/noteFactories';
 import type { StickyNoteData, TodoNoteData } from './types';
@@ -354,6 +355,16 @@ function App() {
     return () => window.removeEventListener('popstate', onPop);
   }, []);
 
+  // Call Center and Sales are closed for now (src/lib/skillAccess.ts): for
+  // other accounts their address shows Learn Skills, and the address says so.
+  const closedOpen = useClosedSkillsAccess();
+  const closedHere = isClosedSection(activeSection) && closedOpen !== true;
+  useEffect(() => {
+    if (!inApp || !closedHere || closedOpen !== false) return;
+    showPage('skills', undefined, true);
+    rememberSection('skills');
+  }, [inApp, closedHere, closedOpen]);
+
   // The tab's title names the open page ("التركيز — خليل"); the sign-in page keeps the app's name.
   useEffect(() => {
     const names: Record<string, string> = {
@@ -369,9 +380,9 @@ function App() {
       callcenter: t('learn.skill.callCenter.name'),
       sales: t('learn.skill.sales.name'),
     };
-    const name = names[activeSection];
+    const name = names[closedHere ? 'skills' : activeSection];
     setPageTitle(inApp && name ? `${name} — ${t('app.title')}` : null);
-  }, [activeSection, inApp, t]);
+  }, [activeSection, closedHere, inApp, t]);
 
   const handleSectionChange = useCallback((section: string) => {
     const target = resolveSection(section);
@@ -480,8 +491,13 @@ function App() {
             </div>
           }>
             {activeSection === 'languages' && <LanguagesHub onNavigate={handleSectionChange} />}
-            {activeSection === 'skills' && <SkillsHub onNavigate={handleSectionChange} />}
-            {(activeSection === 'callcenter' || activeSection === 'sales') && (
+            {(activeSection === 'skills' || (closedHere && closedOpen === false)) && <SkillsHub onNavigate={handleSectionChange} />}
+            {closedHere && closedOpen === null && (
+              <div className="min-h-screen flex items-center justify-center">
+                <div className="w-8 h-8 border-2 border-clay-soft border-t-transparent rounded-full animate-spin" />
+              </div>
+            )}
+            {isClosedSection(activeSection) && closedOpen === true && (
               <>
                 <HubCrumb section={activeSection} onNavigate={handleSectionChange} />
                 {activeSection === 'sales' ? <SalesPrep /> : <CallCenterPrep />}
