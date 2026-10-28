@@ -30,6 +30,8 @@ export async function openApp(browser, base, name, opts = {}) {
       localStorage.setItem('khalil-language', language);
       localStorage.setItem('khalil-kv:appearance', JSON.stringify(appearance));
       if (englishTab) localStorage.setItem('khalil-english-tab', englishTab);
+      // Call Center and Sales are closed for now (src/lib/skillAccess.ts); the dev server opens them for the e2e account.
+      localStorage.setItem('khalil-closed-skills-preview', '1');
       for (const [k, v] of Object.entries(local)) localStorage.setItem(k, v);
     },
     { session, section, theme, appearance, language, englishTab, local }

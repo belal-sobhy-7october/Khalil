@@ -9,6 +9,13 @@ import SkillsHub from './SkillsHub';
 import { SKILL_ICONS } from './icons';
 import { HubCrumb } from './ui';
 
+// Whether this account opens Call Center and Sales (closed for now, src/lib/skillAccess.ts).
+const access = vi.hoisted(() => ({ open: false as boolean | null }));
+vi.mock('../../lib/skillAccess', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../lib/skillAccess')>()),
+  useClosedSkillsAccess: () => access.open,
+}));
+
 vi.mock('../../lib/supabase', async () => {
   const mod = await import('../../test/mockSupabase');
   return { supabase: mod.mockSupabase };
@@ -20,6 +27,7 @@ vi.mock('../../lib/userKv', () => ({
 }));
 
 beforeEach(() => {
+  access.open = false;
   localStorage.clear();
   useAppStore.setState({ language: 'en', session: { user: { id: 'u1', email: 'someone@example.com' } } as never, vocabularyItems: [] });
 });
@@ -111,7 +119,19 @@ describe.each(['en', 'ar'] as const)('the hubs (%s)', (language) => {
     expect(within(soon).getByText('Deutsch')).toBeInTheDocument();
   });
 
-  it('Learn Skills opens Call Center and Sales; the other skills are coming soon', () => {
+  it('Learn Skills shows Call Center and Sales among the skills to come, for every other account', () => {
+    const go = vi.fn();
+    render(<SkillsHub onNavigate={go} />);
+    noRawKeys();
+    expect(screen.queryByRole('region', { name: new RegExp(language === 'en' ? 'Open now' : 'متاح الآن') })).not.toBeInTheDocument();
+    const soon = screen.getByRole('region', { name: new RegExp(language === 'en' ? 'Coming soon' : 'قريبًا') });
+    expect(within(soon).getAllByRole('listitem')).toHaveLength(26);
+    expect(within(soon).getByText(language === 'en' ? 'Call Center Prep' : 'الاستعداد لمراكز الاتصال بالإنجليزية')).toBeInTheDocument();
+    expect(within(soon).queryAllByRole('button')).toHaveLength(0);
+  });
+
+  it('Learn Skills opens Call Center and Sales for the accounts that have them; the other skills are coming soon', () => {
+    access.open = true;
     const go = vi.fn();
     render(<SkillsHub onNavigate={go} />);
     noRawKeys();

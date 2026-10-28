@@ -16,6 +16,7 @@ import { arCount, NOUNS } from '../arabicCount';
 import { clip, type Block, type Card, type Lang, type Page } from '../render';
 import { ROUTES, slugify } from '../routes';
 import { article, breadcrumbs, itemList } from '../schema';
+import { openKhalil } from './openKhalil';
 
 /** The Arabic guide's own words for the English data (resources.ts, plan.ts). */
 export const AR = {
@@ -185,13 +186,7 @@ function hubPage(lang: Lang, origin: string): Page {
         },
         { kind: 'h2', text: 'أدوات مجانية تستعملها الخطة', id: 'tools' },
         { kind: 'list', items: FREE_TOOLS.map((t) => [{ href: t.url, label: t.name }]), lang: 'en' },
-        {
-          kind: 'cta',
-          title: 'استعد في خليل يومًا بيوم',
-          text: 'خطة يومية، وتسجيل صوتك ومقارنة محاولاتك، وأسئلة المقابلة، وبطاقات مراجعة للكلمات، واختبارات أسبوعية. مجانًا.',
-          href: '/',
-          label: 'افتح خليل',
-        },
+        openKhalil('ar'),
       ],
       jsonLd: [
         article({ origin, path, lang, headline: h1, description: 'دليل مجاني للعمل في مراكز الاتصال بالإنجليزية في مصر.', about: ['Call center jobs in Egypt', 'Call center interview'] }),
@@ -257,13 +252,7 @@ function hubPage(lang: Lang, origin: string): Page {
       { kind: 'list', items: LEVELS.map((l) => `${l.name} (${l.cefr}): ${l.goal}${l.status === 'planned' ? ' (coming soon)' : ''}`) },
       { kind: 'h2', text: 'Free tools the plan uses', id: 'tools' },
       { kind: 'list', items: FREE_TOOLS.map((t) => [{ href: t.url, label: t.name }, `: ${t.what}`]) },
-      {
-        kind: 'cta',
-        title: 'Prepare in Khalil, day by day',
-        text: 'A daily plan, voice recording with take comparison, the interview bank, flashcards for the words and weekly tests. Free.',
-        href: '/',
-        label: 'Open Khalil',
-      },
+      openKhalil('en'),
     ],
     jsonLd: [
       article({ origin, path, lang, headline: h1, description: 'A free guide to English call center jobs in Egypt.', about: ['Call center jobs in Egypt', 'Call center interview'] }),
@@ -321,13 +310,7 @@ function interviewIndexAr(origin: string): Page {
           ]),
         ];
       }),
-      {
-        kind: 'cta',
-        title: 'تدرّب على إجاباتك بصوت مرتفع',
-        text: 'في خليل تدريب على أسئلة عشوائية، وتسجيل لإجابتك، وقياس لسرعة كلامك، ومقارنة بين محاولاتك. مجانًا.',
-        href: '/',
-        label: 'افتح خليل',
-      },
+      openKhalil('ar'),
     ],
     jsonLd: [
       itemList(origin, h1, QUESTIONS.map((q) => ({ href: ROUTES.question(q.id), label: q.q }))),
@@ -361,13 +344,7 @@ function interviewIndex(origin: string): Page {
         const list = QUESTIONS.filter((q) => q.group === id);
         return list.length ? [{ kind: 'h2', text: `${name} (${list.length})`, id }, { kind: 'cards', items: list.map((q) => questionCard(q, 'en')) }] : [];
       }),
-      {
-        kind: 'cta',
-        title: 'Practice your answers out loud',
-        text: 'In Khalil you get a random question drill, record your answer, check your pace and compare takes. Free.',
-        href: '/',
-        label: 'Open Khalil',
-      },
+      openKhalil('en'),
     ],
     jsonLd: [
       itemList(origin, h1, QUESTIONS.map((q) => ({ href: ROUTES.question(q.id), label: q.q }))),
@@ -399,13 +376,7 @@ function questionPage(q: InterviewQuestion, origin: string): Page {
     { kind: 'h2', text: 'Mistakes to avoid' },
     { kind: 'list', items: q.mistakes },
     ...(q.tipAr ? [{ kind: 'p', text: q.tipAr, lang: 'ar', note: true } as Block] : []),
-    {
-      kind: 'cta',
-      title: 'Practice this answer in Khalil',
-      text: 'Record yourself, check your pace and pauses, and compare your takes until it sounds natural. Free.',
-      href: '/',
-      label: 'Open Khalil',
-    },
+    openKhalil('en'),
     ...(others.length ? ([{ kind: 'h2', text: `More ${groupOf(q.group).toLowerCase()} questions` }, { kind: 'cards', items: others.map((x) => questionCard(x, 'en')) }] as Block[]) : []),
   ];
   return {
@@ -447,7 +418,6 @@ const unitAlternates = (unit: VocabUnit) => ({
 function vocabularyIndex(lang: Lang, origin: string): Page {
   const path = ROUTES.vocabulary(lang);
   const units = VOCAB_UNITS.map((u) => ({ href: ROUTES.vocabularyUnit(lang, unitSlug(u)), label: lang === 'ar' ? UNIT_TITLES_AR[u.id] : u.title }));
-  const cta = (title: string, text: string, label: string): Block => ({ kind: 'cta', title, text, href: '/', label });
 
   if (lang === 'ar') {
     const crumbs = [
@@ -471,7 +441,7 @@ function vocabularyIndex(lang: Lang, origin: string): Page {
       alternates: VOCAB_ALTERNATES,
       blocks: [
         { kind: 'cards', items: VOCAB_UNITS.map((u) => unitCard(u, 'ar')) },
-        cta('احفظها ببطاقات المراجعة', 'في خليل تدخل كل وحدة إلى بطاقات مراجعة ذكية تذكّرك بموعد المراجعة، ولكل نص زر للاستماع إليه. مجانًا.', 'افتح خليل'),
+        openKhalil('ar'),
       ],
       jsonLd: [itemList(origin, h1, units), breadcrumbs(crumbs, h1, path, origin)],
     };
@@ -497,7 +467,7 @@ function vocabularyIndex(lang: Lang, origin: string): Page {
     alternates: VOCAB_ALTERNATES,
     blocks: [
       { kind: 'cards', items: VOCAB_UNITS.map((u) => unitCard(u, 'en')) },
-      cta('Learn them with flashcards', 'In Khalil every unit goes into smart flashcards that remind you when to review, and each text has a read-aloud bar. Free.', 'Open Khalil'),
+      openKhalil('en'),
     ],
     jsonLd: [itemList(origin, h1, units), breadcrumbs(crumbs, h1, path, origin)],
   };
@@ -556,9 +526,7 @@ function unitPage(unit: VocabUnit, lang: Lang, origin: string): Page {
         text: ar ? 'يجمع هذا النص القصير كلمات الوحدة. اقرأه بصوت مرتفع مرتين، ثم أعد حكايته بكلماتك.' : 'This short text uses the unit’s words. Read it aloud twice, then retell it in your own words.',
       },
       { kind: 'quote', text: unit.text, lang: ar ? 'en' : undefined },
-      ar
-        ? { kind: 'cta', title: 'احفظ هذه الوحدة ببطاقات المراجعة', text: 'يضع خليل هذه الكلمات في بطاقات مراجعة ذكية ويذكّرك بموعد مراجعتها. مجانًا، وتجربه دون تسجيل.', href: '/', label: 'افتح خليل' }
-        : { kind: 'cta', title: 'Learn this unit with flashcards', text: 'Khalil puts these words into smart flashcards and reminds you when it’s time to review. Free, and you can try it without signing up.', href: '/', label: 'Open Khalil' },
+      openKhalil(lang),
       { kind: 'cards', items: neighbors },
     ],
     ogType: 'article',

@@ -53,7 +53,7 @@ export const translations = {
       },
       skills: {
         title: 'Learn Skills',
-        subtitle: 'Skills that can earn you a living, each a plan from zero. Two are open; the rest are on the way.',
+        subtitle: 'Skills that can earn you a living, each a plan from zero, built with people who master them. They open one by one, soon.',
       },
       group: {
         tech: 'Tech',
@@ -277,7 +277,7 @@ export const translations = {
         wird: { title: 'Your wird and habits', text: 'The prayers, the Quran and the adhkar, then your habits, one tick a day. Settings choose what shows and in what order.' },
         focus: { title: 'Focus in one click', text: 'This button starts a focus session (Pomodoro) right away. The Focus page has the rest: breaks, sounds and a floating timer.' },
         languages: { title: 'Learn languages', text: 'English starts from your own level: a daily path, smart flashcards and conversation topics. More languages are coming.' },
-        skills: { title: 'Learn skills', text: 'Get ready for a call center job, and learn sales, marketing and negotiation from zero. More skills are coming.' },
+        skills: { title: 'Learn skills', text: 'Skills that can earn you a living, each a plan from zero, built with people who master them. They open one by one.' },
         menu: { title: 'Everything is in the menu', text: 'From here you open every section: the calendar, bookmarks, analytics of your progress and the settings.' },
         notes: { title: 'Quick notes', text: 'The + button adds a note or a checklist that stays beside your pages.' },
         help: { title: 'Ask me anytime', text: "Not sure how something works? Tap my picture here and search: short answers about every part of Khalil, even offline." },
@@ -1377,7 +1377,7 @@ export const translations = {
       },
       skills: {
         title: 'تعلم المهارات',
-        subtitle: 'مهارات يمكنك أن تكسب منها، لكل واحدة خطة من الصفر. اثنتان متاحتان الآن، والبقية قريبًا.',
+        subtitle: 'مهارات يمكنك أن تكسب منها، لكل واحدة خطة من الصفر نبنيها مع متخصصين يتقنونها. وتُفتح واحدة بعد أخرى قريبًا.',
       },
       group: {
         tech: 'تكنولوجيا',
@@ -1602,7 +1602,7 @@ export const translations = {
         wird: { title: 'وردك وعاداتك', text: 'الصلوات والقرآن والأذكار، ثم عاداتك، بعلامة واحدة كل يوم. وتختار من الإعدادات ما يظهر وترتيبه.' },
         focus: { title: 'التركيز بضغطة واحدة', text: 'هذا الزر يبدأ جلسة تركيز (بومودورو) فورًا. وفي صفحة التركيز بقية الخيارات: الاستراحات والأصوات والمؤقت العائم.' },
         languages: { title: 'تعلّم اللغات', text: 'تبدأ الإنجليزية من مستواك أنت: مسار يومي، وبطاقات مراجعة ذكية، ومواضيع للمحادثة. ولغات أخرى قادمة.' },
-        skills: { title: 'تعلّم المهارات', text: 'استعد لوظيفة في مركز اتصال، وتعلّم المبيعات والتسويق والتفاوض من الصفر. ومهارات أخرى قادمة.' },
+        skills: { title: 'تعلّم المهارات', text: 'مهارات يمكنك أن تكسب منها، لكل واحدة خطة من الصفر نبنيها مع متخصصين يتقنونها. وتُفتح واحدة بعد أخرى.' },
         menu: { title: 'كل شيء في القائمة', text: 'من هنا تفتح كل الأقسام: التقويم، والمفضلة، وتحليلات تقدّمك، والإعدادات.' },
         notes: { title: 'ملاحظات سريعة', text: 'زر + يضيف ملاحظة أو قائمة تبقى بجانب صفحاتك.' },
         help: { title: 'اسألني متى شئت', text: 'لم تعرف كيف يعمل شيء؟ اضغط على صورتي هنا وابحث: إجابات قصيرة عن كل جزء في خليل، حتى دون إنترنت.' },
