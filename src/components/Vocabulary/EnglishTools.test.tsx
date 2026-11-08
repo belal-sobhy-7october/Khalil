@@ -55,37 +55,37 @@ describe('TopicLibraryModal', () => {
   it('adds a whole pack into a topic named after it', async () => {
     const onAdded = vi.fn();
     render(<TopicLibraryModal onClose={() => {}} onAdded={onAdded} />);
-    fireEvent.click(screen.getByText('Job Interview'));
+    fireEvent.click(screen.getByText('Career Planning, Job Search & Interviews'));
     expectNoRawKeys();
-    const pack = TOPIC_PACKS.find((p) => p.id === 'job-interview')!;
+    const pack = TOPIC_PACKS.find((p) => p.id === 'career-and-interviews')!;
     fireEvent.click(screen.getByRole('button', { name: `Add ${pack.items.length} items` }));
     await waitFor(() => expect(importVocabularyItems).toHaveBeenCalled());
     const [items, options] = importVocabularyItems.mock.calls[0] as unknown as [unknown[], { categoryForAll: string }];
     expect(items).toHaveLength(pack.items.length);
-    expect(options.categoryForAll).toBe('Job Interview');
-    await waitFor(() => expect(onAdded).toHaveBeenCalledWith('Job Interview'));
+    expect(options.categoryForAll).toBe('Career Planning, Job Search & Interviews');
+    await waitFor(() => expect(onAdded).toHaveBeenCalledWith('Career Planning, Job Search & Interviews'));
   });
 
   it('studies a lesson offline: no add controls, YouGlish off, marks it studied', () => {
     Object.defineProperty(navigator, 'onLine', { configurable: true, get: () => false });
     render(<TopicLibraryModal onClose={() => {}} />);
-    fireEvent.click(screen.getByText('Job Interview'));
+    fireEvent.click(screen.getByText('Career Planning, Job Search & Interviews'));
     expect(screen.queryByRole('button', { name: /^Add \d+ items$/ })).not.toBeInTheDocument();
     expect(screen.getByText(/Adding words to your list needs internet/)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'YouGlish: strength' })).toBeDisabled();
     fireEvent.click(screen.getByRole('button', { name: 'Mark as studied' }));
-    expect(JSON.parse(localStorage.getItem('khalil-studied-topics') ?? '{}')).toHaveProperty('job-interview');
+    expect(JSON.parse(localStorage.getItem('khalil-studied-topics') ?? '{}')).toHaveProperty('career-and-interviews');
     // Back in the list, the card shows it and the "Studied" filter keeps only it.
     fireEvent.click(screen.getByRole('button', { name: 'Back' }));
     fireEvent.click(screen.getByRole('button', { name: 'Studied' }));
-    expect(screen.getByText('Job Interview')).toBeInTheDocument();
-    expect(screen.queryByText('Small Talk')).not.toBeInTheDocument();
+    expect(screen.getByText('Career Planning, Job Search & Interviews')).toBeInTheDocument();
+    expect(screen.queryByText('Meeting People & Small Talk')).not.toBeInTheDocument();
   });
 
   it('hides the add controls when nobody is signed in (studying from the login page)', () => {
     useAppStore.setState({ session: null });
     render(<TopicLibraryModal onClose={() => {}} />);
-    fireEvent.click(screen.getByText('Job Interview'));
+    fireEvent.click(screen.getByText('Career Planning, Job Search & Interviews'));
     expect(screen.queryByRole('button', { name: /^Add \d+ items$/ })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Mark as studied' })).toBeInTheDocument();
   });
@@ -93,12 +93,12 @@ describe('TopicLibraryModal', () => {
   it('filters topics by group and by a word they contain', () => {
     render(<TopicLibraryModal onClose={() => {}} />);
     fireEvent.click(screen.getByRole('button', { name: 'Daily life' }));
-    expect(screen.queryByText('Job Interview')).toBeNull();
+    expect(screen.queryByText('Career Planning, Job Search & Interviews')).toBeNull();
     expect(screen.getByText(TOPIC_PACKS.find((p) => p.group === 'life')!.title)).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'All' }));
-    const word = TOPIC_PACKS.find((p) => p.id === 'job-interview')!.items[0].word;
+    const word = TOPIC_PACKS.find((p) => p.id === 'career-and-interviews')!.items[0].word;
     fireEvent.change(screen.getByRole('searchbox'), { target: { value: word } });
-    expect(screen.getByText('Job Interview')).toBeInTheDocument();
+    expect(screen.getByText('Career Planning, Job Search & Interviews')).toBeInTheDocument();
     fireEvent.change(screen.getByRole('searchbox'), { target: { value: 'zzzz' } });
     expect(screen.getByText('No topic matches your search.')).toBeInTheDocument();
   });
@@ -108,8 +108,8 @@ describe('TopicLibraryModal', () => {
     render(<TopicLibraryModal onClose={() => {}} />);
     // Khalil is for everyone: no lesson is labelled as someone's own course.
     expect(screen.queryByText(/Your course|الكورس بتاعك/)).not.toBeInTheDocument();
-    fireEvent.click(screen.getByText('Artificial Intelligence'));
-    const pack = TOPIC_PACKS.find((p) => p.id === 'artificial-intelligence')!;
+    const pack = TOPIC_PACKS.find((p) => p.id === 'ai-at-work')!;
+    fireEvent.click(screen.getByText(pack.title));
     expect(screen.getByText(pack.warmUp[0])).toBeInTheDocument();
     expect(screen.getByText(pack.grammar.title)).toBeInTheDocument();
     expect(screen.getByText(pack.discussion[0])).toBeInTheDocument();
@@ -120,8 +120,8 @@ describe('TopicLibraryModal', () => {
 
   it('offers YouGlish next to every pack word', () => {
     render(<TopicLibraryModal onClose={() => {}} />);
-    fireEvent.click(screen.getByText('Job Interview'));
-    const pack = TOPIC_PACKS.find((p) => p.id === 'job-interview')!;
+    fireEvent.click(screen.getByText('Career Planning, Job Search & Interviews'));
+    const pack = TOPIC_PACKS.find((p) => p.id === 'career-and-interviews')!;
     expect(screen.getAllByRole('button', { name: /^YouGlish: / })).toHaveLength(pack.items.length);
   });
 });
@@ -172,21 +172,23 @@ const SPLIT_UP = [
 ];
 
 describe('CheckMeaningsModal', () => {
+  const item = (id: string, word: string, definition: string, exampleSentence?: string, categoryId = 'm'): VocabularyItem => ({
+    id, userId: 'u', categoryId, word, type: 'verb', definition, exampleSentence,
+    masteryLevel: 0, reviewCount: 0, lapseCount: 0, correctStreak: 0, isHard: false, createdAt: '', updatedAt: '',
+  });
+
   it("suggests the topic's sense and keeps the user's example", async () => {
     const updateVocabularyItem = vi.fn(async () => {});
-    const item = (id: string, word: string, definition: string, exampleSentence?: string): VocabularyItem => ({
-      id, userId: 'u', categoryId: 'm', word, type: 'verb', definition, exampleSentence,
-      masteryLevel: 0, reviewCount: 0, lapseCount: 0, correctStreak: 0, isHard: false, createdAt: '', updatedAt: '',
-    });
+    // Not a Topic Library word, so the dictionary's senses are ranked for the topic.
     useAppStore.setState({
       updateVocabularyItem,
       vocabularyItems: [
-        item('1', 'Split up', SPLIT_UP[0].definition, 'They decided to split up'),
+        item('1', 'Part ways', SPLIT_UP[0].definition, 'They decided to part ways'),
         item('2', 'Divorce', 'The legal ending of a marriage.'),
       ],
     });
     lookupMany.mockImplementation(async (words: string[], onResult: (i: number, e: unknown) => void) => {
-      words.forEach((w, i) => onResult(i, w === 'Split up' ? { definition: SPLIT_UP[0].definition, type: 'verb', audio: {}, senses: SPLIT_UP } : null));
+      words.forEach((w, i) => onResult(i, w === 'Part ways' ? { definition: SPLIT_UP[0].definition, type: 'verb', audio: {}, senses: SPLIT_UP } : null));
     });
     render(<CheckMeaningsModal category={{ id: 'm', userId: 'u', name: 'Marriage', createdAt: '', updatedAt: '' }} onClose={() => {}} />);
     expect(await screen.findByText('Fits this topic better')).toBeInTheDocument();
@@ -194,6 +196,23 @@ describe('CheckMeaningsModal', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Save 1 change' }));
     await waitFor(() => expect(updateVocabularyItem).toHaveBeenCalledWith('1', { definition: 'To end a relationship or marriage.' }));
     expect(await screen.findByText('1 meaning updated.')).toBeInTheDocument();
+  });
+
+  it("puts the Topic Library's meaning first, and checks every word against its own topic", async () => {
+    const pack = TOPIC_PACKS.find((p) => p.items.some((i) => i.pos === 'phrasal verb'))!;
+    const word = pack.items.find((i) => i.pos === 'phrasal verb')!;
+    useAppStore.setState({
+      vocabularyCategories: [{ id: 't', userId: 'u', name: pack.title, createdAt: '', updatedAt: '' }],
+      vocabularyItems: [item('1', word.word, 'To divide something into parts.', undefined, 't'), item('2', 'كلمة', 'معنى بالعربي', undefined, 't')],
+    });
+    lookupMany.mockImplementation(async () => {});
+    render(<CheckMeaningsModal category={null} onClose={() => {}} />);
+    expect(screen.getByText('Check the meanings of all your words')).toBeInTheDocument();
+    expect(screen.getByText(word.definition)).toBeInTheDocument();
+    expect(screen.getAllByText(new RegExp(`From the Topic Library \\(${pack.title.replace(/[()&]/g, '.')}\\)`)).length).toBeGreaterThan(0);
+    // Arabic meanings are for the Arabic-to-English tool.
+    expect(screen.queryByText('كلمة')).toBeNull();
+    expectNoRawKeys();
   });
 
   it('says so when every meaning already fits', async () => {
@@ -228,14 +247,15 @@ describe('UpgradeTopicsModal', () => {
     // Keep the old word this time.
     fireEvent.click(screen.getByRole('checkbox', { name: /Remove 1 old word/ }));
     // Don't add the Marriage lesson words either.
-    fireEvent.click(screen.getByRole('checkbox', { name: /from the lesson "Relationships & Marriage"/ }));
+    fireEvent.click(screen.getByRole('checkbox', { name: /from the lesson "Relationships, Marriage & Changing Norms"/ }));
     fireEvent.click(screen.getByRole('button', { name: /^Apply \d+ changes?$/ }));
     await screen.findByText(/^Done — /);
     expect(updateVocabularyItem).toHaveBeenCalledWith('1', expect.objectContaining({ definition: expect.stringMatching(/good quality or ability/) }));
     expect(deleteVocabularyItem).not.toHaveBeenCalled();
-    expect(updateVocabularyCategory).not.toHaveBeenCalled();
+    // The old "Job Interview" lesson is part of a bigger one now, and the topic takes its name.
+    expect(updateVocabularyCategory).toHaveBeenCalledWith('j', { name: 'Career Planning, Job Search & Interviews' });
     const [items, options] = importVocabularyItems.mock.calls[0] as unknown as [Array<{ word: string }>, { categoryForAll: string }];
-    expect(options.categoryForAll).toBe('Job Interview');
+    expect(options.categoryForAll).toBe('Career Planning, Job Search & Interviews');
     expect(items.map((i) => i.word)).not.toContain('strength');
     expect(importVocabularyItems).toHaveBeenCalledTimes(1);
   });
@@ -281,13 +301,13 @@ describe('ConvertToEnglishModal', () => {
     lookupMany.mockImplementation(async () => {});
     useAppStore.setState({ vocabularyItems: [arabicItem('a', 'Splurge')], updateVocabularyItem });
     render(<ConvertToEnglishModal onClose={() => {}} />);
-    expect(screen.getByDisplayValue(/spend a lot of money on something you enjoy/)).toBeInTheDocument();
+    expect(screen.getByDisplayValue(/spend a lot of money on something you don't need/)).toBeInTheDocument();
     // An English example the user already wrote is kept.
     expect(screen.getByDisplayValue('This phone was a real bargain')).toBeInTheDocument();
     expectNoRawKeys();
     fireEvent.click(screen.getByRole('button', { name: 'Update 1 word' }));
     await waitFor(() => expect(updateVocabularyItem).toHaveBeenCalledWith('a', expect.objectContaining({
-      definition: expect.stringMatching(/spend a lot of money on something you enjoy/),
+      definition: expect.stringMatching(/spend a lot of money on something you don't need/),
     })));
   });
 });

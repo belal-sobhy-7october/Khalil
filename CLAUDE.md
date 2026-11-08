@@ -8,7 +8,12 @@ Personal dashboard (React 19 + TypeScript + Vite + Tailwind + Zustand + Supabase
 **Read `src/data/topicPacks/README.md` before adding or editing a topic.** Every topic is a
 full lesson that follows the owner's course method (warm-up → 12 words with the meaning they
 have in the topic and an example → one grammar point → discussion → one-minute speaking
-task → paragraph). The file explains the format, the quality rules and the checks.
+task → paragraph). 90 lessons from A1 to C1 (`a1.ts` … `c1.ts`, in study order): 58 topics, and 32
+that take an earlier topic to a higher level (`revisits`). Every word is checked against the Cambridge
+Dictionary (`scripts/check-word-levels.py` → `wordSources.json`, which the test requires); definitions
+are our own, written from the Cambridge sense. The README explains the format, the rules and the checks.
+- "Check all my meanings" (`CheckMeaningsModal` with no topic) goes through a user's saved words and
+  offers the Topic Library's checked meaning first; Arabic meanings go through `ConvertToEnglishModal`.
 
 ## Offline
 
@@ -89,8 +94,9 @@ minutes each (10/15/20/30 in its settings), and plays the hub's own lessons insi
 
 - `src/lib/learningPath.ts` builds the days (`buildPath(settings)`): each section's lessons in study order,
   packed into days by length × a study factor (`STUDY_FACTOR`), long lessons cut into parts. Vocabulary is
-  the flashcard review plus the words of the day's topic (`PATH_TOPICS`: all 90 Topic Library packs, one
-  a day, B1 → B2 → C1); Grammar is Ibrahim Adel's course, then the grammar point of the day's topic.
+  the flashcard review plus the words of the day's topic (`PATH_TOPICS`: the Topic Library in its order,
+  from the level chosen in the settings, `topicLevel` A1–B2, spread over the 90 days); Grammar is Ibrahim
+  Adel's course, then the grammar point of the day's topic.
 - Settings choose the sources and levels: Listening VOA (American English, the default) or Ibrahim Adel,
   Reading British Council (the default) or Ibrahim Adel, and the Shadowing level.
 - Lessons are ticked in the hub's progress (`english-course-progress`), so one finished here or in its tab

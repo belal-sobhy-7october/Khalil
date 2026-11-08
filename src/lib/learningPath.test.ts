@@ -53,6 +53,20 @@ describe('the plan', () => {
     for (const d of path) expect(blockOf(d, 'vocabulary').items[0].item.kind).toBe('review');
   });
 
+  it('starts the topics at the chosen level and still fills the 90 days', () => {
+    const topicOf = (p: ReturnType<typeof buildPath>, day: number) => {
+      const words = blockOf(p[day - 1], 'vocabulary').items.find((i) => i.item.kind === 'words')!.item;
+      return words.kind === 'words' ? packById(words.packId)! : undefined;
+    };
+    expect(topicOf(path, 1)?.level).toBe('A1');
+    const fromB1 = buildPath(settings({ topicLevel: 'B1' }));
+    expect(fromB1).toHaveLength(90);
+    expect(topicOf(fromB1, 1)).toBe(TOPIC_PACKS.find((p) => p.level === 'B1'));
+    expect(topicOf(fromB1, 90)?.level).toBe('C1');
+    // Fewer topics than days: every day still has words, and no A1 or A2 topic comes back.
+    for (let d = 1; d <= 90; d++) expect(['B1', 'B2', 'C1']).toContain(topicOf(fromB1, d)?.level);
+  });
+
   it("follows Ibrahim Adel's grammar course in order, then the grammar of the day's topic", () => {
     const course = ibrahim('grammar');
     expect([...new Set(lessons(path, 'grammar').map((l) => l.lesson.id))]).toEqual(course);

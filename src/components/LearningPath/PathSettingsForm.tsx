@@ -1,6 +1,6 @@
 import { useTranslation } from '../../i18n/useTranslation';
 import {
-  LISTENING_LEVELS, MINUTE_CHOICES, READING_LEVELS, SHADOWING_LEVELS, hasBritishCouncil,
+  LISTENING_LEVELS, MINUTE_CHOICES, READING_LEVELS, SHADOWING_LEVELS, TOPIC_LEVELS, hasBritishCouncil,
   type ListeningSource, type PathSettings, type ReadingSource,
 } from '../../lib/learningPath';
 import { dayTotal } from './format';
@@ -67,6 +67,19 @@ export default function PathSettingsForm({ settings, onChange }: { settings: Pat
 
   return (
     <div className="space-y-5">
+      <fieldset className="space-y-2">
+        <legend className="text-sm font-semibold text-ink mb-2">{t('path.settings.topics')}</legend>
+        <LevelSelect
+          id="path-topic-level"
+          label={t('path.settings.level')}
+          name={t('path.settings.topics')}
+          value={settings.topicLevel}
+          onChange={(v) => set('topicLevel', v)}
+          options={TOPIC_LEVELS.map((l) => ({ value: l, label: `${l} · ${t(`path.topicLevel.${l}`)}` }))}
+        />
+        <p className="text-xs text-ink-light">{t('path.settings.topicsHint')}</p>
+      </fieldset>
+
       <fieldset className="space-y-2">
         <legend className="text-sm font-semibold text-ink mb-2">{t('path.settings.minutes')}</legend>
         <div className="flex flex-wrap items-center gap-2">

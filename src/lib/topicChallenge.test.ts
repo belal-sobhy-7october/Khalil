@@ -10,12 +10,12 @@ const item = (id: string, word: string, exampleSentence?: string): VocabularyIte
 
 describe('buildPracticeTexts', () => {
   it('uses the pack paragraph first for library topics', () => {
-    const texts = buildPracticeTexts('Job Interview', []);
-    expect(texts[0]).toMatch(/My greatest strength is that I'm proactive/);
+    const texts = buildPracticeTexts('Career Planning, Job Search & Interviews', []);
+    expect(texts[0]).toMatch(/I applied for a job as a team leader/);
   });
 
   it('puts a given paragraph first instead of the pack\'s', () => {
-    expect(buildPracticeTexts('Job Interview', [], 'Our own text.')[0]).toBe('Our own text.');
+    expect(buildPracticeTexts('Career Planning, Job Search & Interviews', [], 'Our own text.')[0]).toBe('Our own text.');
   });
 
   it('stitches example sentences into paragraphs and skips Arabic ones', () => {
@@ -68,10 +68,11 @@ describe('matchesSpoken', () => {
 
 describe('buildAiPrompt for library topics', () => {
   it("brings the pack's questions, grammar and speaking task", () => {
-    const p = buildAiPrompt('Crimes', []);
-    expect(p).toMatch(/witness in court/);
-    expect(p).toMatch(/passive voice/i);
-    expect(p).toMatch(/news reporter/);
-    expect(p).toMatch(/forensics/);
+    const p = buildAiPrompt('Crime, Law & Justice', []);
+    expect(p).toMatch(/Should a witness always go to the police\?/);
+    expect(p).toMatch(/learner at B2 level/);
+    expect(p).toMatch(/Past modals of deduction/);
+    expect(p).toMatch(/Be a detective/);
+    expect(buildAiPrompt('Personal Profile & Background', [])).toMatch(/learner at A1 level/);
   });
 });

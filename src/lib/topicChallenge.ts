@@ -66,8 +66,8 @@ export function buildPracticeTexts(topicName: string, items: VocabularyItem[], p
 
 /**
  * A ready-to-paste prompt for Talkpal or any voice AI. Topics from the
- * library bring their lesson: the discussion questions, the grammar to
- * practise and the speaking task.
+ * library bring their lesson and its level: the discussion questions, the
+ * grammar to practice and the speaking task.
  */
 export function buildAiPrompt(topicName: string, items: VocabularyItem[]): string {
   const pack = findPackForTopic(topicName);
@@ -78,10 +78,10 @@ export function buildAiPrompt(topicName: string, items: VocabularyItem[]): strin
     : /call center|customer/i.test(topicName)
       ? 'Play a customer calling a support line. I am the call center agent. Start with a realistic problem and react naturally — sometimes be a little difficult.'
       : `Have a natural conversation with me about "${topicName}". Ask me open questions and share your own opinions too.`;
-  const lines = [`I'm an English learner at B2 level. Let's practise speaking for 10 minutes.`, role];
+  const lines = [`I'm an English learner at ${pack?.level ?? 'B2'} level. Let's practice speaking for 10 minutes.`, role];
   if (pack) {
     lines.push(`Use these questions, one at a time: ${[...pack.warmUp, ...pack.discussion].join(' / ')}`);
-    lines.push(`Grammar I'm practising: ${pack.grammar.title} (${pack.grammar.points.map((p) => p.form).join('; ')}). Notice when I use it wrongly.`);
+    lines.push(`Grammar I'm practicing: ${pack.grammar.title} (${pack.grammar.points.map((p) => p.form).join('; ')}). Notice when I use it wrongly.`);
     lines.push(`At the end, ask me to do this task: ${pack.task.prompt} (${pack.task.points.join('; ')}).`);
   }
   lines.push(

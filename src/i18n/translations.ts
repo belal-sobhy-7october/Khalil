@@ -524,6 +524,8 @@ export const translations = {
       legend: { done: 'Done', started: 'Started', current: 'Your day' },
       settings: {
         title: 'Settings',
+        topics: 'Topics',
+        topicsHint: 'Topics from A1 to C1, and the earlier ones come back at a higher level. Start where the topics still teach you something; the ones before stay in the Topic Library.',
         minutes: 'Minutes for each section a day',
         perDay: 'About {total} a day',
         listening: 'Listening',
@@ -541,6 +543,7 @@ export const translations = {
         britishCouncilHint: 'Graded texts from A1 to C1, each with its comprehension tasks.',
       },
       level: { beginner: 'Beginner', intermediate: 'Intermediate', advanced: 'Advanced' },
+      topicLevel: { A1: 'from the basics', A2: 'everyday situations', B1: 'telling and explaining', B2: 'discussing and analyzing' },
       item: {
         review: 'Review your flashcards',
         words: 'New words: {topic}',
@@ -1000,6 +1003,9 @@ export const translations = {
       topicPicker: { open: 'All topics ({count})', search: 'Find a topic…', none: 'No topic matches.' },
       meaning: {
         open: 'Check meanings',
+        openAll: 'Check all my meanings',
+        titleAll: 'Check the meanings of all your words',
+        fromLibrary: 'From the Topic Library ({name}), checked against the Cambridge Dictionary',
         count: '{count} meanings — choose the one for this topic',
         count_one: '1 meaning',
         title: 'Check the meanings in "{name}"',
@@ -1673,6 +1679,8 @@ export const translations = {
       legend: { done: 'خلص', started: 'بدأته', current: 'يومك' },
       settings: {
         title: 'الإعدادات',
+        topics: 'التوبيكات',
+        topicsHint: 'توبيكات من A1 لـ C1، واللي فاتت بترجع في مستوى أعلى. ابدأ من المستوى اللي لسه هتتعلم منه؛ اللي قبله موجود في مكتبة التوبيكات.',
         minutes: 'دقايق كل قسم في اليوم',
         perDay: 'حوالي {total} في اليوم',
         listening: 'Listening',
@@ -1690,6 +1698,7 @@ export const translations = {
         britishCouncilHint: 'نصوص متدرّجة من A1 لـ C1، وكل نص معاه تمارين فهم.',
       },
       level: { beginner: 'مبتدئ', intermediate: 'متوسط', advanced: 'متقدم' },
+      topicLevel: { A1: 'من الأساسيات', A2: 'مواقف الحياة اليومية', B1: 'تحكي وتشرح', B2: 'تناقش وتحلل' },
       item: {
         review: 'راجع كروتك',
         words: 'كلمات جديدة: {topic}',
@@ -2160,6 +2169,9 @@ export const translations = {
       topicPicker: { open: 'كل المواضيع ({count})', search: 'دوّر على موضوع…', none: 'مفيش موضوع بالاسم ده.' },
       meaning: {
         open: 'راجع المعاني',
+        openAll: 'راجع معاني كل كلماتي',
+        titleAll: 'مراجعة معاني كل كلماتك',
+        fromLibrary: 'من مكتبة التوبيكات ({name})، ومتراجع على قاموس Cambridge',
         count: '{count} معاني — اختار اللي يناسب الموضوع',
         count_one: 'معنى واحد',
         count_two: 'معنيين — اختار اللي يناسب الموضوع',

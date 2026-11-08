@@ -37,8 +37,11 @@ export type ReadingSource = 'british-council' | 'ibrahim-adel';
 export type ListeningLevel = 'beginner' | 'intermediate' | 'advanced';
 export type ReadingLevel = 'A1' | 'A2' | 'B1' | 'B2' | 'C1';
 export type ShadowingLevel = 'A1' | 'A2' | 'B1' | 'B2';
+/** The level of the first topic: earlier topics stay in the Topic Library. */
+export type TopicLevel = 'A1' | 'A2' | 'B1' | 'B2';
 
 export interface PathSettings {
+  topicLevel: TopicLevel;
   /** Minutes of each section a day. */
   minutes: number;
   listening: ListeningSource;
@@ -54,6 +57,8 @@ export const MINUTE_CHOICES = [10, 15, 20, 30];
 export const LISTENING_LEVELS: ListeningLevel[] = ['beginner', 'intermediate', 'advanced'];
 export const READING_LEVELS: ReadingLevel[] = ['A1', 'A2', 'B1', 'B2', 'C1'];
 export const SHADOWING_LEVELS: ShadowingLevel[] = ['A1', 'A2', 'B1', 'B2'];
+export const TOPIC_LEVELS: TopicLevel[] = ['A1', 'A2', 'B1', 'B2'];
+const LEVEL_ORDER = ['A1', 'A2', 'B1', 'B2', 'C1'];
 
 const sourceOf = (section: CourseSectionId, id: string) => getCourseSection(section).sources.find((s) => s.id === id);
 
@@ -61,6 +66,7 @@ const sourceOf = (section: CourseSectionId, id: string) => getCourseSection(sect
 export const hasBritishCouncil = () => (sourceOf('reading', 'british-council')?.groups.length ?? 0) > 0;
 
 export const defaultSettings = (): PathSettings => ({
+  topicLevel: 'A1',
   minutes: 20,
   listening: 'voa',
   listeningLevel: 'intermediate',
@@ -101,39 +107,23 @@ const SOUND_MINUTES = 10;
 
 // ---- topics -----------------------------------------------------------------
 
-/** The Topic Library in the path's order: a topic a day, easier ones first. */
-export const PATH_TOPICS: string[] = [
-  // B1
-  'self-introduction', 'small-talk', 'family-and-relatives', 'describing-people', 'daily-routines',
-  'meeting-new-people', 'making-plans', 'hobbies-and-free-time', 'household-chores', 'home-and-neighbours',
-  'housing-and-rent', 'cooking-and-recipes', 'restaurant-and-food', 'clothes-and-style', 'returns-and-complaints',
-  'money-and-saving', 'directions-and-help', 'transport-and-traffic', 'travel', 'tourism-and-culture', 'health',
-  'nutrition', 'sleep-and-energy', 'sports-and-fitness', 'football', 'adventure-and-outdoors', 'video-games',
-  'emergencies-and-safety', 'ramadan-and-celebrations', 'university-life', 'exams-and-projects',
-  // B2
-  'feelings-and-personality', 'friendship', 'keeping-conversations-going', 'misunderstandings',
-  'apologies-and-forgiveness', 'advice-and-support', 'childhood-and-memories', 'relationships-and-marriage',
-  'goals-and-dreams', 'learning-languages', 'smart-learning', 'films-series-and-books', 'photography-and-content',
-  'city-vs-countryside', 'shop-smart', 'habitual-change', 'minimalism', 'cultural-differences',
-  'opinions-and-arguing', 'identity-and-heritage', 'history-and-civilizations', 'nature-and-wildlife',
-  'living-abroad', 'career-plans', 'job-hunting', 'job-interview', 'work-and-office', 'phone-and-email',
-  'meetings-and-discussions', 'tech-everyday', 'internet-and-online-services', 'cybersecurity-and-scams',
-  'programming', 'time-management', 'remote-work-and-freelancing', 'presentations', 'leadership-and-teamwork',
-  'negotiation', 'starting-a-business', 'inflation-and-cost-of-living', 'jobs-and-future-work', 'social-media',
-  'news-and-media', 'mental-health', 'happiness-and-success', 'fame-and-celebrity', 'art-and-architecture',
-  'science-and-space', 'climate-and-environment', 'artificial-intelligence', 'social-responsibility', 'crime',
-  // C1
-  'decision-making-and-trade-offs', 'problem-solving', 'change-and-risk', 'equality-and-opportunity',
-  'ethics-and-dilemmas', 'education-systems', 'future-of-society',
-];
+/** The Topic Library in the path's order: A1 → C1, with the topics that come back at a higher level after each level's new ones. */
+export const PATH_TOPICS: string[] = TOPIC_PACKS.map((p) => p.id);
 
 export function packById(id: string | undefined): TopicPack | undefined {
   return id ? TOPIC_PACKS.find((p) => p.id === id) : undefined;
 }
 
-/** Each day's topic and its share of the topic's words (all of them once there is a topic for every day). */
-function topicDays(): Array<{ packId: string; from: number; to: number }> {
-  const topics = PATH_TOPICS.filter((id) => packById(id));
+/**
+ * Each day's topic and its share of the topic's words: from the chosen level on, spread over the
+ * 90 days (a topic a day from A1; from a later level, fewer topics, so some take two days).
+ */
+function topicDays(level: TopicLevel): Array<{ packId: string; from: number; to: number }> {
+  const from = LEVEL_ORDER.indexOf(level);
+  const topics = PATH_TOPICS.filter((id) => {
+    const pack = packById(id);
+    return pack && LEVEL_ORDER.indexOf(pack.level) >= from;
+  });
   const out: Array<{ packId: string; from: number; to: number }> = [];
   topics.forEach((packId, t) => {
     const first = Math.floor((t * PATH_LENGTH) / topics.length);
@@ -307,7 +297,7 @@ const block = (section: PathSection, day: number, items: Array<{ item: PathItem;
 
 export function buildPath(settings: PathSettings = defaultSettings()): PathDay[] {
   const budget = Math.max(5, settings.minutes);
-  const topics = topicDays();
+  const topics = topicDays(settings.topicLevel);
   const [round1, again] = accentRounds();
   const sounds = (items: AccentItem[], round: number): Unit[] =>
     items.map((accent) => ({ item: { kind: 'sound', accent, round }, minutes: SOUND_MINUTES }));
