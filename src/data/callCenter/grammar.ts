@@ -14,7 +14,7 @@ export const GRAMMAR: GrammarPoint[] = [
       { form: "don't / doesn't + verb", use: 'Negatives in the present simple.', example: "The app doesn't open on my phone." },
     ],
     tip: 'He, she and it need -s: "He works", not "He work". And state verbs (know, understand, want, need) don\'t take -ing: "I understand", not "I\'m understanding".',
-    tipAr: 'أشهر غلطة: He work. لازم s مع he و she و it.',
+    tipAr: 'أشهر خطأ: He work. لا بد من s مع he وshe وit.',
     exercises: [
       { q: 'My name is Belal, and I ___ in Cairo.', options: ['live', 'am living', 'lives', 'living'], answer: 0, why: 'A permanent fact: present simple.' },
       { q: 'These days, I ___ on my English for two hours a day.', options: ['work', 'am working', 'works', 'worked'], answer: 1, why: '"These days" is a temporary situation: present continuous.' },
@@ -35,7 +35,7 @@ export const GRAMMAR: GrammarPoint[] = [
       { form: 'Could you tell me + wh- + subject + verb?', use: 'Polite (indirect) questions: no "do", normal word order.', example: 'Could you tell me what the error says?' },
     ],
     tip: 'In polite questions, keep normal word order: "Could you tell me where the router is?", not "where is the router?".',
-    tipAr: 'في السؤال المؤدب الترتيب بيرجع عادي: Could you tell me what the error says، مش what does the error say.',
+    tipAr: 'في السؤال المهذّب يعود الترتيب عاديًا: Could you tell me what the error says، لا what does the error say.',
     exercises: [
       { q: '___ you see a green light on the modem?', options: ['Are', 'Do', 'Does', 'Is'], answer: 1, why: 'You + do for a yes/no question.' },
       { q: 'When ___ the problem start?', options: ['did', 'does', 'was', 'is'], answer: 0, why: 'A past event: did + base verb.' },
@@ -56,7 +56,7 @@ export const GRAMMAR: GrammarPoint[] = [
       { form: 'have / has + past participle + for / since', use: 'Something that started in the past and is still true.', example: "I've been a developer since 2022." },
     ],
     tip: 'Never use the present perfect with a finished time: "I worked there last year", not "I have worked there last year".',
-    tipAr: 'لو فيه وقت محدد خلص (last year, in 2023) استخدم past simple على طول.',
+    tipAr: 'إن كان هناك وقت محدد انتهى (last year, in 2023) فاستخدم past simple مباشرة.',
     exercises: [
       { q: 'I ___ my degree in 2022.', options: ['have finished', 'finished', 'finish', 'am finishing'], answer: 1, why: '"In 2022" is a finished time: past simple.' },
       { q: 'I ___ with clients from the US for two years now.', options: ['worked', 'work', 'have worked', 'am work'], answer: 2, why: 'From the past until now: present perfect.' },
@@ -78,7 +78,7 @@ export const GRAMMAR: GrammarPoint[] = [
       { form: 'Would you mind + verb-ing?', use: 'A very polite request.', example: 'Would you mind holding for a moment?' },
     ],
     tip: 'After "Would you mind", use -ing: "Would you mind waiting?", not "Would you mind to wait?".',
-    tipAr: 'Would you mind بعدها ing دايماً.',
+    tipAr: 'يأتي بعد Would you mind فعل بـ ing دائمًا.',
     exercises: [
       { q: '___ you tell me your account number, please?', options: ['Could', 'Will to', 'Would like', 'Must'], answer: 0, why: 'Could you + verb: a polite request.' },
       { q: 'Would you like me ___ the steps to your email?', options: ['send', 'sending', 'to send', 'sent'], answer: 2, why: 'Would you like me + to + verb.' },
@@ -99,7 +99,7 @@ export const GRAMMAR: GrammarPoint[] = [
       { form: 'am / is / are + verb-ing', use: 'Fixed arrangements with a time.', example: 'The technician is coming on Thursday at ten.' },
     ],
     tip: 'Promise with "I\'ll", not with the present simple: "I\'ll call you back", not "I call you back".',
-    tipAr: 'الوعد للعميل بـ I\'ll. جملة I call you back معناها حاجة بتحصل دايماً، مش وعد.',
+    tipAr: 'وعد العميل يكون بـ I\'ll. أما I call you back فمعناها شيء يحدث دائمًا، لا وعد.',
     exercises: [
       { q: 'Okay, I ___ you a new code right now.', options: ['send', "'ll send", 'am sending to', 'sent'], answer: 1, why: 'A decision made now: will.' },
       { q: "The technician ___ on Friday at nine; it's already booked.", options: ['comes', 'is coming', 'will coming', 'come'], answer: 1, why: 'A fixed arrangement: present continuous.' },
@@ -120,7 +120,7 @@ export const GRAMMAR: GrammarPoint[] = [
       { form: "statement + isn't it? / didn't you? / right?", use: 'Tag questions: confirm something you think is true.', example: "You've already restarted it, haven't you?" },
     ],
     tip: "A positive statement takes a negative tag, and a negative statement takes a positive tag: \"It's working, isn't it?\" · \"It isn't working, is it?\"",
-    tipAr: 'ابدأ بأسئلة مفتوحة تفهم بيها الحكاية، وبعدين أسئلة مقفولة تأكد بيها.',
+    tipAr: 'ابدأ بأسئلة مفتوحة تفهم بها القصة، ثم أسئلة مغلقة تتأكد بها.',
     exercises: [
       { q: 'You restarted the modem, ___?', options: ["didn't you", 'did you', "haven't you", "don't you"], answer: 0, why: 'Past simple positive → "didn\'t you?".' },
       { q: "It isn't charging, ___?", options: ["isn't it", 'is it', 'does it', "doesn't it"], answer: 1, why: 'Negative statement → positive tag.' },
@@ -141,7 +141,7 @@ export const GRAMMAR: GrammarPoint[] = [
       { form: 'might / could / it seems', use: "Sound less direct when you aren't 100% sure.", example: 'It seems the payment might not have gone through.' },
     ],
     tip: 'Never stop at the "no". Always follow it with what you CAN do.',
-    tipAr: 'متقفلش على «لا». قول لا وبعدها على طول «اللي أقدر أعمله…».',
+    tipAr: 'لا تختم بـ«لا». قل لا ثم أتبعها مباشرة بـ«ما يمكنني فعله…».',
     exercises: [
       { q: '___, the warranty ended last month.', options: ["I'm afraid", "I'm afraid of", 'Afraid', 'I fear of'], answer: 0, why: '"I\'m afraid" + bad news.' },
       { q: "Unfortunately, we can't change the date. ___, I can offer you a discount.", options: ['But', 'However', 'So', 'Because'], answer: 1, why: '"However" introduces the positive option.' },
@@ -162,7 +162,7 @@ export const GRAMMAR: GrammarPoint[] = [
       { form: 'will be / has been + past participle', use: 'Next steps and results.', example: 'Your account has been updated, and a code will be sent to your phone.' },
     ],
     tip: 'Use the past participle, not the past simple: "was sent", not "was send".',
-    tipAr: 'الـ passive بيخلي الكلام رسمي ومش بيلوم حد: Your order was delayed أحسن من We delayed your order.',
+    tipAr: 'المبني للمجهول يجعل الكلام رسميًا دون لوم أحد: Your order was delayed أفضل من We delayed your order.',
     exercises: [
       { q: 'Your refund ___ within five to seven business days.', options: ['processes', 'is processed', 'is process', 'processing'], answer: 1, why: 'A process: is + past participle.' },
       { q: 'The package ___ yesterday at 3 PM.', options: ['delivered', 'was delivered', 'is deliver', 'was deliver'], answer: 1, why: 'The package receives the action: was delivered.' },
@@ -183,7 +183,7 @@ export const GRAMMAR: GrammarPoint[] = [
       { form: 'If + present, (then) + verb', use: 'Say what to do in each case.', example: 'If the light is red, unplug it again.' },
     ],
     tip: 'One action per sentence, and wait for the customer to finish before the next step.',
-    tipAr: 'خطوة واحدة في الجملة، واستنى العميل يقول Okay قبل الخطوة اللي بعدها.',
+    tipAr: 'خطوة واحدة في الجملة، وانتظر حتى يقول العميل Okay قبل الخطوة التالية.',
     exercises: [
       { q: '___, open the Settings app.', options: ['First', 'Firstly of all', 'At first of', 'The first'], answer: 0, why: '"First," starts a list of steps.' },
       { q: '___ the light turns green, let me know.', options: ['Once', 'Since', 'While that', 'During'], answer: 0, why: '"Once" = as soon as.' },
@@ -204,7 +204,7 @@ export const GRAMMAR: GrammarPoint[] = [
       { form: 'said / told me (that) + past', use: 'Report what the customer said in a ticket note.', example: 'The customer said the problem started on Monday.' },
     ],
     tip: 'In reported speech, move the tense back: "It doesn\'t work" → "She said it didn\'t work".',
-    tipAr: 'في الـ notes بتحكي اللي العميل قاله: He said it didn\'t work.',
+    tipAr: 'في الملاحظات تنقل ما قاله العميل: He said it didn\'t work.',
     exercises: [
       { q: '___ you tried restarting the computer?', options: ['Did', 'Have', 'Do', 'Are'], answer: 1, why: 'Have you tried…? checks what has been done.' },
       { q: 'I ___ your password, so you can log in now.', options: ['have reset', 'reset have', 'resetted', 'has reset'], answer: 0, why: "I have (I've) + past participle." },
@@ -225,7 +225,7 @@ export const GRAMMAR: GrammarPoint[] = [
       { form: 'although / even though + contrast', use: 'Show a contrast.', example: "Although I'm new to call centers, I've supported many users." },
     ],
     tip: 'Because + a sentence, because of + a noun: "because the line was busy" · "because of the busy line".',
-    tipAr: 'الروابط دي هي اللي بتخلي إجابتك متماسكة بدل جمل مقطعة.',
+    tipAr: 'أدوات الربط هذه هي ما يجعل إجابتك متماسكة بدل جمل متقطعة.',
     exercises: [
       { q: 'I want this job ___ I enjoy helping people.', options: ['because', 'because of', 'so', 'although'], answer: 0, why: 'A reason + a full sentence: because.' },
       { q: "I've practiced every day, ___ I feel ready.", options: ['although', 'because', 'so', 'because of'], answer: 2, why: 'A result: so.' },
@@ -246,7 +246,7 @@ export const GRAMMAR: GrammarPoint[] = [
       { form: 'uncountable nouns', use: 'information, advice, equipment, feedback and software have no plural.', example: 'Thanks for the information and the feedback.' },
     ],
     tip: 'Say "some information", never "informations". And: on Monday, in March, at 5 PM.',
-    tipAr: 'information و advice و equipment مفيهاش s أبداً.',
+    tipAr: 'information وadvice وequipment لا تأخذ s أبدًا.',
     exercises: [
       { q: 'Could you give me some ___ about the plan?', options: ['informations', 'information', 'an information', 'informations about'], answer: 1, why: '"Information" is uncountable.' },
       { q: 'Everyone on my team ___ English at work.', options: ['speak', 'speaks', 'speaking', 'are speak'], answer: 1, why: '"Everyone" is singular.' },
@@ -267,7 +267,7 @@ export const GRAMMAR: GrammarPoint[] = [
       { form: 'If I were…', use: 'Use "were" for every person in formal English.', example: 'If I were the team leader, I would share the best calls with the team.' },
     ],
     tip: 'Never put "would" in the if-part: "If I knew", not "If I would know".',
-    tipAr: 'مفيش would بعد if.',
+    tipAr: 'لا تأتي would بعد if.',
     exercises: [
       { q: 'If a customer ___ at me, I would stay calm.', options: ['shouts', 'shouted', 'would shout', 'shouting'], answer: 1, why: 'If + past simple.' },
       { q: "If I didn't know the answer, I ___ ask a colleague.", options: ['will', 'would', 'am', 'did'], answer: 1, why: 'Would + base verb in the result.' },
@@ -288,7 +288,7 @@ export const GRAMMAR: GrammarPoint[] = [
       { form: 'second conditional', use: 'Answer "what would you do" questions.', example: 'If I got this job, I would aim to be the best agent on the account.' },
     ],
     tip: 'Short, correct sentences beat long, broken ones. If a sentence gets too long, stop and start a new one.',
-    tipAr: 'جملة قصيرة صح أحسن من جملة طويلة متلخبطة.',
+    tipAr: 'جملة قصيرة صحيحة خير من جملة طويلة مضطربة.',
     exercises: [
       { q: 'I ___ my degree three years ago.', options: ['have got', 'got', 'get', 'am getting'], answer: 1, why: '"Three years ago" is a finished time: past simple.' },
       { q: 'Since then, I ___ as a developer.', options: ['worked', 'have worked', 'work', 'am work'], answer: 1, why: '"Since then" (until now): present perfect.' },

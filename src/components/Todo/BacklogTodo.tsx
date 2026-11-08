@@ -15,6 +15,8 @@ import { DndContext, closestCenter, PointerSensor, TouchSensor, useSensor, useSe
 import type { DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
 import { SortableTodoItem } from './SortableTodoItem';
+import { useArrangedTasks } from './useArrangedTasks';
+import HiddenDone from './HiddenDone';
 import { useAppStore } from '../../store/appStore';
 import { useTranslation } from '../../i18n/useTranslation';
 import { priorityColors } from '../../constants/priorityColors';
@@ -23,6 +25,8 @@ import type { Priority, BacklogTodo as BacklogTodoType } from '../../types';
 export default function BacklogTodo() {
   const { t, isRTL } = useTranslation();
   const todos = useAppStore((s) => s.backlogTodos);
+  // Finished tasks stay, sink or hide, as the settings say (hidden ones are listed under "Finished").
+  const { shown, hidden } = useArrangedTasks(todos);
   const addTodo = useAppStore((s) => s.addBacklogTodo);
   const toggleTodo = useAppStore((s) => s.toggleBacklogTodo);
   const removeTodo = useAppStore((s) => s.removeBacklogTodo);
@@ -56,14 +60,14 @@ export default function BacklogTodo() {
   const handleDragEnd = useCallback((event: DragEndEvent) => {
     const { active, over } = event;
     if (over && active.id !== over.id) {
-      const oldIndex = todos.findIndex((t) => t.id === active.id);
-      const newIndex = todos.findIndex((t) => t.id === over.id);
-      const newOrder = arrayMove(todos, oldIndex, newIndex);
-      reorderBacklogTodos(newOrder.map((t) => t.id));
+      const oldIndex = shown.findIndex((t) => t.id === active.id);
+      const newIndex = shown.findIndex((t) => t.id === over.id);
+      const newOrder = arrayMove(shown, oldIndex, newIndex);
+      reorderBacklogTodos([...newOrder, ...hidden].map((t) => t.id));
     }
-  }, [todos, reorderBacklogTodos]);
+  }, [shown, hidden, reorderBacklogTodos]);
 
-  const itemIds = useMemo(() => todos.map((t) => t.id), [todos]);
+  const itemIds = useMemo(() => shown.map((t) => t.id), [shown]);
 
   return (
     <section>
@@ -84,7 +88,7 @@ export default function BacklogTodo() {
               onKeyDown={handleKeyDown}
               placeholder={t('backlog.addPlaceholder')}
               dir={isRTL ? 'rtl' : 'ltr'}
-              className="flex-1 border border-border-subtle rounded-lg px-4 py-2.5 text-sm bg-ink/3 text-ink placeholder-ink-lighter focus:outline-none focus:ring-2 focus:ring-ink-lighter/20 focus:border-transparent transition-all"
+              className="flex-1 min-w-0 border border-border-subtle rounded-lg px-4 py-2.5 text-sm bg-ink/3 text-ink placeholder-ink-lighter focus:outline-none focus:ring-2 focus:ring-ink-lighter/20 focus:border-transparent transition-all"
             />
             <div className="flex gap-1 flex-shrink-0">
               {(['high', 'medium', 'low'] as Priority[]).map((p) => (
@@ -115,7 +119,7 @@ export default function BacklogTodo() {
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <div className="p-2">
             <AnimatePresence mode="popLayout">
-              {todos.length === 0 ? (
+              {shown.length === 0 ? (
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -126,7 +130,7 @@ export default function BacklogTodo() {
                 </motion.div>
               ) : (
                 <SortableContext items={itemIds} strategy={verticalListSortingStrategy}>
-                  {todos.map((todo) => (
+                  {shown.map((todo) => (
                     <SortableTodoItem key={todo.id} id={todo.id}>
                       <BacklogTodoItem
                         todo={todo}
@@ -143,6 +147,7 @@ export default function BacklogTodo() {
             </AnimatePresence>
           </div>
         </DndContext>
+        <HiddenDone tasks={hidden} onToggle={toggleTodo} onRemove={removeTodo} />
       </div>
     </section>
   );
@@ -175,13 +180,14 @@ const BacklogTodoItem = memo(function BacklogTodoItem({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, x: -20, height: 0, marginBottom: 0 }}
       transition={{ duration: 0.2 }}
-      className={`group flex items-center gap-2 sm:gap-3 p-3 rounded-lg hover:bg-ink/3 transition-colors ${
+      // Two lines on a phone, as in DailyTodo.
+      className={`group flex flex-wrap sm:flex-nowrap items-center gap-x-2 gap-y-1 sm:gap-3 p-3 rounded-lg hover:bg-ink/3 transition-colors ${
         todo.completed ? 'opacity-60' : ''
       }`}
     >
       <button
         onClick={() => onToggle(todo.id)}
-        className="shrink-0 text-ink-lighter hover:text-ink transition-colors"
+        className="shrink-0 p-0.5 -m-0.5 text-ink-lighter hover:text-ink transition-colors"
         aria-label={t(todo.completed ? 'a11y.markIncomplete' : 'a11y.markComplete')}
       >
         {todo.completed ? (
@@ -191,15 +197,15 @@ const BacklogTodoItem = memo(function BacklogTodoItem({
         )}
       </button>
 
-      <div className={`flex items-center gap-1.5 shrink-0 ${priorityColors[todo.priority].bg} px-2 py-0.5 rounded`}>
+      <div className={`order-1 sm:order-none ms-7 sm:ms-0 flex items-center gap-1.5 shrink-0 ${priorityColors[todo.priority].bg} px-2 py-0.5 rounded`}>
         <span className={`w-1.5 h-1.5 rounded-full ${priorityColors[todo.priority].dot}`} />
-        <span className={`text-[10px] uppercase tracking-wider font-medium ${priorityColors[todo.priority].text} whitespace-nowrap`}>
+        <span className={`text-[11px] uppercase tracking-wider font-medium ${priorityColors[todo.priority].text} whitespace-nowrap`}>
           {todo.priority}
         </span>
       </div>
 
       <span
-        className={`flex-1 min-w-0 text-sm leading-relaxed ${
+        className={`flex-1 basis-[calc(100%-2.5rem)] sm:basis-auto min-w-0 text-sm leading-relaxed ${
           todo.completed
             ? 'line-through text-ink-lighter'
             : 'text-ink'
@@ -216,7 +222,7 @@ const BacklogTodoItem = memo(function BacklogTodoItem({
         {todo.text}
       </span>
 
-      <div className="flex gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-all">
+      <div className="order-2 sm:order-none ms-auto sm:ms-0 flex gap-1 shrink-0 opacity-0 group-hover:opacity-100 [@media(hover:none)]:opacity-100 transition-all">
         <button
           onClick={() => onMoveToDaily(todo.id)}
           disabled={isMoving}

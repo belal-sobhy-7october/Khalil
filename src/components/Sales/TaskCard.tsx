@@ -14,15 +14,15 @@ import { DoneToggle, LangBlock } from './ui';
 
 const KIND: Record<SalesTaskKind, { ar: string; en: string; icon: typeof Mic }> = {
   lesson: { ar: 'درس', en: 'Lesson', icon: GraduationCap },
-  listen: { ar: 'اسمع واتفرج', en: 'Watch or listen', icon: Headphones },
+  listen: { ar: 'استمع وشاهد', en: 'Watch or listen', icon: Headphones },
   drill: { ar: 'تمرين كتابة', en: 'Writing drill', icon: PenLine },
-  roleplay: { ar: 'رول بلاي مع AI', en: 'Role-play with AI', icon: Users },
+  roleplay: { ar: 'تمثيل أدوار مع الذكاء الاصطناعي', en: 'Role-play with AI', icon: Users },
   mission: { ar: 'مهمة في الحياة', en: 'Real-life mission', icon: MapIcon },
-  speak: { ar: 'قولها بصوت عالي', en: 'Say it out loud', icon: Mic },
+  speak: { ar: 'قلها بصوت مرتفع', en: 'Say it out loud', icon: Mic },
   journal: { ar: 'الدفتر', en: 'Notebook', icon: NotebookPen },
   words: { ar: 'كلمات', en: 'Words', icon: SpellCheck },
   review: { ar: 'مراجعة', en: 'Review', icon: BookOpen },
-  quiz: { ar: 'كويز', en: 'Quiz', icon: ClipboardCheck },
+  quiz: { ar: 'اختبار قصير', en: 'Quiz', icon: ClipboardCheck },
   knowledge: { ar: 'فصل معرفة', en: 'Knowledge', icon: Library },
 };
 
@@ -75,7 +75,7 @@ export default function TaskCard({ task, lang, done, open, onToggleOpen }: {
         <button
           type="button"
           onClick={() => markTasks([task.id], !done)}
-          aria-label={done ? (lang === 'en' ? 'Mark as not done' : 'علّم إنها مخلصتش') : lang === 'en' ? 'Mark as done' : 'علّم إنها خلصت'}
+          aria-label={done ? (lang === 'en' ? 'Mark as not done' : 'علّمها غير منجزة') : lang === 'en' ? 'Mark as done' : 'علّمها منجزة'}
           aria-pressed={done}
           className={`shrink-0 w-7 h-7 rounded-full border-2 flex items-center justify-center transition-colors ${
             done ? 'bg-sage-soft border-sage-soft text-white' : 'border-ink/20 text-transparent hover:border-sage-soft'

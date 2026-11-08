@@ -101,11 +101,11 @@ function Prep() {
       <section className="relative overflow-hidden rounded-3xl border border-border-subtle bg-linear-to-br from-clay-soft/12 via-gold-soft/8 to-sage-soft/12 p-5 sm:p-6">
         <span aria-hidden="true" className="pointer-events-none absolute -top-24 -end-20 w-72 h-72 rounded-full bg-gold-soft/20 blur-3xl" />
         <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }} className="relative space-y-4">
-          <div className="flex items-start gap-4">
+          <div className="flex flex-wrap items-start gap-4">
             <ProgressRing ratio={progress.ratio} size={72} stroke={7} label="Plan progress">
               <span className="text-base font-bold text-ink tabular-nums">{Math.floor(progress.ratio * 100)}%</span>
             </ProgressRing>
-            <div className="flex-1 min-w-0">
+            <div className="flex-1 min-w-[10rem]">
               <h1 className="text-2xl font-bold text-ink leading-tight">Call Center English Prep</h1>
               <p className="text-sm text-ink-light">From B1 to C1 and an English call center job in Egypt · tech support first, ready for any account</p>
               <p className="mt-1 text-xs text-clay-soft-dark font-medium">
@@ -113,12 +113,12 @@ function Prep() {
                 {where.week ? ` · Week ${where.week.number}` : ''}
               </p>
             </div>
-            <div className="shrink-0 flex flex-col items-end gap-2">
+            <div className="shrink-0 ms-auto flex flex-col items-end gap-2">
               <Headphones size={28} className="hidden sm:block text-clay-soft/60" />
               <NewWordButton />
             </div>
           </div>
-          <ArabicNote>من «اترفضت في الريكورد» لـ «overqualified». كل يوم خطوة، وكل خطوة متسجلة هنا. يلا بينا 💪</ArabicNote>
+          <ArabicNote>من «رُفضت بسبب التسجيل الصوتي» إلى «مؤهل أكثر من المطلوب». كل يوم خطوة، وكل خطوة مسجّلة هنا. هيا بنا 💪</ArabicNote>
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
             <Stat icon={Flame} value={`${streak} day${streak === 1 ? '' : 's'}`} label="Streak" />
             <Stat icon={Timer} value={`${minutes} min`} label="Studied today" />
@@ -175,7 +175,7 @@ function Prep() {
                   <span className="font-semibold">Extra, not part of the plan.</span> Ibrahim Adel's phonetics and American &amp; British accent course: watch it
                   whenever you like. Nothing here is a daily task or counts toward a level.
                 </p>
-                <ArabicNote>ده قسم إضافي للأكسنت، مش إجباري ومش داخل في المهام اليومية ولا في الليفلات. اتفرج عليه وقت ما تحب، وتقدمك فيه بيتحفظ.</ArabicNote>
+                <ArabicNote>هذا قسم إضافي للّكنة، ليس إجباريًا، ولا يدخل في المهام اليومية ولا في المستويات. شاهده متى شئت، ويُحفظ تقدّمك فيه.</ArabicNote>
               </div>
               <CourseSection section={CALL_CENTER_ACCENT_SECTION} loopPlayer />
             </div>

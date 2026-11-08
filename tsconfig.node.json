@@ -20,5 +20,5 @@
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["vite.config.ts", "scripts/offlinePlugin.ts", "api"]
+  "include": ["vite.config.ts", "scripts/offlinePlugin.ts", "scripts/seoPlugin.ts", "api"]
 }

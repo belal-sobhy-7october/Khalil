@@ -36,19 +36,19 @@ export function ChapterReader({ id, onRead }: { id: string; onRead?: () => void 
       <div className="flex items-start gap-2 rounded-xl bg-sage-soft/8 border border-sage-soft/30 p-3">
         <Sparkles size={15} className="shrink-0 mt-0.5 text-sage-soft-dark" />
         <div>
-          <div className="text-xs font-semibold text-sage-soft-dark">في حياتك وفي أي شغل</div>
+          <div className="text-xs font-semibold text-sage-soft-dark">في حياتك وفي أي عمل</div>
           <p className="text-sm text-ink leading-relaxed">{c.inLife}</p>
         </div>
       </div>
       <div className="space-y-1.5">
         <div className="flex items-center gap-1.5 text-xs font-semibold text-ink-light">
-          <Lightbulb size={13} /> جرّب النهارده
+          <Lightbulb size={13} /> جرّب اليوم
         </div>
         <p className="text-sm text-ink">{c.tryIt}</p>
         <NoteBox noteKey={`knowledge:${c.id}`} rows={2} lang="ar" />
       </div>
       <div className="space-y-3 rounded-xl border border-dashed border-border-subtle p-3">
-        <div className="text-xs font-semibold text-ink-light">اتأكد إنك فهمت</div>
+        <div className="text-xs font-semibold text-ink-light">تأكد أنك فهمت</div>
         {c.check.map((q) => (
           <CheckQuestion key={q.q} choice={q} />
         ))}
@@ -66,7 +66,7 @@ export function ChapterReader({ id, onRead }: { id: string; onRead?: () => void 
         aria-pressed={read}
         className={read ? secondaryBtn : primaryBtn}
       >
-        {read ? <CheckCircle2 size={13} /> : <BookOpen size={13} />} {read ? 'قريته ✓' : 'خلصت الفصل'}
+        {read ? <CheckCircle2 size={13} /> : <BookOpen size={13} />} {read ? 'قرأته ✓' : 'أنهيت الفصل'}
       </button>
     </div>
   );
@@ -80,7 +80,7 @@ export function KnowledgeTask({ chapterId, onDone }: { chapterId: string; onDone
     <div className="space-y-3">
       {readBefore && (
         <div className="flex flex-wrap items-center gap-2">
-          <ArabicNote>قريت الفصل ده قبل كده من تبويب «المعرفة». راجعه بسرعة وجاوب الأسئلة.</ArabicNote>
+          <ArabicNote>قرأت هذا الفصل من قبل في تبويب «المعرفة». راجعه سريعًا وأجب عن الأسئلة.</ArabicNote>
           <button type="button" onClick={onDone} className={secondaryBtn}>
             <CheckCircle2 size={13} /> راجعته
           </button>
@@ -139,7 +139,7 @@ export default function KnowledgeView() {
   return (
     <div className="space-y-3">
       <ArabicNote>
-        معرفة حقيقية مش حفظ: أفكار من كتب وأبحاث معروفة، متشرحة ببساطة، ومعاها إزاي تستخدمها في حياتك وفي أي شغل. الخطة بتديك فصل في أغلب أيام المستوى 1 و 2 (وأسئلته في الكويز)، وتقدر تقرا أي فصل هنا وقت ما تحب.
+        معرفة حقيقية لا حفظ: أفكار من كتب وأبحاث معروفة، مشروحة ببساطة، ومعها كيف تستعملها في حياتك وفي أي عمل. تعطيك الخطة فصلًا في أغلب أيام المستويين 1 و2 (وأسئلته في الاختبار القصير)، ويمكنك قراءة أي فصل هنا متى شئت.
       </ArabicNote>
       <div className="grid gap-3 lg:grid-cols-2">
         {KNOWLEDGE.map((b) => (

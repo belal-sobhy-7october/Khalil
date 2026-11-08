@@ -14,7 +14,7 @@ function useExitChecks(level: SalesLevel): Array<{ text: string; ok: boolean | n
   const examDay = level.extraDays.find((d) => d.id === level.examId);
   const examRoleplay = examDay?.tasks.find((t) => t.kind === 'roleplay')?.ref;
   const ofKind = (kind: SalesTaskKind) => level.weeks.flatMap((w) => w.days.flatMap((d) => d.tasks.filter((t) => t.kind === kind)));
-  const bestLabel = level.lang === 'en' ? 'best' : 'أحسن نتيجة';
+  const bestLabel = level.lang === 'en' ? 'best' : 'أفضل نتيجة';
   const count = (text: string, list: SalesTask[]) => {
     const n = list.filter((t) => tasks[t.id]).length;
     return { text: `${text} · ${n} / ${list.length}`, ok: list.length > 0 && n === list.length };
@@ -22,7 +22,7 @@ function useExitChecks(level: SalesLevel): Array<{ text: string; ok: boolean | n
   return level.exit.map((text) => {
     if (level.id === 'S0') return { text, ok: !!quizzes['S0-DIAG']?.length };
     if (/امتحان المستوى|Level exam/.test(text)) return { text: exam ? `${text} · ${bestLabel} ${exam.percent}%` : text, ok: !!exam?.passed };
-    if (/رول بلاي|role-play/i.test(text) && examRoleplay) {
+    if (/تمثيل الأدوار|role-play/i.test(text) && examRoleplay) {
       const best = bestRoleplay(calls, examRoleplay);
       return { text: best !== null ? `${text} · ${bestLabel} ${best}%` : text, ok: best !== null && best >= 80 };
     }
@@ -35,7 +35,7 @@ function useExitChecks(level: SalesLevel): Array<{ text: string; ok: boolean | n
 
 const levelLanguage = (level: SalesLevel) => {
   const langs = new Set([level.lang, ...level.weeks.map((w) => w.lang)]);
-  return langs.size > 1 ? 'عربي وإنجليزي' : level.lang === 'en' ? 'بالإنجليزي' : 'بالعربي';
+  return langs.size > 1 ? 'عربي وإنجليزي' : level.lang === 'en' ? 'بالإنجليزية' : 'بالعربية';
 };
 
 function LevelCard({ level, onOpenDay, defaultOpen }: { level: SalesLevel; onOpenDay: (index: number) => void; defaultOpen: boolean }) {
@@ -58,10 +58,10 @@ function LevelCard({ level, onOpenDay, defaultOpen }: { level: SalesLevel; onOpe
           <div className="flex flex-wrap items-center gap-1.5">
             <span className="text-xs text-ink-light">المستوى {level.number}</span>
             <Pill tone="accent">{levelLanguage(level)}</Pill>
-            {planned && <Pill>بعدين</Pill>}
+            {planned && <Pill>لاحقًا</Pill>}
             {locked && (
               <Pill>
-                <Lock size={10} /> عدّي امتحان المستوى {previous.number} الأول
+                <Lock size={10} /> اجتز امتحان المستوى {previous.number} أولًا
               </Pill>
             )}
           </div>
@@ -76,7 +76,7 @@ function LevelCard({ level, onOpenDay, defaultOpen }: { level: SalesLevel; onOpe
       {open && (
         <div className="mt-4 space-y-4">
           <div>
-            <div className="text-xs font-semibold text-ink mb-1.5">عشان تعدي المستوى</div>
+            <div className="text-xs font-semibold text-ink mb-1.5">لتجتاز المستوى</div>
             <ul className="space-y-1">
               {checks.map((c) => (
                 <li key={c.text} className="flex items-start gap-2 text-sm text-ink">
@@ -89,7 +89,7 @@ function LevelCard({ level, onOpenDay, defaultOpen }: { level: SalesLevel; onOpe
 
           {planned && level.outline && (
             <div className="space-y-2">
-              <ArabicNote>المستوى ده لسه متبنيش: دي خطوطه العريضة.</ArabicNote>
+              <ArabicNote>هذا المستوى لم يُبنَ بعد: هذه خطوطه العريضة.</ArabicNote>
               <ol className="space-y-1.5">
                 {level.outline.map((w) => (
                   <li key={w.title} className="text-sm">
@@ -111,7 +111,7 @@ function LevelCard({ level, onOpenDay, defaultOpen }: { level: SalesLevel; onOpe
                   <LangBlock lang={w.lang} className="text-sm font-semibold text-ink">
                     {w.title}
                   </LangBlock>
-                  {quiz && <Pill tone={quiz.passed ? 'good' : 'neutral'}>الكويز {quiz.percent}%</Pill>}
+                  {quiz && <Pill tone={quiz.passed ? 'good' : 'neutral'}>الاختبار القصير {quiz.percent}%</Pill>}
                 </div>
                 <LangBlock lang={w.lang}>
                   <p className="text-xs text-ink-light">{w.goal}</p>
@@ -128,7 +128,7 @@ function LevelCard({ level, onOpenDay, defaultOpen }: { level: SalesLevel; onOpe
                         dayDone(d, tasks) ? 'border-sage-soft bg-sage-soft/15 text-sage-soft-dark' : 'border-border-subtle text-ink-light hover:border-clay-soft hover:text-ink'
                       }`}
                     >
-                      {i === 5 ? 'كويز' : `يوم ${i + 1}`}
+                      {i === 5 ? 'اختبار' : `يوم ${i + 1}`}
                     </button>
                   ))}
                 </div>
@@ -163,7 +163,7 @@ export default function RoadmapView({ currentIndex, onOpenDay }: { currentIndex:
   return (
     <div className="space-y-3">
       <ArabicNote>
-        الخطة كلها هنا لو حبيت تبص، بس مش محتاج تشيل همها: افتح «النهارده» وخلاص. الأساس هو المعرفة: المستوى 1 أساسيات السيلز وعلم نفس القرار، والمستوى 2 السوق والماركتينج والتفاوض، الاتنين بالعربي. والمستوى 3 نفس المهارات بالإنجليزي. بيع الأجهزة في تبويب «إضافي» برا الخطة. كل أسبوع آخره كويز، وكل مستوى آخره امتحان ورول بلاي كامل.
+        الخطة كلها هنا إن أردت أن تطّلع عليها، لكن لا تحمل همّها: افتح «اليوم» وكفى. الأساس هو المعرفة: المستوى 1 أساسيات المبيعات وعلم نفس القرار، والمستوى 2 السوق والتسويق والتفاوض، وكلاهما بالعربية. والمستوى 3 المهارات نفسها بالإنجليزية. أما بيع الأجهزة ففي تبويب «إضافي» خارج الخطة. في آخر كل أسبوع اختبار قصير، وفي آخر كل مستوى امتحان وتمثيل أدوار كامل.
       </ArabicNote>
       {LEVELS.map((level) => (
         <LevelCard key={level.id} level={level} onOpenDay={onOpenDay} defaultOpen={level.id === currentLevel} />

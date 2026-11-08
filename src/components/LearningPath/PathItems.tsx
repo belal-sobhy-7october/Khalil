@@ -41,7 +41,7 @@ function WordRow({ item, onYouGlish }: { item: PackItem; onYouGlish: (w: string)
         <button onClick={() => onYouGlish(item.word)} className="p-1 rounded hover:bg-ink/5" aria-label={`YouGlish: ${item.word}`}>
           <PlayCircle size={14} className="text-ink-light" />
         </button>
-        <span className="text-[10px] px-1.5 py-0.5 rounded bg-ink/5 text-ink-light">{item.pos}</span>
+        <span className="text-[11px] px-1.5 py-0.5 rounded bg-ink/5 text-ink-light">{item.pos}</span>
       </div>
       <div className="text-sm text-ink mt-0.5">{item.definition}</div>
       <div className="text-xs text-ink-light italic">{item.example}</div>
@@ -295,7 +295,7 @@ export function ListenSteps() {
       <ol className="grid gap-1.5 sm:grid-cols-5">
         {['1', '2', '3', '4', '5'].map((n) => (
           <li key={n} className="flex gap-2 text-xs">
-            <span className="w-4 h-4 shrink-0 rounded-full bg-clay-soft/15 text-clay-soft text-[10px] flex items-center justify-center">{n}</span>
+            <span className="w-4 h-4 shrink-0 rounded-full bg-clay-soft/15 text-clay-soft text-[11px] flex items-center justify-center">{n}</span>
             <span className="text-ink-light">{t(`path.listen.${n}`)}</span>
           </li>
         ))}

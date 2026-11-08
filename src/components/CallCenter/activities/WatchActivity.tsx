@@ -59,7 +59,7 @@ export default function WatchActivity({ refId, onDone, video }: {
         <span>{info.channel}</span>
         <span>·</span>
         <span className="tabular-nums">{clockLength(info.seconds)}</span>
-        {info.arabic && <Pill tone="accent">بالعربي</Pill>}
+        {info.arabic && <Pill tone="accent">بالعربية</Pill>}
         {watched && <Pill tone="good">Watched</Pill>}
         <NeedsInternet />
       </div>

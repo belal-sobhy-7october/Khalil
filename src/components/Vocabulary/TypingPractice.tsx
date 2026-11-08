@@ -90,7 +90,7 @@ export default function TypingPractice({ mode, initialItemIds, onClose }: Typing
 
   return (
     <div className="fixed inset-0 bg-ink/50 flex items-center justify-center z-50 p-4" onKeyDown={onKeyDown}>
-      <div className="bg-card border border-border-subtle rounded-2xl w-full max-w-xl overflow-hidden flex flex-col">
+      <div className="bg-card border border-border-subtle rounded-2xl w-full max-w-xl max-h-[90svh] overflow-y-auto flex flex-col">
         <div className="px-6 py-4 border-b border-border-subtle flex items-center justify-between">
           <div>
             <h2 className="text-lg font-bold text-ink">

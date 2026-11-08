@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useCallback, useState } from 'react';
 import Sidebar from './Sidebar';
 import Header from './Header';
 import { motion } from 'framer-motion';
@@ -17,62 +17,13 @@ export default function DashboardLayout({
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const handleSectionChange = (section: string) => {
-    onSectionChange(section);
-
-    setTimeout(() => {
-      const el = document.getElementById(`section-${section}`);
-      if (el) {
-        const headerOffset = 90;
-        const elementPosition = el.getBoundingClientRect().top + window.scrollY;
-        const offsetPosition = elementPosition - headerOffset;
-        window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
-      }
-    }, 50);
-  };
-
-  useEffect(() => {
-    const sections = ['todo', 'life', 'bookmarks'];
-    const observers = sections.map((sectionId) => {
-      const el = document.getElementById(`section-${sectionId}`);
-      if (!el) return null;
-
-      const observer = new IntersectionObserver(
-        ([entry]) => {
-          if (entry.isIntersecting && entry.intersectionRatio >= 0.2) {
-            onSectionChange(sectionId);
-          }
-        },
-        {
-          rootMargin: '-10% 0px -60% 0px',
-          threshold: [0.2],
-        }
-      );
-
-      observer.observe(el);
-      return { observer, el };
-    });
-
-    return () => {
-      observers.forEach((obs) => {
-        if (obs) obs.observer.unobserve(obs.el);
-      });
-    };
-  }, [onSectionChange]);
+  const toggleSidebar = useCallback(() => setSidebarOpen((open) => !open), []);
 
   return (
     <div className="min-h-screen relative">
-      <Header
-        isOpen={sidebarOpen}
-        onToggle={() => setSidebarOpen(!sidebarOpen)}
-      />
+      <Header isOpen={sidebarOpen} onToggle={toggleSidebar} />
 
-      <Sidebar
-        activeSection={activeSection}
-        onSectionChange={handleSectionChange}
-        isOpen={sidebarOpen}
-        onToggle={() => setSidebarOpen(!sidebarOpen)}
-      />
+      <Sidebar activeSection={activeSection} onSectionChange={onSectionChange} isOpen={sidebarOpen} onToggle={toggleSidebar} />
 
       <div className="pt-14">
         {/* lg:pe-72 is reserved here, before centering, on every page (not just

@@ -41,13 +41,13 @@ export default function QuizActivity({ quizId, onDone }: { quizId: string; onDon
     return (
       <LangBlock lang={lang} className="flex flex-wrap items-center gap-3">
         <button type="button" onClick={() => setSeed(Date.now() % 1_000_000)} className={primaryBtn}>
-          {best ? pick(lang, 'جرّب تاني', 'Take it again') : pick(lang, 'ابدأ', 'Start')}
+          {best ? pick(lang, 'حاول مرة أخرى', 'Take it again') : pick(lang, 'ابدأ', 'Start')}
         </button>
         <span className="text-xs text-ink-light">
           {quiz.questions.length} {pick(lang, 'سؤال', 'questions')}
-          {quiz.pass ? pick(lang, ` · النجاح ${quiz.pass}%`, ` · pass mark ${quiz.pass}%`) : pick(lang, ' · مش امتحان نجاح، بس بيقيس انت فين', ' · just to see where you are')}
+          {quiz.pass ? pick(lang, ` · النجاح ${quiz.pass}%`, ` · pass mark ${quiz.pass}%`) : pick(lang, ' · ليس امتحان نجاح، بل يقيس أين أنت', ' · just to see where you are')}
         </span>
-        {best && <Pill tone={best.passed ? 'good' : 'neutral'}>{pick(lang, `أحسن نتيجة ${best.percent}%`, `Best ${best.percent}%`)}</Pill>}
+        {best && <Pill tone={best.passed ? 'good' : 'neutral'}>{pick(lang, `أفضل نتيجة ${best.percent}%`, `Best ${best.percent}%`)}</Pill>}
       </LangBlock>
     );
   }
@@ -64,10 +64,10 @@ export default function QuizActivity({ quizId, onDone }: { quizId: string; onDon
           <span className="text-sm text-ink">
             {right} / {quiz.questions.length} ·{' '}
             {quiz.pass === 0
-              ? pick(lang, 'دي نقطة البداية بتاعتك. هتشوف الفرق في امتحان المستوى.', 'This is your starting point.')
+              ? pick(lang, 'هذه نقطة بدايتك. سترى الفرق في امتحان المستوى.', 'This is your starting point.')
               : passed
                 ? pick(lang, 'نجحت! 🎉', 'Passed! 🎉')
-                : pick(lang, `محتاج ${quiz.pass}%. راجع اللي غلطت فيه وجرب تاني.`, `You need ${quiz.pass}%. Review what you missed and try again.`)}
+                : pick(lang, `تحتاج إلى ${quiz.pass}%. راجع ما أخطأت فيه وحاول مرة أخرى.`, `You need ${quiz.pass}%. Review what you missed and try again.`)}
           </span>
         </div>
         {wrong.length > 0 && (
@@ -90,7 +90,7 @@ export default function QuizActivity({ quizId, onDone }: { quizId: string; onDon
           }}
           className={secondaryBtn}
         >
-          <RotateCcw size={13} /> {pick(lang, 'تمام', 'Done')}
+          <RotateCcw size={13} /> {pick(lang, 'حسنًا', 'Done')}
         </button>
       </LangBlock>
     );
@@ -124,7 +124,7 @@ export default function QuizActivity({ quizId, onDone }: { quizId: string; onDon
       {picked !== undefined && q.why && <p className="text-xs text-ink-light">{q.why}</p>}
       {picked !== undefined && index < quiz.questions.length - 1 && (
         <button type="button" onClick={() => setIndex(index + 1)} className={primaryBtn}>
-          {pick(lang, 'اللي بعده', 'Next')}
+          {pick(lang, 'التالي', 'Next')}
         </button>
       )}
     </LangBlock>

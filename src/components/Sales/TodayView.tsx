@@ -49,7 +49,7 @@ export default function TodayView({ dayIndex, currentIndex, onSelectDay }: {
                   <span>الأسبوع {week.number}{dayNumber ? `، اليوم ${dayNumber}` : ''}</span>
                 </>
               )}
-              {dayIndex === currentIndex ? <Pill tone="accent">النهارده</Pill> : dayIndex < currentIndex ? <Pill tone="good">خلص</Pill> : <Pill>قدام</Pill>}
+              {dayIndex === currentIndex ? <Pill tone="accent">اليوم</Pill> : dayIndex < currentIndex ? <Pill tone="good">انتهى</Pill> : <Pill>قادم</Pill>}
             </div>
             <LangBlock lang={lang}>
               <h2 className="mt-1 text-xl font-bold text-ink">{day.title}</h2>
@@ -67,19 +67,19 @@ export default function TodayView({ dayIndex, currentIndex, onSelectDay }: {
         </div>
         {week && <ArabicNote>{week.noteAr}</ArabicNote>}
         <div className="space-y-1">
-          <ProgressBar ratio={ratio} label="تقدم النهارده" />
+          <ProgressBar ratio={ratio} label="تقدم اليوم" />
           <div className="flex justify-between text-xs text-ink-light tabular-nums">
             <span>
-              {day.tasks.length - left.length} / {day.tasks.length} مهام · حوالي {minutes} دقيقة
+              {day.tasks.length - left.length} / {day.tasks.length} مهام · نحو {minutes} دقيقة
             </span>
             <span className="inline-flex items-center gap-1">
-              <Flame size={12} /> {todayMinutes} دقيقة النهارده
+              <Flame size={12} /> {todayMinutes} دقيقة اليوم
             </span>
           </div>
         </div>
         {dayIndex !== currentIndex && (
           <button type="button" onClick={() => onSelectDay(currentIndex)} className="text-xs text-clay-soft hover:underline">
-            ارجع ليوم النهارده
+            عُد إلى يوم اليوم
           </button>
         )}
       </Card>
@@ -88,12 +88,12 @@ export default function TodayView({ dayIndex, currentIndex, onSelectDay }: {
         <Card className="flex flex-col sm:flex-row sm:items-center gap-3 border-sage-soft/50 bg-sage-soft/8">
           <PartyPopper size={28} className="text-gold-soft shrink-0" />
           <div className="flex-1">
-            <div className="font-semibold text-ink">اليوم خلص! 🎉</div>
-            <ArabicNote>عاش 💪 كده كفاية النهارده. لو لسه عندك طاقة، ابدأ اليوم اللي بعده، بس متتحرقش: يوم واحد كل يوم هو اللي بيعمل الفرق.</ArabicNote>
+            <div className="font-semibold text-ink">انتهى اليوم! 🎉</div>
+            <ArabicNote>أحسنت 💪 هذا يكفي اليوم. وإن بقيت لديك طاقة، فابدأ اليوم التالي، لكن لا تُنهك نفسك: يوم واحد كل يوم هو ما يصنع الفرق.</ArabicNote>
           </div>
           {next !== null && (
             <button type="button" onClick={() => onSelectDay(next)} className={primaryBtn}>
-              اليوم اللي بعده <ArrowLeft size={13} />
+              ابدأ اليوم التالي <ArrowLeft size={13} />
             </button>
           )}
         </Card>
@@ -108,7 +108,7 @@ export default function TodayView({ dayIndex, currentIndex, onSelectDay }: {
 
       {!done && next !== null && (
         <p className="text-xs text-ink-light text-center">
-          بكرة: <span lang={PLAN_DAYS[next].week?.lang ?? PLAN_DAYS[next].level.lang} dir="auto">{PLAN_DAYS[next].day.title}</span>
+          غدًا: <span lang={PLAN_DAYS[next].week?.lang ?? PLAN_DAYS[next].level.lang} dir="auto">{PLAN_DAYS[next].day.title}</span>
         </p>
       )}
     </div>

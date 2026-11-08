@@ -1,14 +1,17 @@
 import { ArrowRight } from 'lucide-react';
 import { useTranslation } from '../../i18n/useTranslation';
-import { SKILLS, SKILL_GROUPS } from '../../data/learnCatalog';
+import { SKILLS, SKILL_GROUPS, type SkillItem } from '../../data/learnCatalog';
+import { isClosedSection, useClosedSkillsAccess } from '../../lib/skillAccess';
 import { HUB_ICONS, SKILL_ICONS } from './icons';
 import { HubHeading, HubHero, SoonBadge } from './ui';
 
-/** Learn Skills: Call Center Prep and Sales Prep, and the skills still to come. */
+/** Learn Skills: the skills open now, and the ones still to come (Call Center and Sales are closed for now). */
 export default function SkillsHub({ onNavigate }: { onNavigate: (section: string) => void }) {
   const { t } = useTranslation();
-  const open = SKILLS.filter((s) => s.section);
-  const soon = SKILLS.filter((s) => !s.section);
+  const closedOpen = useClosedSkillsAccess() === true;
+  const isOpen = (s: SkillItem) => !!s.section && (closedOpen || !isClosedSection(s.section));
+  const open = SKILLS.filter(isOpen);
+  const soon = SKILLS.filter((s) => !isOpen(s));
 
   const go = (section: string) => {
     onNavigate(section);
@@ -19,33 +22,35 @@ export default function SkillsHub({ onNavigate }: { onNavigate: (section: string
     <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 space-y-6">
       <HubHero icon={HUB_ICONS.skills} title={t('learn.skills.title')} subtitle={t('learn.skills.subtitle')} />
 
-      <section aria-labelledby="learn-skills-open" className="space-y-3">
-        <HubHeading id="learn-skills-open" count={open.length}>{t('learn.openNow')}</HubHeading>
-        <div className="grid sm:grid-cols-2 gap-3">
-          {open.map((s) => {
-            const Icon = SKILL_ICONS[s.id];
-            return (
-              <button
-                key={s.id}
-                onClick={() => go(s.section!)}
-                className="group text-start rounded-2xl border border-border-subtle bg-card p-4 sm:p-5 flex flex-col gap-3 hover:border-clay-soft/40 hover:shadow-md transition-all"
-              >
-                <span className="flex items-center gap-3">
-                  <span className="w-11 h-11 shrink-0 rounded-xl bg-linear-to-br from-clay-soft/20 to-gold-soft/25 text-clay-soft-dark flex items-center justify-center">
-                    <Icon size={22} />
+      {open.length > 0 && (
+        <section aria-labelledby="learn-skills-open" className="space-y-3">
+          <HubHeading id="learn-skills-open" count={open.length}>{t('learn.openNow')}</HubHeading>
+          <div className="grid sm:grid-cols-2 gap-3">
+            {open.map((s) => {
+              const Icon = SKILL_ICONS[s.id];
+              return (
+                <button
+                  key={s.id}
+                  onClick={() => go(s.section!)}
+                  className="group text-start rounded-2xl border border-border-subtle bg-card p-4 sm:p-5 flex flex-col gap-3 hover:border-clay-soft/40 hover:shadow-md transition-all"
+                >
+                  <span className="flex items-center gap-3">
+                    <span className="w-11 h-11 shrink-0 rounded-xl bg-linear-to-br from-clay-soft/20 to-gold-soft/25 text-clay-soft-dark flex items-center justify-center">
+                      <Icon size={22} />
+                    </span>
+                    <span className="text-lg font-bold text-ink leading-tight">{t(`learn.skill.${s.id}.name`)}</span>
                   </span>
-                  <span className="text-lg font-bold text-ink leading-tight">{t(`learn.skill.${s.id}.name`)}</span>
-                </span>
-                <span className="flex-1 text-sm text-ink-light">{t(`learn.skill.${s.id}.blurb`)}</span>
-                <span className="self-start inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-clay-soft text-white text-sm font-medium group-hover:bg-clay-soft-dark transition-colors">
-                  {t('learn.open')}
-                  <ArrowRight size={15} className="rtl:rotate-180" />
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </section>
+                  <span className="flex-1 text-sm text-ink-light">{t(`learn.skill.${s.id}.blurb`)}</span>
+                  <span className="self-start inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-clay-soft text-white text-sm font-medium group-hover:bg-clay-soft-dark transition-colors">
+                    {t('learn.open')}
+                    <ArrowRight size={15} className="rtl:rotate-180" />
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       <section aria-labelledby="learn-skills-soon" className="space-y-5">
         <HubHeading id="learn-skills-soon" count={soon.length}>{t('learn.comingSoon')}</HubHeading>

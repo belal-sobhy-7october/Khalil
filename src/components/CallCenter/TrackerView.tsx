@@ -24,7 +24,7 @@ function ApplicationForm({ onAdd }: { onAdd: (a: Application) => void }) {
   const field = 'rounded-lg border border-border-subtle bg-transparent px-2.5 py-1.5 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-clay-soft/40';
   return (
     <form
-      className="grid sm:grid-cols-2 gap-2"
+      className="grid grid-cols-1 sm:grid-cols-2 gap-2"
       onSubmit={(e) => {
         e.preventDefault();
         if (!company.trim()) return;
@@ -80,7 +80,7 @@ export default function TrackerView({ onGoTab }: { onGoTab: (tab: 'voice' | 'int
   return (
     <div className="space-y-4">
       <ArabicNote>
-        سجّل كل تقديم، حتى قبل ليفل 3 (اعتبره تمرين). ولو اترفضت، اختار المرحلة اللي وقعت فيها والقسم يقولك تتدرب على إيه بالظبط. كل رفض = داتا، مش فشل.
+        سجّل كل تقديم، حتى قبل المستوى 3 (اعتبره تمرينًا). وإن رُفضت، فاختر المرحلة التي رُفضت فيها، ويخبرك القسم بما تتدرب عليه تحديدًا. كل رفض بيانات، لا فشل.
       </ArabicNote>
       <Card className="space-y-3">
         <h3 className="font-semibold text-ink">Add an application</h3>

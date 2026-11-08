@@ -19,7 +19,7 @@ export default function ListenActivity({ refId, taskId, lang, onDone }: { refId:
         <Headphones size={13} />
         <span>{item.source}</span>
         <span>·</span>
-        <span>{pick(lang, `حوالي ${item.minutes} دقيقة`, `about ${item.minutes} min`)}</span>
+        <span>{pick(lang, `نحو ${item.minutes} دقيقة`, `about ${item.minutes} min`)}</span>
         <NeedsInternet />
       </div>
       <p className="text-sm text-ink">{item.focus}</p>
@@ -47,13 +47,13 @@ export default function ListenActivity({ refId, taskId, lang, onDone }: { refId:
         </a>
       </div>
       <div className="space-y-2">
-        <div className="text-xs font-semibold text-ink-light">{pick(lang, 'بعد ما تخلص، جاوب في دفترك', 'Afterwards, answer in your notebook')}</div>
+        <div className="text-xs font-semibold text-ink-light">{pick(lang, 'بعد أن تنتهي، أجب في دفترك', 'Afterwards, answer in your notebook')}</div>
         {item.questions.map((q, i) => (
           <NoteBox key={q} noteKey={`${taskId}#${i}`} label={q} rows={2} lang={lang} />
         ))}
       </div>
       <button type="button" onClick={onDone} className={secondaryBtn}>
-        {pick(lang, 'سمعته وجاوبت', 'Listened and answered')}
+        {pick(lang, 'استمعت وأجبت', 'Listened and answered')}
       </button>
     </div>
   );

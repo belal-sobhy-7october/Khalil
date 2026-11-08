@@ -3,6 +3,7 @@ import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import type { Plugin, ResolvedConfig } from 'vite';
+import { isSeoFile } from '../src/seo/site';
 
 const TEMPLATE = path.join(path.dirname(fileURLToPath(import.meta.url)), 'sw.template.js');
 
@@ -29,7 +30,8 @@ export function offlinePlugin(): Plugin {
     },
     writeBundle(options) {
       const outDir = options.dir ?? config.build.outDir;
-      const files = listFiles(outDir).filter((f) => f !== 'sw.js' && f !== 'index.html' && !f.endsWith('.map'));
+      // The public pages for search engines (scripts/seoPlugin.ts) aren't part of the app.
+      const files = listFiles(outDir).filter((f) => f !== 'sw.js' && f !== 'index.html' && !f.endsWith('.map') && !isSeoFile(f));
       const precache = ['/', ...files.map((f) => `/${f}`)].sort();
 
       const html = fs.readFileSync(path.join(outDir, 'index.html'), 'utf8');

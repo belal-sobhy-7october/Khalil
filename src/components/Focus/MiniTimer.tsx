@@ -12,7 +12,7 @@ export default function MiniTimer() {
   const remaining = s.remaining(now);
   const progress = 1 - remaining / s.durationMs();
   return (
-    <div className="h-screen w-screen flex flex-col items-center justify-center gap-2 bg-card text-ink p-3 select-none">
+    <div className="h-svh w-screen flex flex-col items-center justify-center gap-2 bg-card text-ink p-3 select-none">
       <div className="text-xs text-ink-light">{t(`focus.phase.${s.phase}`)}{s.label ? ` · ${s.label}` : ''}</div>
       <div className="text-5xl font-bold tabular-nums tracking-tight">{formatClock(remaining)}</div>
       <div className="w-full h-1.5 bg-ink/10 rounded-full overflow-hidden">

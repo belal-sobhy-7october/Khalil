@@ -6,6 +6,7 @@ import { playChime } from '../../lib/chime';
 import { systemNotify } from '../../lib/systemNotify';
 import { useFloatingWindow } from '../../lib/floatingWindow';
 import { formatClock } from './clock';
+import { getPageTitle } from '../../lib/routes';
 import MiniTimer from './MiniTimer';
 import { createPortal } from 'react-dom';
 
@@ -44,7 +45,6 @@ export default function PomodoroEngine() {
   const userId = useAppStore((s) => s.session?.user?.id);
   const loadForUser = usePomodoroStore((s) => s.loadForUser);
   const finishing = useRef(false);
-  const originalTitle = useRef(document.title);
   const originalIcon = useRef<string | null>(null);
   const floating = useFloatingWindow((f) => f.win);
 
@@ -55,7 +55,6 @@ export default function PomodoroEngine() {
   useEffect(() => {
     const iconLink = () => document.querySelector<HTMLLinkElement>('link[rel~="icon"]');
     originalIcon.current = iconLink()?.href ?? null;
-    const baseTitle = originalTitle.current;
     let lastIconSecond = -1;
 
     const tick = async () => {
@@ -88,8 +87,9 @@ export default function PomodoroEngine() {
       const remaining = s.remaining(now);
       if (active && s.settings.titleCountdown) {
         document.title = `${s.status === 'paused' ? '⏸' : PHASE_EMOJI[s.phase]} ${formatClock(remaining)} · ${t(`focus.phase.${s.phase}`)}`;
-      } else if (document.title !== originalTitle.current) {
-        document.title = originalTitle.current;
+      } else if (document.title !== getPageTitle()) {
+        // The open page's title (lib/routes.ts), which changes with the page.
+        document.title = getPageTitle();
       }
 
       const link = iconLink();
@@ -129,7 +129,7 @@ export default function PomodoroEngine() {
       window.clearInterval(id);
       window.clearTimeout(endTimer);
       unsubscribe();
-      document.title = baseTitle;
+      document.title = getPageTitle();
       const link = iconLink();
       if (link && originalIcon.current) link.href = originalIcon.current;
     };

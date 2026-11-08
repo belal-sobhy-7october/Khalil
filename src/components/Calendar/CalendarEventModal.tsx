@@ -119,7 +119,7 @@ export default function CalendarEventModal({ event, initialDate, onSave, onDelet
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: -20 }}
-        className="bg-card border border-border-subtle rounded-2xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto"
+        className="bg-card border border-border-subtle rounded-2xl shadow-xl max-w-md w-full max-h-[90svh] overflow-y-auto"
         onClick={e => e.stopPropagation()}
       >
         <div className="p-4 md:p-6 border-b border-border-subtle flex items-center justify-between">

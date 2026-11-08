@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, lazy, Suspense } from 'react';
+import { useEffect, useRef, useState, useCallback, lazy, Suspense } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { Plus, StickyNote as StickyNoteIcon, ListTodo } from 'lucide-react';
 import {
@@ -14,28 +14,30 @@ import {
 import { supabase } from './lib/supabase';
 import { claimLocalData } from './lib/localOwner';
 import { isOnline, readStoredSession } from './lib/offline';
+import { isCrawler, isGuestSession, startGuest, takeAuthRedirectError, useGuest } from './lib/guest';
+import { guideAvailable, guideSeen, useGuide } from './lib/guide';
 import { useAppStore } from './store/appStore';
 import { useTranslation } from './i18n/useTranslation';
 import LoginPage from './components/Auth/LoginPage';
 import DashboardLayout from './components/Layout/DashboardLayout';
-import DailyFocus from './components/DailyFocus/DailyFocus';
-import DailyTodo from './components/Todo/DailyTodo';
-import WeeklyTodo from './components/Todo/WeeklyTodo';
-import BacklogTodo from './components/Todo/BacklogTodo';
+import TasksPage from './components/Home/TasksPage';
 import PomodoroEngine from './components/Focus/PomodoroEngine';
 import FocusChip from './components/Focus/FocusChip';
 import ReviewReminders from './components/Vocabulary/ReviewReminders';
-import ReviewNudge from './components/Vocabulary/ReviewNudge';
 import OfflineBanner from './components/Common/OfflineBanner';
+import AuthDialog from './components/Auth/AuthDialog';
+import { GuestBrowseBanner, GuestSavePrompt } from './components/Auth/GuestSavePrompt';
 import { HubCrumb } from './components/Learn/ui';
 import SelectionWordMenu from './components/Vocabulary/SelectionWordMenu';
 import { applyAppearance, useAppearance } from './lib/appearance';
+import { getTasksSettings } from './lib/tasksSettings';
+import { readEnglishTab, routeOf, setPageTitle, showPage, writeEnglishTab } from './lib/routes';
+import { ENGLISH_TAB_EVENT } from './lib/openReview';
+import { isClosedSection, useClosedSkillsAccess } from './lib/skillAccess';
 
 import { createStickyNote, createTodoNote } from './components/Canvas/noteFactories';
 import type { StickyNoteData, TodoNoteData } from './types';
 
-const LifePillars = lazy(() => import('./components/LifePillars/LifePillars'));
-const HabitsTracker = lazy(() => import('./components/Habits/HabitsTracker'));
 const BookmarksVault = lazy(() => import('./components/Bookmarks/BookmarksVault'));
 const NotesPanel = lazy(() => import('./components/Layout/NotesPanel'));
 const Calendar = lazy(() => import('./components/Calendar/Calendar'));
@@ -45,9 +47,55 @@ const SalesPrep = lazy(() => import('./components/Sales/SalesPrep'));
 const LanguagesHub = lazy(() => import('./components/Learn/LanguagesHub'));
 const SkillsHub = lazy(() => import('./components/Learn/SkillsHub'));
 const FocusSection = lazy(() => import('./components/Focus/FocusSection'));
-const WirdSection = lazy(() => import('./components/Wird/WirdSection'));
 const AnalyticsSection = lazy(() => import('./components/Analytics/AnalyticsSection'));
 const SettingsSection = lazy(() => import('./components/Settings/SettingsSection'));
+const GuideTour = lazy(() => import('./components/Guide/GuideTour'));
+const HelpAssistant = lazy(() => import('./components/Help/HelpAssistant'));
+
+const SECTION_KEY = 'khalil-active-section';
+
+/** Old sections that are now parts of the tasks page. */
+const PAGE_PARTS: Record<string, string> = { wird: 'todo', life: 'todo' };
+
+/** The page a section id opens (the wird and the habits open the tasks page). */
+function resolveSection(section: string): string {
+  return PAGE_PARTS[section] ?? section;
+}
+
+/**
+ * The page Khalil opens on: the one its address names (/focus, a reload, a
+ * bookmark); else the tasks page, unless this browser tab was on another page
+ * or the settings say "the last page".
+ */
+function initialSection(): string {
+  if (typeof window === 'undefined') return 'todo';
+  const route = routeOf(window.location.pathname);
+  if (route) {
+    if (route.tab) writeEnglishTab(route.tab);
+    return route.section;
+  }
+  let stored: string | null = null;
+  try {
+    stored = sessionStorage.getItem(SECTION_KEY) ?? (getTasksSettings().startup === 'last' ? localStorage.getItem(SECTION_KEY) : null);
+  } catch {
+    // storage blocked: open on the tasks page
+  }
+  // The learning path moved into the English hub.
+  if (stored === 'path') {
+    writeEnglishTab('path');
+    return 'vocabulary';
+  }
+  return stored ? resolveSection(stored) : 'todo';
+}
+
+function rememberSection(section: string) {
+  try {
+    sessionStorage.setItem(SECTION_KEY, section);
+    localStorage.setItem(SECTION_KEY, section);
+  } catch {
+    // storage blocked: the page just isn't remembered
+  }
+}
 
 function App() {
   const language = useAppStore((s) => s.language);
@@ -57,19 +105,7 @@ function App() {
   const setSession = useAppStore((s) => s.setSession);
   const loadUserData = useAppStore((s) => s.loadUserData);
   const { isRTL, t } = useTranslation();
-  const [activeSection, setActiveSection] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('khalil-active-section');
-      // The learning path moved into the English hub.
-      if (stored === 'path') {
-        localStorage.setItem('khalil-english-tab', 'path');
-        return 'vocabulary';
-      }
-      if (stored) return stored;
-    }
-    return 'todo';
-  });
-  const [lifeView, setLifeView] = useState<'tracking' | 'habits'>('habits');
+  const [activeSection, setActiveSection] = useState(initialSection);
   const stickyNotes = useAppStore((s) => s.stickyNotes);
   const todoNotes = useAppStore((s) => s.todoNotes);
   const addStickyNoteStore = useAppStore((s) => s.addStickyNote);
@@ -83,6 +119,11 @@ function App() {
   const appError = useAppStore((s) => s.error);
   const clearAppError = useAppStore((s) => s.clearError);
   const [menuOpen, setMenuOpen] = useState(false);
+  const browsing = useGuest((g) => g.browsing);
+  const guest = !!session && isGuestSession(session);
+  // In the app (signed in, a guest, or browsing with no account), not on the welcome page.
+  const inApp = !!session || browsing;
+  const touring = useGuide((g) => g.active);
 
   const { refs, floatingStyles, context } = useFloating({
     placement: isRTL ? 'left-start' : 'right-start',
@@ -166,6 +207,7 @@ function App() {
     let sessionResolved = false;
     // Showing the session saved on this device while there is no internet.
     let usingStored = false;
+    let guestStarting = false;
 
     // Another account's local copy must not show or upload: clear it and start fresh.
     const switchedAccount = (session: Session | null) => {
@@ -190,12 +232,41 @@ function App() {
       });
     };
 
+    // No account: open Khalil as a guest (lib/guest.ts). Search engines get the
+    // welcome page; with no guest account (switched off, or no internet) the
+    // visitor browses and nothing is saved until they sign in.
+    const openAsGuest = () => {
+      if (isCrawler()) {
+        useAppStore.setState({ isLoading: false });
+        return;
+      }
+      const browse = () => {
+        useGuest.setState({ browsing: true });
+        useAppStore.setState({ isLoading: false });
+      };
+      if (!isOnline()) return browse();
+      if (guestStarting) return;
+      guestStarting = true;
+      // The spinner, not the welcome page, while the guest account opens (e.g. right after signing out).
+      useAppStore.setState({ isLoading: true });
+      void startGuest().then((ok) => {
+        guestStarting = false;
+        // Signed in: onAuthStateChange shows the guest's session.
+        if (!ok) browse();
+      });
+    };
+
     const showSession = (session: Session | null) => {
       if (switchedAccount(session)) return;
       setSession(session);
-      if (session) loadData();
-      else useAppStore.setState({ isLoading: false });
+      if (session) {
+        useGuest.setState({ browsing: false });
+        loadData();
+      } else openAsGuest();
     };
+
+    // Back from Google with that account already used by another Khalil account.
+    if (takeAuthRedirectError() === 'identity_already_exists') useGuest.getState().openDialog('exists');
 
     // With no internet, supabase-js retries refreshing an expired token for
     // ~30s and then reports no session, which would show the login page. The
@@ -237,7 +308,11 @@ function App() {
     // Back online: refreshing the saved session also loads the data.
     const onOnline = () => {
       void supabase.auth.getSession().then(({ data: { session } }) => {
-        if (!session) return;
+        if (!session) {
+          // Browsing with no account because there was no internet: try a guest account now.
+          if (useGuest.getState().browsing) openAsGuest();
+          return;
+        }
         usingStored = false;
         showSession(session);
       });
@@ -251,11 +326,76 @@ function App() {
     };
   }, [loadUserData, setSession]);
 
+  // Signed in, the address the app opened on becomes the open page's (the root
+  // and an unknown address become /tasks, or the page this tab was on). The
+  // sign-in page keeps its address: the root stays the one search engines know.
+  const addressShown = useRef(false);
+  useEffect(() => {
+    if (!inApp || addressShown.current) return;
+    addressShown.current = true;
+    showPage(activeSection, activeSection === 'vocabulary' ? readEnglishTab() : undefined, true);
+    rememberSection(activeSection);
+    // Only once: later pages are shown by handleSectionChange and Back.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [inApp]);
+
+  // Back and Forward: open the page the address names.
+  useEffect(() => {
+    const onPop = () => {
+      const route = routeOf(window.location.pathname);
+      const section = route?.section ?? 'todo';
+      if (route?.tab) {
+        writeEnglishTab(route.tab);
+        window.dispatchEvent(new CustomEvent(ENGLISH_TAB_EVENT, { detail: route.tab }));
+      }
+      setActiveSection(section);
+      rememberSection(section);
+    };
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, []);
+
+  // Call Center and Sales are closed for now (src/lib/skillAccess.ts): for
+  // other accounts their address shows Learn Skills, and the address says so.
+  const closedOpen = useClosedSkillsAccess();
+  const closedHere = isClosedSection(activeSection) && closedOpen !== true;
+  useEffect(() => {
+    if (!inApp || !closedHere || closedOpen !== false) return;
+    showPage('skills', undefined, true);
+    rememberSection('skills');
+  }, [inApp, closedHere, closedOpen]);
+
+  // The tab's title names the open page ("التركيز — خليل"); the sign-in page keeps the app's name.
+  useEffect(() => {
+    const names: Record<string, string> = {
+      todo: t('nav.todo'),
+      focus: t('nav.focus'),
+      languages: t('nav.languages'),
+      skills: t('nav.skills'),
+      calendar: t('nav.calendar'),
+      bookmarks: t('nav.bookmarks'),
+      analytics: t('nav.analytics'),
+      settings: t('nav.settings'),
+      vocabulary: t('learn.language.english.name'),
+      callcenter: t('learn.skill.callCenter.name'),
+      sales: t('learn.skill.sales.name'),
+    };
+    const name = names[closedHere ? 'skills' : activeSection];
+    setPageTitle(inApp && name ? `${name} — ${t('app.title')}` : null);
+  }, [activeSection, closedHere, inApp, t]);
+
   const handleSectionChange = useCallback((section: string) => {
-    setActiveSection(section);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('khalil-active-section', section);
-    }
+    const target = resolveSection(section);
+    setActiveSection(target);
+    rememberSection(target);
+    showPage(target, target === 'vocabulary' ? readEnglishTab() : undefined);
+    // The wird and the habits are parts of the tasks page: jump to them there.
+    // Any other page opens at its top.
+    window.setTimeout(() => {
+      const anchor = section !== target ? document.getElementById(`section-${section}`) : null;
+      if (anchor) anchor.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      else window.scrollTo({ top: 0 });
+    }, 50);
   }, []);
 
   // Other components (e.g. the account menu) can ask to open a section.
@@ -276,7 +416,7 @@ function App() {
     );
   }
 
-  if (!session) {
+  if (!inApp) {
     return <LoginPage />;
   }
 
@@ -285,7 +425,7 @@ function App() {
       <DashboardLayout
         activeSection={activeSection}
         onSectionChange={handleSectionChange}
-        allowFullWidth={['calendar', 'bookmarks', 'languages', 'skills', 'vocabulary', 'callcenter', 'sales', 'focus', 'wird', 'analytics', 'settings'].includes(activeSection)}
+        allowFullWidth={['calendar', 'bookmarks', 'languages', 'skills', 'vocabulary', 'callcenter', 'sales', 'focus', 'analytics', 'settings'].includes(activeSection)}
         notesSlot={
           <Suspense fallback={null}>
             <NotesPanel
@@ -310,6 +450,7 @@ function App() {
           </div>
         )}
         <OfflineBanner />
+        {browsing && <GuestBrowseBanner />}
         <SelectionWordMenu />
         {activeSection === 'calendar' ? (
           <Suspense fallback={
@@ -333,14 +474,13 @@ function App() {
           }>
             <BookmarksVault />
           </Suspense>
-        ) : ['focus', 'wird', 'analytics', 'settings'].includes(activeSection) ? (
+        ) : ['focus', 'analytics', 'settings'].includes(activeSection) ? (
           <Suspense fallback={
             <div className="min-h-screen flex items-center justify-center">
               <div className="w-8 h-8 border-2 border-clay-soft border-t-transparent rounded-full animate-spin" />
             </div>
           }>
             {activeSection === 'focus' && <FocusSection />}
-            {activeSection === 'wird' && <WirdSection />}
             {activeSection === 'analytics' && <AnalyticsSection onNavigate={handleSectionChange} />}
             {activeSection === 'settings' && <SettingsSection />}
           </Suspense>
@@ -351,8 +491,13 @@ function App() {
             </div>
           }>
             {activeSection === 'languages' && <LanguagesHub onNavigate={handleSectionChange} />}
-            {activeSection === 'skills' && <SkillsHub onNavigate={handleSectionChange} />}
-            {(activeSection === 'callcenter' || activeSection === 'sales') && (
+            {(activeSection === 'skills' || (closedHere && closedOpen === false)) && <SkillsHub onNavigate={handleSectionChange} />}
+            {closedHere && closedOpen === null && (
+              <div className="min-h-screen flex items-center justify-center">
+                <div className="w-8 h-8 border-2 border-clay-soft border-t-transparent rounded-full animate-spin" />
+              </div>
+            )}
+            {isClosedSection(activeSection) && closedOpen === true && (
               <>
                 <HubCrumb section={activeSection} onNavigate={handleSectionChange} />
                 {activeSection === 'sales' ? <SalesPrep /> : <CallCenterPrep />}
@@ -372,58 +517,23 @@ function App() {
             <EnglishHub />
           </Suspense>
         ) : (
-          <>
-            <div className={`space-y-8 canvas-area max-w-[1800px] mx-auto`} style={{ position: 'relative' }}>
-              <div>
-                <DailyFocus />
-                <ReviewNudge />
-              </div>
-
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-                <div>
-                  <DailyTodo />
-                </div>
-                <div>
-                  <WeeklyTodo />
-                </div>
-              </div>
-
-              <div>
-                <BacklogTodo />
-              </div>
-
-              <Suspense fallback={<div className="h-32" />}>
-                <section id="section-life">
-                  <div className="space-y-8">
-                    <div className="flex items-center gap-2 mb-4">
-                      <button
-                        onClick={() => setLifeView('habits')}
-                        className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                          lifeView === 'habits' ? 'bg-clay-soft text-white' : 'bg-ink/5 text-ink-light hover:bg-ink/10'
-                        }`}
-                      >
-                        {t('habits.toggleHabits')}
-                      </button>
-                      <button
-                        onClick={() => setLifeView('tracking')}
-                        className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                          lifeView === 'tracking' ? 'bg-clay-soft text-white' : 'bg-ink/5 text-ink-light hover:bg-ink/10'
-                        }`}
-                      >
-                        {t('habits.toggleTracking')}
-                      </button>
-                    </div>
-                    {lifeView === 'tracking' ? <LifePillars /> : <HabitsTracker />}
-                  </div>
-                </section>
-              </Suspense>
-            </div>
-          </>
+          <TasksPage />
         )}
       </DashboardLayout>
 
       <PomodoroEngine />
       <ReviewReminders />
+      <AuthDialog />
+      {guest && <GuestSavePrompt />}
+      <GuideAutoStart enabled={guest || browsing || isNewAccount(session)} />
+      {touring && (
+        <Suspense fallback={null}>
+          <GuideTour onNavigate={handleSectionChange} />
+        </Suspense>
+      )}
+      <Suspense fallback={null}>
+        <HelpAssistant />
+      </Suspense>
       {activeSection !== 'focus' && <FocusChip onOpen={() => handleSectionChange('focus')} />}
 
       <div
@@ -464,12 +574,30 @@ function App() {
           menuOpen ? 'rotate-45' : ''
         }`}
         aria-label={t('notes.addMenu')}
+        data-guide="add-note"
         {...getReferenceProps()}
       >
         <Plus size={22} />
       </button>
     </>
   );
+}
+
+/** An account made in the last few days (signed up with Google, maybe never a guest here). */
+function isNewAccount(session: Session | null): boolean {
+  const created = Date.parse(session?.user?.created_at ?? '');
+  return Number.isFinite(created) && Date.now() - created < 3 * 24 * 60 * 60 * 1000;
+}
+
+/** A new guest or a new account gets Khalil's tour once in this browser, a moment after the page opens. */
+function GuideAutoStart({ enabled }: { enabled: boolean }) {
+  const start = useGuide((g) => g.start);
+  useEffect(() => {
+    if (!enabled || guideSeen() || !guideAvailable()) return;
+    const timer = window.setTimeout(start, 900);
+    return () => window.clearTimeout(timer);
+  }, [enabled, start]);
+  return null;
 }
 
 export default App;

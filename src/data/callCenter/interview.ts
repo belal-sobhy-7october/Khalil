@@ -30,7 +30,7 @@ export const QUESTIONS: InterviewQuestion[] = [
       "I'm a software developer from Cairo. For the last three years, I've worked mostly as a freelancer, building websites and apps for clients in different countries, so I use English every day. A big part of my work has always been support: when something breaks, I'm the one clients call, and I've learned to explain technical problems in simple words. I really enjoy that moment when a frustrated user says, \"It works!\" That's why I'm applying for a technical support role. I'm patient, I learn new tools quickly, and I'm flexible with shifts.",
     phrases: ["For the last three years, I've…", 'A big part of my work has been…', "That's why I'm applying for…", "I'm patient, and I learn new tools quickly."],
     mistakes: ['Reading your CV out loud (every date, course and job).', 'Starting with "My name is…, I am 25 years old, I live with my family…"', 'Talking for three minutes with no clear ending.'],
-    tipAr: 'ابدأ بإنت مين دلوقتي، وبعدين عملت إيه، وخلّص بليه عاوز الشغلانة دي. دقيقة ونص بالكتير.',
+    tipAr: 'ابدأ بمن أنت الآن، ثم بما فعلته، واختم بسبب رغبتك في هذه الوظيفة. دقيقة ونصف على الأكثر.',
   },
   {
     id: 'why-call-center',
@@ -86,7 +86,7 @@ export const QUESTIONS: InterviewQuestion[] = [
       "Sometimes I speak too fast when I'm excited about a topic, especially in English. I noticed it when I recorded myself, so now I practice every day: I record short answers, check my speed and pause after each idea. It's already much better, and on calls I make a point of slowing down for names, numbers and steps.",
     phrases: ['Sometimes I…', 'I noticed it when…', 'So now I…', "It's already much better."],
     mistakes: ['"I\'m a perfectionist" or "I work too hard".', 'A weakness that kills the job: "I get angry quickly".', 'No plan to improve.'],
-    tipAr: 'اختار عيب حقيقي بس صغير، وقول بتعمل إيه عشان تحسنه.',
+    tipAr: 'اختر عيبًا حقيقيًا لكنه صغير، واذكر ما تفعله لتحسينه.',
   },
   {
     id: 'why-our-company',
@@ -98,7 +98,7 @@ export const QUESTIONS: InterviewQuestion[] = [
       "I read that you opened a new center in Cairo for a big telecom client's technical support, and that's exactly the kind of work I want to do. You're known for strong training, and I like that you promote people from inside to Tier 2 and team leader roles. I want a company where I can learn fast and grow, not just a job for a few months.",
     phrases: ['I read that you…', "That's exactly the kind of work I want to do.", "You're known for…"],
     mistakes: ['"Because you\'re a big company."', 'Knowing nothing about the company or its clients.'],
-    tipAr: 'قبل أي انترفيو دوّر على الشركة: عندها أكونتات إيه؟ فتحت فرع جديد؟ جملة واحدة حقيقية بتفرق جداً.',
+    tipAr: 'قبل أي مقابلة ابحث عن الشركة: ما حساباتها؟ هل فتحت فرعًا جديدًا؟ جملة واحدة حقيقية تصنع فرقًا كبيرًا.',
   },
   {
     id: 'why-hire-you',
@@ -142,7 +142,7 @@ export const QUESTIONS: InterviewQuestion[] = [
       "I'm flexible. I know salaries depend on the account and the English level, so I'd be happy to hear the range for this position. What matters most to me is the training and the chance to grow. If you need a number, based on my research, I'd expect something within the standard range for a B2 tech support account.",
     phrases: ["I'm flexible.", "I'd be happy to hear the range…", 'What matters most to me is…'],
     mistakes: ['A very high number with no reason.', '"Anything is fine" (it sounds desperate).'],
-    tipAr: 'متقولش رقم الأول. ولو أصرّوا، قول range واقعي للمستوى والأكونت.',
+    tipAr: 'لا تذكر رقمًا أولًا. وإن أصرّوا، فاذكر نطاقًا واقعيًا يناسب المستوى والحساب.',
   },
   {
     id: 'shifts',
@@ -252,7 +252,7 @@ export const QUESTIONS: InterviewQuestion[] = [
     answer: "I've completed my military service. (Or: I'm exempted from military service. Or: My military service is postponed until 2027, and I have the official papers.)",
     phrases: ["I've completed my military service.", "I'm exempted from military service.", 'My military service is postponed until…'],
     mistakes: ['A long, nervous explanation.', 'Not knowing the English words.'],
-    tipAr: 'جاوب في جملة واحدة: completed أو exempted أو postponed.',
+    tipAr: 'أجب بجملة واحدة: completed أو exempted أو postponed.',
   },
   {
     id: 'overqualified',
@@ -264,7 +264,7 @@ export const QUESTIONS: InterviewQuestion[] = [
       "My programming background definitely helps: I'll understand technical issues faster and learn your systems quickly. But I'm not applying by accident. I've found that what I enjoy most is helping people directly, and support gives me that every day. I'm looking for a long-term career here: starting with this role, getting really good at it, and growing into Tier 2 or a team leader position.",
     phrases: ['My background definitely helps…', "I'm not applying by accident.", "I'm looking for a long-term career here."],
     mistakes: ['Saying "it\'s just for now".', 'Talking down the job: "it\'s easy for me".'],
-    tipAr: 'متقولش «هي فترة وهمشي». قول إن خلفيتك ميزة وإنك ناوي تكبر جوه الشركة.',
+    tipAr: 'لا تقل «هي فترة وسأرحل». قل إن خلفيتك ميزة، وإنك تنوي أن تكبر داخل الشركة.',
   },
   {
     id: 'programmer-why-support',
@@ -443,7 +443,7 @@ export const QUESTIONS: InterviewQuestion[] = [
       'A router is like a post office for your home internet. The internet comes into your home through one cable, and the router sends it to all your devices, your phone, your laptop and your TV, so everyone can use it at the same time.',
     phrases: ["It's like…", '…so everyone can use it at the same time.'],
     mistakes: ['Using words like "packets", "IP" or "NAT".', 'A long technical lecture.'],
-    tipAr: 'ده أهم سؤال ليك كمبرمج: اشرح من غير ولا مصطلح، كأنك بتكلم مامتك.',
+    tipAr: 'هذا أهم سؤال لك بصفتك مبرمجًا: اشرح دون أي مصطلح، كأنك تكلم أمك.',
   },
   {
     id: 'troubleshooting-approach',

@@ -86,7 +86,7 @@ describe('LearningPathSection', () => {
     render(<LearningPathSection onOpenTab={onOpenTab} />);
     await act(async () => {}); // the saved values load first
     expectNoRawKeys();
-    expect(screen.getAllByText(language === 'en' ? /around 2h a day/ : /حوالي 2 ساعة في اليوم/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(language === 'en' ? /around 2h a day/ : /نحو 2 ساعة في اليوم/).length).toBeGreaterThan(0);
     fireEvent.click(screen.getByRole('button', { name: language === 'en' ? 'Start day 1' : 'ابدأ اليوم الأول' }));
     await waitFor(() => expect(lastSaved<PathState>(PATH_KV_KEY)?.startedAt).toBe(today));
     expect(lastSaved<PathState>(PATH_KV_KEY)?.settings).toEqual(defaultSettings());
@@ -226,14 +226,28 @@ describe('LearningPathSection', () => {
     await waitFor(() => expect(lastSaved<PathState>(PATH_KV_KEY)?.notes[key]).toBe('I enjoy reading.'), { timeout: 2000 });
   });
 
-  it('shows the 90-day plan from the settings and changes with them', async () => {
+  it('shows what each section covers from the settings, and changes with them', async () => {
     serve({ [PATH_KV_KEY]: started() });
     render(<LearningPathSection onOpenTab={onOpenTab} />);
-    const plan = await screen.findByRole('region', { name: 'The 90-day plan' });
+    const plan = await screen.findByRole('region', { name: 'What each section covers' });
     expect(within(plan).getAllByText(/VOA Learning English · America's National Parks/).length).toBeGreaterThan(0);
     fireEvent.click(screen.getAllByRole('radio', { name: /Ibrahim Adel/ })[0]);
     await waitFor(() => expect(lastSaved<PathState>(PATH_KV_KEY)?.settings.listening).toBe('ibrahim-adel'));
     expect(within(plan).getAllByText(/Ibrahim Adel · Listening Course — Level 1/).length).toBeGreaterThan(0);
+  });
+
+  it('sets every section from your level, and the day\'s topic starts there', async () => {
+    serve({ [PATH_KV_KEY]: started() });
+    render(<LearningPathSection onOpenTab={onOpenTab} />);
+    await screen.findByRole('region', { name: 'What each section covers' }); // the started path has loaded
+    fireEvent.click(screen.getByRole('button', { name: /^C1/ }));
+    await waitFor(() =>
+      expect(lastSaved<PathState>(PATH_KV_KEY)?.settings).toMatchObject({ level: 'C1', listeningLevel: 'advanced', readingLevel: 'C1', shadowingLevel: 'B2' })
+    );
+    // No end date: the day grid pages through the weeks.
+    expect(screen.getByText('Weeks 1–12')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Later weeks' }));
+    expect(screen.getByText('Weeks 13–24')).toBeInTheDocument();
   });
 
   it('starts over without losing the settings', async () => {

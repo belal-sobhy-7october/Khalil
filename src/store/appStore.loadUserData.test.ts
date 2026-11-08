@@ -39,13 +39,16 @@ function makeHabitEntryRows(count: number, startIndex: number) {
   });
 }
 
+// What loads table by table when the database has no app_startup (lib/startup.ts).
 const CORE_TABLES = [
-  'daily_focus', 'todos', 'life_categories', 'sub_tracks', 'sub_track_entries',
-  'bookmark_categories', 'bookmarks', 'habits', 'habit_entries', 'daily_mood',
-  'calendar_events', 'sticky_notes', 'todo_notes',
+  'daily_focus', 'todos', 'life_categories', 'sub_tracks', 'habits', 'habit_entries',
+  'vocabulary_categories', 'vocabulary_items', 'sticky_notes', 'todo_notes',
 ];
 
 beforeEach(() => {
+  mockSupabase.from.mockClear();
+  mockSupabase.rpc.mockReset();
+  mockSupabase.rpc.mockResolvedValue({ data: null, error: { code: 'PGRST202', message: 'Could not find the function' } });
   useAppStore.setState({
     session,
     habitEntries: [], dailyMoods: [], calendarEvents: [], subTrackEntries: [],
@@ -84,7 +87,7 @@ describe('loadUserData pagination', () => {
     const rows = makeHabitEntryRows(3, 0);
     const tables: Record<string, ReturnType<typeof createTableQuery>> = {};
     for (const table of CORE_TABLES) {
-      tables[table] = table === 'calendar_events'
+      tables[table] = table === 'habit_entries'
         ? createTableQuery(() => ({ data: rows, error: null }))
         : emptyTableQuery();
     }
@@ -92,7 +95,7 @@ describe('loadUserData pagination', () => {
 
     await useAppStore.getState().loadUserData();
 
-    expect(tables.calendar_events.range).toHaveBeenCalledTimes(1);
+    expect(tables.habit_entries.range).toHaveBeenCalledTimes(1);
   });
 
   it('logs a dev warning once a table grows past a single PostgREST page', async () => {
@@ -131,7 +134,7 @@ describe('loadUserData error surfacing', () => {
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     const tables: Record<string, ReturnType<typeof createTableQuery>> = {};
     for (const table of CORE_TABLES) {
-      tables[table] = table === 'calendar_events'
+      tables[table] = table === 'habit_entries'
         ? createTableQuery(() => ({ data: null, error: { message: 'connection reset' } }))
         : emptyTableQuery();
     }
@@ -140,7 +143,7 @@ describe('loadUserData error surfacing', () => {
     await useAppStore.getState().loadUserData();
 
     expect(useAppStore.getState().error).toBe('errors.loadUserDataPartial');
-    expect(useAppStore.getState().calendarEvents).toEqual([]);
+    expect(useAppStore.getState().habitEntries).toEqual([]);
     errorSpy.mockRestore();
   });
 
@@ -155,5 +158,78 @@ describe('loadUserData error surfacing', () => {
     await useAppStore.getState().loadUserData();
 
     expect(useAppStore.getState().error).toBeNull();
+  });
+});
+
+describe('loadUserData with the startup request', () => {
+  const today = new Date().toISOString().slice(0, 10);
+  const startup = {
+    now: '2026-10-25T10:00:00.000Z',
+    full: true,
+    focus: [{ text: 'Focus', date: '2000-01-01' }],
+    todos: [
+      { id: 't1', gate: 'daily', text: 'A', completed: false, priority: 'medium', date: today, sort_order: 0 },
+      { id: 't2', gate: 'backlog', text: 'B', completed: false, priority: 'medium', sort_order: 1 },
+    ],
+    life_categories: [], sub_tracks: [],
+    habits: [{ id: 'h1', name: 'Read', icon: 'star', sort_order: 0 }],
+    vocabulary_categories: [],
+    sticky_notes: [{ id: 'n1', title: '', text: 'note', sort_order: 0 }],
+    todo_notes: [],
+    kv: { 'tasks-settings': { x: 1 } },
+    words: [{ id: 'w1', word: 'bargain', type: 'word', definition: 'd', created_at: '2026-01-01T00:00:00Z' }],
+    srs: [],
+    habit_entries: [{ id: 'e1', habit_id: 'h1', date: '2026-10-24' }],
+    wird: [],
+    deleted: [],
+  };
+
+  it('opens with one request and no table reads', async () => {
+    mockSupabase.rpc.mockResolvedValue({ data: startup, error: null });
+    const from = mockSupabase.from.mockImplementation(() => emptyTableQuery());
+
+    await useAppStore.getState().loadUserData();
+
+    const s = useAppStore.getState();
+    expect(mockSupabase.rpc).toHaveBeenCalledTimes(1);
+    expect(from).not.toHaveBeenCalled();
+    expect(s.dailyTodos.map((t) => t.id)).toEqual(['t1']);
+    expect(s.backlogTodos.map((t) => t.id)).toEqual(['t2']);
+    expect(s.habitEntries).toEqual([{ id: 'e1', habitId: 'h1', date: '2026-10-24' }]);
+    expect(s.vocabularyItems.map((w) => w.word)).toEqual(['bargain']);
+    expect(s.stickyNotes.map((n) => n.text)).toEqual(['note']);
+    // Yesterday's focus isn't today's.
+    expect(s.dailyFocus.text).toBe('');
+    expect(s.error).toBeNull();
+  });
+
+  it('loads table by table when the database has no app_startup yet', async () => {
+    const tables: Record<string, ReturnType<typeof createTableQuery>> = {};
+    for (const table of CORE_TABLES) tables[table] = emptyTableQuery();
+    tables.habit_entries = createTableQuery(() => ({ data: makeHabitEntryRows(2, 0), error: null }));
+    mockSupabase.from.mockImplementation((table: string) => tables[table] ?? emptyTableQuery());
+
+    await useAppStore.getState().loadUserData();
+
+    expect(useAppStore.getState().habitEntries).toHaveLength(2);
+    expect(mockSupabase.from).not.toHaveBeenCalledWith('calendar_events');
+    expect(mockSupabase.from).not.toHaveBeenCalledWith('bookmarks');
+    expect(useAppStore.getState().error).toBeNull();
+  });
+});
+
+describe('pages that load their own data', () => {
+  it('loads the calendar and keeps an event added while it was loading', async () => {
+    useAppStore.setState({ calendarEvents: [] });
+    const table = createTableQuery(() => {
+      // Added on this device while the request was on its way.
+      useAppStore.setState({ calendarEvents: [{ id: 'new' } as never] });
+      return { data: [{ id: 'c1', title: 'Exam', date: '2026-10-26' }], error: null };
+    });
+    mockSupabase.from.mockImplementation(() => table);
+
+    await useAppStore.getState().loadCalendarEvents();
+
+    expect(useAppStore.getState().calendarEvents.map((e) => e.id)).toEqual(['c1', 'new']);
   });
 });

@@ -33,7 +33,7 @@ export default function VoiceStudioView() {
     <div className="space-y-4">
       <Card className="space-y-2">
         <h3 className="font-semibold text-ink">Before you record: the recruiter's checklist</h3>
-        <ArabicNote>الـ voice note هو أول فلتر، وغالباً ده اللي وقّعك قبل كده. سجّل، اسمع، صلّح، وسجّل تاني. ابعت أحسن take، مش أول واحد.</ArabicNote>
+        <ArabicNote>الرسالة الصوتية أول مرشِّح، وغالبًا هي ما أسقطك من قبل. سجّل، واستمع، وصحّح، ثم سجّل مرة أخرى. أرسل أفضل تسجيل، لا أوله.</ArabicNote>
         <ul className="grid sm:grid-cols-2 gap-x-6 gap-y-1 text-sm text-ink">
           {CHECKLIST.map((c) => (
             <li key={c} className="flex gap-2">

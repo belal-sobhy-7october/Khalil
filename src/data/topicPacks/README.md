@@ -1,9 +1,9 @@
 # How to add a topic (topic pack)
 
-> **ملخص بالعربي:** كل توبيك في خليل درس كامل ماشي بنفس طريقة سلايدز الكورس بتاع صاحب التطبيق:
-> تسخين ← ١٢ كلمة (بمعناها في الموضوع ده ومثال في نفس السياق) ← قاعدة جرامر واحدة ← أسئلة نقاش ← مهمة كلام دقيقة ← براجراف.
-> التوبيكات من A1 لـ C1، وبعضها بيرجع لتوبيك قديم في مستوى أعلى. كل كلمة متراجعة على قاموس Cambridge
-> (المستوى والمعنى)، والتعريف مكتوب بأسلوبنا من المعنى ده. التوبيكات جوه الكود نفسه، فبتشتغل من غير نت.
+> **ملخص بالعربية:** كل موضوع في خليل درس كامل يسير على طريقة شرائح الدورة التي يدرسها صاحب التطبيق:
+> تمهيد ← ١٢ كلمة (بمعناها في هذا الموضوع ومثال من السياق نفسه) ← قاعدة نحوية واحدة ← أسئلة نقاش ← مهمة كلام مدتها دقيقة ← فقرة.
+> المواضيع من A1 إلى C1، وبعضها يعود إلى موضوع سابق بمستوى أعلى. كل كلمة مراجَعة على قاموس Cambridge
+> (المستوى والمعنى)، والتعريف مكتوب بأسلوبنا من ذلك المعنى. المواضيع داخل الكود نفسه، فتعمل دون إنترنت.
 
 This is the guide for anyone (human or agent) adding a topic to Khalil's **Topic Library**
 (`TopicLibraryModal`) and the Learning Path. Follow it exactly: people study these lessons
@@ -88,7 +88,10 @@ Rules, all of them important:
 6. **Mix**: mostly nouns, verbs and adjectives that let you *discuss* the topic, plus at least **one
    phrasal verb**, and from B2 on at least **one idiom** (the test checks). 11–16 items.
 7. **No word may appear in two packs** (the test checks, case-insensitive).
-8. **English only** inside packs (no Arabic letters; the test checks).
+8. **English only** inside packs (no Arabic letters; the test checks). The Arabic lives in
+   `arabic.ts`: add the topic's Arabic name to `TOPIC_TITLES_AR` and each word's meaning in this
+   topic to `MEANINGS_AR` (short Fusha; the test checks that none is missing). The public Arabic
+   page of the topic shows them.
 9. Write the word in its base form. Spell out `someone` / `something` (`meet someone halfway`),
    don't use `sb` / `sth`. Avoid `/` alternatives.
 10. Use **American English**: the spelling (neighbor, color, practice as a verb, organize, traveling,

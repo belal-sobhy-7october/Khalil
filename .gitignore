@@ -27,3 +27,6 @@ dist-ssr
 backup_before_migrations_*.sql
 e2e-shots/
 __pycache__/
+# The load test's outputs (scripts/load)
+scripts/load/recorded.json
+scripts/load/results*.json

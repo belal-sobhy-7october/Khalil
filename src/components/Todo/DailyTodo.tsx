@@ -15,6 +15,11 @@ import { DndContext, closestCenter, PointerSensor, TouchSensor, useSensor, useSe
 import type { DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
 import { SortableTodoItem } from './SortableTodoItem';
+import { useArrangedTasks } from './useArrangedTasks';
+import HiddenDone from './HiddenDone';
+import TodayRecurring from './TodayRecurring';
+import { useTodayRows } from './useTodayRows';
+import { useTasksSettings } from '../../lib/tasksSettings';
 import { useAppStore } from '../../store/appStore';
 import { useTranslation } from '../../i18n/useTranslation';
 import { priorityColors } from '../../constants/priorityColors';
@@ -23,6 +28,11 @@ import type { Priority, DailyTodo as DailyTodoType } from '../../types';
 export default function DailyTodo() {
   const { t, isRTL } = useTranslation();
   const todos = useAppStore((s) => s.dailyTodos);
+  // Finished tasks stay, sink or hide, as the settings say (hidden ones are listed under "Finished").
+  const { shown, hidden } = useArrangedTasks(todos);
+  // Today's wird items and due habits, ticked here and in their own sections alike.
+  const todayRows = useTodayRows();
+  const [{ recurringPosition }] = useTasksSettings();
   const addTodo = useAppStore((s) => s.addDailyTodo);
   const toggleTodo = useAppStore((s) => s.toggleDailyTodo);
   const removeTodo = useAppStore((s) => s.removeDailyTodo);
@@ -58,14 +68,14 @@ export default function DailyTodo() {
   const handleDragEnd = useCallback((event: DragEndEvent) => {
     const { active, over } = event;
     if (over && active.id !== over.id) {
-      const oldIndex = todos.findIndex((t) => t.id === active.id);
-      const newIndex = todos.findIndex((t) => t.id === over.id);
-      const newOrder = arrayMove(todos, oldIndex, newIndex);
-      reorderDailyTodos(newOrder.map((t) => t.id));
+      const oldIndex = shown.findIndex((t) => t.id === active.id);
+      const newIndex = shown.findIndex((t) => t.id === over.id);
+      const newOrder = arrayMove(shown, oldIndex, newIndex);
+      reorderDailyTodos([...newOrder, ...hidden].map((t) => t.id));
     }
-  }, [todos, reorderDailyTodos]);
+  }, [shown, hidden, reorderDailyTodos]);
 
-  const itemIds = useMemo(() => todos.map((t) => t.id), [todos]);
+  const itemIds = useMemo(() => shown.map((t) => t.id), [shown]);
 
   return (
     <section id="section-todo">
@@ -93,7 +103,7 @@ export default function DailyTodo() {
               onKeyDown={handleKeyDown}
               placeholder={t('todo.addPlaceholder')}
               dir={isRTL ? 'rtl' : 'ltr'}
-              className="flex-1 border border-border-subtle rounded-lg px-4 py-2.5 text-sm bg-ink/3 text-ink placeholder-ink-lighter focus:outline-none focus:ring-2 focus:ring-clay-soft/20 focus:border-transparent transition-all"
+              className="flex-1 min-w-0 border border-border-subtle rounded-lg px-4 py-2.5 text-sm bg-ink/3 text-ink placeholder-ink-lighter focus:outline-none focus:ring-2 focus:ring-clay-soft/20 focus:border-transparent transition-all"
             />
             <div className="flex gap-1 flex-shrink-0">
               {(['high', 'medium', 'low'] as Priority[]).map((p) => (
@@ -121,10 +131,12 @@ export default function DailyTodo() {
           </div>
         </div>
 
+        {recurringPosition === 'top' && <TodayRecurring rows={todayRows} />}
+
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <div className="p-2">
             <AnimatePresence mode="popLayout">
-              {todos.length === 0 ? (
+              {shown.length === 0 && todayRows.length > 0 ? null : shown.length === 0 ? (
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -135,7 +147,7 @@ export default function DailyTodo() {
                 </motion.div>
               ) : (
                 <SortableContext items={itemIds} strategy={verticalListSortingStrategy}>
-                  {todos.map((todo) => (
+                  {shown.map((todo) => (
                     <SortableTodoItem key={todo.id} id={todo.id}>
                       <TodoItem
                         todo={todo}
@@ -152,6 +164,8 @@ export default function DailyTodo() {
             </AnimatePresence>
           </div>
         </DndContext>
+        <HiddenDone tasks={hidden} onToggle={toggleTodo} onRemove={removeTodo} />
+        {recurringPosition === 'bottom' && <TodayRecurring rows={todayRows} />}
       </div>
     </section>
   );
@@ -185,13 +199,15 @@ const TodoItem = memo(function TodoItem({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, x: -20, height: 0, marginBottom: 0 }}
       transition={{ duration: 0.2 }}
-      className={`group flex items-center gap-3 p-3 rounded-lg hover:bg-ink/3 transition-colors ${
+      // Two lines on a phone (the check and the task, then the priority and the buttons): on one
+      // line a 320px screen left the task no width at all.
+      className={`group flex flex-wrap sm:flex-nowrap items-center gap-x-3 gap-y-1 p-3 rounded-lg hover:bg-ink/3 transition-colors ${
         todo.completed ? 'opacity-60' : ''
       }`}
     >
       <button
         onClick={() => onToggle(todo.id)}
-        className="shrink-0 text-ink-lighter hover:text-clay-soft transition-colors"
+        className="shrink-0 p-0.5 -m-0.5 text-ink-lighter hover:text-clay-soft transition-colors"
         aria-label={t(todo.completed ? 'a11y.markIncomplete' : 'a11y.markComplete')}
       >
         {todo.completed ? (
@@ -201,15 +217,15 @@ const TodoItem = memo(function TodoItem({
         )}
       </button>
 
-      <div className={`flex items-center gap-2 min-w-0 ${colors.bg} px-2 py-0.5 rounded`}>
+      <div className={`order-1 sm:order-none ms-8 sm:ms-0 flex items-center gap-2 min-w-0 ${colors.bg} px-2 py-0.5 rounded`}>
         <span className={`w-1.5 h-1.5 rounded-full ${colors.dot}`} />
-        <span className={`text-[10px] uppercase tracking-wider font-medium ${colors.text}`}>
+        <span className={`text-[11px] uppercase tracking-wider font-medium ${colors.text}`}>
           {todo.priority}
         </span>
       </div>
 
       <span
-        className={`flex-1 min-w-0 text-sm leading-relaxed ${
+        className={`flex-1 basis-[calc(100%-2.5rem)] sm:basis-auto min-w-0 text-sm leading-relaxed ${
           todo.completed
             ? 'line-through text-ink-lighter'
             : 'text-ink'
@@ -227,7 +243,7 @@ const TodoItem = memo(function TodoItem({
       </span>
 
 
-      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all shrink-0">
+      <div className="order-2 sm:order-none ms-auto sm:ms-0 flex gap-1 opacity-0 group-hover:opacity-100 [@media(hover:none)]:opacity-100 transition-all shrink-0">
         <button
           onClick={() => onMoveToWeekly(todo.id)}
           disabled={isMoving}

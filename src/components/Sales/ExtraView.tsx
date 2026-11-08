@@ -46,9 +46,9 @@ export default function ExtraView() {
     <div className="space-y-3">
       <Card className="space-y-1">
         <p className="text-sm text-ink">
-          <span className="font-semibold">إضافي، مش جزء من الخطة.</span> بيع الأجهزة الإلكترونية هتتعلمه بجد جوه الشركة: منتجاتها وعروضها وسياساتها. ده بس عشان أول يوم ميبقاش غريب عليك.
+          <span className="font-semibold">إضافي، ليس جزءًا من الخطة.</span> ستتعلم بيع الأجهزة الإلكترونية فعليًا داخل الشركة: منتجاتها وعروضها وسياساتها. هذا فقط كي لا يكون يومك الأول غريبًا عليك.
         </p>
-        <ArabicNote>مفيش حاجة هنا داخلة في تقدم الخطة ولا في شروط المستويات. افتحه وقت ما تحتاجه، وتقدمك فيه بيتحفظ.</ArabicNote>
+        <ArabicNote>لا شيء هنا يدخل في تقدم الخطة ولا في شروط المستويات. افتحه متى احتجت إليه، ويُحفظ تقدمك فيه.</ArabicNote>
       </Card>
       {EXTRA_WEEKS.map((w) => (
         <Topic key={w.id} week={w} />

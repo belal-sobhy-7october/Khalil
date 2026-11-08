@@ -1,10 +1,10 @@
-# Sales Prep (تعلّم السيلز)
+# Sales Prep (تعلّم المبيعات)
 
-> **ملخص بالعربي:** قسم جوه «تعلم المهارات» ومتاح لكل الأكونتات (اتعمل الأول لصاحب التطبيق): يتعلم سيلز وماركتينج وتفاوض من الصفر، معرفة تنفعه في أي شغل.
-> الأساس 4 كتب معرفة (السيلز، علم نفس القرار، الماركتينج، التفاوض) متوزعة كمهام يومية على المستوى 1 و 2
-> بالعربي، وبعدهم المستوى 3 نفس المهارات بالإنجليزي. بيع الأجهزة الإلكترونية (شغله الحالي، اللي هيتعلمه جوه
-> الشركة) في تبويب «إضافي» برا الخطة. مقسوم مستويات ← أسابيع ← أيام ← مهام، وتبويب «النهارده»
-> بيعرض يوم واحد بس (حوالي ساعة). كل المحتوى جوه الكود فبيشتغل من غير نت، ما عدا الفيديوهات والبودكاست والـ AI.
+> **ملخص بالعربية:** قسم داخل «تعلّم المهارات» متاح لكل الحسابات (أُعدّ أولًا لصاحب التطبيق): يتعلم فيه المستخدم المبيعات والتسويق والتفاوض من الصفر، معرفةً تنفعه في أي عمل.
+> أساسه 4 كتب معرفة (البيع على حقيقته، وعلم نفس القرار، والتسويق، والتفاوض) موزعة مهامَّ يومية على المستويين 1 و2
+> بالعربية، ثم المستوى 3 بالمهارات نفسها بالإنجليزية. أما بيع الأجهزة الإلكترونية (عمله الحالي، الذي سيتعلمه داخل
+> الشركة) ففي تبويب «إضافي» خارج الخطة. ينقسم القسم إلى مستويات ← أسابيع ← أيام ← مهام، وتبويب «اليوم»
+> يعرض يومًا واحدًا فقط (نحو ساعة). كل المحتوى داخل الكود فيعمل من غير إنترنت، ما عدا المقاطع والبودكاست والذكاء الاصطناعي.
 
 Read this before adding a week, a level or any content.
 
@@ -16,14 +16,14 @@ only think about today, with the whole roadmap, data and progress kept for them.
 
 | Tab | What's there |
 |---|---|
-| النهارده (Today) | The day to study, only its tasks (about an hour), and tomorrow's title. |
+| اليوم (Today) | The day to study, only its tasks (about an hour), and tomorrow's title. |
 | المعرفة (Knowledge) | Four short books (`knowledge.ts`): sales, negotiation, marketing, the psychology of decisions. Each chapter is also a task in Levels 1–2; any chapter can be read here any time. |
 | الخريطة (Roadmap) | Levels 0–4 with progress, exit criteria, weeks and days. |
 | الدفتر والتقدم (Notebook) | Minutes over the last two weeks, quiz and role-play results, and everything written in the plan. |
 | المكتبة (Library) | Free podcasts, channels, courses and books, Arabic first (`sources.ts`). |
 | إضافي: الأجهزة (Extra) | Selling electronics (`electronics.ts`), outside the plan: lessons, drills and role-plays to open before the first days in the job. Nothing here counts toward a level. |
 
-The chrome is Egyptian Arabic (`dir="rtl"`); English weeks render in `LangBlock lang="en"` (left to right).
+The chrome is Modern Standard Arabic (`dir="rtl"`); English weeks render in `LangBlock lang="en"` (left to right).
 Every account sees it, from the Learn Skills page (never write the owner's email anywhere: the repo is public).
 
 ## 2. Where things are
@@ -47,7 +47,7 @@ Levels → weeks → days → tasks. Days are study days, not dates: Today shows
 - **Level 0**: one day: the "start here" lesson, a "before" recording (sell me this pen), the first-day check, a notebook line.
 - **Levels 1–3**: four weeks each, then an exam day (`S1-EXAM`…): review, a full role-play, a speaking task, the exam, a notebook line.
 - **Knowledge is the foundation.** Each Level 1–2 week lists `knowledge` chapter ids, one a study day from
-  day 1: Level 1 takes "السيلز بجد" and "علم نفس القرار", Level 2 "الماركتينج" and "التفاوض". Every
+  day 1: Level 1 takes "البيع على حقيقته" and "علم نفس القرار", Level 2 "التسويق" and "التفاوض". Every
   chapter is in the plan exactly once (a test checks), their checks join the weekly quiz and the level
   exam, and reading them is an exit criterion of the level. **Level 3** is the same skills in English.
 - **Selling electronics is an extra**, not a level: the owner's current job, learned properly inside the
@@ -76,7 +76,8 @@ order un-ticks tasks the owner already did, so only do it to fix something broke
 
 ## 4. Content rules
 
-- **Levels 1–2 (and the Extra) are Egyptian Arabic**, simple and friendly, for a beginner. **Level 3 is simple English**
+- **Levels 1–2 (and the Extra) are Modern Standard Arabic (الفصحى)**, simple and friendly, for a beginner: no
+  Egyptian or other dialect (`src/i18n/fusha.test.ts` checks). **Level 3 is simple English**
   (American spelling), with Arabic only in `noteAr` (weeks and lessons), the words' `ar`, and drills that
   give Arabic lines to translate (a test checks).
 - **Lessons**: one idea; a one-line `summary`, 3–5 `points`, an optional short `example`, beginner
@@ -90,7 +91,7 @@ order un-ticks tasks the owner already did, so only do it to fix something broke
 - **Electronics facts** (the Extra) stay general and safe: rules of thumb are labeled approximate (TV size, AC
   horsepower), no prices or offers that go stale, and no real store names in role-plays.
 - **Knowledge chapters**: one real idea, 3–5 sections, an example, `inLife` (life and any job), `tryIt`, a
-  `source` (book, author or study: never invent one), and 2 checks. Keep them Egyptian Arabic with the
+  `source` (book, author or study: never invent one), and 2 checks. Keep them in simple Modern Standard Arabic with the
   English term in the text where it helps. A new chapter must also go into a week's `knowledge` (a test
   checks that every chapter is in the plan once).
 

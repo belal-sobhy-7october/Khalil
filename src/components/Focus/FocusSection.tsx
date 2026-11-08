@@ -69,6 +69,12 @@ export default function FocusSection() {
   const recent = useMemo(() => [...s.sessions].reverse().slice(0, 8), [s.sessions]);
   const todaysTasks = dailyTodos.filter((td) => td.date === today && !td.completed);
 
+  // The sessions load when a page that shows them opens; until then, this device's copy.
+  const loadSessions = s.loadSessions;
+  useEffect(() => {
+    if (userId) void loadSessions(userId);
+  }, [userId, loadSessions]);
+
   // Keyboard: Space start/pause, R reset, S skip (ignored while typing).
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -101,7 +107,7 @@ export default function FocusSection() {
     <NumberSetting label={t(`focus.settings.${key}`)} value={s.settings[key]} min={min} max={max} onChange={(v) => setting(key, v)} />
   );
   const toggleInput = (key: 'autoStartBreaks' | 'autoStartFocus' | 'sound' | 'notify' | 'titleCountdown') => (
-    <label className="flex items-center justify-between gap-2 text-sm text-ink cursor-pointer">
+    <label className="flex items-center justify-between gap-2 py-1 text-sm text-ink cursor-pointer">
       {t(`focus.settings.${key}`)}
       <input type="checkbox" checked={s.settings[key]} onChange={(e) => setting(key, e.target.checked)} className="accent-clay-soft w-4 h-4" />
     </label>
@@ -289,9 +295,9 @@ export default function FocusSection() {
             <div className="flex items-end gap-1.5 h-28">
               {week.map((w) => (
                 <div key={w.day} className="flex-1 flex flex-col items-center gap-1 h-full justify-end" title={`${w.minutes} ${t('focus.stats.min')}`}>
-                  <span className="text-[10px] text-ink-light tabular-nums">{w.minutes || ''}</span>
+                  <span className="text-[11px] text-ink-light tabular-nums">{w.minutes || ''}</span>
                   <div className={`w-full rounded-t ${w.day === today ? 'bg-clay-soft' : 'bg-clay-soft/65'}`} style={{ height: `${(w.minutes / weekMax) * 100}%`, minHeight: w.minutes ? 3 : 0 }} />
-                  <span className="text-[10px] text-ink-lighter">
+                  <span className="text-[11px] text-ink-lighter">
                     {new Date(`${w.day}T00:00:00`).toLocaleDateString(locale, { weekday: 'narrow' })}
                   </span>
                 </div>
@@ -315,7 +321,7 @@ export default function FocusSection() {
                     <span className="tabular-nums text-ink-light">{r.minutes}′</span>
                     <button
                       onClick={() => void s.deleteSession(r.id, userId)}
-                      className="opacity-0 group-hover:opacity-100 p-0.5 text-ink-lighter hover:text-red-500"
+                      className="opacity-0 group-hover:opacity-100 [@media(hover:none)]:opacity-100 p-0.5 text-ink-lighter hover:text-red-500"
                       aria-label={t('common.delete')}
                     >
                       <Trash2 size={12} />

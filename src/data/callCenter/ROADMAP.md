@@ -1,8 +1,8 @@
 # Call Center Prep: roadmap (Levels 4 and 5)
 
-> **بالعربي:** ليفل 0 لـ 3 جاهزين في الأبلكيشن وبيوصّلوك لمستوى "جاهز للشغل" (B2+). الملف ده فيه
-> الخطة التفصيلية لليفل 4 (Advanced, C1) و 5 (Overqualified) عشان أي session جاية تكمّل من هنا:
-> كل أسبوع بهدفه وأصواته وعباراته والجرامر والمكالمات والـ role-plays والامتحان. قبل ما تبني، اقرا
+> **بالعربية:** المستويات من 0 إلى 3 جاهزة في التطبيق وتوصلك إلى مستوى «جاهز للعمل» (B2+). في هذا الملف
+> الخطة التفصيلية للمستوى 4 (Advanced, C1) والمستوى 5 (Overqualified) لتكمل منها أي جلسة قادمة:
+> كل أسبوع بهدفه وأصواته وعباراته وقواعده ومكالماته وتمثيل أدواره وامتحانه. قبل أن تبني، اقرأ
 > [`README.md`](./README.md) (القواعد وطريقة إضافة أسبوع).
 
 ## Where things stand
@@ -61,7 +61,7 @@ written reply to a formal complaint (new `WRITING_TASKS` entry), a premium mock 
 ### Week 1: Connected speech & intonation
 
 - **Goal:** understand fast native speakers and sound smooth yourself: linking, reductions, the flap T, sentence stress.
-- **noteAr idea:** الأمريكان مش بيقولوا الكلمات منفصلة. الأسبوع ده هتسمع "wanna" و "gonna" و "didja" وتفهمها، ومش لازم تقولها كلها، بس لازم تفهمها.
+- **noteAr idea:** الأمريكيون لا يقولون الكلمات منفصلة. ستسمع هذا الأسبوع "wanna" و"gonna" و"didja" وتفهمها، ولا يلزمك أن تقولها كلها، لكن يلزمك أن تفهمها.
 - **Sounds:** new `can-cant` (/kən/ vs /kænt/, stress tells them apart) · new `t-glottal` (button, certain, important) · new `yod-coalescence` (did you → "didja", would you → "wouldja", don't you → "don'cha") · new `h-dropping` (tell him → "tell 'im"). Day 5 reviews them; re-shadow with `linking`, `reductions`, `flap-t`.
 - **Phrase sets:** new `natural-reactions` (Got it. / Oh no, that's not good. / Absolutely. / No worries at all. / Fair enough. / That makes total sense. / You bet. / Sure thing.) · new `smooth-transitions` (While that's loading… / Now that we've done that… / Moving on to… / One last thing before you go… / Bear with me one second…).
 - **Grammar:** new `question-tags-echo` (isn't it? / You did? / Oh, it does? — tags to check and to show interest; rising vs falling tag).
@@ -74,7 +74,7 @@ written reply to a formal complaint (new `WRITING_TASKS` entry), a premium mock 
 ### Week 2: Diplomatic language
 
 - **Goal:** say no, disagree and set limits so politely that the customer still feels helped.
-- **noteAr idea:** الـ C1 الحقيقي مش كلمات صعبة. هو إنك تقول "لأ" من غير ما العميل يزعل. هنتعلم الـ softening.
+- **noteAr idea:** الـ C1 الحقيقي ليس كلمات صعبة، بل أن تقول «لا» دون أن يغضب العميل. سنتعلم التلطيف (softening).
 - **Sounds:** new `fall-rise` (the polite "but": "I understand… ↘↗") · new `contrastive-stress` ("I *did* send it" vs "I did send *it*") · `tone-warm` · `confident-voice`.
 - **Phrase sets:** new `softening-no` (I'm afraid that's not something I can do, but here's what I can do… / Unfortunately, that's outside our policy; what I can offer is…) · new `setting-boundaries` (I really want to help you, and I need us to keep this respectful. / I'll have to end the call if…) · new `hedging-opinions` (It looks like… / As far as I can see… / It might be worth… / I'd suggest…).
 - **Grammar:** new `politeness-distance` (past forms for politeness: "I was wondering if…", "I wanted to check…"; "Would you mind -ing"; "It might be worth -ing"; passive to avoid blame: "the charge was applied" not "you did it wrong").
@@ -87,7 +87,7 @@ written reply to a formal complaint (new `WRITING_TASKS` entry), a premium mock 
 ### Week 3: Escalations & supervisor calls
 
 - **Goal:** handle "I want your manager", complaints, threats to cancel or to complain to a regulator, and hand a call over cleanly.
-- **noteAr idea:** لما العميل يقول "عايز المدير" دي مش هزيمة. فيه طريقة محترمة تحاول فيها الأول، وطريقة احترافية تحوّل بيها.
+- **noteAr idea:** حين يقول العميل «أريد المدير» فليست هذه هزيمة. هناك طريقة محترمة تحاول بها أولًا، وطريقة احترافية تحوّله بها.
 - **Sounds:** new `legal-words` (stress in liability, compensation, regulatory, formal, complaint, reimbursement) · `pace` · `numbers-teens` · `prices-dates`.
 - **Phrase sets:** new `manager-requests` (I can hear you'd like to speak to a supervisor. Before I do that, let me see if I can fix this right now…) · new `formal-complaints` (I'm logging a formal complaint for you; your reference number is… / You'll hear from our complaints team within…) · new `warm-transfer` (I've explained everything to my colleague, so you won't have to repeat yourself.).
 - **Grammar:** new `reported-speech` (the customer said he had been charged twice; she asked whether…; for handovers and ticket notes).
@@ -100,7 +100,7 @@ written reply to a formal complaint (new `WRITING_TASKS` entry), a premium mock 
 ### Week 4: Retention & sales
 
 - **Goal:** save a customer who wants to cancel and offer upgrades naturally, without sounding pushy.
-- **noteAr idea:** أكونتات كتير بتدفع commission على الـ sales والـ retention. لو اتقنته، مرتبك بيزيد.
+- **noteAr idea:** حسابات كثيرة تدفع عمولة على المبيعات والاحتفاظ بالعملاء. إن أتقنتهما زاد راتبك.
 - **Sounds:** new `enthusiasm` (wider pitch range: sounding positive without shouting) · `list-intonation` · `prices-dates` · `stress-shift`.
 - **Phrase sets:** new `retention-save` (Before you go, can I ask what's made you want to leave? / I'd hate to lose you as a customer…) · new `objection-handling` (That's a fair point. A lot of customers felt the same until… / I hear you on the price…) · new `natural-upsell` (Since you work from home, you might like… / Most people in your situation…).
 - **Grammar:** new `conditionals-for-offers` (first conditional for real offers, second for hypotheticals: "If I could lower your bill, would you stay?"; comparatives for value).
@@ -113,7 +113,7 @@ written reply to a formal complaint (new `WRITING_TASKS` entry), a premium mock 
 ### Week 5: Complex troubleshooting
 
 - **Goal:** lead multi-step technical calls, use remote tools, and explain the root cause in plain words (the owner's strength as a programmer).
-- **noteAr idea:** هنا انت سابق الكل لأنك مبرمج. التحدي إنك تشرح الحاجة المعقدة بكلام بسيط من غير ما تستعرض.
+- **noteAr idea:** أنت هنا متقدم على الجميع لأنك مبرمج. التحدي أن تشرح المعقد بكلام بسيط دون استعراض.
 - **Sounds:** new `acronyms` (DNS, VPN, ISP, SSID, IP: letter names, stress on the last letter) · `tech-words` · `spelling-urls` · `silent-letters`.
 - **Phrase sets:** new `remote-session` (I'm going to send you a link so I can see your screen… / You'll see a pop-up asking for permission…) · new `root-cause` (The reason this happened is… / What's going on behind the scenes is… / To stop it happening again…) · new `ruling-things-out` (Let's rule out a few things first. / That tells me it's not the cable.).
 - **Grammar:** new `cause-and-effect` (because of / due to / as a result / which means / so that; "it's + adjective + to").
@@ -126,7 +126,7 @@ written reply to a formal complaint (new `WRITING_TASKS` entry), a premium mock 
 ### Week 6: Accents of the world
 
 - **Goal:** understand customers and colleagues with Southern US, British, Australian and Indian English, and very fast speakers, without asking them to repeat three times.
-- **noteAr idea:** مش كل العملاء بيتكلموا زي الفيديوهات. الأسبوع ده ودنك هتتعود على لهجات مختلفة.
+- **noteAr idea:** لا يتكلم كل العملاء كما في المقاطع. ستعتاد أذنك هذا الأسبوع على لكنات مختلفة.
 - **Sounds:** listening targets written as sounds (`how` explains what you'll hear): new `accent-southern-us` · new `accent-british` (no R after vowels, "bath" vowel, T not flapped) · new `accent-australian` · new `accent-indian` (syllable-timed rhythm, retroflex T and D).
 - **Phrase sets:** new `clarifying-politely` (I want to be sure I get this right: could you say the account number one digit at a time? / Just so I don't get it wrong…) · new `phrasal-verbs-calls` used naturally (hang up, hold on, look into, sort out, follow up, back up, run out, set up).
 - **Grammar:** new `phrasal-verbs` (separable or not: "turn it off" not "turn off it"; the ones customers use most).
@@ -140,7 +140,7 @@ written reply to a formal complaint (new `WRITING_TASKS` entry), a premium mock 
 ### Week 7: Chat & email support
 
 - **Goal:** write short, clear, warm chat and email replies, use templates without sounding like a robot, and handle two chats at once.
-- **noteAr idea:** أكونتات كتير بقت chat و email. هنا الكتابة والسرعة بيفرقوا، والـ typing لازم يوصل 40.
+- **noteAr idea:** حسابات كثيرة صارت محادثة كتابية وبريدًا. هنا تفرق الكتابة والسرعة، ولا بد أن تصل سرعة الكتابة إلى 40.
 - **Sounds:** a lighter week: `pace` · `confident-voice` · `tone-warm` · `spelling-urls` (review).
 - **Phrase sets:** new `chat-openers-closers` · new `chat-tone` (Thanks for your patience! / I'm checking that for you now. / Is there anything else I can help with today?) · new `email-structure` (subject lines, the opening line, next steps, the sign-off).
 - **Grammar:** new `written-errors` (a/an/the, its/it's, your/you're, then/than, run-on sentences, capital letters: the mistakes QA marks in writing).
@@ -153,7 +153,7 @@ written reply to a formal complaint (new `WRITING_TASKS` entry), a premium mock 
 ### Week 8: C1 review & exam
 
 - **Goal:** C1 structures in speech and the Level 4 exam.
-- **noteAr idea:** آخر أسبوع في ليفل 4. راجع، اعمل EF SET تاني، وادخل الامتحان. لو جبت 61+ في EF SET انت C1 رسمي.
+- **noteAr idea:** آخر أسبوع في المستوى 4. راجع، وأدِّ EF SET مرة أخرى، وادخل الامتحان. إن حصلت على 61+ في EF SET فأنت في C1 رسميًا.
 - **Sounds:** review: `linking` · `reductions` · `intonation` · `thought-groups`.
 - **Phrase sets:** new `c1-discourse-markers` (That said… / Having said that… / On top of that… / In a nutshell… / The thing is…) · `structuring-answers` · `star-answers`.
 - **Grammar:** new `c1-structures` (inversion: "Not only did…", "Rarely do…"; clefts: "What I'd suggest is…"; mixed conditionals: "If I had known, I'd be…").

@@ -9,7 +9,7 @@ export function Card({ children, className = '' }: { children: ReactNode; classN
   return <div className={`rounded-2xl border border-border-subtle bg-card p-4 sm:p-5 ${className}`}>{children}</div>;
 }
 
-/** A short friendly line in Egyptian Arabic, right to left inside the English page. */
+/** A short friendly line in Modern Standard Arabic, right to left inside the English page. */
 export function ArabicNote({ children, className = '' }: { children: ReactNode; className?: string }) {
   return (
     <p dir="rtl" lang="ar" className={`text-sm leading-relaxed text-ink-light font-[inherit] ${className}`}>
@@ -36,7 +36,7 @@ export function SpeakButton({ text, label, rate, compact = false }: { text: stri
       onClick={() => speakText(text, rate)}
       aria-label={label ?? `Listen: ${text}`}
       title="Listen"
-      className={`shrink-0 inline-flex items-center justify-center gap-1 rounded-lg ${compact ? 'p-0.5' : 'p-1.5'} text-ink-light hover:text-clay-soft hover:bg-clay-soft/10 transition-colors`}
+      className={`shrink-0 inline-flex items-center justify-center gap-1 rounded-lg ${compact ? 'p-[5px]' : 'p-1.5'} text-ink-light hover:text-clay-soft hover:bg-clay-soft/10 transition-colors`}
     >
       <Volume2 size={15} />
       {label && <span className="text-xs">{label}</span>}

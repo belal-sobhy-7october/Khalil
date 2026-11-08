@@ -132,12 +132,12 @@ B1`;
 
   describe('Tab-separated format', () => {
     it('parses tab-separated lines', () => {
-      const input = `Come across as\tمعنى\tHe comes across as confident. — بيدي انطباع...`;
+      const input = `Come across as\tمعنى\tHe comes across as confident. — يعطي انطباعًا...`;
       const result = parseVocabularyText(input);
       expect(result.rows).toHaveLength(1);
       expect(result.rows[0].word).toBe('Come across as');
       expect(result.rows[0].definition).toBe('معنى');
-      expect(result.rows[0].exampleSentence).toBe('He comes across as confident. — بيدي انطباع...');
+      expect(result.rows[0].exampleSentence).toBe('He comes across as confident. — يعطي انطباعًا...');
     });
   });
 

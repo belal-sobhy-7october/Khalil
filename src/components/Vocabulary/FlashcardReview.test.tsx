@@ -144,8 +144,8 @@ describe('FlashcardReview', () => {
   it('speaks Arabic units on the buttons', () => {
     useAppStore.setState({ language: 'ar' });
     setup([word('v1', 'hello', 'A greeting')]);
-    fireEvent.click(screen.getByRole('button', { name: /اظهر الإجابة/ }));
+    fireEvent.click(screen.getByRole('button', { name: /أظهر الإجابة/ }));
     expect(screen.getByTestId('srs-wait-3')).toHaveTextContent('10 د');
-    expect(screen.getByRole('button', { name: /^افتكرتها/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^تذكّرتها/ })).toBeInTheDocument();
   });
 });

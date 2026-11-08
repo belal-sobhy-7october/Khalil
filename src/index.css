@@ -323,3 +323,11 @@ select option {
     animation: none;
   }
 }
+
+/* An iPhone zooms the whole page in when a text field under 16px gets focus, so on touch
+   screens fields are at least 16px (1em keeps a field inside larger text at that size). */
+@media (hover: none) {
+  :is(input, textarea, select):not(.text-lg, .text-xl, .text-2xl, .text-3xl) {
+    font-size: max(1rem, 1em);
+  }
+}

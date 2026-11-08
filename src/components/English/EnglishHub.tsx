@@ -10,24 +10,28 @@ import ReadingBook from './ReadingBook';
 import ShadowingMethod from './ShadowingMethod';
 import StudyTimer from './StudyTimer';
 import { ENGLISH_TAB_EVENT } from '../../lib/openReview';
+import { ENGLISH_TABS, readEnglishTab, showPage, writeEnglishTab, type EnglishTab } from '../../lib/routes';
 
 const LearningPathSection = lazy(() => import('../LearningPath/LearningPathSection'));
 
-type Tab = 'path' | 'vocabulary' | CourseSectionId;
+type Tab = EnglishTab;
+
+const ICONS: Record<Tab, typeof BookOpen> = {
+  path: Route,
+  vocabulary: BookOpen,
+  pronunciation: Mic2,
+  listening: Headphones,
+  reading: Library,
+  grammar: PenLine,
+  shadowing: Repeat,
+};
 
 /**
  * The hub's sections, in study order, after the learning path that draws on
- * all of them. Names are English in both languages, as the owner asked.
+ * all of them. Names are English in both languages, as the owner asked
+ * (lib/routes.ts, where each tab's address comes from too).
  */
-const TABS: Array<{ id: Tab; label: string; icon: typeof BookOpen }> = [
-  { id: 'path', label: 'Learning Path', icon: Route },
-  { id: 'vocabulary', label: 'Vocabulary', icon: BookOpen },
-  { id: 'pronunciation', label: 'Pronunciation & Accent', icon: Mic2 },
-  { id: 'listening', label: 'Listening', icon: Headphones },
-  { id: 'reading', label: 'Reading', icon: Library },
-  { id: 'grammar', label: 'Grammar', icon: PenLine },
-  { id: 'shadowing', label: 'Shadowing', icon: Repeat },
-];
+const TABS = ENGLISH_TABS.map((tab) => ({ ...tab, icon: ICONS[tab.id] }));
 
 /** The practice timer and "your own links" each section keeps (older sections keep their old keys). */
 const SECTION_SETUP: Record<CourseSectionId, { timer: PracticeKind; links: LinksTarget }> = {
@@ -38,30 +42,15 @@ const SECTION_SETUP: Record<CourseSectionId, { timer: PracticeKind; links: Links
   shadowing: { timer: 'shadowing', links: { section: 'shadowing' } },
 };
 
-const STORAGE_KEY = 'khalil-english-tab';
-
-function readTab(): Tab {
-  try {
-    const v = localStorage.getItem(STORAGE_KEY);
-    if (v === 'accent') return 'pronunciation'; // the tab's old name
-    if (v && TABS.some((x) => x.id === v)) return v as Tab;
-  } catch {
-    // ignore
-  }
-  return 'path';
-}
-
 export default function EnglishHub() {
   const { t } = useTranslation();
-  const [tab, setTab] = useState<Tab>(readTab);
+  const [tab, setTab] = useState<Tab>(readEnglishTab);
 
   const choose = (next: Tab) => {
     setTab(next);
-    try {
-      localStorage.setItem(STORAGE_KEY, next);
-    } catch {
-      // ignore
-    }
+    writeEnglishTab(next);
+    // Its own address (/languages/english/<tab>); nothing changes when the address already names it (Back).
+    showPage('vocabulary', next);
     window.scrollTo?.({ top: 0 });
   };
 

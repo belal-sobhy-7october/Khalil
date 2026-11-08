@@ -109,7 +109,7 @@ export const CALL_CENTER_LIBRARY: CallCenterLibrary = {
       kind: 'youtube',
       id: 'vacancy',
       name: 'VACANCY (Arabic)',
-      channel: { name: 'VACANCY · كورس Get accepted', url: 'https://www.youtube.com/@mshokr2000' },
+      channel: { name: 'VACANCY · دورة Get accepted', url: 'https://www.youtube.com/@mshokr2000' },
       playlists: [{ id: 'PL6YFA5xPTImSaldxdGtHgdSwsFt2SIG_i', name: 'Get Accepted: English Call Center Interview Questions', reverse: true }],
     },
   ],

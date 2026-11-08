@@ -15,7 +15,7 @@ export const SALES_SOURCES: SalesSource[] = [
     lang: 'ar',
     by: 'ياسر نجم (Koinz)',
     url: ytWatch('d95V47ba4YU'),
-    whyAr: 'أحسن بداية: بيشرح يعني إيه سيلز وفرقه عن التسويق بكلام بسيط.',
+    whyAr: 'أفضل بداية: يشرح معنى المبيعات والفرق بينها وبين التسويق بكلام بسيط.',
     start: true,
   },
   {
@@ -25,7 +25,7 @@ export const SALES_SOURCES: SalesSource[] = [
     lang: 'ar',
     by: 'د. محمود الزايد',
     url: ytWatch('BtdcgxVyE8k'),
-    whyAr: 'أسئلة المبتدئين اللي في دماغك بالظبط، مع استشاري مبيعات.',
+    whyAr: 'أسئلة المبتدئين التي في ذهنك بالضبط، مع مستشار مبيعات.',
     start: true,
   },
   {
@@ -44,7 +44,7 @@ export const SALES_SOURCES: SalesSource[] = [
     lang: 'ar',
     by: 'قائمة تشغيل على يوتيوب',
     url: ytPlaylist('PLxe78bIBB8nVbx0YqKQct_SWc-c_LFThQ'),
-    whyAr: 'كورس مجاني قصير عن إزاي تكون بياع شاطر.',
+    whyAr: 'دورة مجانية قصيرة عن كيف تكون بائعًا ماهرًا.',
   },
   {
     id: 'sales-job-playlist',
@@ -53,7 +53,7 @@ export const SALES_SOURCES: SalesSource[] = [
     lang: 'ar',
     by: 'قائمة تشغيل على يوتيوب',
     url: ytPlaylist('PLJaRF0pxws2rkySQqOGxu5X5pfAZz9vnV'),
-    whyAr: 'عشان تعرف الشغلانة على حقيقتها قبل ما تقدّم.',
+    whyAr: 'لتعرف الوظيفة على حقيقتها قبل أن تتقدم إليها.',
   },
   {
     id: 'edraak',
@@ -62,7 +62,7 @@ export const SALES_SOURCES: SalesSource[] = [
     lang: 'ar',
     by: 'منصة إدراك (مجانية)',
     url: 'https://www.edraak.org/',
-    whyAr: 'دورات عربي مجانية منظمة. ابحث فيها عن «مهارات المبيعات».',
+    whyAr: 'دورات عربية مجانية منظمة. ابحث فيها عن «مهارات المبيعات».',
   },
   {
     id: 'business-bel-arabi',
@@ -71,7 +71,7 @@ export const SALES_SOURCES: SalesSource[] = [
     lang: 'ar',
     by: 'بودكاست',
     url: 'https://businessbelarabi.buzzsprout.com/',
-    whyAr: 'بزنس وتطوير ذات بالعربي، فيه حلقات عن البيع والتسويق.',
+    whyAr: 'أعمال وتطوير ذات بالعربية، وفيه حلقات عن البيع والتسويق.',
   },
   {
     id: 'carnegie-ar',
@@ -80,7 +80,7 @@ export const SALES_SOURCES: SalesSource[] = [
     lang: 'ar',
     by: 'ديل كارنيجي (مترجم)',
     url: ytSearch('ملخص كتاب كيف تكسب الأصدقاء وتؤثر في الناس'),
-    whyAr: 'أساس التعامل مع الناس. اسمع ملخص، وبعدين اقرا الكتاب.',
+    whyAr: 'أساس التعامل مع الناس. استمع إلى ملخص، ثم اقرأ الكتاب.',
     start: true,
   },
   {
@@ -90,7 +90,7 @@ export const SALES_SOURCES: SalesSource[] = [
     lang: 'ar',
     by: 'روبرت سيالديني (مترجم)',
     url: ytSearch('ملخص كتاب التأثير سيكولوجية الاقناع سيالديني'),
-    whyAr: 'مبادئ الإقناع الست اللي في المستوى 2.',
+    whyAr: 'مبادئ الإقناع الستة التي في المستوى 2.',
   },
 
   // ── English ────────────────────────────────────────────────────────
@@ -101,7 +101,7 @@ export const SALES_SOURCES: SalesSource[] = [
     lang: 'en',
     by: 'HubSpot (free, with a certificate)',
     url: 'https://academy.hubspot.com/courses/inbound-sales',
-    whyAr: 'كورس مجاني حوالي 3 ساعات بشهادة تحطها في الـ CV واللينكدإن. هتبدأه في المستوى 3.',
+    whyAr: 'دورة مجانية مدتها نحو 3 ساعات بشهادة تضعها في سيرتك الذاتية وعلى لينكدإن. ستبدأها في المستوى 3.',
     start: true,
   },
   {
@@ -111,7 +111,7 @@ export const SALES_SOURCES: SalesSource[] = [
     lang: 'en',
     by: 'Jeb Blount',
     url: spotifySearch('Sales Gravy Jeb Blount'),
-    whyAr: 'حلقات قصيرة عن الـ prospecting والمكالمات الباردة. مناسب للـ SDR.',
+    whyAr: 'حلقات قصيرة عن الـ prospecting والمكالمات الباردة. مناسبة للـ SDR.',
   },
   {
     id: 'presidents-club',
@@ -120,7 +120,7 @@ export const SALES_SOURCES: SalesSource[] = [
     lang: 'en',
     by: 'Armand Farrokh & Nick Cegelski',
     url: ytSearch("30 minutes to president's club"),
-    whyAr: 'تكتيكات عملية وجمل بالحرف للاكتشاف والمكالمات الباردة.',
+    whyAr: 'أساليب عملية وجمل حرفية للاكتشاف والمكالمات الباردة.',
   },
   {
     id: 'salesman-podcast',
@@ -129,7 +129,7 @@ export const SALES_SOURCES: SalesSource[] = [
     lang: 'en',
     by: 'Will Barron',
     url: ytSearch('Salesman Podcast Will Barron'),
-    whyAr: 'لقاءات عن مهارات البياع نفسه: القيمة، الـ pipeline، والعقلية.',
+    whyAr: 'لقاءات عن مهارات البائع نفسه: القيمة، والـ pipeline، والعقلية.',
   },
   {
     id: 'outbound-squad',
@@ -138,7 +138,7 @@ export const SALES_SOURCES: SalesSource[] = [
     lang: 'en',
     by: 'Jason Bay',
     url: spotifySearch('Outbound Squad Jason Bay'),
-    whyAr: 'للـ outbound الحديث: مكالمات وإيميلات ولينكدإن.',
+    whyAr: 'لأسلوب الـ outbound الحديث: مكالمات، ورسائل بريد، ولينكدإن.',
   },
   {
     id: 'spin-selling',
@@ -147,7 +147,7 @@ export const SALES_SOURCES: SalesSource[] = [
     lang: 'en',
     by: 'Neil Rackham',
     url: ytSearch('SPIN Selling summary Neil Rackham'),
-    whyAr: 'الكتاب اللي جت منه أسئلة SPIN. اسمع ملخص.',
+    whyAr: 'الكتاب الذي جاءت منه أسئلة SPIN. استمع إلى ملخص.',
   },
   {
     id: 'never-split',
@@ -156,7 +156,7 @@ export const SALES_SOURCES: SalesSource[] = [
     lang: 'en',
     by: 'Chris Voss',
     url: ytSearch('Never Split the Difference summary'),
-    whyAr: 'تفاوض من مفاوض رهائن سابق: التسمية (labeling) والأسئلة المفتوحة.',
+    whyAr: 'تفاوض من مفاوض سابق في قضايا الرهائن: التسمية (labeling) والأسئلة المفتوحة.',
   },
   {
     id: 'fanatical-prospecting',
@@ -165,6 +165,6 @@ export const SALES_SOURCES: SalesSource[] = [
     lang: 'en',
     by: 'Jeb Blount',
     url: ytSearch('Fanatical Prospecting summary'),
-    whyAr: 'ليه البياع لازم يملا الـ pipeline كل يوم، وإزاي.',
+    whyAr: 'لماذا يجب على البائع أن يملأ الـ pipeline كل يوم، وكيف.',
   },
 ];

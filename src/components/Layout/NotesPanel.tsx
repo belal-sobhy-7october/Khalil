@@ -30,6 +30,7 @@ const SortableNoteItem = memo(function SortableNoteItem({
   id: string;
   children: React.ReactNode;
 }) {
+  const { t } = useTranslation();
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
 
   const style = {
@@ -45,6 +46,7 @@ const SortableNoteItem = memo(function SortableNoteItem({
       <div
         {...attributes}
         {...listeners}
+        aria-label={t('a11y.reorder')}
         className="shrink-0 mt-3 opacity-20 group-hover/drag:opacity-60 hover:!opacity-100 cursor-grab active:cursor-grabbing p-1 text-ink-lighter transition-opacity touch-none"
       >
         <GripVertical size={14} />
@@ -161,7 +163,7 @@ export default function NotesPanel({
     <div className="mt-8 border-t border-border-subtle pt-4">
       <button
         onClick={() => setMobileOpen((v) => !v)}
-        className="flex items-center gap-2 text-sm font-medium text-ink mb-2 w-full text-start"
+        className="flex items-center gap-2 py-1 text-sm font-medium text-ink mb-1 w-full text-start"
       >
         {mobileOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
         {t('notes.title')} ({stickyNotes.length + todoNotes.length})

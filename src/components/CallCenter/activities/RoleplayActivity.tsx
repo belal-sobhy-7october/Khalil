@@ -101,7 +101,7 @@ export default function RoleplayActivity({ refId, onDone, onScore, progressKey }
 
       <div className="rounded-xl bg-ink/3 p-3 space-y-2">
         <ArabicNote>
-          انسخ البرومبت، افتح ChatGPT أو Gemini، شغّل الـ voice mode واتكلم كأنها مكالمة حقيقية. لما تخلص قول «end call» (أو «end interview») وهيقيّمك. انقل التقييم هنا.
+          انسخ التعليمات، وافتح ChatGPT أو Gemini، وشغّل الوضع الصوتي، وتحدّث كأنها مكالمة حقيقية. حين تنتهي قل «end call» (أو «end interview») وسيقيّمك. انقل التقييم إلى هنا.
         </ArabicNote>
         <AiPartnerButtons prompt={roleplayPrompt(scenario)} />
       </div>

@@ -13,6 +13,8 @@ export interface EnglishResource {
   description: string;
   category: ResourceCategory;
   free: boolean | 'freemium';
+  /** One of the tools we recommend most: shown first, with a badge (see FEATURED_RESOURCES). */
+  featured?: true;
 }
 
 export const RESOURCE_CATEGORIES: ResourceCategory[] = ['speaking', 'listening', 'pronunciation', 'vocabulary', 'writing', 'reading'];
@@ -30,9 +32,10 @@ export const ENGLISH_RESOURCES: EnglishResource[] = [
     id: 'speakozy',
     name: 'Speakozy',
     url: 'https://speakozy.com/',
-    description: 'Speaking practice platform — practise speaking English out loud and build confidence.',
+    description: 'An English academy for speaking: live Zoom sessions with professional trainers, small groups of 8 students at most, personal follow-up and a free placement test.',
     category: 'speaking',
-    free: 'freemium',
+    free: false,
+    featured: true,
   },
   {
     id: 'tandem',
@@ -44,11 +47,12 @@ export const ENGLISH_RESOURCES: EnglishResource[] = [
   },
   {
     id: 'naturalreaders',
-    name: 'NaturalReaders',
+    name: 'NaturalReader',
     url: 'https://www.naturalreaders.com/online/',
     description: 'Paste any text and hear it read in natural voices — great for shadowing scripts and answers.',
     category: 'listening',
     free: 'freemium',
+    featured: true,
   },
   {
     id: 'bbc-learning-english',
@@ -81,6 +85,7 @@ export const ENGLISH_RESOURCES: EnglishResource[] = [
     description: 'Hear any word or phrase in real YouTube videos, filtered by US, UK or Australian accent.',
     category: 'pronunciation',
     free: true,
+    featured: true,
   },
   {
     id: 'rachels-english',
@@ -139,3 +144,8 @@ export const ENGLISH_RESOURCES: EnglishResource[] = [
     free: true,
   },
 ];
+
+/** The recommended tools, in the order they're shown. */
+export const FEATURED_RESOURCES: EnglishResource[] = ['speakozy', 'youglish', 'naturalreaders'].map(
+  (id) => ENGLISH_RESOURCES.find((r) => r.id === id)!
+);

@@ -75,7 +75,7 @@ function PracticeTextCard({ index, text, done, onToggleDone, accent }: {
       <p className="text-ink leading-relaxed" dir="ltr">{text}</p>
       <div className="flex flex-wrap items-center gap-2">
         <button onClick={openNaturalReaders} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-clay-soft text-white text-xs hover:bg-clay-soft-dark">
-          <ExternalLink size={13} /> {t('vocabulary.challenge.openNaturalReaders')}
+          <ExternalLink size={13} /> {t('vocabulary.challenge.openNaturalReader')}
         </button>
         <button onClick={() => speakBrowser(text, accent, 0.9)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-ink/5 text-ink text-xs hover:bg-ink/10">
           <Volume2 size={13} /> {t('vocabulary.challenge.quickListen')}
@@ -213,7 +213,7 @@ export default function TopicChallenge({ category, paragraph, onClose }: { categ
 
   return (
     <div className="fixed inset-0 bg-ink/50 flex items-center justify-center z-50 p-4" onClick={(e) => e.target === e.currentTarget && handleClose()}>
-      <div {...dialog.props} className="bg-card border border-border-subtle rounded-2xl w-full max-w-3xl max-h-[92vh] overflow-hidden flex flex-col">
+      <div {...dialog.props} className="bg-card border border-border-subtle rounded-2xl w-full max-w-3xl max-h-[92svh] overflow-hidden flex flex-col">
         <div className="px-6 py-4 border-b border-border-subtle flex items-center justify-between gap-3">
           <div className="min-w-0">
             <h2 id={dialog.titleId} className="text-lg font-bold text-ink flex items-center gap-2">
@@ -247,7 +247,7 @@ export default function TopicChallenge({ category, paragraph, onClose }: { categ
                 </span>
                 <span className="text-[11px] leading-tight text-ink">
                   {i + 1}. {stepTitle(key)}
-                  {key === 'shadow' && <span className="block text-[10px] text-ink-lighter">{t('vocabulary.challenge.optional')}</span>}
+                  {key === 'shadow' && <span className="block text-[11px] text-ink-lighter">{t('vocabulary.challenge.optional')}</span>}
                 </span>
               </button>
             );
@@ -388,7 +388,7 @@ export default function TopicChallenge({ category, paragraph, onClose }: { categ
                   onChange={(e) => setVideoDraft(e.target.value)}
                   placeholder={data.videoUrl ? t('vocabulary.challenge.changeVideo') : t('vocabulary.challenge.videoPlaceholder')}
                   dir="ltr"
-                  className="flex-1 px-3 py-2 bg-ink/5 border border-border-subtle rounded-lg text-ink text-sm focus:outline-none focus:border-clay-soft"
+                  className="flex-1 min-w-0 px-3 py-2 bg-ink/5 border border-border-subtle rounded-lg text-ink text-sm focus:outline-none focus:border-clay-soft"
                 />
                 <button type="submit" className="px-3 py-2 text-sm rounded-lg bg-clay-soft text-white">{t('common.save')}</button>
               </form>

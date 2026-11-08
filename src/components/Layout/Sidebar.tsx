@@ -1,20 +1,26 @@
+import { useEffect } from 'react';
 import {
   CheckSquare,
   Bookmark,
-  Heart,
   LogOut,
   Calendar,
   Timer,
-  Moon,
   BarChart3,
   Settings,
+  MessageCircle,
+  UserPlus,
+  Compass,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from '../../i18n/useTranslation';
 import { supabase } from '../../lib/supabase';
+import { whatsappLink } from '../../lib/contact';
 import { useDueSummary } from '../../lib/useDueSummary';
 import { hubOf } from '../../data/learnCatalog';
 import { HUB_ICONS } from '../Learn/icons';
+import { useAppStore } from '../../store/appStore';
+import { isGuestSession, useGuest } from '../../lib/guest';
+import { guideAvailable, useGuide } from '../../lib/guide';
 
 interface NavItem {
   id: string;
@@ -39,16 +45,18 @@ export default function Sidebar({
   const { due } = useDueSummary();
   const LanguagesIcon = HUB_ICONS.languages;
   const SkillsIcon = HUB_ICONS.skills;
+  const guest = useAppStore((s) => !s.session || isGuestSession(s.session));
+  const openDialog = useGuest((g) => g.openDialog);
+  const startGuide = useGuide((g) => g.start);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
   };
 
+  // The wird and the habits live on the tasks page ("Tasks & Habits"), so they have no item of their own.
   const navItems: NavItem[] = [
     { id: 'todo', label: t('nav.todo'), icon: <CheckSquare size={18} /> },
-    { id: 'calendar', label: t('nav.calendar'), icon: <Calendar size={18} /> },
-    { id: 'life', label: t('nav.life'), icon: <Heart size={18} /> },
-    { id: 'bookmarks', label: t('nav.bookmarks'), icon: <Bookmark size={18} /> },
+    { id: 'focus', label: t('nav.focus'), icon: <Timer size={18} /> },
     // English lives in Learn Languages, Call Center and Sales in Learn Skills (data/learnCatalog.ts).
     {
       id: 'languages',
@@ -57,11 +65,21 @@ export default function Sidebar({
       badge: due ? { count: due, label: t('vocabulary.srs.badge').replace('{count}', String(due)) } : undefined,
     },
     { id: 'skills', label: t('nav.skills'), icon: <SkillsIcon size={18} /> },
-    { id: 'focus', label: t('nav.focus'), icon: <Timer size={18} /> },
-    { id: 'wird', label: t('nav.wird'), icon: <Moon size={18} /> },
+    { id: 'calendar', label: t('nav.calendar'), icon: <Calendar size={18} /> },
+    { id: 'bookmarks', label: t('nav.bookmarks'), icon: <Bookmark size={18} /> },
     { id: 'analytics', label: t('nav.analytics'), icon: <BarChart3 size={18} /> },
     { id: 'settings', label: t('nav.settings'), icon: <Settings size={18} /> },
   ];
+
+  // Escape closes the menu, like a tap outside it.
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onToggle();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [isOpen, onToggle]);
 
   return (
     <>
@@ -92,9 +110,10 @@ export default function Sidebar({
           {navItems.map((item) => (
             <button
               key={item.id}
+              // The menu covers the page on every screen size, so choosing an item closes it.
               onClick={() => {
                 onSectionChange(item.id);
-                if (window.innerWidth < 1024) onToggle();
+                onToggle();
               }}
               className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
                 (hubOf(activeSection) ?? activeSection) === item.id
@@ -113,14 +132,48 @@ export default function Sidebar({
           ))}
         </nav>
 
-        <div className="mt-auto pt-4 border-t border-border-subtle p-4">
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center gap-2 px-3 py-2 text-xs text-ink-lighter hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-lg transition-all"
+        <div className="mt-auto pt-4 border-t border-border-subtle p-4 space-y-1">
+          <a
+            href={whatsappLink(t('contact.message'))}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full flex items-center gap-2 px-3 py-2 text-xs text-ink-light hover:text-ink hover:bg-ink/5 rounded-lg transition-all"
           >
-            <LogOut size={14} />
-            <span>{t('auth.logout')}</span>
-          </button>
+            <MessageCircle size={14} />
+            <span>{t('contact.menu')}</span>
+          </a>
+          {guideAvailable() && (
+            <button
+              onClick={() => {
+                onToggle();
+                startGuide();
+              }}
+              className="w-full flex items-center gap-2 px-3 py-2 text-xs text-ink-light hover:text-ink hover:bg-ink/5 rounded-lg transition-all"
+            >
+              <Compass size={14} />
+              <span>{t('guide.replay')}</span>
+            </button>
+          )}
+          {guest ? (
+            <button
+              onClick={() => {
+                onToggle();
+                openDialog('signup');
+              }}
+              className="w-full flex items-center gap-2 px-3 py-2 text-xs text-clay-soft hover:bg-clay-soft/10 rounded-lg transition-all"
+            >
+              <UserPlus size={14} />
+              <span>{t('auth.signUp')}</span>
+            </button>
+          ) : (
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center gap-2 px-3 py-2 text-xs text-ink-lighter hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-lg transition-all"
+            >
+              <LogOut size={14} />
+              <span>{t('auth.logout')}</span>
+            </button>
+          )}
         </div>
       </motion.aside>
     </>

@@ -42,6 +42,14 @@ async function flow(name, opts, body) {
   await app.context.close();
 }
 
+/** Waits (up to `timeout` ms) for `get` to return something, e.g. a row the app is still sending. */
+const until = async (get, timeout = 3000) => {
+  for (const end = Date.now() + timeout; ; await new Promise((r) => setTimeout(r, 100))) {
+    const v = get();
+    if (v || Date.now() > end) return v;
+  }
+};
+
 const visible = async (locator, timeout = 3000) => {
   try {
     await locator.first().waitFor({ state: 'visible', timeout });
@@ -57,7 +65,7 @@ await flow('todo-add-complete-delete', { section: 'todo' }, async ({ page, backe
   await input.fill('E2E write report');
   await input.press('Enter');
   check(await visible(page.getByText('E2E write report')), 'new todo not shown');
-  const saved = backend.tables.todos.find((t) => t.text === 'E2E write report');
+  const saved = await until(() => backend.tables.todos.find((t) => t.text === 'E2E write report'));
   if (!check(saved, 'new todo not sent to the backend')) return;
   check(saved.date === today, `new todo saved for ${saved.date}, expected ${today}`);
   check(saved.gate === 'daily', `new todo saved with gate ${saved.gate}`);
@@ -82,7 +90,7 @@ await flow('todo-add-complete-delete', { section: 'todo' }, async ({ page, backe
 });
 
 // ---------------------------------------------------------------- habits
-await flow('habit-add-toggle', { section: 'life' }, async ({ page, backend, check, reload }) => {
+await flow('habit-add-toggle', { section: 'todo' }, async ({ page, backend, check, reload }) => {
   await page.getByRole('button', { name: 'Add a habit...' }).click();
   await page.getByPlaceholder('Add a habit...').fill('E2E Reading');
   await page.getByRole('button', { name: 'Add', exact: true }).click();
@@ -106,6 +114,8 @@ await flow('habit-add-toggle', { section: 'life' }, async ({ page, backend, chec
 
 // ---------------------------------------------------------------- settings
 await flow('settings-theme-language', { section: 'settings' }, async ({ page, backend, check, reload }) => {
+  const tab = (name) => page.getByRole('tab', { name, exact: true }).click();
+  await tab('Appearance');
   await page.getByRole('button', { name: /Downtown Cairo/ }).click();
   await page.waitForTimeout(400);
   const state = () => page.evaluate(() => ({ appearance: document.documentElement.dataset.appearance, dark: document.documentElement.classList.contains('dark'), dir: document.documentElement.dir }));
@@ -117,14 +127,18 @@ await flow('settings-theme-language', { section: 'settings' }, async ({ page, ba
   await reload();
   s = await state();
   check(s.appearance === 'downtown' && s.dark, `theme lost after reload: ${JSON.stringify(s)}`);
+  check(await visible(page.getByRole('button', { name: /Royal Pine|Warm Ivory/ })), 'settings did not stay on the Appearance tab after reload');
+  await tab('General');
   await page.getByRole('button', { name: 'Light', exact: true }).first().click();
   await page.waitForTimeout(300);
   s = await state();
   check(!s.dark, 'Light button did not switch mode');
+  await tab('Appearance');
   await page.getByRole('button', { name: /Royal Pine|Warm Ivory/ }).click();
   await page.waitForTimeout(300);
   s = await state();
   check(s.appearance === 'pine', `palette after click: ${s.appearance}`);
+  await tab('General');
   await page.getByRole('button', { name: /عربي|العربية|Arabic/ }).first().click();
   await page.waitForTimeout(500);
   s = await state();
@@ -133,7 +147,7 @@ await flow('settings-theme-language', { section: 'settings' }, async ({ page, ba
 });
 
 // ---------------------------------------------------------------- wird
-await flow('wird-mark-day', { section: 'wird' }, async ({ page, backend, check, reload }) => {
+await flow('wird-mark-day', { section: 'todo' }, async ({ page, backend, check, reload }) => {
   const fajr = page.getByRole('button', { name: new RegExp(`^Fajr ${today}:`) });
   if (!check(await visible(fajr), "today's Fajr cell not found")) return;
   await fajr.click();
@@ -143,8 +157,8 @@ await flow('wird-mark-day', { section: 'wird' }, async ({ page, backend, check, 
   await fajr.click();
   check(/Not marked/.test((await fajr.getAttribute('aria-label')) ?? ''), `third click → ${await fajr.getAttribute('aria-label')}`);
   await fajr.click();
-  await page.getByRole('button', { name: 'Qiyam (rakaat) +' }).click();
-  await page.getByRole('button', { name: 'Qiyam (rakaat) +' }).click();
+  await page.getByRole('button', { name: 'Qiyam +' }).click();
+  await page.getByRole('button', { name: 'Qiyam +' }).click();
   await page.getByRole('button', { name: `Morning adhkar ${today}` }).click();
   await page.waitForTimeout(1500); // save is debounced
   const row = backend.tables.wird_days.find((r) => r.date === today);
@@ -327,15 +341,13 @@ await flow('bookmarks-add', { section: 'bookmarks' }, async ({ page, backend, ch
   await page.getByRole('button', { name: 'Add Category' }).click();
   await page.getByPlaceholder('Category name').fill('E2E Cat');
   await page.getByPlaceholder('Category name').press('Enter');
-  await page.waitForTimeout(500);
-  check(backend.tables.bookmark_categories?.some((c) => c.name === 'E2E Cat'), 'category not saved');
+  check(await until(() => backend.tables.bookmark_categories?.some((c) => c.name === 'E2E Cat')), 'category not saved');
   await page.getByRole('button', { name: 'E2E Cat', exact: true }).click();
   await page.getByRole('button', { name: 'Add Bookmark' }).first().click();
   await page.getByPlaceholder('Title').fill('E2E Link');
   await page.getByPlaceholder('https://...').fill('https://example.com');
   await page.getByRole('button', { name: 'Save', exact: true }).last().click();
-  await page.waitForTimeout(500);
-  check(backend.tables.bookmarks?.some((b) => b.title === 'E2E Link'), 'bookmark not saved');
+  check(await until(() => backend.tables.bookmarks?.some((b) => b.title === 'E2E Link')), 'bookmark not saved');
   await reload();
   check(await visible(page.getByText('E2E Link')), 'bookmark missing after reload');
 });
@@ -402,7 +414,7 @@ await flow('learning-path', { section: 'vocabulary', englishTab: 'path' }, async
   // Reload: the day finished today stays open and the progress stays.
   await reload();
   check(await visible(page.getByRole('heading', { level: 2, name: /Day 1/ })), 'after reload the day finished today should stay open');
-  check(await visible(page.getByText('1/90', { exact: true })), 'days-done count lost after reload');
+  check((await page.getByTestId('path-stat-days').textContent()) === '1', 'days-done count lost after reload');
 
   // A grammar point after Ibrahim Adel's course: its sentences are saved.
   await page.getByRole('button', { name: /^Day 60 \(/ }).click();
@@ -462,9 +474,9 @@ await flow('srs-review', { section: 'vocabulary', englishTab: 'vocabulary' }, as
 });
 
 await flow('review-nudge', { section: 'todo' }, async ({ page, backend, check, reload }) => {
-  // A word reviewed ten days ago at level 2 is due again.
+  // A word reviewed ten days ago at level 2 is due again (changed now, as the server stamps every write).
   const word = backend.tables.vocabulary_items[1];
-  Object.assign(word, { mastery_level: 2, review_count: 3, last_reviewed_at: new Date(Date.now() - 10 * 86400000).toISOString() });
+  Object.assign(word, { mastery_level: 2, review_count: 3, last_reviewed_at: new Date(Date.now() - 10 * 86400000).toISOString(), updated_at: new Date().toISOString() });
   await reload();
   const nudge = page.getByTestId('review-nudge');
   check(await visible(nudge), 'no review reminder on the day page');
@@ -486,24 +498,204 @@ await flow('account-menu-settings', { section: 'todo' }, async ({ page, check })
   check(await visible(page.getByRole('heading', { name: 'Settings', exact: true })), 'account menu did not open settings');
 });
 
-await flow('mobile-nav', { section: 'todo', viewport: { width: 390, height: 844 } }, async ({ page, check }) => {
-  const menu = page.getByRole('button', { name: 'Toggle sidebar' });
-  if (!check(await visible(menu), 'mobile menu button not found')) return;
-  await menu.click();
-  await page.getByRole('button', { name: 'Daily Wird' }).first().click();
-  await page.waitForTimeout(800);
-  check(await visible(page.getByRole('button', { name: new RegExp(`^Fajr ${today}:`) })), 'mobile nav did not open wird');
-  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
-  check(overflow <= 2, `overflow ${overflow}px`);
+// The menu closes by itself once an item is chosen, on a phone and on a wide screen alike.
+for (const [label, viewport] of [['mobile', { width: 390, height: 844 }], ['desktop', { width: 1440, height: 900 }]]) {
+  await flow(`${label}-nav`, { section: 'todo', viewport }, async ({ page, check }) => {
+    const menu = page.getByRole('button', { name: 'Toggle sidebar' });
+    if (!check(await visible(menu), 'menu button not found')) return;
+    const menuShown = () => page.evaluate(() => {
+      const r = document.querySelector('aside')?.getBoundingClientRect();
+      return !!r && r.right > 0 && r.left < document.documentElement.clientWidth;
+    });
+    await menu.click();
+    await page.waitForTimeout(400);
+    check(await menuShown(), 'menu did not open');
+    await page.getByRole('button', { name: 'Analytics', exact: true }).click();
+    await page.waitForTimeout(600);
+    check(!(await menuShown()), 'menu stayed open after choosing Analytics');
+    check(await visible(page.getByRole('heading', { name: 'Analytics' })), 'Analytics did not open');
+    await menu.click();
+    await page.waitForTimeout(400);
+    await page.getByRole('button', { name: 'Tasks & Habits', exact: true }).click();
+    await page.waitForTimeout(800);
+    check(!(await menuShown()), 'menu stayed open after choosing Tasks & Habits');
+    check(await visible(page.getByRole('button', { name: new RegExp(`^Fajr ${today}:`) })), 'the wird sheet is not on the tasks page');
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+    check(overflow <= 2, `overflow ${overflow}px`);
+  });
+}
+
+// A tick in today's tasks is the wird's tick (one fact, shown in both places), and survives a reload.
+await flow('today-wird-sync', { section: 'todo' }, async ({ page, backend, check, reload }) => {
+  const row = page.getByRole('button', { name: 'Mark as complete: Asr' });
+  if (!check(await visible(row), "Asr is not in today's tasks")) return;
+  await row.click();
+  const cell = () => page.getByRole('button', { name: new RegExp(`^Asr ${today}:`) });
+  check(/In congregation/.test((await cell().getAttribute('aria-label')) ?? ''), `the wird sheet shows ${await cell().getAttribute('aria-label')}`);
+  await page.waitForTimeout(1500); // the wird's save is debounced
+  check(backend.tables.wird_days.find((r) => r.date === today)?.data?.prayers?.asr === 'jamaah', 'Asr not saved to wird_days');
+  await reload();
+  check(await visible(page.getByRole('button', { name: 'Mark as incomplete: Asr' })), "Asr not ticked in today's tasks after reload");
+  // And the other way: the sheet's tick shows in today's tasks.
+  await page.getByRole('button', { name: `Evening adhkar ${today}` }).click();
+  check(await visible(page.getByRole('button', { name: 'Mark as incomplete: Evening adhkar' })), "the sheet's tick did not reach today's tasks");
+});
+
+// Finished tasks hide as the settings say, and are listed under "Finished".
+await flow('finished-tasks-setting', { section: 'settings' }, async ({ page, check }) => {
+  await page.getByRole('tab', { name: 'Tasks & Habits', exact: true }).click();
+  await page.getByRole('radio', { name: /Hide at once/ }).click();
+  await page.evaluate(() => window.dispatchEvent(new CustomEvent('khalil:navigate', { detail: 'todo' })));
+  await page.waitForTimeout(600);
+  const input = page.getByPlaceholder('Add a task for today...');
+  await input.fill('E2E hide me');
+  await input.press('Enter');
+  const row = page.getByText('E2E hide me').locator('xpath=ancestor::*[.//button[@aria-label="Delete task"]][1]');
+  await row.getByRole('button', { name: 'Mark as complete' }).click();
+  await page.waitForTimeout(600);
+  check(!(await page.getByText('E2E hide me').isVisible()), 'a finished task stayed in the list with "Hide at once"');
+  await page.getByRole('button', { name: /^Finished \(\d+\)$/ }).first().click();
+  check(await visible(page.getByText('E2E hide me')), 'the finished task is not under "Finished"');
+});
+
+// Opening the app: one request, then only what changed (lib/startup.ts).
+await flow('startup-requests', { section: 'todo', startup: true }, async ({ backend, check }) => {
+  // The dev server's StrictMode runs the app's startup twice; a production build sends one (scripts/load/record.mjs).
+  const calls = backend.log.filter((l) => l.method === 'RPC');
+  check(calls.length >= 1 && calls.length <= 2 && calls.every((c) => c.rows[0].since === null), `the first visit made ${calls.length} startup requests, since=${calls[0]?.rows[0].since}`);
+  // What the startup request brings, and what loads only when its page opens.
+  const notNow = ['todos', 'habits', 'habit_entries', 'vocabulary_items', 'vocabulary_categories', 'wird_days', 'sticky_notes', 'todo_notes',
+    'calendar_events', 'bookmarks', 'bookmark_categories', 'daily_mood', 'sub_track_entries', 'pomodoro_sessions'];
+  const extra = backend.reads.filter((r) => notNow.includes(r.table));
+  check(extra.length === 0, `the tasks page also read: ${extra.map((r) => r.table).join(', ')}`);
+  const kv = backend.reads.filter((r) => r.table === 'user_kv');
+  check(kv.length <= 1, `the tasks page read user_kv ${kv.length} times: ${kv.map((r) => decodeURIComponent(r.query)).join(' | ')}`);
+});
+
+await flow('startup-sync', { section: 'vocabulary', englishTab: 'vocabulary', startup: true }, async ({ page, backend, check, reload }) => {
+  check(await visible(page.getByText('Clumsy', { exact: true })), 'the seeded words are not shown');
+  // Another device deletes one word, renames another and adds a third.
+  const now = new Date().toISOString();
+  const words = backend.tables.vocabulary_items;
+  const gone = words.find((w) => w.word === 'Clumsy');
+  backend.tables.vocabulary_items = words.filter((w) => w !== gone);
+  (backend.tables.sync_deletions ??= []).push({ source: 'vocabulary_items', row_key: gone.id, deleted_at: now });
+  Object.assign(words.find((w) => w.word === 'Ambitious'), { word: 'Driven', updated_at: now });
+  backend.tables.vocabulary_items.push({ ...structuredClone(words[0]), id: crypto.randomUUID(), word: 'Serendipity', created_at: now, updated_at: now });
+  const firstVisit = backend.log.filter((l) => l.method === 'RPC').length;
+  await reload();
+  const second = backend.log.filter((l) => l.method === 'RPC')[firstVisit]?.rows[0];
+  check(second?.since, 'the second visit did not ask only for what changed');
+  check(await visible(page.getByText('Serendipity', { exact: true })), 'a word added on another device is missing');
+  check(await visible(page.getByText('Driven', { exact: true })), 'a word renamed on another device is not renamed');
+  check(!(await page.getByText('Ambitious', { exact: true }).count()), 'the old name of a renamed word is still shown');
+  check(!(await page.getByText('Clumsy', { exact: true }).count()), 'a word deleted on another device is still shown');
+  // Not in the changes: it comes from this device's copy.
+  check(await visible(page.getByText('Receipt', { exact: true })), 'a word kept from the last visit is missing');
+});
+
+// A database without the app_startup migration: the app loads table by table, as before.
+await flow('startup-legacy', { section: 'vocabulary', englishTab: 'vocabulary', startup: false }, async ({ page, backend, check, reload }) => {
+  check(await visible(page.getByText('Clumsy', { exact: true })), 'the words are not shown without the startup request');
+  check(backend.reads.some((r) => r.table === 'vocabulary_items'), 'the words were not loaded table by table');
+  check(backend.reads.some((r) => r.table === 'wird_days'), 'the wird was not loaded without the startup request');
+  await reload();
+  check(await visible(page.getByText('Receipt', { exact: true })), 'the words are not shown after a reload');
+});
+
+// Every page has its own address: opening it, Back and Forward, a reload, a link (lib/routes.ts).
+await flow('page-addresses', { section: 'todo' }, async ({ page, check, reload }) => {
+  const path = () => new URL(page.url()).pathname;
+  const at = async (expected, msg) => {
+    for (let i = 0; i < 20 && path() !== expected; i++) await page.waitForTimeout(100);
+    return check(path() === expected, `${msg}: the address is ${path()}, not ${expected}`);
+  };
+  const nav = (name) => page.locator('aside nav button', { hasText: name });
+  const open = async (name) => {
+    await page.getByRole('button', { name: 'Toggle sidebar' }).click();
+    await nav(name).click();
+    await page.waitForTimeout(600);
+  };
+  const origin = new URL(page.url()).origin;
+  const english = page.getByRole('navigation', { name: 'Where you are' });
+
+  // The root opens the tasks page and shows its address and title.
+  await at('/tasks', 'the root did not become /tasks');
+  check((await page.title()) === 'Tasks & Habits — Khalil', `title on the tasks page: ${await page.title()}`);
+
+  // The menu: each page its own address and title.
+  await open('Focus');
+  await at('/focus', 'Focus');
+  check(await visible(page.getByRole('heading', { name: 'Focus', exact: true })), 'Focus did not open');
+  check((await page.title()) === 'Focus (Pomodoro) — Khalil', `title on Focus: ${await page.title()}`);
+  await open('Learn Languages');
+  await at('/languages', 'Learn Languages');
+  await page.getByRole('button', { name: /English/ }).first().click();
+  await page.waitForTimeout(600);
+  await at('/languages/english/path', 'English (its first tab)');
+  await page.getByRole('tab', { name: 'Listening' }).click();
+  await at('/languages/english/listening', 'the Listening tab');
+
+  // Back and Forward walk the same pages, tabs included.
+  await page.goBack();
+  await at('/languages/english/path', 'Back from Listening');
+  check(await visible(page.getByRole('tab', { name: 'Learning Path', selected: true })), 'Back did not return to the Learning Path tab');
+  await page.goBack();
+  await at('/languages', 'Back to Learn Languages');
+  check(await visible(page.getByRole('heading', { name: 'Learn Languages' })), 'Back did not open Learn Languages');
+  await page.goBack();
+  await at('/focus', 'Back to Focus');
+  check(await visible(page.getByRole('heading', { name: 'Focus', exact: true })), 'Back did not open Focus');
+  await page.goForward();
+  await at('/languages', 'Forward to Learn Languages');
+  check(await visible(page.getByRole('heading', { name: 'Learn Languages' })), 'Forward did not open Learn Languages');
+
+  // A link straight to a page, a tab, a skill.
+  await page.goto(`${origin}/languages/english/grammar`, { waitUntil: 'domcontentloaded' });
+  check(await visible(page.getByRole('tab', { name: 'Grammar', selected: true }), 8000), 'a link to the Grammar tab did not open it');
+  await page.goto(`${origin}/skills/sales`, { waitUntil: 'domcontentloaded' });
+  check(await visible(page.getByRole('heading', { name: 'تعلّم المبيعات' }), 8000), 'a link to Sales Prep did not open it');
+  check(await visible(english.getByRole('button', { name: 'Learn Skills' })), 'Sales Prep has no way back to Learn Skills');
+  await english.getByRole('button', { name: 'Learn Skills' }).click();
+  await at('/skills', 'the way back to Learn Skills');
+
+  // A reload stays on the page; an unknown address is read like the root: the page this tab was on.
+  await page.goto(`${origin}/calendar`, { waitUntil: 'domcontentloaded' });
+  await reload();
+  await at('/calendar', 'a reload on the calendar');
+  check((await page.title()) === 'Calendar — Khalil', `title on the calendar: ${await page.title()}`);
+  await page.goto(`${origin}/no-such-page`, { waitUntil: 'domcontentloaded' });
+  await page.waitForTimeout(1500);
+  await at('/calendar', 'an unknown address');
+
+  // The wird is part of the tasks page: opening it shows /tasks.
+  await page.goto(`${origin}/settings`, { waitUntil: 'domcontentloaded' });
+  await page.waitForTimeout(1200);
+  await page.evaluate(() => window.dispatchEvent(new CustomEvent('khalil:navigate', { detail: 'wird' })));
+  await at('/tasks', 'opening the wird');
+});
+
+// The habits grid: the longer the range, the narrower its cells, also when a month's name
+// (a long one in Arabic, like "ديسمبر") sits over the 1st (HabitsTracker's header).
+await flow('habits-range-widths', { section: 'todo', language: 'ar', viewport: { width: 526, height: 893 } }, async ({ page, backend, check, reload }) => {
+  // Habits that began 12 days ago: the month and two-month windows then reach past the next 1sts.
+  for (const h of backend.tables.habits) h.start_date = dayStr(new Date(Date.now() - 12 * 864e5));
+  await reload();
+  const widths = [];
+  for (const name of ['أسبوع', 'شهر', 'شهران']) {
+    await page.getByRole('button', { name, exact: true }).click();
+    await page.waitForTimeout(400);
+    widths.push(await page.locator('[data-today="true"]').first().evaluate((el) => Math.round(el.getBoundingClientRect().width)));
+  }
+  check(widths[0] > widths[1] && widths[1] > widths[2], `cell widths for week, month, two months: ${widths.join(', ')}`);
 });
 
 await flow('learn-hubs', { section: 'todo' }, async ({ page, check, reload }) => {
   const nav = (name) => page.locator('aside nav button', { hasText: name });
-  // On a wide screen the sidebar stays open over the page after a click: close it with its backdrop.
+  // Choosing an item closes the menu by itself.
   const open = async (name) => {
     await page.getByRole('button', { name: 'Toggle sidebar' }).click();
     await nav(name).click();
-    await page.mouse.click(1000, 450);
     await page.waitForTimeout(600);
   };
   check(!(await nav('Call Center Prep').count()) && !(await nav('Learn English').count()), 'old sections still in the sidebar');
@@ -518,7 +710,7 @@ await flow('learn-hubs', { section: 'todo' }, async ({ page, check, reload }) =>
   check(await visible(page.getByRole('heading', { name: 'Call Center English Prep' })), 'Call Center Prep not kept after reload');
   await page.getByRole('navigation', { name: 'Where you are' }).getByRole('button', { name: 'Learn Skills' }).click();
   await page.getByRole('button', { name: /Sales Prep/ }).click();
-  check(await visible(page.getByRole('heading', { name: 'تعلّم السيلز' })), 'Sales Prep did not open');
+  check(await visible(page.getByRole('heading', { name: 'تعلّم المبيعات' })), 'Sales Prep did not open');
   // Learn Languages → English.
   await open('Learn Languages');
   check((await page.getByRole('region', { name: /Coming soon/ }).getByRole('listitem').count()) === 10, 'not 10 languages coming soon');

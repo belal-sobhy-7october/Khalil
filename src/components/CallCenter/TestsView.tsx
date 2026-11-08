@@ -40,7 +40,7 @@ export default function TestsView({ onRun }: { onRun: (testId: string) => void }
   return (
     <div className="space-y-4">
       <ArabicNote>
-        كل الامتحانات بنفس شكل اختبارات الشركات: جرامر، استماع، Repeat و Sentence builds زي Versant، كتابة، typing ومكالمة. كل مرة تعيد الامتحان بتجيلك أسئلة جديدة، والغلطات بتتجمع تحت عشان تراجعها.
+        كل الاختبارات على شكل اختبارات الشركات: قواعد، واستماع، وRepeat وSentence builds مثل Versant، وكتابة، وكتابة على لوحة المفاتيح، ومكالمة. في كل مرة تعيد فيها الاختبار تأتيك أسئلة جديدة، وتُجمع أخطاؤك في الأسفل لتراجعها.
       </ArabicNote>
       <Card>
         <h3 className="font-semibold text-ink">Diagnostic</h3>

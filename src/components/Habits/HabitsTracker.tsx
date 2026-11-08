@@ -32,6 +32,7 @@ import {
   GripVertical,
   Flame,
   Check,
+  Link2,
   type LucideIcon,
 } from 'lucide-react';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, TouchSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
@@ -55,6 +56,8 @@ import { getHabitWeekStart, addDaysToDateString, getToday } from '../../store/da
 import { canStepBack, habitPeriodStart, stepHabitPeriod, visibleHabitDates } from '../../store/habitPeriod';
 import { countEligibleDays, computeHabitStats, computeStreaks, isScheduledOn, weekdayOf, type HabitStreaks } from '../../store/habitStats';
 import type { Habit } from '../../types';
+import { useWirdItems } from '../../lib/wirdItems';
+import { linkHabit, linkOf, targetLabel, toggleHabit, unlinkHabit, useHabitEntries, useHabitLinks, wirdTargets } from '../../lib/wirdSync';
 
 const iconMap: Record<string, LucideIcon> = {
   star: Star,
@@ -178,7 +181,7 @@ const ROW_ACTION_VISIBILITY =
 
 type RowPopover = 'delete' | 'edit' | null;
 
-const SortableHabitRow = memo(function SortableHabitRow({ habit, dates, entrySet, entryDates, today, streaks, onToggle }: {
+const SortableHabitRow = memo(function SortableHabitRow({ habit, dates, entrySet, entryDates, today, streaks, onToggle, link }: {
   habit: Habit;
   dates: string[];
   entrySet: Set<string>;
@@ -186,8 +189,12 @@ const SortableHabitRow = memo(function SortableHabitRow({ habit, dates, entrySet
   today: string;
   streaks: HabitStreaks;
   onToggle: (habit: Habit, date: string) => void;
+  /** The wird target this habit is linked to, if any. */
+  link: string | null;
 }) {
   const { t, language } = useTranslation();
+  const [wirdItems] = useWirdItems();
+  const [draftLink, setDraftLink] = useState(link ?? '');
   const locale = language === 'ar' ? 'ar-EG' : 'en-US';
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: habit.id,
@@ -225,6 +232,7 @@ const SortableHabitRow = memo(function SortableHabitRow({ habit, dates, entrySet
   const openEdit = () => {
     setDraftStartDate(habit.startDate);
     setDraftSchedule(habit.scheduleDays);
+    setDraftLink(link ?? '');
     setPopover((p) => (p === 'edit' ? null : 'edit'));
   };
 
@@ -238,6 +246,12 @@ const SortableHabitRow = memo(function SortableHabitRow({ habit, dates, entrySet
     if (draftStartDate !== habit.startDate) data.startDate = draftStartDate;
     if (JSON.stringify(draftSchedule) !== JSON.stringify(habit.scheduleDays)) data.scheduleDays = draftSchedule;
     if (Object.keys(data).length > 0) useAppStore.getState().updateHabit(habit.id, data);
+    if (draftLink !== (link ?? '')) {
+      void (async () => {
+        if (link && !(await unlinkHabit(habit.id))) return;
+        if (draftLink) await linkHabit(habit.id, draftLink);
+      })();
+    }
     setPopover(null);
   };
 
@@ -256,6 +270,7 @@ const SortableHabitRow = memo(function SortableHabitRow({ habit, dates, entrySet
         <span
           {...attributes}
           {...listeners}
+          aria-label={t('a11y.reorder')}
           className="shrink-0 opacity-20 group-hover:opacity-60 hover:!opacity-100 cursor-grab active:cursor-grabbing p-1 -m-1 text-ink-lighter transition-opacity touch-none"
         >
           <GripVertical size={14} />
@@ -267,8 +282,13 @@ const SortableHabitRow = memo(function SortableHabitRow({ habit, dates, entrySet
           <span className="text-sm font-medium text-ink truncate" title={habit.name}>
             {habit.name}
           </span>
-          <span className="text-[10px] text-ink-lighter truncate">
-            {habit.scheduleDays
+          <span className="text-[11px] text-ink-lighter truncate">
+            {link ? (
+              <span className="inline-flex items-center gap-1 text-clay-soft" title={t('habits.linkedTo').replace('{target}', targetLabel(link, wirdItems, t))}>
+                <Link2 size={11} className="shrink-0" />
+                {targetLabel(link, wirdItems, t)}
+              </span>
+            ) : habit.scheduleDays
               ? habit.scheduleDays.map((d) => weekdayName(d, locale, 'short')).join(' · ')
               : t('habits.since').replace('{date}', shortDate(habit.startDate, locale))}
           </span>
@@ -356,6 +376,19 @@ const SortableHabitRow = memo(function SortableHabitRow({ habit, dates, entrySet
                       {t('habits.startDateWarning').replace('{count}', String(excludedCount))}
                     </p>
                   )}
+                  <label className="block text-xs text-ink mb-1.5" htmlFor={`habit-link-${habit.id}`}>{t('habits.linkLabel')}</label>
+                  <select
+                    id={`habit-link-${habit.id}`}
+                    value={draftLink}
+                    onChange={(e) => setDraftLink(e.target.value)}
+                    className="w-full border border-border-subtle rounded-lg px-2 py-1.5 text-xs bg-ink/3 text-ink focus:outline-none focus:ring-1 focus:ring-clay-soft/30 mb-1"
+                  >
+                    <option value="">{t('habits.linkNone')}</option>
+                    {wirdTargets(wirdItems).map((target) => (
+                      <option key={target} value={target}>{targetLabel(target, wirdItems, t)}</option>
+                    ))}
+                  </select>
+                  <p className="text-[11px] text-ink-lighter mb-2">{t('habits.linkHint')}</p>
                   <div className="flex gap-1.5 justify-end">
                     <button
                       onClick={() => setPopover(null)}
@@ -435,8 +468,10 @@ export default function HabitsTracker() {
   const { t, isRTL, language } = useTranslation();
   const locale = language === 'ar' ? 'ar-EG' : 'en-US';
   const rawHabits = useAppStore((s) => s.habits);
-  const habitEntries = useAppStore((s) => s.habitEntries);
-  const toggleHabitEntry = useAppStore((s) => s.toggleHabitEntry);
+  // A habit linked to the wird reads its days from the wird (lib/wirdSync.ts).
+  const habitEntries = useHabitEntries();
+  const [habitLinks] = useHabitLinks();
+  const [wirdItems] = useWirdItems();
   const addHabit = useAppStore((s) => s.addHabit);
   const reorderHabits = useAppStore((s) => s.reorderHabits);
 
@@ -502,8 +537,8 @@ export default function HabitsTracker() {
     if (isChecking && date < habit.startDate) {
       void useAppStore.getState().updateHabit(habit.id, { startDate: date });
     }
-    void toggleHabitEntry(habit.id, date);
-  }, [entrySet, toggleHabitEntry]);
+    toggleHabit(habit, date, !isChecking);
+  }, [entrySet]);
   const [showAddForm, setShowAddForm] = useState(false);
   const [newHabitName, setNewHabitName] = useState('');
   const [newHabitIcon, setNewHabitIcon] = useState('star');
@@ -841,22 +876,24 @@ export default function HabitsTracker() {
                   <div
                     key={date}
                     data-today={date === today || undefined}
-                    className={`text-center py-1 w-full h-(--cell-w) border border-border-subtle flex items-center justify-center ${
+                    className={`text-center py-1 w-full min-h-(--cell-w) border border-border-subtle flex items-center justify-center ${
                       date === today ? 'bg-clay-soft/10 ring-1 ring-inset ring-clay-soft/40' : date > today ? 'opacity-60' : ''
                     }`}
                   >
-                    <div className="flex flex-col items-center leading-tight text-ink-lighter">
+                    <div className="flex flex-col items-center gap-px leading-none text-ink-lighter">
                       {/* The 1st of a month (after the first column) names the month, so the jump from 31 to 1 reads clearly. */}
+                      {/* Drawn over its column without widening it: every column is as wide as the widest (1fr), so a long
+                          name like "ديسمبر" used to make two months' cells wider than one month's. */}
                       {date.endsWith('-01') && date !== gridDates[0] && gridDates.length > 7 ? (
-                        <span className="text-[9px] font-semibold text-clay-soft">{monthShort(date, locale)}</span>
+                        <span className="w-0 flex justify-center whitespace-nowrap text-[11px] font-semibold text-clay-soft">{monthShort(date, locale)}</span>
                       ) : (
                         gridDates.length <= 31 && (
-                          <span className="text-[9px]">
+                          <span className="text-[11px]">
                             {gridDates.length <= 7 ? dayNameOf(date, locale) : weekdayName(weekdayOf(date), locale, 'narrow')}
                           </span>
                         )
                       )}
-                      <span className={`text-[10px] ${date === today ? 'text-clay-soft font-semibold' : ''}`}>
+                      <span className={`text-[11px] ${date === today ? 'text-clay-soft font-semibold' : ''}`}>
                         {Number(date.slice(8))}
                       </span>
                     </div>
@@ -876,6 +913,7 @@ export default function HabitsTracker() {
                       today={today}
                       streaks={streaksByHabit.get(habit.id) ?? { current: 0, best: 0 }}
                       onToggle={handleToggle}
+                      link={linkOf(habit.id, habitLinks, wirdItems)}
                     />
                   ))}
                 </SortableContext>
@@ -990,7 +1028,7 @@ export default function HabitsTracker() {
                         style={{ width: `${ha.percent}%` }}
                       />
                     </div>
-                    <span className="text-[10px] text-ink-light tabular-nums w-8 text-end">
+                    <span className="text-[11px] text-ink-light tabular-nums w-8 text-end">
                       {ha.percent}%
                     </span>
                   </div>
@@ -1042,7 +1080,7 @@ function ProgressBar({ label, title, count, total, color }: { label: string; tit
           />
         )}
       </div>
-      <div className="text-[10px] text-ink-lighter tabular-nums whitespace-nowrap">{label}</div>
+      <div className="text-[11px] text-ink-lighter tabular-nums whitespace-nowrap">{label}</div>
     </div>
   );
 }

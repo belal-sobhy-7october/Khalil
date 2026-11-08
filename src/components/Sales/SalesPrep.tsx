@@ -18,7 +18,7 @@ import { ArabicNote } from './ui';
 type Tab = 'today' | 'knowledge' | 'roadmap' | 'notebook' | 'library' | 'extra';
 
 const TABS: Array<{ id: Tab; label: string; icon: typeof Flame }> = [
-  { id: 'today', label: 'النهارده', icon: CalendarCheck },
+  { id: 'today', label: 'اليوم', icon: CalendarCheck },
   { id: 'knowledge', label: 'المعرفة', icon: BookOpen },
   { id: 'roadmap', label: 'الخريطة', icon: MapIcon },
   { id: 'notebook', label: 'الدفتر والتقدم', icon: NotebookPen },
@@ -85,27 +85,27 @@ function Prep() {
               <span className="text-base font-bold text-ink tabular-nums">{Math.floor(progress.ratio * 100)}%</span>
             </ProgressRing>
             <div className="flex-1 min-w-0">
-              <h1 className="text-2xl font-bold text-ink leading-tight">تعلّم السيلز</h1>
-              <p className="text-sm text-ink-light">سيلز وماركتينج وتفاوض من الصفر: معرفة تنفعك في أي شغل، بالعربي الأول وبعدين بالإنجليزي</p>
+              <h1 className="text-2xl font-bold text-ink leading-tight">تعلّم المبيعات</h1>
+              <p className="text-sm text-ink-light">المبيعات والتسويق والتفاوض من الصفر: معرفة تنفعك في أي عمل، بالعربية أولًا ثم بالإنجليزية</p>
               <p className="mt-1 text-xs text-clay-soft-dark font-medium">
-                دلوقتي: المستوى {where.level.number} · {where.level.name}
+                الآن: المستوى {where.level.number} · {where.level.name}
                 {where.week ? ` · الأسبوع ${where.week.number}` : ''}
               </p>
             </div>
             <TrendingUp size={28} className="hidden sm:block shrink-0 text-clay-soft/60" />
           </div>
-          <ArabicNote>مش محتاج تفكر في الخطة كلها. كل يوم افتح «النهارده»، خلّص مهامه (حوالي ساعة)، وسيب الباقي على الخريطة. 💪</ArabicNote>
+          <ArabicNote>لا تحتاج إلى التفكير في الخطة كلها. افتح «اليوم» كل يوم، وأنجز مهامه (نحو ساعة)، واترك الباقي للخريطة. 💪</ArabicNote>
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-            <Stat icon={Flame} value={`${studyStreak(tasks, today)} يوم`} label="ورا بعض" />
-            <Stat icon={Timer} value={`${minutesOn(today, tasks)} دقيقة`} label="النهارده" />
-            <Stat icon={CalendarCheck} value={`${daysDone(tasks)} / ${daysDone(tasks) + daysLeft(tasks)}`} label="أيام خلصت" />
-            <Stat icon={ClipboardCheck} value={`${progress.done} / ${progress.total}`} label="مهام خلصت" />
+            <Stat icon={Flame} value={`${studyStreak(tasks, today)} يوم`} label="متتالية" />
+            <Stat icon={Timer} value={`${minutesOn(today, tasks)} دقيقة`} label="اليوم" />
+            <Stat icon={CalendarCheck} value={`${daysDone(tasks)} / ${daysDone(tasks) + daysLeft(tasks)}`} label="أيام منجزة" />
+            <Stat icon={ClipboardCheck} value={`${progress.done} / ${progress.total}`} label="مهام منجزة" />
             <Stat icon={BookOpen} value={`${ALL_CHAPTERS.filter((c) => knowledge[c.id]).length} / ${ALL_CHAPTERS.length}`} label="فصول المعرفة" />
           </div>
         </motion.div>
       </section>
 
-      <div className="flex gap-1 p-1 rounded-xl bg-ink/5 overflow-x-auto scrollbar-thin" role="tablist" aria-label="تعلّم السيلز">
+      <div className="flex gap-1 p-1 rounded-xl bg-ink/5 overflow-x-auto scrollbar-thin" role="tablist" aria-label="تعلّم المبيعات">
         {TABS.map(({ id, label, icon: Icon }) => (
           <button
             key={id}

@@ -71,7 +71,7 @@ export default memo(function CalendarMonthView({ currentDate, events, onEditEven
   }, [onCompleteEvent]);
 
   return (
-    <div className="h-[calc(100vh-300px)] min-h-[500px] overflow-y-auto scrollbar-thin">
+    <div className="h-[calc(100svh-300px)] min-h-[500px] overflow-y-auto scrollbar-thin">
       <div className="grid grid-cols-7 gap-0.5">
         {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
           <div key={day} className="h-10 flex items-center justify-center text-xs font-medium text-ink-lighter border-b border-border-subtle bg-card/50 sticky top-0 z-10">
@@ -123,7 +123,7 @@ export default memo(function CalendarMonthView({ currentDate, events, onEditEven
                       {event.completed ? <CheckCircle size={12} className="text-sage-soft" /> : <Circle size={12} className="text-ink-light" />}
                     </button>
                     <span className="truncate font-medium" style={{ color: `var(--calendar-color-${event.color}-700)` }}>{event.title}</span>
-                    {event.startTime && <span className="text-[10px] opacity-70">{event.startTime}</span>}
+                    {event.startTime && <span className="text-[11px] opacity-70">{event.startTime}</span>}
                   </motion.div>
                 ))}
               </div>
