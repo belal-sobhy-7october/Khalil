@@ -1,17 +1,19 @@
 /**
  * Ready-made topic packs, built with the method of the user's English course
- * (warm-up → key words → grammar → discussion → speaking task). See ./types.ts.
+ * (warm-up → key words → grammar → discussion → speaking task), from A1 to C1.
+ * Every word is checked against the Cambridge Dictionary (see ./README.md).
  */
-import { COURSE_PACKS } from './course';
-import { WORK_PACKS } from './work';
-import { TALK_PACKS } from './talk';
-import { LIFE_PACKS } from './life';
-import { SOCIETY_PACKS } from './society';
+import { A1_PACKS } from './a1';
+import { A2_PACKS } from './a2';
+import { B1_PACKS } from './b1';
+import { B2_PACKS } from './b2';
+import { C1_PACKS } from './c1';
 import type { TopicPack } from './types';
 
 export type { GrammarPoint, PackGroup, PackItem, PartOfSpeech, TopicGrammar, TopicPack } from './types';
 
-export const TOPIC_PACKS: TopicPack[] = [...WORK_PACKS, ...COURSE_PACKS, ...TALK_PACKS, ...LIFE_PACKS, ...SOCIETY_PACKS];
+/** In study order: A1 first, and the topics that come back at a higher level after each level's new ones. */
+export const TOPIC_PACKS: TopicPack[] = [...A1_PACKS, ...A2_PACKS, ...B1_PACKS, ...B2_PACKS, ...C1_PACKS];
 
 export function getPackById(id: string): TopicPack | undefined {
   return TOPIC_PACKS.find((p) => p.id === id);

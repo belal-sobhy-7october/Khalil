@@ -1176,6 +1176,9 @@ export const translations = {
       topicPicker: { open: 'All topics ({count})', search: 'Find a topic…', none: 'No topic matches.' },
       meaning: {
         open: 'Check meanings',
+        openAll: 'Check all my meanings',
+        titleAll: 'Check the meanings of all your words',
+        fromLibrary: 'From the Topic Library ({name}), checked against the Cambridge Dictionary',
         count: '{count} meanings — choose the one for this topic',
         count_one: '1 meaning',
         title: 'Check the meanings in "{name}"',
@@ -2512,6 +2515,9 @@ export const translations = {
       topicPicker: { open: 'كل المواضيع ({count})', search: 'ابحث عن موضوع…', none: 'لا يوجد موضوع بهذا الاسم.' },
       meaning: {
         open: 'راجع المعاني',
+        openAll: 'راجع معاني كل كلماتي',
+        titleAll: 'مراجعة معاني كل كلماتك',
+        fromLibrary: 'من مكتبة المواضيع ({name})، ومراجَع على قاموس Cambridge',
         count: '{count} معانٍ، اختر ما يناسب الموضوع',
         count_one: 'معنى واحد',
         count_two: 'معنيان، اختر ما يناسب الموضوع',

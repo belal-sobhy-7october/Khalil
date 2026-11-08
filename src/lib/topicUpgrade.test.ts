@@ -11,23 +11,26 @@ const word = (id: string, categoryId: string, w: string, definition = 'old defin
 
 describe('lessonForTopicName', () => {
   it('matches lessons by title, by merged old packs and by subject', () => {
-    expect(lessonForTopicName('Job Interview')?.id).toBe('job-interview');
-    expect(lessonForTopicName('Shopping & Money')?.id).toBe('shop-smart');
-    expect(lessonForTopicName('Marriage')?.id).toBe('relationships-and-marriage');
-    expect(lessonForTopicName('Love')?.id).toBe('relationships-and-marriage');
-    expect(lessonForTopicName('Education')?.id).toBe('smart-learning');
-    expect(lessonForTopicName('Personality')?.id).toBe('feelings-and-personality');
+    // Lessons of the earlier versions map to the lesson that replaced them.
+    expect(lessonForTopicName('Job Interview')?.id).toBe('career-and-interviews');
+    expect(lessonForTopicName('Small Talk')?.id).toBe('meeting-people');
+    expect(lessonForTopicName('Shopping & Money')?.id).toBe('consumerism-and-minimalism');
+    expect(lessonForTopicName('Meeting People & Small Talk')?.id).toBe('meeting-people');
+    expect(lessonForTopicName('Marriage')?.id).toBe('relationships-and-norms');
+    expect(lessonForTopicName('Love')?.id).toBe('relationships-and-norms');
+    expect(lessonForTopicName('Education')?.id).toBe('learning-strategies');
+    expect(lessonForTopicName('Personality')?.id).toBe('people-and-feelings');
     expect(lessonForTopicName('Grammar')).toBeUndefined();
-    expect(lessonForTopicName('Friends')?.id).toBe('friendship');
-    expect(lessonForTopicName('Environment')?.id).toBe('climate-and-environment');
-    expect(lessonForTopicName('رمضان')?.id).toBe('ramadan-and-celebrations');
-    expect(lessonForTopicName('Movies')?.id).toBe('films-series-and-books');
-    expect(lessonForTopicName('My ideal job')?.id).toBe('work-and-office');
+    expect(lessonForTopicName('Friends')?.id).toBe('friendship-and-conflict');
+    expect(lessonForTopicName('Environment')?.id).toBe('climate-and-sustainability');
+    expect(lessonForTopicName('رمضان')?.id).toBe('celebrations-and-traditions');
+    expect(lessonForTopicName('Movies')?.id).toBe('media-and-reviews');
+    expect(lessonForTopicName('My ideal job')?.id).toBe('workplace-responsibilities');
   });
 });
 
 describe('planTopicUpgrade', () => {
-  const lesson = TOPIC_PACKS.find((p) => p.id === 'job-interview')!;
+  const lesson = TOPIC_PACKS.find((p) => p.id === 'career-and-interviews')!;
 
   it('updates lesson words, adds the missing ones and offers to remove old filler', () => {
     const categories = [cat('j', 'Job Interview')];
@@ -43,12 +46,13 @@ describe('planTopicUpgrade', () => {
     expect(up.update[0].next.definition).toBe(lesson.items.find((i) => i.word === 'strength')!.definition);
     expect(up.remove.map((r) => r.id)).toEqual(['2']);
     expect(up.add).toHaveLength(lesson.items.length - 1);
-    expect(up.rename).toBeUndefined();
+    // The old lesson was merged into a bigger one, so the topic takes its name.
+    expect(up.rename).toBe(lesson.title);
   });
 
   it('renames topics whose old pack was merged into a course lesson', () => {
     const { lessons } = planTopicUpgrade([cat('s', 'Shopping & Money')], [word('1', 's', 'bargain')]);
-    expect(lessons[0].rename).toBe('Shop Smart: The Psychology of Spending');
+    expect(lessons[0].rename).toBe('Consumerism, Advertising & Minimalism');
     expect(lessons[0].remove.map((r) => r.word)).toEqual(['bargain']);
   });
 
@@ -56,7 +60,7 @@ describe('planTopicUpgrade', () => {
     const plan = planTopicUpgrade([cat('m', 'Marriage'), cat('g', 'Grammar')], [word('1', 'm', 'Split up')]);
     expect(plan.lessons).toEqual([]);
     const marriage = plan.own.find((o) => o.category.id === 'm')!;
-    expect(marriage.pack?.id).toBe('relationships-and-marriage');
+    expect(marriage.pack?.id).toBe('relationships-and-norms');
     // "split up" is already in the list, so it isn't added again.
     expect(marriage.add.map((a) => a.word)).not.toContain('split up');
     expect(plan.own.find((o) => o.category.id === 'g')!.pack).toBeUndefined();
@@ -71,7 +75,7 @@ describe('planTopicUpgrade', () => {
 
   it('has nothing to do once a topic matches its lesson', () => {
     const items = lesson.items.map((p, i) => ({ ...word(String(i), 'j', p.word, p.definition, p.example) }));
-    const plan = planTopicUpgrade([cat('j', 'Job Interview')], items);
+    const plan = planTopicUpgrade([cat('j', lesson.title)], items);
     expect(plan.lessons).toEqual([]);
     expect(hasUpgrade(plan)).toBe(false);
   });
@@ -82,7 +86,7 @@ describe('call center topics', () => {
     expect(lessonForTopicName('Call Center Interview')).toBeUndefined();
     expect(lessonForTopicName('Call Center: My words')).toBeUndefined();
     expect(lessonForTopicName('كول سنتر')).toBeUndefined();
-    expect(lessonForTopicName('Interview')?.id).toBe('job-interview');
+    expect(lessonForTopicName('Interview')?.id).toBe('career-and-interviews');
   });
 
   it('are not in the Topic Library', () => {

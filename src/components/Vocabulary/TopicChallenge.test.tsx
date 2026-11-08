@@ -28,7 +28,7 @@ vi.mock('../../lib/speech', async (orig) => ({
   recognizeOnce: speech.recognize,
 }));
 
-const category: VocabularyCategory = { id: 'c1', userId: 'u1', name: 'Job Interview', createdAt: '', updatedAt: '' };
+const category: VocabularyCategory = { id: 'c1', userId: 'u1', name: 'Career Planning, Job Search & Interviews', createdAt: '', updatedAt: '' };
 const item = (id: string, word: string): VocabularyItem => ({
   id, userId: 'u1', word, type: 'word', definition: 'd', categoryId: 'c1', exampleSentence: `I use ${word} daily.`,
   masteryLevel: 0, reviewCount: 0, lapseCount: 0, correctStreak: 0, isHard: false, createdAt: '', updatedAt: '',
@@ -80,7 +80,7 @@ describe('TopicChallenge', () => {
   it('listen step uses the pack paragraph plus texts from example sentences', async () => {
     render(<TopicChallenge category={category} onClose={() => {}} />);
     fireEvent.click(await screen.findByRole('tab', { name: /Listen & repeat/ }));
-    expect(screen.getByText(/My greatest strength is that I'm proactive/)).toBeInTheDocument();
+    expect(screen.getByText(/I applied for a job as a team leader/)).toBeInTheDocument();
     expect(screen.getAllByRole('button', { name: /Copy & open NaturalReader/ })).toHaveLength(1);
   });
 

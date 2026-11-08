@@ -19,7 +19,12 @@ silence the test, rewrite the text instead.
 **Read `src/data/topicPacks/README.md` before adding or editing a topic.** Every topic is a
 full lesson that follows the owner's course method (warm-up → 12 words with the meaning they
 have in the topic and an example → one grammar point → discussion → one-minute speaking
-task → paragraph). The file explains the format, the quality rules and the checks.
+task → paragraph). 90 lessons from A1 to C1 (`a1.ts` … `c1.ts`, in study order): 58 topics, and 32
+that take an earlier topic to a higher level (`revisits`). Every word is checked against the Cambridge
+Dictionary (`scripts/check-word-levels.py` → `wordSources.json`, which the test requires); definitions
+are our own, written from the Cambridge sense. The README explains the format, the rules and the checks.
+- "Check all my meanings" (`CheckMeaningsModal` with no topic) goes through a user's saved words and
+  offers the Topic Library's checked meaning first; Arabic meanings go through `ConvertToEnglishModal`.
 
 ## Offline
 
@@ -220,7 +225,7 @@ the hub's own lessons inside the block.
   as long as any section has lessons (about two years at 20 minutes) and grows by itself when content is
   added; a section that ran out gives its time to "your choice" in its tab. Vocabulary is the flashcard
   review plus the words of the day's topic (`PATH_TOPICS`, a topic a day from the learner's level up,
-  then the easier ones; the library has B1–C1 topics, so A1–A2 start with the easiest); Grammar is
+  then the easier ones); Grammar is
   Ibrahim Adel's course, then the grammar point of the day's topic (every topic's once).
 - Settings: "Your level" (`level`) sets where the topics start and, through `startsFor`, where every
   section starts; then the sources (Listening VOA, the default, or Ibrahim Adel; Reading British Council,

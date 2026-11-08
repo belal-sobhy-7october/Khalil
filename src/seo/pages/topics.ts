@@ -20,8 +20,8 @@ const GROUP_NAME: Record<Lang, Record<PackGroup, string>> = {
 };
 
 const LEVEL_NAME: Record<Lang, Record<TopicPack['level'], string>> = {
-  en: { B1: 'B1 (intermediate)', B2: 'B2 (upper intermediate)', C1: 'C1 (advanced)' },
-  ar: { B1: 'B1 (متوسط)', B2: 'B2 (فوق المتوسط)', C1: 'C1 (متقدم)' },
+  en: { A1: 'A1 (beginner)', A2: 'A2 (elementary)', B1: 'B1 (intermediate)', B2: 'B2 (upper intermediate)', C1: 'C1 (advanced)' },
+  ar: { A1: 'A1 (مبتدئ)', A2: 'A2 (أساسي)', B1: 'B1 (متوسط)', B2: 'B2 (فوق المتوسط)', C1: 'C1 (متقدم)' },
 };
 
 const POS_AR: Record<string, string> = {
@@ -167,7 +167,7 @@ function indexPage(lang: Lang, origin: string): Page {
       section: 'topics',
       title: `مواضيع محادثة بالإنجليزية مجانًا: ${arCount(count, NOUNS.lesson)} بالكلمات والأسئلة | خليل`,
       description: clip(
-        `${arCount(count, NOUNS.topic)} للمحادثة بالإنجليزية من B1 إلى C1: في كل موضوع نحو 12 كلمة بمعناها ومثال، وقاعدة نحوية، وأسئلة نقاش، ومهمة كلام مدتها دقيقة، وفقرة نموذجية. مجانًا.`
+        `${arCount(count, NOUNS.topic)} للمحادثة بالإنجليزية من A1 إلى C1: في كل موضوع نحو 12 كلمة بمعناها ومثال، وقاعدة نحوية، وأسئلة نقاش، ومهمة كلام مدتها دقيقة، وفقرة نموذجية. مجانًا.`
       ),
       h1,
       crumb: 'مواضيع المحادثة',
@@ -175,7 +175,7 @@ function indexPage(lang: Lang, origin: string): Page {
       crumbs,
       alternates,
       blocks: [
-        { kind: 'p', text: `المستويات: ${byLevel('B1')} في B1 (متوسط)، و${byLevel('B2')} في B2 (فوق المتوسط)، و${byLevel('C1')} في C1 (متقدم). الدروس مكتوبة بالإنجليزية الأمريكية، ومع كل كلمة معناها بالعربية.`, note: true },
+        { kind: 'p', text: `المستويات: ${byLevel('A1')} في A1 (مبتدئ)، و${byLevel('A2')} في A2 (أساسي)، و${byLevel('B1')} في B1 (متوسط)، و${byLevel('B2')} في B2 (فوق المتوسط)، و${byLevel('C1')} في C1 (متقدم). الدروس مكتوبة بالإنجليزية الأمريكية، ومع كل كلمة معناها بالعربية.`, note: true },
         { kind: 'h2', text: 'كيف تذاكر الموضوع؟' },
         {
           kind: 'list',
@@ -207,9 +207,9 @@ function indexPage(lang: Lang, origin: string): Page {
     path,
     lang,
     section: 'topics',
-    title: `English Conversation Topics: ${count} Free Lessons (B1–C1) | Khalil`,
+    title: `English Conversation Topics: ${count} Free Lessons (A1–C1) | Khalil`,
     description: clip(
-      `${count} free English conversation lessons from B1 to C1. Each topic: about 12 key words with meanings and examples, a grammar point, discussion questions, a one-minute speaking task and a model paragraph.`
+      `${count} free English conversation lessons from A1 to C1. Each topic: about 12 key words with meanings and examples, a grammar point, discussion questions, a one-minute speaking task and a model paragraph.`
     ),
     h1,
     crumb: 'English topics',
@@ -217,7 +217,7 @@ function indexPage(lang: Lang, origin: string): Page {
     crumbs,
     alternates,
     blocks: [
-      { kind: 'p', text: `Levels: ${byLevel('B1')} at B1 (intermediate), ${byLevel('B2')} at B2 (upper intermediate) and ${byLevel('C1')} at C1 (advanced). Written in American English.`, note: true },
+      { kind: 'p', text: `Levels: ${byLevel('A1')} at A1 (beginner), ${byLevel('A2')} at A2 (elementary), ${byLevel('B1')} at B1 (intermediate), ${byLevel('B2')} at B2 (upper intermediate) and ${byLevel('C1')} at C1 (advanced). Written in American English.`, note: true },
       { kind: 'h2', text: 'How to study a topic' },
       {
         kind: 'list',

@@ -43,7 +43,9 @@ export interface TopicPack {
   group: PackGroup;
   title: string;
   description: string;
-  level: 'B1' | 'B2' | 'C1';
+  level: 'A1' | 'A2' | 'B1' | 'B2' | 'C1';
+  /** An earlier topic that this one takes to a higher level (e.g. renting → housing costs → housing policy). */
+  revisits?: string;
   emoji: string;
   featured?: boolean;
   /** Lesson from the user's own course (the shared slides). */

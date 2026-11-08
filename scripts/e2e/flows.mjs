@@ -249,7 +249,7 @@ await flow('vocab-topic-library', { section: 'vocabulary', englishTab: 'vocabula
   await page.getByRole('button', { name: 'Topic Library', exact: true }).click();
   const library = page.getByRole('dialog', { name: 'Topic Library' });
   check(await visible(library), 'topic library is not exposed as a dialog');
-  const pack = library.getByRole('button', { name: /Job Interview/ });
+  const pack = library.getByRole('button', { name: /Job Search & Interviews/ });
   if (!check(await visible(pack), 'Interview pack not listed')) return;
   await pack.click();
   const add = page.getByRole('button', { name: /^Add \d+ items$/ });
@@ -377,7 +377,7 @@ await flow('learning-path', { section: 'vocabulary', englishTab: 'path' }, async
   await page.waitForTimeout(800);
   const added = wordCount() - wordsBefore;
   check(added > 0 && added <= 16, `adding the day's words added ${added}`);
-  check(backend.tables.vocabulary_categories?.some((c) => c.name === 'Self-Introduction & Background'), 'words not filed under the day 1 topic');
+  check(backend.tables.vocabulary_categories?.some((c) => c.name === 'Personal Profile & Background'), 'words not filed under the day 1 topic');
 
   // Review: the flashcards open in the path; ending the session ticks the review and saves each word's schedule.
   await block('vocabulary').getByRole('button', { name: /^Start review/ }).click();

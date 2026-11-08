@@ -118,31 +118,8 @@ const SOUND_MINUTES = 10;
 
 // ---- topics -----------------------------------------------------------------
 
-/** The Topic Library from the easiest topic to the hardest (it has B1 to C1 topics for now). */
-export const PATH_TOPICS: string[] = [
-  // B1
-  'self-introduction', 'small-talk', 'family-and-relatives', 'describing-people', 'daily-routines',
-  'meeting-new-people', 'making-plans', 'hobbies-and-free-time', 'household-chores', 'home-and-neighbours',
-  'housing-and-rent', 'cooking-and-recipes', 'restaurant-and-food', 'clothes-and-style', 'returns-and-complaints',
-  'money-and-saving', 'directions-and-help', 'transport-and-traffic', 'travel', 'tourism-and-culture', 'health',
-  'nutrition', 'sleep-and-energy', 'sports-and-fitness', 'football', 'adventure-and-outdoors', 'video-games',
-  'emergencies-and-safety', 'ramadan-and-celebrations', 'university-life', 'exams-and-projects',
-  // B2
-  'feelings-and-personality', 'friendship', 'keeping-conversations-going', 'misunderstandings',
-  'apologies-and-forgiveness', 'advice-and-support', 'childhood-and-memories', 'relationships-and-marriage',
-  'goals-and-dreams', 'learning-languages', 'smart-learning', 'films-series-and-books', 'photography-and-content',
-  'city-vs-countryside', 'shop-smart', 'habitual-change', 'minimalism', 'cultural-differences',
-  'opinions-and-arguing', 'identity-and-heritage', 'history-and-civilizations', 'nature-and-wildlife',
-  'living-abroad', 'career-plans', 'job-hunting', 'job-interview', 'work-and-office', 'phone-and-email',
-  'meetings-and-discussions', 'tech-everyday', 'internet-and-online-services', 'cybersecurity-and-scams',
-  'programming', 'time-management', 'remote-work-and-freelancing', 'presentations', 'leadership-and-teamwork',
-  'negotiation', 'starting-a-business', 'inflation-and-cost-of-living', 'jobs-and-future-work', 'social-media',
-  'news-and-media', 'mental-health', 'happiness-and-success', 'fame-and-celebrity', 'art-and-architecture',
-  'science-and-space', 'climate-and-environment', 'artificial-intelligence', 'social-responsibility', 'crime',
-  // C1
-  'decision-making-and-trade-offs', 'problem-solving', 'change-and-risk', 'equality-and-opportunity',
-  'ethics-and-dilemmas', 'education-systems', 'future-of-society',
-];
+/** The Topic Library in study order: A1 → C1, with the topics that come back at a higher level after each level's new ones. */
+export const PATH_TOPICS: string[] = TOPIC_PACKS.map((p) => p.id);
 
 export function packById(id: string | undefined): TopicPack | undefined {
   return id ? TOPIC_PACKS.find((p) => p.id === id) : undefined;

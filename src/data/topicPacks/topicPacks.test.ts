@@ -30,7 +30,7 @@ describe('TOPIC_PACKS', () => {
   it('writes American English', () => {
     const british = /\b(\w+our(s|ed|ing|ite|ites|able|ful|y|hood|hoods)?|\w+(ise|ised|ising|isation)|\w+yse[ds]?|centre|theatre|metre|litre|kilometres?|licence|defence|offence|practis\w*|travell\w*|cancell\w*|jewellery|judgement|grey|yoghurt|mum|flat|holidays?|queues?|rubbish|whilst|learnt|at weekends|with a pinch of salt|on the blink|tether|public transport(?!ation))\b/gi;
     // Spelled the same way in American English.
-    const sameInAmerican = /^(exercis|ris|rais|nois|surpris|prais|compromis|promis|otherwis|concis|advis|revis|supervis|wis|precis|premis|expertis|disguis|despis|improvis|enterpris|franchis|merchandis|cruis|bruis|pois|treatis|televis|paradis|sunris|edgewis)|^(your|yours|our|ours|hour|hours|four|tour|tours|pour|pours|poured|pouring|flour|sour|detour|detours|contour|devour|glamour|nour)$/i;
+    const sameInAmerican = /^(exercis|ris|rais|nois|surpris|prais|compromis|promis|otherwis|concis|advis|revis|supervis|wis|precis|premis|expertis|disguis|despis|improvis|enterpris|franchis|merchandis|cruis|bruis|pois|treatis|televis|paradis|sunris|edgewis|advertis)|^(your|yours|our|ours|hour|hours|four|tour|tours|pour|pours|poured|pouring|flour|sour|detour|detours|contour|devour|glamour|nour)$/i;
     const found = TOPIC_PACKS.flatMap((p) =>
       [p.title, p.description, ...p.warmUp, ...p.discussion, p.task.prompt, ...p.task.points, p.paragraph, p.grammar.title, p.grammar.tip ?? '',
         ...p.grammar.points.flatMap((g) => [g.form, g.use, g.example]), ...p.items.flatMap((i) => [i.word, i.definition, i.example])]
@@ -39,6 +39,21 @@ describe('TOPIC_PACKS', () => {
         .map((w) => `${p.id}: ${w}`)
     );
     expect(found).toEqual([]);
+  });
+
+  it('checks every word against the Cambridge Dictionary (scripts/check-word-levels.py)', () => {
+    const sources = JSON.parse(fs.readFileSync(path.join(DIR, 'wordSources.json'), 'utf8')) as Record<string, { url: string }>;
+    const unchecked = TOPIC_PACKS.flatMap((p) => p.items.map((i) => i.word.toLowerCase())).filter((w) => !sources[w]?.url.startsWith('https://dictionary.cambridge.org/'));
+    expect(unchecked).toEqual([]);
+  });
+
+  it('takes earlier topics to a higher level', () => {
+    const order = ['A1', 'A2', 'B1', 'B2', 'C1'];
+    for (const pack of TOPIC_PACKS.filter((p) => p.revisits)) {
+      const earlier = TOPIC_PACKS.find((p) => p.id === pack.revisits);
+      expect(earlier, pack.id).toBeDefined();
+      expect(order.indexOf(pack.level), pack.id).toBeGreaterThan(order.indexOf(earlier!.level));
+    }
   });
 
   it('gives every topic its Arabic name and every word its Arabic meaning, and nothing more', () => {
@@ -56,7 +71,8 @@ describe('TOPIC_PACKS', () => {
     expect(pack.items.length).toBeGreaterThanOrEqual(11);
     expect(pack.items.length).toBeLessThanOrEqual(16);
     expect(pack.items.some((i) => i.pos === 'phrasal verb')).toBe(true);
-    expect(pack.items.some((i) => i.pos === 'idiom')).toBe(true);
+    // Idioms from B2 on; A1–B1 lessons keep to everyday words.
+    if (pack.level === 'B2' || pack.level === 'C1') expect(pack.items.some((i) => i.pos === 'idiom')).toBe(true);
     for (const item of pack.items) {
       expect(item.word).not.toBe('');
       expect(item.definition).toMatch(/[.)]$/);

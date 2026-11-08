@@ -61,7 +61,8 @@ describe('the plan', () => {
   it("starts the day's topic at the chosen level, and every section where that level starts", () => {
     const levelOf = (p: PathDay[]) => packById(p[0].packId)!.level;
     expect(levelOf(path)).toBe('B1');
-    expect(levelOf(buildPath(settings({ level: 'A1' })))).toBe('B1'); // the easiest topics there are
+    expect(levelOf(buildPath(settings({ level: 'A1' })))).toBe('A1');
+    expect(levelOf(buildPath(settings({ level: 'A2' })))).toBe('A2');
     expect(levelOf(buildPath(settings({ level: 'B2' })))).toBe('B2');
     const c1 = buildPath(settings({ level: 'C1' }));
     expect(levelOf(c1)).toBe('C1');

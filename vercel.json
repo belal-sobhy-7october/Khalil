@@ -1,9 +1,853 @@
 {
+  "redirects": [
+    {
+      "source": "/:lang(ar|en)/english-topics/small-talk",
+      "destination": "/:lang/english-topics/meeting-people",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/small-talk.md",
+      "destination": "/:lang/english-topics/meeting-people.md",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/opinions-and-arguing",
+      "destination": "/:lang/english-topics/argumentation-and-debate",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/opinions-and-arguing.md",
+      "destination": "/:lang/english-topics/argumentation-and-debate.md",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/describing-people",
+      "destination": "/:lang/english-topics/people-and-feelings",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/describing-people.md",
+      "destination": "/:lang/english-topics/people-and-feelings.md",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/making-plans",
+      "destination": "/:lang/english-topics/plans-and-invitations",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/making-plans.md",
+      "destination": "/:lang/english-topics/plans-and-invitations.md",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/hobbies-and-free-time",
+      "destination": "/:lang/english-topics/hobbies-and-sports",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/hobbies-and-free-time.md",
+      "destination": "/:lang/english-topics/hobbies-and-sports.md",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/home-and-neighbours",
+      "destination": "/:lang/english-topics/home-and-neighborhood",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/home-and-neighbours.md",
+      "destination": "/:lang/english-topics/home-and-neighborhood.md",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/restaurant-and-food",
+      "destination": "/:lang/english-topics/food-and-ordering",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/restaurant-and-food.md",
+      "destination": "/:lang/english-topics/food-and-ordering.md",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/travel",
+      "destination": "/:lang/english-topics/travel-and-accommodation",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/travel.md",
+      "destination": "/:lang/english-topics/travel-and-accommodation.md",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/transport-and-traffic",
+      "destination": "/:lang/english-topics/directions-and-transport",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/transport-and-traffic.md",
+      "destination": "/:lang/english-topics/directions-and-transport.md",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/health",
+      "destination": "/:lang/english-topics/health-and-lifestyle",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/health.md",
+      "destination": "/:lang/english-topics/health-and-lifestyle.md",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/ramadan-and-celebrations",
+      "destination": "/:lang/english-topics/celebrations-and-traditions",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/ramadan-and-celebrations.md",
+      "destination": "/:lang/english-topics/celebrations-and-traditions.md",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/feelings-and-personality",
+      "destination": "/:lang/english-topics/people-and-feelings",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/feelings-and-personality.md",
+      "destination": "/:lang/english-topics/people-and-feelings.md",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/friendship",
+      "destination": "/:lang/english-topics/friendship-and-conflict",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/friendship.md",
+      "destination": "/:lang/english-topics/friendship-and-conflict.md",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/childhood-and-memories",
+      "destination": "/:lang/english-topics/life-experiences",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/childhood-and-memories.md",
+      "destination": "/:lang/english-topics/life-experiences.md",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/films-series-and-books",
+      "destination": "/:lang/english-topics/media-and-reviews",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/films-series-and-books.md",
+      "destination": "/:lang/english-topics/media-and-reviews.md",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/relationships-and-marriage",
+      "destination": "/:lang/english-topics/relationships-and-norms",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/relationships-and-marriage.md",
+      "destination": "/:lang/english-topics/relationships-and-norms.md",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/city-vs-countryside",
+      "destination": "/:lang/english-topics/cities-and-urban-life",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/city-vs-countryside.md",
+      "destination": "/:lang/english-topics/cities-and-urban-life.md",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/shop-smart",
+      "destination": "/:lang/english-topics/consumerism-and-minimalism",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/shop-smart.md",
+      "destination": "/:lang/english-topics/consumerism-and-minimalism.md",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/habitual-change",
+      "destination": "/:lang/english-topics/habit-change",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/habitual-change.md",
+      "destination": "/:lang/english-topics/habit-change.md",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/minimalism",
+      "destination": "/:lang/english-topics/consumerism-and-minimalism",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/minimalism.md",
+      "destination": "/:lang/english-topics/consumerism-and-minimalism.md",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/smart-learning",
+      "destination": "/:lang/english-topics/learning-strategies",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/smart-learning.md",
+      "destination": "/:lang/english-topics/learning-strategies.md",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/cultural-differences",
+      "destination": "/:lang/english-topics/cultures-and-living-abroad",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/cultural-differences.md",
+      "destination": "/:lang/english-topics/cultures-and-living-abroad.md",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/identity-and-heritage",
+      "destination": "/:lang/english-topics/history-and-identity",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/identity-and-heritage.md",
+      "destination": "/:lang/english-topics/history-and-identity.md",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/work-and-office",
+      "destination": "/:lang/english-topics/workplace-responsibilities",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/work-and-office.md",
+      "destination": "/:lang/english-topics/workplace-responsibilities.md",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/phone-and-email",
+      "destination": "/:lang/english-topics/professional-communication",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/phone-and-email.md",
+      "destination": "/:lang/english-topics/professional-communication.md",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/job-interview",
+      "destination": "/:lang/english-topics/career-and-interviews",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/job-interview.md",
+      "destination": "/:lang/english-topics/career-and-interviews.md",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/meetings-and-discussions",
+      "destination": "/:lang/english-topics/professional-communication",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/meetings-and-discussions.md",
+      "destination": "/:lang/english-topics/professional-communication.md",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/tech-everyday",
+      "destination": "/:lang/english-topics/tech-troubleshooting",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/tech-everyday.md",
+      "destination": "/:lang/english-topics/tech-troubleshooting.md",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/time-management",
+      "destination": "/:lang/english-topics/time-and-habits",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/time-management.md",
+      "destination": "/:lang/english-topics/time-and-habits.md",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/remote-work-and-freelancing",
+      "destination": "/:lang/english-topics/teamwork-and-freelancing",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/remote-work-and-freelancing.md",
+      "destination": "/:lang/english-topics/teamwork-and-freelancing.md",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/presentations",
+      "destination": "/:lang/english-topics/professional-communication",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/presentations.md",
+      "destination": "/:lang/english-topics/professional-communication.md",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/leadership-and-teamwork",
+      "destination": "/:lang/english-topics/leadership-and-feedback",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/leadership-and-teamwork.md",
+      "destination": "/:lang/english-topics/leadership-and-feedback.md",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/starting-a-business",
+      "destination": "/:lang/english-topics/entrepreneurship",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/starting-a-business.md",
+      "destination": "/:lang/english-topics/entrepreneurship.md",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/social-media",
+      "destination": "/:lang/english-topics/social-media-and-fame",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/social-media.md",
+      "destination": "/:lang/english-topics/social-media-and-fame.md",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/news-and-media",
+      "destination": "/:lang/english-topics/news-and-media-literacy",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/news-and-media.md",
+      "destination": "/:lang/english-topics/news-and-media-literacy.md",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/mental-health",
+      "destination": "/:lang/english-topics/wellbeing-and-stress",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/mental-health.md",
+      "destination": "/:lang/english-topics/wellbeing-and-stress.md",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/happiness-and-success",
+      "destination": "/:lang/english-topics/success-and-happiness",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/happiness-and-success.md",
+      "destination": "/:lang/english-topics/success-and-happiness.md",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/fame-and-celebrity",
+      "destination": "/:lang/english-topics/social-media-and-fame",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/fame-and-celebrity.md",
+      "destination": "/:lang/english-topics/social-media-and-fame.md",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/climate-and-environment",
+      "destination": "/:lang/english-topics/climate-and-sustainability",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/climate-and-environment.md",
+      "destination": "/:lang/english-topics/climate-and-sustainability.md",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/artificial-intelligence",
+      "destination": "/:lang/english-topics/ai-at-work",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/artificial-intelligence.md",
+      "destination": "/:lang/english-topics/ai-at-work.md",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/social-responsibility",
+      "destination": "/:lang/english-topics/ethics-and-responsibility",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/social-responsibility.md",
+      "destination": "/:lang/english-topics/ethics-and-responsibility.md",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/crime",
+      "destination": "/:lang/english-topics/crime-law-justice",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/crime.md",
+      "destination": "/:lang/english-topics/crime-law-justice.md",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/self-introduction",
+      "destination": "/:lang/english-topics/personal-profile",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/self-introduction.md",
+      "destination": "/:lang/english-topics/personal-profile.md",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/family-and-relatives",
+      "destination": "/:lang/english-topics/family-and-friends",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/family-and-relatives.md",
+      "destination": "/:lang/english-topics/family-and-friends.md",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/goals-and-dreams",
+      "destination": "/:lang/english-topics/goals-and-change",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/goals-and-dreams.md",
+      "destination": "/:lang/english-topics/goals-and-change.md",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/meeting-new-people",
+      "destination": "/:lang/english-topics/meeting-people",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/meeting-new-people.md",
+      "destination": "/:lang/english-topics/meeting-people.md",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/keeping-conversations-going",
+      "destination": "/:lang/english-topics/conversation-and-misunderstandings",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/keeping-conversations-going.md",
+      "destination": "/:lang/english-topics/conversation-and-misunderstandings.md",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/misunderstandings",
+      "destination": "/:lang/english-topics/conversation-and-misunderstandings",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/misunderstandings.md",
+      "destination": "/:lang/english-topics/conversation-and-misunderstandings.md",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/apologies-and-forgiveness",
+      "destination": "/:lang/english-topics/friendship-and-conflict",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/apologies-and-forgiveness.md",
+      "destination": "/:lang/english-topics/friendship-and-conflict.md",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/advice-and-support",
+      "destination": "/:lang/english-topics/wellbeing-and-stress",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/advice-and-support.md",
+      "destination": "/:lang/english-topics/wellbeing-and-stress.md",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/video-games",
+      "destination": "/:lang/english-topics/hobbies-and-sports",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/video-games.md",
+      "destination": "/:lang/english-topics/hobbies-and-sports.md",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/football",
+      "destination": "/:lang/english-topics/sports-and-fitness",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/football.md",
+      "destination": "/:lang/english-topics/sports-and-fitness.md",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/adventure-and-outdoors",
+      "destination": "/:lang/english-topics/travel-stories",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/adventure-and-outdoors.md",
+      "destination": "/:lang/english-topics/travel-stories.md",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/photography-and-content",
+      "destination": "/:lang/english-topics/media-and-reviews",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/photography-and-content.md",
+      "destination": "/:lang/english-topics/media-and-reviews.md",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/cooking-and-recipes",
+      "destination": "/:lang/english-topics/food-culture",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/cooking-and-recipes.md",
+      "destination": "/:lang/english-topics/food-culture.md",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/clothes-and-style",
+      "destination": "/:lang/english-topics/clothes-and-complaints",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/clothes-and-style.md",
+      "destination": "/:lang/english-topics/clothes-and-complaints.md",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/directions-and-help",
+      "destination": "/:lang/english-topics/directions-and-transport",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/directions-and-help.md",
+      "destination": "/:lang/english-topics/directions-and-transport.md",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/household-chores",
+      "destination": "/:lang/english-topics/chores-and-renting",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/household-chores.md",
+      "destination": "/:lang/english-topics/chores-and-renting.md",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/returns-and-complaints",
+      "destination": "/:lang/english-topics/clothes-and-complaints",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/returns-and-complaints.md",
+      "destination": "/:lang/english-topics/clothes-and-complaints.md",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/money-and-saving",
+      "destination": "/:lang/english-topics/money-and-budgeting",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/money-and-saving.md",
+      "destination": "/:lang/english-topics/money-and-budgeting.md",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/nutrition",
+      "destination": "/:lang/english-topics/healthy-habits",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/nutrition.md",
+      "destination": "/:lang/english-topics/healthy-habits.md",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/sleep-and-energy",
+      "destination": "/:lang/english-topics/healthy-habits",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/sleep-and-energy.md",
+      "destination": "/:lang/english-topics/healthy-habits.md",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/emergencies-and-safety",
+      "destination": "/:lang/english-topics/health-and-lifestyle",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/emergencies-and-safety.md",
+      "destination": "/:lang/english-topics/health-and-lifestyle.md",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/tourism-and-culture",
+      "destination": "/:lang/english-topics/travel-and-accommodation",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/tourism-and-culture.md",
+      "destination": "/:lang/english-topics/travel-and-accommodation.md",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/housing-and-rent",
+      "destination": "/:lang/english-topics/housing-rent-or-buy",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/housing-and-rent.md",
+      "destination": "/:lang/english-topics/housing-rent-or-buy.md",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/university-life",
+      "destination": "/:lang/english-topics/university-and-assignments",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/university-life.md",
+      "destination": "/:lang/english-topics/university-and-assignments.md",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/exams-and-projects",
+      "destination": "/:lang/english-topics/university-and-assignments",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/exams-and-projects.md",
+      "destination": "/:lang/english-topics/university-and-assignments.md",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/learning-languages",
+      "destination": "/:lang/english-topics/learning-strategies",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/learning-languages.md",
+      "destination": "/:lang/english-topics/learning-strategies.md",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/career-plans",
+      "destination": "/:lang/english-topics/career-and-interviews",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/career-plans.md",
+      "destination": "/:lang/english-topics/career-and-interviews.md",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/job-hunting",
+      "destination": "/:lang/english-topics/career-and-interviews",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/job-hunting.md",
+      "destination": "/:lang/english-topics/career-and-interviews.md",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/internet-and-online-services",
+      "destination": "/:lang/english-topics/digital-life",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/internet-and-online-services.md",
+      "destination": "/:lang/english-topics/digital-life.md",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/programming",
+      "destination": "/:lang/english-topics/technology-and-innovation",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/programming.md",
+      "destination": "/:lang/english-topics/technology-and-innovation.md",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/cybersecurity-and-scams",
+      "destination": "/:lang/english-topics/cybersecurity-and-privacy",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/cybersecurity-and-scams.md",
+      "destination": "/:lang/english-topics/cybersecurity-and-privacy.md",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/history-and-civilizations",
+      "destination": "/:lang/english-topics/history-and-identity",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/history-and-civilizations.md",
+      "destination": "/:lang/english-topics/history-and-identity.md",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/nature-and-wildlife",
+      "destination": "/:lang/english-topics/climate-and-sustainability",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/nature-and-wildlife.md",
+      "destination": "/:lang/english-topics/climate-and-sustainability.md",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/living-abroad",
+      "destination": "/:lang/english-topics/cultures-and-living-abroad",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/living-abroad.md",
+      "destination": "/:lang/english-topics/cultures-and-living-abroad.md",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/equality-and-opportunity",
+      "destination": "/:lang/english-topics/inequality-and-mobility",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/equality-and-opportunity.md",
+      "destination": "/:lang/english-topics/inequality-and-mobility.md",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/inflation-and-cost-of-living",
+      "destination": "/:lang/english-topics/personal-finance",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/inflation-and-cost-of-living.md",
+      "destination": "/:lang/english-topics/personal-finance.md",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/jobs-and-future-work",
+      "destination": "/:lang/english-topics/economy-and-future-of-work",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/jobs-and-future-work.md",
+      "destination": "/:lang/english-topics/economy-and-future-of-work.md",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/decision-making-and-trade-offs",
+      "destination": "/:lang/english-topics/decision-making-and-risk",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/decision-making-and-trade-offs.md",
+      "destination": "/:lang/english-topics/decision-making-and-risk.md",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/problem-solving",
+      "destination": "/:lang/english-topics/systems-thinking",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/problem-solving.md",
+      "destination": "/:lang/english-topics/systems-thinking.md",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/change-and-risk",
+      "destination": "/:lang/english-topics/decision-making-and-risk",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/change-and-risk.md",
+      "destination": "/:lang/english-topics/decision-making-and-risk.md",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/ethics-and-dilemmas",
+      "destination": "/:lang/english-topics/ethical-dilemmas",
+      "permanent": true
+    },
+    {
+      "source": "/:lang(ar|en)/english-topics/ethics-and-dilemmas.md",
+      "destination": "/:lang/english-topics/ethical-dilemmas.md",
+      "permanent": true
+    }
+  ],
   "rewrites": [
-    { "source": "/:p1(ar|en)", "destination": "/:p1/index.html" },
-    { "source": "/:p1(ar|en)/:p2", "destination": "/:p1/:p2/index.html" },
-    { "source": "/:p1(ar|en)/:p2/:p3", "destination": "/:p1/:p2/:p3/index.html" },
-    { "source": "/:p1(ar|en)/:p2/:p3/:p4", "destination": "/:p1/:p2/:p3/:p4/index.html" },
+    {
+      "source": "/:p1(ar|en)",
+      "destination": "/:p1/index.html"
+    },
+    {
+      "source": "/:p1(ar|en)/:p2",
+      "destination": "/:p1/:p2/index.html"
+    },
+    {
+      "source": "/:p1(ar|en)/:p2/:p3",
+      "destination": "/:p1/:p2/:p3/index.html"
+    },
+    {
+      "source": "/:p1(ar|en)/:p2/:p3/:p4",
+      "destination": "/:p1/:p2/:p3/:p4/index.html"
+    },
     {
       "source": "/((?!api/).*)",
       "destination": "/index.html"
@@ -13,13 +857,24 @@
     {
       "source": "/(.*).md",
       "headers": [
-        { "key": "Content-Type", "value": "text/markdown; charset=utf-8" },
-        { "key": "X-Robots-Tag", "value": "noindex" }
+        {
+          "key": "Content-Type",
+          "value": "text/markdown; charset=utf-8"
+        },
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex"
+        }
       ]
     },
     {
       "source": "/llms.txt",
-      "headers": [{ "key": "Content-Type", "value": "text/plain; charset=utf-8" }]
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "text/plain; charset=utf-8"
+        }
+      ]
     }
   ]
 }

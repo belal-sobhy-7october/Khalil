@@ -47,6 +47,7 @@ export default function VocabularySection() {
   const [showResources, setShowResources] = useState(false);
   const [showChallenge, setShowChallenge] = useState(false);
   const [showMeanings, setShowMeanings] = useState(false);
+  const [showAllMeanings, setShowAllMeanings] = useState(false);
   const [showUpgrade, setShowUpgrade] = useState(false);
   const upgradeAvailable = useMemo(
     () => hasUpgrade(planTopicUpgrade(vocabularyCategories, vocabularyItems)),
@@ -260,6 +261,15 @@ export default function VocabularySection() {
           <Plus size={18} />
           <span>{t('vocabulary.addWord')}</span>
         </button>
+        {vocabularyItems.length > 0 && (
+          <button
+            onClick={() => setShowAllMeanings(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-ink/5 text-ink rounded-lg hover:bg-ink/10 transition-colors"
+          >
+            <SearchCheck size={18} />
+            <span>{t('vocabulary.meaning.openAll')}</span>
+          </button>
+        )}
         <button
           onClick={() => setShowCategories(true)}
           className="flex items-center gap-2 px-4 py-2 bg-ink/5 text-ink rounded-lg hover:bg-ink/10 transition-colors"
@@ -524,6 +534,7 @@ export default function VocabularySection() {
       )}
 
       {showMeanings && selectedCategory && <CheckMeaningsModal category={selectedCategory} onClose={() => setShowMeanings(false)} />}
+      {showAllMeanings && <CheckMeaningsModal category={null} onClose={() => setShowAllMeanings(false)} />}
       {showUpgrade && <UpgradeTopicsModal onClose={() => setShowUpgrade(false)} />}
       {showChallenge && selectedCategory && (
         <TopicChallenge category={selectedCategory} onClose={() => setShowChallenge(false)} />
